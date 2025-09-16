@@ -10,7 +10,6 @@ With SmartPantry, users can:
 
 By keeping track of ingredients and suggesting meals before food expires, SmartPantry saves time, money, and reduces waste.  
 
----
 
 ## Contributors  
 - Jimmy Chen 
