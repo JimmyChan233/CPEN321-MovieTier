@@ -1,5 +1,5 @@
 # CPEN321-SmartPantry
-##Rank movies. Share with friends. Discover together.
+## Rank movies. Share with friends. Discover together.
 
 
 MovieTier is a social movie companion app that makes watching, ranking, and sharing films fun and interactive.
