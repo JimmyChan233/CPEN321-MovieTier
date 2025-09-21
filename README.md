@@ -1,14 +1,21 @@
 # CPEN321-SmartPantry
 
-SmartPantry is a smart and waste-free way to manage your kitchen.  
-It helps students and young professionals simplify meal and grocery planning while reducing food waste.  
+MovieTier is a social movie companion app that makes watching, ranking, and sharing films fun and interactive.
+It helps friends discover new movies, compare tastes, and get personalized recommendations.
 
-With SmartPantry, users can:  
-- Track pantry items and get expiry reminders with recipe suggestions.  
-- Generate smart grocery lists based on selected recipes.  
-- Discover real-time recipe ideas using integrated APIs (e.g., Spoonacular).  
+With MovieTier, users can:
 
-By keeping track of ingredients and suggesting meals before food expires, SmartPantry saves time, money, and reduces waste.  
+Sign in securely using Google authentication.
+
+Add friends and build their movie network.
+
+Browse a friends’ feed with recent rankings and activity.
+
+Create and share personal movie tiers and rankings.
+
+Get movie recommendations based on recent watches or top favorites.
+
+By blending social interaction with personalized discovery, MovieTier makes movie watching more engaging and helps users always find the next great film.
 
 
 ## Contributors  
