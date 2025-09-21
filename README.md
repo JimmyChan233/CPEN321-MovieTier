@@ -1,4 +1,4 @@
-# CPEN321-SmartPantry
+# CPEN321-MovieTier
 #### Rank movies. Share with friends. Discover together.
 
 
