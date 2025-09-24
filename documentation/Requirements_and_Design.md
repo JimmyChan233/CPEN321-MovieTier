@@ -17,7 +17,11 @@
 ## 3. Requirements Specification
 
 ### **3.1. List of Features**
-
+1) Authentication - There will be a google login/auth page that will allow users to sign up or sign into their account.
+2) Add a Friend - The user will be allowed to add a friend by friends username.
+3) Feed - A user gets real time updates of their friends activities on their feed.
+4) Comparitive Ranking - The app lets users compare movies from the list of their previously watched movies. The app will then assign a final ranking to the movie based on the comparision done by the user.
+5) Recommendation - Based on users top movies there will be a recommended list of movies that the user can watch.
 
 ### **3.2. Use Case Diagram**
 
