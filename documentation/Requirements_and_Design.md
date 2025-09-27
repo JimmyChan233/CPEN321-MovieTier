@@ -29,7 +29,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 ### **3.2. Use Case Diagram**
 
-
+![UML diagram](images/UML.png)
 
 ### **3.3. Actors Description**
 
@@ -281,3 +281,4 @@ The user is on the “Feed” page
    -**Purpose**: Send real time push notifications to the user when a friend ranks a movie.
 
 ### **4.5. Dependencies Diagram**
+![dependencies diagram](images/DependencyDiagram.png)
