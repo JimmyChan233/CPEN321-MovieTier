@@ -1,0 +1,33 @@
+# OS files
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Local configuration files with secrets
+backend/.env
+frontend/local.properties
+
+# Build directories
+frontend/build/
+frontend/app/build/
+frontend/.gradle/
+backend/dist/
+backend/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Old/reference projects
+M1-starter-app-itsjimmy/
