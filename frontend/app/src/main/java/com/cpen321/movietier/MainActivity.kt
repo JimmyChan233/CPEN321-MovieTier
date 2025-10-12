@@ -11,11 +11,14 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.ui.navigation.NavGraph
 import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.theme.MovieTierTheme
+import com.cpen321.movietier.ui.viewmodels.ThemeViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -24,7 +27,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MovieTierTheme {
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val themeMode by themeViewModel.themeMode.collectAsState()
+            MovieTierTheme(themeMode = themeMode) {
                 MovieTierApp()
             }
         }
@@ -44,56 +49,123 @@ fun MovieTierApp() {
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(
+                    modifier = Modifier.testTag("bottom_navigation")
+                ) {
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Feed") },
+                        icon = {
+                            Icon(
+                                Icons.Default.Home,
+                                contentDescription = "Feed"
+                            )
+                        },
                         label = { Text("Feed") },
                         selected = currentRoute == NavRoutes.FEED,
                         onClick = {
                             navController.navigate(NavRoutes.FEED) {
                                 popUpTo(NavRoutes.FEED) { inclusive = true }
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.testTag("nav_feed")
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Person, contentDescription = "Friends") },
+                        icon = {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Friends"
+                            )
+                        },
                         label = { Text("Friends") },
                         selected = currentRoute == NavRoutes.FRIENDS,
                         onClick = {
                             navController.navigate(NavRoutes.FRIENDS) {
                                 popUpTo(NavRoutes.FEED)
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.testTag("nav_friends")
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Star, contentDescription = "Ranking") },
+                        icon = {
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = "Ranking"
+                            )
+                        },
                         label = { Text("Ranking") },
                         selected = currentRoute == NavRoutes.RANKING,
                         onClick = {
                             navController.navigate(NavRoutes.RANKING) {
                                 popUpTo(NavRoutes.FEED)
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.testTag("nav_ranking")
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Favorite, contentDescription = "Recommended") },
-                        label = { Text("Recommended") },
+                        icon = {
+                            Icon(
+                                Icons.Default.Favorite,
+                                contentDescription = "Recommended"
+                            )
+                        },
+                        label = { Text("Discover") },
                         selected = currentRoute == NavRoutes.RECOMMENDATION,
                         onClick = {
                             navController.navigate(NavRoutes.RECOMMENDATION) {
                                 popUpTo(NavRoutes.FEED)
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.testTag("nav_recommendation")
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.AccountCircle, contentDescription = "Profile") },
+                        icon = {
+                            Icon(
+                                Icons.Default.AccountCircle,
+                                contentDescription = "Profile"
+                            )
+                        },
                         label = { Text("Profile") },
                         selected = currentRoute == NavRoutes.PROFILE,
                         onClick = {
                             navController.navigate(NavRoutes.PROFILE) {
                                 popUpTo(NavRoutes.FEED)
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.testTag("nav_profile")
                     )
                 }
             }
