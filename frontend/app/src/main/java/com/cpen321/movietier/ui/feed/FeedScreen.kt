@@ -1,18 +1,30 @@
 package com.cpen321.movietier.ui.feed
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.cpen321.movietier.data.model.FeedActivity
+import com.cpen321.movietier.data.model.Movie
+import com.cpen321.movietier.ui.components.EmptyState
+import com.cpen321.movietier.ui.components.FeedActivityCard
+import com.cpen321.movietier.ui.components.MovieDetailBottomSheet
+import com.cpen321.movietier.ui.components.shimmerPlaceholder
+import com.cpen321.movietier.ui.navigation.NavRoutes
+import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.FeedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,59 +34,108 @@ fun FeedScreen(
     feedViewModel: FeedViewModel = hiltViewModel()
 ) {
     val uiState by feedViewModel.uiState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
 
     Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+            .testTag("feed_screen"),
         topBar = {
-            TopAppBar(
-                title = { Text("Friend Activity Feed") },
+            CenterAlignedTopAppBar(
+                title = { Text("Friend Activity", style = MaterialTheme.typography.titleMedium) },
                 actions = {
-                    IconButton(onClick = { feedViewModel.refreshFeed() }) {
+                    IconButton(
+                        onClick = { feedViewModel.refreshFeed() },
+                        modifier = Modifier.testTag("refresh_button")
+                    ) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                uiState.feedActivities.isEmpty() -> {
-                    Column(
+        Crossfade(
+            targetState = when {
+                uiState.isLoading -> FeedState.LOADING
+                uiState.feedActivities.isEmpty() -> FeedState.EMPTY
+                else -> FeedState.CONTENT
+            },
+            label = "feed_state"
+        ) { state ->
+            when (state) {
+                FeedState.LOADING -> {
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "No activity yet",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Add friends to see their movie rankings",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                            .padding(padding)
+                            .testTag("feed_loading"),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.feedActivities) { activity ->
-                            FeedActivityCard(activity = activity)
+                        items(5) {
+                            ShimmerFeedCard()
+                        }
+                    }
+                }
+                FeedState.EMPTY -> {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .testTag("feed_empty")
+                    ) {
+                        EmptyState(
+                            icon = Icons.Default.Person,
+                            title = "No activity yet",
+                            message = "Add friends to see their rankings",
+                            primaryCta = {
+                                Button(
+                                    onClick = {
+                                        navController.navigate(NavRoutes.FRIENDS) {
+                                            popUpTo(NavRoutes.FEED)
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("go_to_friends_button")
+                                ) {
+                                    Text("Add Friends")
+                                }
+                            }
+                        )
+                    }
+                }
+                FeedState.CONTENT -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .testTag("feed_list"),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(
+                                items = uiState.feedActivities,
+                                key = { it.id }
+                            ) { activity ->
+                                FeedActivityCard(
+                                    activity = activity,
+                                    onClick = { selectedMovie = activity.movie }
+                                )
+                            }
+                        }
+
+                        selectedMovie?.let { movie ->
+                            MovieDetailBottomSheet(
+                                movie = movie,
+                                onAddToRanking = { /* TODO: Hook to ranking from feed */ },
+                                onDismissRequest = { selectedMovie = null }
+                            )
                         }
                     }
                 }
@@ -83,43 +144,63 @@ fun FeedScreen(
     }
 }
 
+private enum class FeedState {
+    LOADING, EMPTY, CONTENT
+}
+
 @Composable
-fun FeedActivityCard(activity: com.cpen321.movietier.data.model.FeedActivity) {
+private fun ShimmerFeedCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = activity.userName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+            // Avatar shimmer
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .shimmerPlaceholder(visible = true, shape = MaterialTheme.shapes.small)
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(16.dp)
+                        .shimmerPlaceholder(visible = true)
                 )
-                Spacer(modifier = Modifier.weight(1f))
-                activity.rank?.let {
-                    Text(
-                        text = "#$it",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(12.dp)
+                        .shimmerPlaceholder(visible = true)
+                )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Ranked: ${activity.movie.title}",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = activity.createdAt,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FeedScreenLoadingPreview() {
+    MovieTierTheme {
+        val navController = rememberNavController()
+        FeedScreen(navController = navController)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FeedScreenContentPreview() {
+    MovieTierTheme {
+        // Would require mock ViewModel for proper preview
+        val navController = rememberNavController()
+        FeedScreen(navController = navController)
     }
 }
