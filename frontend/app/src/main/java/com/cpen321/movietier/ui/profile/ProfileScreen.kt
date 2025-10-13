@@ -42,8 +42,11 @@ fun ProfileScreen(
             (uiState.successMessage == "Signed out successfully" ||
              uiState.successMessage == "Account deleted successfully")) {
             navController.navigate(NavRoutes.AUTH) {
-                popUpTo(0) { inclusive = true }
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                launchSingleTop = true
             }
+            // Prevent repeated navigations on recomposition
+            authViewModel.clearMessages()
         }
     }
 
@@ -56,7 +59,7 @@ fun ProfileScreen(
                 title = { Text("Profile", style = MaterialTheme.typography.titleMedium) },
                 actions = {
                     IconButton(
-                        onClick = { authViewModel.signOut() },
+                        onClick = { if (!uiState.isLoading) authViewModel.signOut() },
                         modifier = Modifier.testTag("sign_out_icon_button")
                     ) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Sign Out")
@@ -66,11 +69,10 @@ fun ProfileScreen(
         }
     ) { padding ->
         Crossfade(
-            targetState = uiState.user != null,
+            targetState = uiState.user,
             label = "profile_state"
-        ) { hasUser ->
-            if (hasUser) {
-                val user = uiState.user!!
+        ) { user ->
+            if (user != null) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -159,7 +161,7 @@ fun ProfileScreen(
 
                     // Action buttons
                     Button(
-                        onClick = { authViewModel.signOut() },
+                        onClick = { if (!uiState.isLoading) authViewModel.signOut() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("sign_out_button"),
@@ -177,7 +179,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { showDeleteDialog = true },
+                        onClick = { if (!uiState.isLoading) showDeleteDialog = true },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("delete_account_button"),
@@ -209,7 +211,7 @@ fun ProfileScreen(
                             Button(
                                 onClick = {
                                     showDeleteDialog = false
-                                    authViewModel.deleteAccount()
+                                    if (!uiState.isLoading) authViewModel.deleteAccount()
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.error
