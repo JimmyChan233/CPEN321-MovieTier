@@ -103,7 +103,8 @@ class AuthRepository @Inject constructor(
     suspend fun deleteAccount(): Result<Unit> {
         return try {
             val response = apiService.deleteAccount()
-            if (response.isSuccessful && response.body()?.success == true) {
+            if (response.isSuccessful) {
+                // Treat any 2xx as success; backend may return 204 with no body
                 tokenManager.clearAll()
                 Result.Success(Unit)
             } else {
