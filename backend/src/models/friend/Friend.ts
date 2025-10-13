@@ -16,6 +16,9 @@ const FriendRequestSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Optional indexes to reduce duplicates and speed lookups
+FriendRequestSchema.index({ senderId: 1, receiverId: 1, status: 1 });
+
 export interface IFriendship extends Document {
   userId: mongoose.Types.ObjectId;
   friendId: mongoose.Types.ObjectId;
@@ -29,6 +32,9 @@ const FriendshipSchema: Schema = new Schema(
   },
   { timestamps: true }
 );
+
+// Prevent duplicate friendships per direction
+FriendshipSchema.index({ userId: 1, friendId: 1 }, { unique: true });
 
 export const FriendRequest = mongoose.model<IFriendRequest>('FriendRequest', FriendRequestSchema);
 export const Friendship = mongoose.model<IFriendship>('Friendship', FriendshipSchema);

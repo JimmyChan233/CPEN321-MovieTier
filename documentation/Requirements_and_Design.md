@@ -2,9 +2,9 @@
 
 ## 1. Change History
 
-| **Change Date**   | **Modified Sections** | **Rationale** |
-| ----------------- | --------------------- | ------------- |
-| _Nothing to show_ |
+| **Change Date** | **Modified Sections** | **Rationale** |
+| --------------- | --------------------- | ------------- |
+| 2025-10-14      | 3.1, 3.4 (Manage Friend), Design notes | Implemented and finalized Friends feature: send/accept/reject/cancel requests, remove friend, search by name/email, outgoing requests visible (top) and cancellable, real-time SSE with reconnection/backoff, and in-app feedback messages. |
 
 ---
 
@@ -20,7 +20,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 ### **3.1. List of Features**
 
 1. Authentication - There will be a google login/auth page that will allow users to sign up or sign into their account. A user can also delete their account.
-2. Manage Friends - The user will be allowed to send a friend request as well as accept/reject friend requests. Under the “Manage Friends” feature, the user will be able to see the list of already added friends and can even remove a friend. 
+2. Manage Friends - The user can send friend requests (by email or by searching name/email), accept/reject incoming requests, view pending requests, and remove existing friends. Real-time notifications are delivered when a request is received or handled.
 3. Feed - A user gets real time updates of their friends activities on their feed. Users get live notification whenever a friend ranks a new movie. Feed contains all friend activities (sorted in reverse chronological order) which include the movie name, ranking, friend name, and movie banner of the friends ranking. 
 4. Ranked Movie List - Users will be able to generate a ranked list of movies they have seen. They can search for movies, add movies, and then rank the movie, based on comparison between previously ranked movies.  The app will then assign a final ranking to the movie based on the comparison done by the user.
 
@@ -49,10 +49,18 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 - Use cases for feature 2: Manage Friend
  
-1. Send Friend Request: Users will use this use case to send friend requests to a friend. 
+1. Send Friend Request: Users send friend requests to other users by entering their email or selecting from search results (name/email). Users receive in-app feedback on success/failure.
 2. Accept Friend Request: To accept friend requests received by the user.
 3. Reject Friend Request : To reject a friend request received by the user. 
 4. Remove Friend: To remove a friend who is a friend of the user. 
+5. Search Users: Users can search for other users by name or email to send requests.
+6. Cancel Outgoing Request: Users can cancel pending outgoing friend requests.
+
+Design notes:
+- Real-time events are delivered via HTTP Server-Sent Events (SSE) stream from the backend. Clients connect to `/api/friends/stream` and receive events for `friend_request`, `friend_request_accepted`, `friend_request_rejected`, and `friend_removed`.
+- Additional event: `friend_request_canceled` notifies receivers when a pending request is canceled by the sender.
+- Basic rate limiting is enforced for sending friend requests to reduce spam (fixed window, max 5/min per user).
+- Client behavior: SSE connection uses infinite read timeout with reconnection/backoff to remain stable during idle periods; UI provides immediate in-app feedback (snackbars) for all friend actions.
 
 - Use cases for feature 3: Feed
 

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from '../../services/auth/authService';
 import { AuthRequest } from '../../middleware/auth';
 import User from '../../models/user/User';
+import { Friendship, FriendRequest } from '../../models/friend/Friend';
 
 const authService = new AuthService();
 
@@ -85,7 +86,13 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    await User.findByIdAndDelete(req.userId);
+    // Delete user and cascade delete friendships and friend requests
+    const userId = req.userId;
+    await Promise.all([
+      User.findByIdAndDelete(userId),
+      Friendship.deleteMany({ $or: [{ userId }, { friendId: userId }] }),
+      FriendRequest.deleteMany({ $or: [{ senderId: userId }, { receiverId: userId }] })
+    ]);
 
     res.json({
       success: true,

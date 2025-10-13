@@ -35,6 +35,19 @@ class FriendRepository @Inject constructor(
         }
     }
 
+    suspend fun searchUsers(query: String): Result<List<User>> {
+        return try {
+            val response = apiService.searchUsers(query)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data ?: emptyList())
+            } else {
+                Result.Error(Exception("Failed to search users: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
     suspend fun sendFriendRequest(email: String): Result<FriendRequest> {
         return try {
             val response = apiService.sendFriendRequest(SendFriendRequestBody(email))
@@ -71,6 +84,58 @@ class FriendRepository @Inject constructor(
             }
         } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun getUser(userId: String): Result<User> {
+        return try {
+            val response = apiService.getUser(userId)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Result.Success(response.body()!!.data!!)
+            } else {
+                Result.Error(Exception("Failed to get user: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    suspend fun getFriendRequestsDetailed(): Result<List<FriendRequestDetailed>> {
+        return try {
+            val response = apiService.getFriendRequestsDetailed()
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data ?: emptyList())
+            } else {
+                Result.Error(Exception("Failed to get detailed friend requests: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    suspend fun getOutgoingFriendRequestsDetailed(): Result<List<FriendRequestDetailed>> {
+        return try {
+            val response = apiService.getOutgoingFriendRequestsDetailed()
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data ?: emptyList())
+            } else {
+                Result.Error(Exception("Failed to get outgoing detailed requests: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    suspend fun cancelFriendRequest(requestId: String): Result<Unit> {
+        return try {
+            val response = apiService.cancelFriendRequest(requestId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(Exception(response.body()?.message ?: "Failed to cancel request"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
         }
     }
 }

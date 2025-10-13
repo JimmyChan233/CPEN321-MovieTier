@@ -15,6 +15,16 @@ data class FriendRequest(
     val createdAt: String
 )
 
+data class FriendRequestDetailed(
+    @SerializedName("_id") val id: String,
+    @SerializedName("sender") val sender: User?,
+    @SerializedName("receiver") val receiver: User?,
+    @SerializedName("receiverId") val receiverId: String?,
+    @SerializedName("senderId") val senderId: String?,
+    @SerializedName("status") val status: String,
+    @SerializedName("createdAt") val createdAt: String
+)
+
 data class Friend(
     @SerializedName("_id")
     val id: String,
