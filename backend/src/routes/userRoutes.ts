@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import User from '../models/user/User';
 import mongoose from 'mongoose';
+import WatchlistItem from '../models/watch/WatchlistItem';
 
 const router = Router();
 
@@ -40,6 +41,20 @@ router.get('/:userId', authenticate, async (req, res) => {
     res.json({ success: true, data: user });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get user' });
+  }
+});
+
+// Public watchlist of a user (friend view)
+router.get('/:userId/watchlist', authenticate, async (req, res) => {
+  try {
+    const { userId } = req.params as { userId: string };
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid user id' });
+    }
+    const items = await WatchlistItem.find({ userId }).sort({ createdAt: -1 });
+    res.json({ success: true, data: items });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get user watchlist' });
   }
 });
 

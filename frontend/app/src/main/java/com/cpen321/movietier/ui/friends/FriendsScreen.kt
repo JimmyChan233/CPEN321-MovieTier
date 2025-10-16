@@ -30,6 +30,7 @@ import com.cpen321.movietier.ui.components.LoadingState
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.FriendViewModel
 import com.cpen321.movietier.ui.viewmodels.FriendRequestUi
+import com.cpen321.movietier.ui.navigation.NavRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -180,7 +181,8 @@ fun FriendsScreen(
                         ) { friend ->
                             FriendRow(
                                 friend = friend,
-                                onRemove = { friendViewModel.removeFriend(friend.id) }
+                                onRemove = { friendViewModel.removeFriend(friend.id) },
+                                navController = navController
                             )
                         }
                     }
@@ -215,7 +217,8 @@ private enum class FriendsState {
 @Composable
 private fun FriendRow(
     friend: com.cpen321.movietier.data.model.Friend,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    navController: NavController? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -231,7 +234,7 @@ private fun FriendRow(
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = { }
+                onClick = { navController?.navigate(NavRoutes.PROFILE_USER.replace("{userId}", friend.id)) }
             )
             .testTag("friend_row_${friend.id}")
     ) {
