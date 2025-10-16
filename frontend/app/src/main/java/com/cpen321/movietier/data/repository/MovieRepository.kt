@@ -35,9 +35,9 @@ class MovieRepository @Inject constructor(
         }
     }
 
-    suspend fun addMovie(movieId: Int, title: String, posterPath: String?): Result<RankedMovie> {
+    suspend fun addMovie(movieId: Int, title: String, posterPath: String?, overview: String? = null): Result<RankedMovie> {
         return try {
-            val response = apiService.addMovie(AddMovieRequest(movieId, title, posterPath))
+            val response = apiService.addMovie(AddMovieRequest(movieId, title, posterPath, overview))
             if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
                 Result.Success(response.body()!!.data!!)
             } else {

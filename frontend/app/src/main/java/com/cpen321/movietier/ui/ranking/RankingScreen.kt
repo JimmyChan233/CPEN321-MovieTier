@@ -30,13 +30,24 @@ fun RankingScreen(
     rankingViewModel: RankingViewModel = hiltViewModel()
 ) {
     val uiState by rankingViewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    val searchResults by rankingViewModel.searchResults.collectAsState()
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .testTag("ranking_screen"),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(title = { Text("My Rankings", style = MaterialTheme.typography.titleMedium) })
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showAddDialog = true },
+                modifier = Modifier.testTag("add_movie_fab")
+            ) { Text("+") }
         }
     ) { padding ->
         Crossfade(
@@ -66,7 +77,12 @@ fun RankingScreen(
                         EmptyState(
                             icon = Icons.Default.Star,
                             title = "No movies ranked yet",
-                            message = "Start adding and ranking movies to build your list"
+                            message = "Start adding and ranking movies to build your list",
+                            primaryCta = {
+                                Button(onClick = { showAddDialog = true }, modifier = Modifier.testTag("empty_add_movie_button")) {
+                                    Text("Add Watched Movie")
+                                }
+                            }
                         )
                     }
                 }
@@ -92,6 +108,69 @@ fun RankingScreen(
                 }
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        rankingViewModel.events.collect { ev ->
+            when (ev) {
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> snackbarHostState.showSnackbar(ev.text)
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = { Text("Add Watched Movie") },
+            text = {
+                Column(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = {
+                            query = it
+                            rankingViewModel.searchMovies(it)
+                        },
+                        label = { Text("Search title") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("search_movie_input")
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    if (query.length >= 2 && searchResults.isEmpty()) {
+                        Text("No results", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.heightIn(max = 300.dp)
+                    ) {
+                        items(searchResults, key = { it.id }) { movie ->
+                            Card(Modifier.fillMaxWidth().testTag("search_result_${'$'}{movie.id}")) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(movie.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                                        movie.releaseDate?.take(4)?.let { year ->
+                                            Text(year, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                    TextButton(onClick = {
+                                        rankingViewModel.addMovieFromSearch(movie)
+                                        showAddDialog = false
+                                    }) { Text("Add") }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAddDialog = false }) { Text("Close") }
+            }
+        )
     }
 }
 
@@ -159,6 +238,48 @@ private fun RankedMovieRow(
             }
         }
     }
+}
+
+@Composable
+private fun AddWatchedMovieDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String?) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var poster by remember { mutableStateOf("") }
+    val isValid = title.isNotBlank()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Watched Movie") },
+        text = {
+            Column(Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("add_movie_title")
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = poster,
+                    onValueChange = { poster = it },
+                    label = { Text("Poster URL (optional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("add_movie_poster")
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(title, poster.ifBlank { null }) }, enabled = isValid, modifier = Modifier.testTag("add_movie_confirm")) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.testTag("add_movie_cancel")) { Text("Cancel") }
+        }
+    )
 }
 
 @Preview(showBackground = true)
