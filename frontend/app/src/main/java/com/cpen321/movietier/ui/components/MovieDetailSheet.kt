@@ -16,6 +16,7 @@ import com.cpen321.movietier.data.model.Movie
 fun MovieDetailBottomSheet(
     movie: Movie,
     onAddToRanking: (() -> Unit)? = null,
+    onAddToWatchlist: (() -> Unit)? = null,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -55,9 +56,16 @@ fun MovieDetailBottomSheet(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (onAddToRanking != null) {
-                        FilledTonalButton(onClick = onAddToRanking) {
-                            Text("Add to Ranking")
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (onAddToRanking != null) {
+                            FilledTonalButton(onClick = onAddToRanking, modifier = Modifier.fillMaxWidth()) {
+                                Text("Add to Ranking")
+                            }
+                        }
+                        if (onAddToWatchlist != null) {
+                            Button(onClick = onAddToWatchlist, modifier = Modifier.fillMaxWidth()) {
+                                Text("Add to Watchlist")
+                            }
                         }
                     }
                 }
@@ -76,4 +84,3 @@ fun MovieDetailBottomSheet(
         }
     }
 }
-

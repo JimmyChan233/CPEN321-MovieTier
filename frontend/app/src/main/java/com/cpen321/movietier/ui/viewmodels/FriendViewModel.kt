@@ -193,7 +193,7 @@ class FriendViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        viewModelScope.launch { sseClient.close() }
+        viewModelScope.launch { sseClient.closePath("friends/stream") }
     }
 }
 

@@ -38,11 +38,14 @@ fun FeedScreen(
 
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
             .testTag("feed_screen"),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Friend Activity", style = MaterialTheme.typography.titleMedium) },
@@ -133,12 +136,28 @@ fun FeedScreen(
                         selectedMovie?.let { movie ->
                             MovieDetailBottomSheet(
                                 movie = movie,
-                                onAddToRanking = { /* TODO: Hook to ranking from feed */ },
+                                onAddToRanking = {
+                                    feedViewModel.addToRanking(movie)
+                                    selectedMovie = null
+                                },
+                                onAddToWatchlist = {
+                                    feedViewModel.addToWatchlist(movie)
+                                    // Close sheet so snackbar is visible immediately
+                                    selectedMovie = null
+                                },
                                 onDismissRequest = { selectedMovie = null }
                             )
                         }
                     }
                 }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        feedViewModel.events.collect { event ->
+            when (event) {
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
             }
         }
     }
