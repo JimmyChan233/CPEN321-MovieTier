@@ -17,9 +17,11 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.cpen321.movietier.data.model.FeedActivity
+import com.cpen321.movietier.ui.util.formatIsoToPstDateTime
 
 @Composable
 fun FeedActivityCard(
@@ -49,77 +51,70 @@ fun FeedActivityCard(
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Avatar
-            Avatar(
-                imageUrl = activity.userProfileImage,
-                name = activity.userName,
-                size = 48.dp
-            )
-
-            // Content Column
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
-            ) {
-                // Username and action text
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append(activity.userName)
-                        }
-                        append(" ranked ")
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Medium)) {
-                            append(activity.movie.title)
-                        }
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            // Top: Ranked info row
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Avatar(
+                    imageUrl = activity.userProfileImage,
+                    name = activity.userName,
+                    size = 48.dp
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Timestamp
-                Text(
-                    text = activity.createdAt,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(activity.userName) }
+                            append(" ranked ")
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Medium)) { append(activity.movie.title) }
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = formatIsoToPstDateTime(activity.createdAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                activity.rank?.let { rank ->
+                    AssistChip(
+                        onClick = { },
+                        label = { Text(text = "#$rank", style = MaterialTheme.typography.labelLarge) }
+                    )
+                }
             }
 
-            // Rank chip on the right
-            activity.rank?.let { rank ->
-                AssistChip(
-                    onClick = { },
-                    label = {
-                        Text(
-                            text = "#$rank",
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    },
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
-            }
-        }
+            Spacer(modifier = Modifier.height(12.dp))
 
-        // Optional small poster thumbnail
-        activity.movie.posterPath?.let { posterPath ->
-            AsyncImage(
-                model = "https://image.tmdb.org/t/p/w92$posterPath",
-                contentDescription = "Poster thumbnail for ${activity.movie.title}",
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 12.dp)
-                    .height(80.dp)
-                    .aspectRatio(2f / 3f),
-                contentScale = ContentScale.Crop
-            )
+            // Bottom: Description (left) and poster (right)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                // Description
+                val desc = activity.movie.overview
+                if (!desc.isNullOrBlank()) {
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 5,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+
+                // Poster on the right (only if available)
+                activity.movie.posterPath?.let { posterPath ->
+                    AsyncImage(
+                        model = "https://image.tmdb.org/t/p/w185$posterPath",
+                        contentDescription = "Poster for ${activity.movie.title}",
+                        modifier = Modifier
+                            .height(180.dp)
+                            .aspectRatio(2f / 3f),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
         }
     }
 }

@@ -20,16 +20,16 @@ import java.util.concurrent.TimeUnit
 class SseClient @Inject constructor(
     private val okHttpClient: OkHttpClient
 ){
-    private var job: Job? = null
-    @Volatile private var shouldRun: Boolean = false
+    private val jobs = mutableMapOf<String, Job>()
+    private val shouldRuns = mutableMapOf<String, Boolean>()
 
     fun connect(path: String, onEvent: (String, String) -> Unit) {
-        job?.cancel()
-        shouldRun = true
+        jobs[path]?.cancel()
+        shouldRuns[path] = true
         val handler = CoroutineExceptionHandler { _, _ -> /* swallow to avoid app crash */ }
-        job = CoroutineScope(Dispatchers.IO + handler).launch {
+        val job = CoroutineScope(Dispatchers.IO + handler).launch {
             var backoff = 1000L
-            while (isActive && shouldRun) {
+            while (isActive && (shouldRuns[path] == true)) {
                 try {
                     val request = Request.Builder()
                         .url(BuildConfig.API_BASE_URL + path)
@@ -53,7 +53,7 @@ class SseClient @Inject constructor(
                         val source: BufferedSource = body.source()
                         var currentEvent = "message"
                         try {
-                            while (isActive && shouldRun) {
+                            while (isActive && (shouldRuns[path] == true)) {
                                 val line = source.readUtf8Line() ?: break
                                 if (line.startsWith("event:")) {
                                     currentEvent = line.removePrefix("event:").trim()
@@ -73,11 +73,17 @@ class SseClient @Inject constructor(
                 }
             }
         }
+        jobs[path] = job
     }
 
-    suspend fun close() {
-        shouldRun = false
-        job?.cancelAndJoin()
-        job = null
+    suspend fun closePath(path: String) {
+        shouldRuns[path] = false
+        jobs[path]?.cancelAndJoin()
+        jobs.remove(path)
+    }
+
+    suspend fun closeAll() {
+        val paths = jobs.keys.toList()
+        for (p in paths) closePath(p)
     }
 }

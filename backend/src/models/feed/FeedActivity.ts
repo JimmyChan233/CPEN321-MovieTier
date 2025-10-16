@@ -5,6 +5,8 @@ export interface IFeedActivity extends Document {
   activityType: 'ranked_movie';
   movieId: number;
   movieTitle: string;
+  posterPath?: string;
+  overview?: string;
   rank?: number;
   createdAt: Date;
 }
@@ -15,6 +17,8 @@ const FeedActivitySchema: Schema = new Schema(
     activityType: { type: String, enum: ['ranked_movie'], required: true },
     movieId: { type: Number, required: true },
     movieTitle: { type: String, required: true },
+    posterPath: { type: String },
+    overview: { type: String },
     rank: { type: Number }
   },
   { timestamps: true }

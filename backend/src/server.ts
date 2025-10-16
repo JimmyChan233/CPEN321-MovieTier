@@ -8,7 +8,9 @@ import friendRoutes from './routes/friendRoutes';
 import movieRoutes from './routes/movieRoutes';
 import feedRoutes from './routes/feedRoutes';
 import recommendationRoutes from './routes/recommendationRoutes';
+import watchlistRoutes from './routes/watchlistRoutes';
 import { errorHandler } from './middleware/errorHandler';
+import { Request, Response, NextFunction } from 'express';
 
 dotenv.config();
 
@@ -19,6 +21,18 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Simple request logger
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  const { method, originalUrl } = req;
+  console.log(`➡️  ${method} ${originalUrl}`);
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    console.log(`⬅️  ${method} ${originalUrl} ${res.statusCode} ${ms}ms`);
+  });
+  next();
+});
 
 // Database connection
 mongoose
@@ -33,6 +47,7 @@ app.use('/api/friends', friendRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/watchlist', watchlistRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

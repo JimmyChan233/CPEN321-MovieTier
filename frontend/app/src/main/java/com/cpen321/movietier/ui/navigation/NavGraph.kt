@@ -10,6 +10,7 @@ import com.cpen321.movietier.ui.friends.FriendsScreen
 import com.cpen321.movietier.ui.ranking.RankingScreen
 import com.cpen321.movietier.ui.recommendation.RecommendationScreen
 import com.cpen321.movietier.ui.profile.ProfileScreen
+import com.cpen321.movietier.ui.profile.FriendProfileScreen
 
 object NavRoutes {
     const val AUTH = "auth"
@@ -18,6 +19,8 @@ object NavRoutes {
     const val RANKING = "ranking"
     const val RECOMMENDATION = "recommendation"
     const val PROFILE = "profile"
+    const val PROFILE_USER = "profile/{userId}"
+    const val WATCHLIST = "watchlist"
 }
 
 @Composable
@@ -57,6 +60,15 @@ fun NavGraph(
 
         composable(NavRoutes.PROFILE) {
             ProfileScreen(navController = navController)
+        }
+
+        composable(NavRoutes.PROFILE_USER) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+            FriendProfileScreen(navController = navController, userId = userId)
+        }
+
+        composable(NavRoutes.WATCHLIST) {
+            com.cpen321.movietier.ui.watchlist.WatchlistScreen(navController = navController)
         }
     }
 }

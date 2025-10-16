@@ -20,6 +20,8 @@ import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.ui.components.Avatar
 import com.cpen321.movietier.ui.components.LoadingState
 import com.cpen321.movietier.ui.navigation.NavRoutes
+import coil.compose.AsyncImage
+import com.cpen321.movietier.ui.viewmodels.WatchlistViewModel
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.AuthViewModel
 import com.cpen321.movietier.ui.viewmodels.ThemeViewModel
@@ -83,6 +85,10 @@ fun ProfileScreen(
                 ) {
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // Watchlist section
+                    val watchlistVm: WatchlistViewModel = hiltViewModel()
+                    val watchUi by watchlistVm.ui.collectAsState()
+
                     // Avatar and user info header
                     Avatar(
                         imageUrl = null,
@@ -107,6 +113,30 @@ fun ProfileScreen(
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("My Watchlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        TextButton(onClick = { navController.navigate(NavRoutes.WATCHLIST) }) { Text("View All") }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        watchUi.items.take(3).forEach { item ->
+                            Card(Modifier.fillMaxWidth()) {
+                                Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title, modifier = Modifier.height(100.dp).aspectRatio(2f/3f))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(item.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                        item.overview?.let { Text(it, maxLines = 2, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                    }
+                                }
+                            }
+                        }
+                        if (watchUi.items.isEmpty()) {
+                            Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+
+                    // Extra spacing between watchlist and theme section
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // Theme toggle section
                     Card(

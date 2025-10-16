@@ -36,7 +36,9 @@ data class AddMovieRequest(
     @SerializedName("title")
     val title: String,
     @SerializedName("posterPath")
-    val posterPath: String?
+    val posterPath: String?,
+    @SerializedName("overview")
+    val overview: String? = null
 )
 
 data class CompareMoviesRequest(

@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-10-15      | 3.1 (Feed notes + Watchlist), 3.4 (Feed detail + Watchlist), Design notes | Documented Feed enhancements (TMDB description, PST yyyy-MM-dd HH:mm timestamps, card layout), Ranking add via TMDB search, added Watchlist feature (add from feed detail, Profile preview + View All, friend watchlist view), and UI feedback notes. |
 | 2025-10-14      | 3.1, 3.4 (Manage Friend), Design notes | Implemented and finalized Friends feature: send/accept/reject/cancel requests, remove friend, search by name/email, outgoing requests visible (top) and cancellable, real-time SSE with reconnection/backoff, and in-app feedback messages. |
 
 ---
@@ -26,6 +27,8 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 
 5. Recommendation - Based on users top movies rankings there will be a recommended list of movies that the user can watch. The recommendation list will be generated based on the top movies on the users tiered list. The list will exclude all the movies which are already ranked by the user. Each movie in the list will contain the movie name, movie banner, and movie duration. 
+
+6. Watchlist - Users can save movies to a personal watchlist (e.g., from the Feed detail). The watchlist is visible on the user’s Profile (with a “View All” page) and friends can view each other’s watchlists from the friend profile page.
 
 ### **3.2. Use Case Diagram**
 
@@ -66,6 +69,7 @@ Design notes:
 
 1. View Feed: The user can view all their friends' activities in their feed. 
 2. View Live Update Notification: Every time a friend ranks a movie, a push notification will be received by the user. 
+3. Open Movie Detail from Feed: The user taps a feed entry to open a detail sheet with poster/description and can add the movie to their Watchlist or Rankings (with confirmation messages).
 
 - Use cases for feature 4: Ranked Movie List
 
