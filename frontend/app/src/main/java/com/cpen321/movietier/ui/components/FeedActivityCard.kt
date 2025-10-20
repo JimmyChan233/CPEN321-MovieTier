@@ -27,6 +27,7 @@ import com.cpen321.movietier.ui.util.formatIsoToPstDateTime
 fun FeedActivityCard(
     activity: FeedActivity,
     onClick: (() -> Unit)? = null,
+    availabilityText: String? = null,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -88,19 +89,26 @@ fun FeedActivityCard(
 
             // Bottom: Description (left) and poster (right)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                // Description
-                val desc = activity.movie.overview
-                if (!desc.isNullOrBlank()) {
-                    Text(
-                        text = desc,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 5,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
+                // Description + availability on the left
+                Column(modifier = Modifier.weight(1f)) {
+                    val desc = activity.movie.overview
+                    if (!desc.isNullOrBlank()) {
+                        Text(
+                            text = desc,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 5,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    availabilityText?.let {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 // Poster on the right (only if available)
