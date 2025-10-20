@@ -4,9 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -14,6 +13,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.cpen321.movietier.ui.viewmodels.WatchlistViewModel
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,12 +25,16 @@ fun WatchlistScreen(
     vm: WatchlistViewModel = hiltViewModel()
 ) {
     val ui by vm.ui.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
 
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
             title = { Text("My Watchlist", style = MaterialTheme.typography.titleMedium) }
         )
-    }) { padding ->
+    }, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         if (ui.isLoading) {
             Box(Modifier.fillMaxSize().padding(padding)) { CircularProgressIndicator(Modifier.padding(24.dp)) }
         } else {
@@ -43,6 +50,39 @@ fun WatchlistScreen(
                             Column(Modifier.weight(1f)) {
                                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                 item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
+                                Spacer(Modifier.height(8.dp))
+                                FilledTonalButton(onClick = {
+                                    scope.launch {
+                                        when (val res = vm.getWatchProviders(item.movieId, country)) {
+                                            is com.cpen321.movietier.data.repository.Result.Success -> {
+                                                val link = res.data.link
+                                                val providers = buildList {
+                                                    addAll(res.data.providers.flatrate)
+                                                    addAll(res.data.providers.rent)
+                                                    addAll(res.data.providers.buy)
+                                                }.distinct()
+                                                if (!link.isNullOrBlank()) {
+                                                    try {
+                                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                                        context.startActivity(intent)
+                                                    } catch (e: Exception) {
+                                                        snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
+                                                    }
+                                                } else if (providers.isNotEmpty()) {
+                                                    snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                                } else {
+                                                    snackbarHostState.showSnackbar("No streaming info found")
+                                                }
+                                            }
+                                            is com.cpen321.movietier.data.repository.Result.Error -> {
+                                                snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                            }
+                                            else -> {}
+                                        }
+                                    }
+                                }, modifier = Modifier.fillMaxWidth()) {
+                                    Text("Where to Watch")
+                                }
                             }
                         }
                     }
@@ -54,4 +94,3 @@ fun WatchlistScreen(
         }
     }
 }
-

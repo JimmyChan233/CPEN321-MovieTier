@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.data.model.WatchlistItem
 import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.data.repository.MovieRepository
+import com.cpen321.movietier.data.model.WatchProviders
 import com.cpen321.movietier.data.repository.WatchlistRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +22,8 @@ data class WatchlistUiState(
 
 @HiltViewModel
 class WatchlistViewModel @Inject constructor(
-    private val repo: WatchlistRepository
+    private val repo: WatchlistRepository,
+    private val movieRepository: MovieRepository
 ) : ViewModel() {
     private val _ui = MutableStateFlow(WatchlistUiState())
     val ui: StateFlow<WatchlistUiState> = _ui.asStateFlow()
@@ -37,5 +40,8 @@ class WatchlistViewModel @Inject constructor(
             }
         }
     }
-}
 
+    suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
+        return movieRepository.getWatchProviders(movieId, country)
+    }
+}

@@ -15,6 +15,10 @@ import com.cpen321.movietier.ui.components.Avatar
 import com.cpen321.movietier.data.model.WatchlistItem
 import com.cpen321.movietier.ui.viewmodels.FriendProfileViewModel
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,9 +30,14 @@ fun FriendProfileScreen(
     val ui by vm.uiState.collectAsState()
     LaunchedEffect(userId) { vm.load(userId) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
+
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = { Text(ui.userName ?: "Profile") })
-    }) { padding ->
+    }, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             // Header
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -45,7 +54,36 @@ fun FriendProfileScreen(
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(ui.watchlist, key = { it.id }) { item ->
-                    WatchItemRow(item)
+                    WatchItemRow(item) {
+                        scope.launch {
+                            when (val res = vm.getWatchProviders(item.movieId, country)) {
+                                is com.cpen321.movietier.data.repository.Result.Success -> {
+                                    val link = res.data.link
+                                    val providers = buildList {
+                                        addAll(res.data.providers.flatrate)
+                                        addAll(res.data.providers.rent)
+                                        addAll(res.data.providers.buy)
+                                    }.distinct()
+                                    if (!link.isNullOrBlank()) {
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                            context.startActivity(intent)
+                                        } catch (e: Exception) {
+                                            snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
+                                        }
+                                    } else if (providers.isNotEmpty()) {
+                                        snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                    } else {
+                                        snackbarHostState.showSnackbar("No streaming info found")
+                                    }
+                                }
+                                is com.cpen321.movietier.data.repository.Result.Error -> {
+                                    snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -53,7 +91,7 @@ fun FriendProfileScreen(
 }
 
 @Composable
-private fun WatchItemRow(item: WatchlistItem) {
+private fun WatchItemRow(item: WatchlistItem, onWhereToWatch: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AsyncImage(
@@ -64,6 +102,10 @@ private fun WatchItemRow(item: WatchlistItem) {
             Column(Modifier.weight(1f)) {
                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 item.overview?.let { Text(it, maxLines = 3, style = MaterialTheme.typography.bodyMedium) }
+                Spacer(Modifier.height(8.dp))
+                FilledTonalButton(onClick = onWhereToWatch, modifier = Modifier.fillMaxWidth()) {
+                    Text("Where to Watch")
+                }
             }
         }
     }

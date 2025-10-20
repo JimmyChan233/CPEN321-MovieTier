@@ -5,6 +5,8 @@
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
 | 2025-10-15      | 3.1 (Feed notes + Watchlist), 3.4 (Feed detail + Watchlist), Design notes | Documented Feed enhancements (TMDB description, PST yyyy-MM-dd HH:mm timestamps, card layout), Ranking add via TMDB search, added Watchlist feature (add from feed detail, Profile preview + View All, friend watchlist view), and UI feedback notes. |
+| 2025-10-20      | 3.1, 3.4, Design notes | Added “Where to Watch” feature: Feed detail bottom sheet, Watchlist items, and Friend Profile watchlist fetch TMDB watch providers (country from device locale with CA fallback) and either open the TMDB watch link or show available platforms. Feed detail shows an availability line under actions. |
+| 2025-10-20      | 3.1, 3.4, Design notes | Refinements: Feed preview now shows availability inline (top 4 platforms, “ …” if more). Feed detail “Where to Watch” opens the TMDB watch link. Availability text uses grey tone. Added on-device caching (DataStore, 6h TTL) for provider results to reduce API calls. Default country fallback changed to Canada (CA). |
 | 2025-10-14      | 3.1, 3.4 (Manage Friend), Design notes | Implemented and finalized Friends feature: send/accept/reject/cancel requests, remove friend, search by name/email, outgoing requests visible (top) and cancellable, real-time SSE with reconnection/backoff, and in-app feedback messages. |
 
 ---
@@ -14,7 +16,7 @@
 MovieTier is a social movie companion app that makes discovering, ranking, and sharing films fun and interactive. On this app, users can login and see what movie their friends have currently rated, themselves can rate a new movie, and get a list of recommended movies based on the movies they have recommended.
 In this app instead of giving out boring stars to rate a movie, the user decides which movie they liked more in a head-to-head matchup (comparing the new movie to a movie they have previously ranked), and then the app calculates the rank of the movie automatically . Over time, their personal tier list is built automatically, reflecting their true taste in cinema.
 
----
+--- 
 
 ## 3. Requirements Specification
 
@@ -29,6 +31,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 5. Recommendation - Based on users top movies rankings there will be a recommended list of movies that the user can watch. The recommendation list will be generated based on the top movies on the users tiered list. The list will exclude all the movies which are already ranked by the user. Each movie in the list will contain the movie name, movie banner, and movie duration. 
 
 6. Watchlist - Users can save movies to a personal watchlist (e.g., from the Feed detail). The watchlist is visible on the user’s Profile (with a “View All” page) and friends can view each other’s watchlists from the friend profile page.
+   - Where to Watch: Feed preview shows an inline availability line limited to the top 4 platforms (adds “ …” if more). Feed detail’s “Where to Watch” opens the TMDB watch link. Watchlist and Friend Profile show availability on button press. Country is detected from device locale with CA fallback. Availability text uses the grey on-surface-variant tone.
 
 ### **3.2. Use Case Diagram**
 
