@@ -26,6 +26,40 @@ import com.cpen321.movietier.ui.components.shimmerPlaceholder
 import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.FeedViewModel
+import kotlinx.coroutines.launch
+
+
+private fun normalizeProviderName(name: String): String {
+    val n = name.trim()
+    val lower = n.lowercase()
+    return when {
+        lower.contains("netflix") -> "Netflix"
+        lower.contains("amazon") || lower.contains("prime video") -> "Prime Video"
+        lower.contains("disney") -> "Disney+"
+        lower == "max" || lower.contains("hbo") -> "Max"
+        lower.contains("apple tv") -> "Apple TV"
+        lower.contains("hulu") -> "Hulu"
+        lower.contains("paramount") -> "Paramount+"
+        lower.contains("peacock") -> "Peacock"
+        lower.contains("youtube") -> "YouTube"
+        lower.contains("crunchyroll") -> "Crunchyroll"
+        lower.contains("tubi") -> "Tubi"
+        lower.contains("plex") -> "Plex"
+        else -> n
+    }
+}
+
+private fun pickTopProviders(all: List<String>, limit: Int = 4): List<String> {
+    val majors = listOf(
+        "Netflix", "Prime Video", "Disney+", "Hulu", "Max",
+        "Apple TV", "Paramount+", "Peacock", "YouTube", "Crunchyroll",
+        "Tubi", "Plex"
+    )
+    val normalized = all.map { normalizeProviderName(it) }.distinct()
+    val ranked = normalized.sortedBy { p -> majors.indexOf(p).let { if (it == -1) Int.MAX_VALUE else it } }
+    val top = ranked.take(limit)
+    return if (top.isNotEmpty()) top else normalized.take(limit)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +73,9 @@ fun FeedScreen(
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
 
     Scaffold(
         modifier = Modifier
@@ -126,16 +163,98 @@ fun FeedScreen(
                                 items = uiState.feedActivities,
                                 key = { it.id }
                             ) { activity ->
+                                var availability by remember(activity.movie.id) { mutableStateOf<String?>(null) }
+                                val countryPerItem = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
+                                LaunchedEffect(activity.movie.id) {
+                                    when (val res = feedViewModel.getWatchProviders(activity.movie.id, countryPerItem)) {
+                                        is com.cpen321.movietier.data.repository.Result.Success -> {
+                                            val providers = buildList {
+                                                addAll(res.data.providers.flatrate)
+                                                addAll(res.data.providers.rent)
+                                                addAll(res.data.providers.buy)
+                                            }.distinct()
+                                            val top = pickTopProviders(providers, 4)
+                                            val more = providers.size > top.size
+                                            availability = if (top.isNotEmpty()) {
+                                                "Available on: ${top.joinToString()}" + if (more) " …" else ""
+                                            } else null
+                                        }
+                                        else -> { availability = null }
+                                    }
+                                }
                                 FeedActivityCard(
                                     activity = activity,
+                                    availabilityText = availability,
                                     onClick = { selectedMovie = activity.movie }
                                 )
                             }
                         }
 
                         selectedMovie?.let { movie ->
+                            var availability by remember(movie.id) { mutableStateOf<String?>(null) }
+                            var loadingAvail by remember(movie.id) { mutableStateOf(true) }
+                            LaunchedEffect(movie.id) {
+                                loadingAvail = true
+                                when (val res = feedViewModel.getWatchProviders(movie.id, country)) {
+                                    is com.cpen321.movietier.data.repository.Result.Success -> {
+                                        val providers = buildList {
+                                            addAll(res.data.providers.flatrate)
+                                            addAll(res.data.providers.rent)
+                                            addAll(res.data.providers.buy)
+                                        }.distinct()
+                                        val top = pickTopProviders(providers, 4)
+                                        val more = providers.size > top.size
+                                        availability = if (top.isNotEmpty()) {
+                                            "Available on: ${top.joinToString()}" + if (more) " …" else ""
+                                        } else "No streaming info found"
+                                    }
+                                    is com.cpen321.movietier.data.repository.Result.Error -> {
+                                        availability = res.message ?: "Failed to load providers"
+                                    }
+                                    else -> {}
+                                }
+                                loadingAvail = false
+                            }
                             MovieDetailBottomSheet(
                                 movie = movie,
+                                onOpenWhereToWatch = {
+                                    scope.launch {
+                                        when (val res = feedViewModel.getWatchProviders(movie.id, country)) {
+                                            is com.cpen321.movietier.data.repository.Result.Success -> {
+                                                val link = res.data.link
+                                                val providers = buildList {
+                                                    addAll(res.data.providers.flatrate)
+                                                    addAll(res.data.providers.rent)
+                                                    addAll(res.data.providers.buy)
+                                                }.distinct()
+                                                if (!link.isNullOrBlank()) {
+                                                    try {
+                                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(link))
+                                                        context.startActivity(intent)
+                                                    } catch (e: Exception) {
+                                                        val top = pickTopProviders(providers, 4)
+                                                        val more = providers.size > top.size
+                                                        snackbarHostState.showSnackbar("Available on: ${top.joinToString()}" + if (more) " …" else "")
+                                                    }
+                                                } else {
+                                                    val top = pickTopProviders(providers, 4)
+                                                    if (top.isNotEmpty()) {
+                                                        val more = providers.size > top.size
+                                                        snackbarHostState.showSnackbar("Available on: ${top.joinToString()}" + if (more) " …" else "")
+                                                    } else {
+                                                        snackbarHostState.showSnackbar("No streaming info found")
+                                                    }
+                                                }
+                                            }
+                                            is com.cpen321.movietier.data.repository.Result.Error -> {
+                                                snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                            }
+                                            else -> {}
+                                        }
+                                    }
+                                },
+                                availabilityText = availability,
+                                availabilityLoading = loadingAvail,
                                 onAddToRanking = {
                                     feedViewModel.addToRanking(movie)
                                     selectedMovie = null

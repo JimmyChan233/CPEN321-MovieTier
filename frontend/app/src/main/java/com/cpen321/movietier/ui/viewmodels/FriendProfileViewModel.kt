@@ -7,6 +7,8 @@ import com.cpen321.movietier.data.model.User
 import com.cpen321.movietier.data.repository.Result
 import com.cpen321.movietier.data.repository.WatchlistRepository
 import com.cpen321.movietier.data.api.ApiService
+import com.cpen321.movietier.data.repository.MovieRepository
+import com.cpen321.movietier.data.model.WatchProviders
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +26,8 @@ data class FriendProfileUi(
 @HiltViewModel
 class FriendProfileViewModel @Inject constructor(
     private val watchlistRepository: WatchlistRepository,
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val movieRepository: MovieRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(FriendProfileUi())
     val uiState: StateFlow<FriendProfileUi> = _uiState.asStateFlow()
@@ -48,5 +51,8 @@ class FriendProfileViewModel @Inject constructor(
             )
         }
     }
-}
 
+    suspend fun getWatchProviders(movieId: Int, country: String = "US"): Result<WatchProviders> {
+        return movieRepository.getWatchProviders(movieId, country)
+    }
+}

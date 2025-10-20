@@ -8,6 +8,7 @@ import com.cpen321.movietier.data.repository.Result
 import com.cpen321.movietier.data.repository.WatchlistRepository
 import com.cpen321.movietier.data.repository.MovieRepository
 import com.cpen321.movietier.data.model.Movie
+import com.cpen321.movietier.data.model.WatchProviders
 import com.cpen321.movietier.data.api.SseClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,6 +92,10 @@ class FeedViewModel @Inject constructor(
                 else -> {}
             }
         }
+    }
+
+    suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
+        return movieRepository.getWatchProviders(movieId, country)
     }
 
     override fun onCleared() {

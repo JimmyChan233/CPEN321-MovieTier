@@ -1,13 +1,15 @@
 package com.cpen321.movietier.data.repository
 
 import com.cpen321.movietier.data.api.ApiService
+import com.cpen321.movietier.data.local.ProvidersCache
 import com.cpen321.movietier.data.model.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class MovieRepository @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val providersCache: ProvidersCache
 ) {
     suspend fun searchMovies(query: String): Result<List<Movie>> {
         return try {
@@ -72,6 +74,26 @@ class MovieRepository @Inject constructor(
                 Result.Error(Exception("Failed to get recommendations: ${response.message()}"))
             }
         } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
+        // 1) Try cache first
+        providersCache.get(movieId, country)?.let { return Result.Success(it) }
+
+        // 2) Fetch network and store
+        return try {
+            val response = apiService.getMovieProviders(movieId, country)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                val data = response.body()!!.data!!
+                try { providersCache.put(movieId, country, data) } catch (_: Exception) {}
+                Result.Success(data)
+            } else {
+                Result.Error(Exception("Failed to get watch providers: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            // Optional: fall back to stale cache in the future
             Result.Error(e, "Network error: ${e.message}")
         }
     }

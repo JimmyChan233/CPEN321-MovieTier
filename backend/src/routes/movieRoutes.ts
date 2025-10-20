@@ -148,4 +148,42 @@ router.post('/compare', authenticate, async (req, res) => {
   res.json({ success: true, message: 'Compare movies route - placeholder' });
 });
 
+// Get watch providers for a TMDB movie id
+router.get('/:movieId/providers', authenticate, async (req, res) => {
+  try {
+    const movieId = Number(req.params.movieId);
+    if (!movieId || Number.isNaN(movieId)) {
+      return res.status(400).json({ success: false, message: 'Invalid movie id' });
+    }
+
+    const country = (req.query.country as string)?.toUpperCase?.() || 'CA';
+
+    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ success: false, message: 'TMDB API key not configured' });
+    }
+
+    const tmdb = getTmdbClient();
+    const { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
+    const result = data?.results?.[country] || {};
+
+    const link: string | null = result.link || null;
+    const mapProviders = (arr: any[] | undefined) =>
+      Array.isArray(arr) ? arr.map((p: any) => p.provider_name).filter(Boolean) : [];
+
+    const payload = {
+      link,
+      providers: {
+        flatrate: mapProviders(result.flatrate),
+        rent: mapProviders(result.rent),
+        buy: mapProviders(result.buy)
+      }
+    };
+
+    res.json({ success: true, data: payload });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get watch providers' });
+  }
+});
+
 export default router;

@@ -73,6 +73,12 @@ interface ApiService {
     @POST("movies/compare")
     suspend fun compareMovies(@Body request: CompareMoviesRequest): Response<ApiResponse<Unit>>
 
+    @GET("movies/{movieId}/providers")
+    suspend fun getMovieProviders(
+        @Path("movieId") movieId: Int,
+        @Query("country") country: String = "US"
+    ): Response<ApiResponse<WatchProviders>>
+
     // Feed
     @GET("feed")
     suspend fun getFeed(): Response<ApiResponse<List<FeedActivity>>>

@@ -17,6 +17,9 @@ fun MovieDetailBottomSheet(
     movie: Movie,
     onAddToRanking: (() -> Unit)? = null,
     onAddToWatchlist: (() -> Unit)? = null,
+    onOpenWhereToWatch: (() -> Unit)? = null,
+    availabilityText: String? = null,
+    availabilityLoading: Boolean = false,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -57,15 +60,26 @@ fun MovieDetailBottomSheet(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (onOpenWhereToWatch != null) {
+                            Button(onClick = onOpenWhereToWatch, modifier = Modifier.fillMaxWidth()) {
+                                Text("Where to Watch")
+                            }
+                        }
                         if (onAddToRanking != null) {
                             FilledTonalButton(onClick = onAddToRanking, modifier = Modifier.fillMaxWidth()) {
                                 Text("Add to Ranking")
                             }
                         }
                         if (onAddToWatchlist != null) {
-                            Button(onClick = onAddToWatchlist, modifier = Modifier.fillMaxWidth()) {
+                            FilledTonalButton(onClick = onAddToWatchlist, modifier = Modifier.fillMaxWidth()) {
                                 Text("Add to Watchlist")
                             }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        if (availabilityLoading) {
+                            Text("Checking availability…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        } else if (!availabilityText.isNullOrBlank()) {
+                            Text(availabilityText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
