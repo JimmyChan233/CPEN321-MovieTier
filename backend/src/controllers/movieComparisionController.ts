@@ -44,6 +44,27 @@ export const addMovie = async (req: Request, res: Response) => {
     //   });
     //   await activity.save();
 
+    // --- FEED + SSE Notification ---
+    const activity = new FeedActivity({
+      userId,
+      activityType: 'ranked_movie',
+      movieId,
+      movieTitle: title,
+      posterPath,
+      overview,
+      rank: 1,
+    });
+    await activity.save();
+
+    // Notify friends via SSE
+    const friendships = await Friendship.find({ userId });
+    friendships.forEach((f) => {
+      sseService.send(String(f.friendId), 'feed_activity', {
+        activityId: activity._id,
+      });
+    });
+
+
       return res.json({ success: true, status: 'added', data: rankedMovie });
     }
 
@@ -135,6 +156,27 @@ export const compareMovies = async (req: Request, res: Response) => {
     //       activityId: activity._id,
     //     });
     //   });
+
+    // --- FEED + SSE Notification ---
+      const activity = new FeedActivity({
+        userId,
+        activityType: 'ranked_movie',
+        movieId: movie.movieId,
+        movieTitle: movie.title,
+        posterPath: movie.posterPath,
+        overview: null,
+        rank: movie.rank,
+      });
+      await activity.save();
+
+      // Notify friends via SSE
+      const friendships = await Friendship.find({ userId });
+      friendships.forEach((f) => {
+        sseService.send(String(f.friendId), 'feed_activity', {
+          activityId: activity._id,
+        });
+      });
+
 
       return res.json({ success: true, status: 'added', data: movie });
     }
