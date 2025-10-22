@@ -14,6 +14,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
+
+data class CompareUiState(
+    val newMovie: Movie,
+    val compareWith: Movie
+)
+
+
 data class RankingUiState(
     val isLoading: Boolean = false,
     val rankedMovies: List<RankedMovie> = emptyList(),
@@ -27,6 +35,9 @@ class RankingViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(RankingUiState())
     val uiState: StateFlow<RankingUiState> = _uiState.asStateFlow()
+
+    private val _compareState = MutableStateFlow<CompareUiState?>(null)
+    val compareState: StateFlow<CompareUiState?> = _compareState.asStateFlow()
 
     private val _events = MutableSharedFlow<RankingEvent>()
     val events = _events
@@ -86,12 +97,39 @@ class RankingViewModel @Inject constructor(
         }
     }
 
+//    fun addMovieFromSearch(movie: Movie) {
+//        viewModelScope.launch {
+//            when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {
+//                is Result.Success -> {
+//                    _events.emit(RankingEvent.Message("Added '${movie.title}' to rankings"))
+//                    loadRankedMovies()
+//                }
+//                is Result.Error -> {
+//                    _events.emit(RankingEvent.Message(res.message ?: "Failed to add movie"))
+//                }
+//                else -> {}
+//            }
+//        }
+//    }
     fun addMovieFromSearch(movie: Movie) {
         viewModelScope.launch {
             when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {
                 is Result.Success -> {
-                    _events.emit(RankingEvent.Message("Added '${movie.title}' to rankings"))
-                    loadRankedMovies()
+                    val body = res.data
+                    when (body.status) {
+                        "added" -> {
+                            _events.emit(RankingEvent.Message("Added '${movie.title}' to rankings"))
+                            loadRankedMovies()
+                        }
+                        "compare" -> {
+                            val compareWith = body.data?.compareWith
+                            if (compareWith != null) {
+                                _compareState.value = CompareUiState(newMovie = movie, compareWith = compareWith)
+                            } else {
+                                _events.emit(RankingEvent.Message("Comparison data missing"))
+                            }
+                        }
+                    }
                 }
                 is Result.Error -> {
                     _events.emit(RankingEvent.Message(res.message ?: "Failed to add movie"))
@@ -100,6 +138,36 @@ class RankingViewModel @Inject constructor(
             }
         }
     }
+
+    fun compareMovies(newMovie: Movie, compareWith: Movie, preferredMovie: Movie) {
+        viewModelScope.launch {
+            when (val res = movieRepository.compareMovies(newMovie.id, compareWith.id, preferredMovie.id)) {
+                is Result.Success -> {
+                    val body = res.data
+                    when (body.status) {
+                        "compare" -> {
+                            val nextCompare = body.data?.compareWith
+                            if (nextCompare != null) {
+                                _compareState.value = CompareUiState(newMovie = newMovie, compareWith = nextCompare)
+                            }
+                        }
+                        "added" -> {
+                            _events.emit(RankingEvent.Message("Added '${newMovie.title}' to rankings"))
+                            _compareState.value = null
+                            loadRankedMovies()
+                        }
+                    }
+                }
+                is Result.Error -> {
+                    _events.emit(RankingEvent.Message("Comparison failed: ${res.message}"))
+                    _compareState.value = null
+                }
+                is Result.Loading -> { /* no-op */ } // ✅ Added branch
+            }
+        }
+    }
+
+
 }
 
 sealed class RankingEvent {

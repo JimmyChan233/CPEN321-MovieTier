@@ -1,0 +1,162 @@
+import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+const RankedMovie = (mongoose.models.RankedMovie || mongoose.model('RankedMovie')) as any;
+import FeedActivity from '../models/feed/FeedActivity';
+import { Friendship } from '../models/friend/Friend';
+import { sseService } from '../services/sse/sseService';
+import {
+  startSession,
+  getSession,
+  updateSession,
+  endSession,
+} from '../utils/comparisonSession';
+import { IRankedMovie } from '../models/movie/RankedMovie';
+
+
+export const addMovie = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { movieId, title, posterPath, overview } = req.body;
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    const rankedMovies = await RankedMovie.find({ userId: userObjectId }).sort({ rank: 1 });
+
+    // 🟩 Case 1: First movie
+    if (rankedMovies.length === 0) {
+      const rankedMovie = new RankedMovie({
+        userId: userObjectId,
+        movieId,
+        title,
+        posterPath,
+        rank: 1,
+      });
+      await rankedMovie.save();
+
+    //   // Optional: add feed activity
+    //   const activity = new FeedActivity({
+    //     userId,
+    //     activityType: 'ranked_movie',
+    //     movieId,
+    //     movieTitle: title,
+    //     posterPath,
+    //     overview,
+    //     rank: 1,
+    //   });
+    //   await activity.save();
+
+      return res.json({ success: true, status: 'added', data: rankedMovie });
+    }
+
+    // 🟨 Case 2: Duplicate movie
+    if (rankedMovies.some((m: IRankedMovie) => m.movieId === movieId)) {
+      return res.status(400).json({ success: false, message: 'Movie already ranked' });
+    }
+
+    // 🟦 Case 3: Begin comparison
+    const middleIndex = Math.floor(rankedMovies.length / 2);
+    const compareWith = rankedMovies[middleIndex];
+    startSession(userId, { movieId, title, posterPath }, rankedMovies.length - 1);
+
+    return res.json({
+      success: true,
+      status: 'compare',
+      data: {
+        compareWith: {
+          movieId: compareWith.movieId,
+          title: compareWith.title,
+          posterPath: compareWith.posterPath,
+        },
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to add movie' });
+  }
+};
+
+export const compareMovies = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { comparedMovieId, preferredMovieId } = req.body;
+    const session = getSession(userId);
+
+    if (!session) {
+      return res.status(400).json({ success: false, message: 'No active comparison session' });
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const rankedMovies = await RankedMovie.find({ userId: userObjectId }).sort({ rank: 1 });
+
+    let { low, high } = session;
+    const middleIndex = Math.floor((low + high) / 2);
+
+    if (preferredMovieId === session.newMovie.movieId) {
+      high = middleIndex - 1; // new movie better
+    } else {
+      low = middleIndex + 1; // existing better
+    }
+
+    // Stopping condition
+    if (low > high) {
+      const newRank = low + 1;
+
+      await RankedMovie.updateMany(
+        { userId: userObjectId, rank: { $gte: newRank } },
+        { $inc: { rank: 1 } }
+      );
+
+      const movie = new RankedMovie({
+        userId: userObjectId,
+        movieId: session.newMovie.movieId,
+        title: session.newMovie.title,
+        posterPath: session.newMovie.posterPath,
+        rank: newRank,
+      });
+
+      await movie.save();
+      endSession(userId);
+
+    //   // Optional: feed update
+    //   const activity = new FeedActivity({
+    //     userId,
+    //     activityType: 'ranked_movie',
+    //     movieId: movie.movieId,
+    //     movieTitle: movie.title,
+    //     posterPath: movie.posterPath,
+    //     overview: null,
+    //     rank: movie.rank,
+    //   });
+    //   await activity.save();
+
+    //   // SSE notifications (same as in your /rank route)
+    //   const friendships = await Friendship.find({ userId });
+    //   friendships.forEach((f) => {
+    //     sseService.send(String(f.friendId), 'feed_activity', {
+    //       activityId: activity._id,
+    //     });
+    //   });
+
+      return res.json({ success: true, status: 'added', data: movie });
+    }
+
+    // Continue comparison
+    updateSession(userId, low, high);
+    const nextIndex = Math.floor((low + high) / 2);
+    const nextCompare = rankedMovies[nextIndex];
+
+    return res.json({
+      success: true,
+      status: 'compare',
+      data: {
+        compareWith: {
+          movieId: nextCompare.movieId,
+          title: nextCompare.title,
+          posterPath: nextCompare.posterPath,
+        },
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to compare movies' });
+  }
+};

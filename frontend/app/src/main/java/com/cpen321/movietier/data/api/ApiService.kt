@@ -67,11 +67,21 @@ interface ApiService {
     @GET("movies/ranked")
     suspend fun getRankedMovies(): Response<ApiResponse<List<RankedMovie>>>
 
-    @POST("movies/rank")
-    suspend fun addMovie(@Body request: AddMovieRequest): Response<ApiResponse<RankedMovie>>
+//    @POST("movies/rank")
+//    suspend fun addMovie(@Body request: AddMovieRequest): Response<ApiResponse<RankedMovie>>
+
+//    @POST("movies/compare")
+//    suspend fun compareMovies(@Body request: CompareMoviesRequest): Response<ApiResponse<Unit>>
+
+    @POST("movies/add")
+    suspend fun addMovie(
+        @Body body: AddMovieRequest
+    ): Response<AddMovieResponse>
 
     @POST("movies/compare")
-    suspend fun compareMovies(@Body request: CompareMoviesRequest): Response<ApiResponse<Unit>>
+    suspend fun compareMovies(
+        @Body body: CompareMoviesRequest
+    ): Response<AddMovieResponse>
 
     @GET("movies/{movieId}/providers")
     suspend fun getMovieProviders(

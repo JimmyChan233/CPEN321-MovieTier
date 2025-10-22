@@ -77,41 +77,98 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    suspend fun signInWithGoogle(context: Context, googleClientId: String) {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+//    suspend fun signInWithGoogle(context: Context, googleClientId: String) {
+//        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+//        Log.d(TAG, "Google Client ID used: $googleClientId")
+//
+//
+//        try {
+//            val credentialManager = CredentialManager.create(context)
+//
+//            val googleIdOption = GetGoogleIdOption.Builder()
+//                .setFilterByAuthorizedAccounts(false)
+//                .setServerClientId(googleClientId)
+//                .build()
+//
+//            val request = GetCredentialRequest.Builder()
+//                .addCredentialOption(googleIdOption)
+//                .build()
+//
+//            val result = credentialManager.getCredential(context, request)
+//            val credential = result.credential
+//            Log.d(TAG, "Credential class: ${credential.javaClass.name}") // ← add this
+//
+//
+//            if (credential is GoogleIdTokenCredential) {
+//                val idToken = credential.idToken
+//                handleGoogleSignIn(idToken)
+//            } else {
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = false,
+//                    errorMessage = "Invalid credential type"
+//                )
+//            }
+//        } catch (e: Exception) {
+//            Log.e(TAG, "Sign in error", e)
+//            _uiState.value = _uiState.value.copy(
+//                isLoading = false,
+//                errorMessage = e.message ?: "Sign in failed"
+//            )
+//        }
+//    }
+suspend fun signInWithGoogle(context: Context, googleClientId: String) {
+    _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-        try {
-            val credentialManager = CredentialManager.create(context)
+    try {
+        val credentialManager = CredentialManager.create(context)
 
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(googleClientId)
-                .build()
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setServerClientId(googleClientId)
+            .setFilterByAuthorizedAccounts(false)
+            .setAutoSelectEnabled(false)   // prevents reusing a stale credential
+            .build()
 
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
 
-            val result = credentialManager.getCredential(context, request)
-            val credential = result.credential
+        val result = credentialManager.getCredential(context, request)
+        val credential = result.credential
+        Log.d(TAG, "Credential class: ${credential.javaClass.name}")
 
-            if (credential is GoogleIdTokenCredential) {
+        when {
+            // ✅ Newer devices (returns the wrapped credential)
+            credential is androidx.credentials.CustomCredential &&
+                    credential.type == com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
+                val googleIdTokenCredential =
+                    com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.createFrom(credential.data)
+                val idToken = googleIdTokenCredential.idToken
+                handleGoogleSignIn(idToken)
+            }
+
+            // ✅ Older versions (returns the ID token directly)
+            credential is com.google.android.libraries.identity.googleid.GoogleIdTokenCredential -> {
                 val idToken = credential.idToken
                 handleGoogleSignIn(idToken)
-            } else {
+            }
+
+            // ❌ Anything else
+            else -> {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "Invalid credential type"
                 )
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Sign in error", e)
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                errorMessage = e.message ?: "Sign in failed"
-            )
         }
+    } catch (e: Exception) {
+        Log.e(TAG, "Sign in error", e)
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            errorMessage = e.message ?: "Sign in failed"
+        )
     }
+}
+
 
     private suspend fun handleGoogleSignIn(idToken: String) {
         // Try sign in first

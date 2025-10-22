@@ -35,6 +35,9 @@ fun RankingScreen(
     var query by remember { mutableStateOf("") }
     val searchResults by rankingViewModel.searchResults.collectAsState()
 
+    val compareState by rankingViewModel.compareState.collectAsState()
+
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -172,6 +175,52 @@ fun RankingScreen(
             }
         )
     }
+    // 🔹 Comparison Dialog
+    if (compareState != null) {
+        val state = compareState!!
+        AlertDialog(
+            onDismissRequest = { /* Disabled during ranking */ },
+            title = { Text("Which movie do you prefer?") },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        "Help us place '${state.newMovie.title}' in your rankings:",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Button(
+                        onClick = {
+                            rankingViewModel.compareMovies(
+                                newMovie = state.newMovie,
+                                compareWith = state.compareWith,
+                                preferredMovie = state.newMovie
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(state.newMovie.title)
+                    }
+                    Button(
+                        onClick = {
+                            rankingViewModel.compareMovies(
+                                newMovie = state.newMovie,
+                                compareWith = state.compareWith,
+                                preferredMovie = state.compareWith
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(state.compareWith.title)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
+
 }
 
 private enum class RankingState {
