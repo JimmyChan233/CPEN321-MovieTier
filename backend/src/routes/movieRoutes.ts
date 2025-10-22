@@ -4,6 +4,10 @@ import RankedMovie from '../models/movie/RankedMovie';
 import FeedActivity from '../models/feed/FeedActivity';
 import { Friendship } from '../models/friend/Friend';
 import { sseService } from '../services/sse/sseService';
+import {
+  addMovie,
+  compareMovies,
+} from '../controllers/movieComparisionController';
 import axios from 'axios';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
 
@@ -144,9 +148,14 @@ router.post('/rank', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/compare', authenticate, async (req, res) => {
-  res.json({ success: true, message: 'Compare movies route - placeholder' });
-});
+// router.post('/compare', authenticate, async (req, res) => {
+//   res.json({ success: true, message: 'Compare movies route - placeholder' });
+// });
+// use interactive add logic instead of static rank
+router.post('/add', authenticate, addMovie);
+
+//placeholder compare
+router.post('/compare', authenticate, compareMovies);
 
 // Get watch providers for a TMDB movie id
 router.get('/:movieId/providers', authenticate, async (req, res) => {

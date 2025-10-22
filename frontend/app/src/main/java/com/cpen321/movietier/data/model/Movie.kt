@@ -49,3 +49,17 @@ data class CompareMoviesRequest(
     @SerializedName("preferredMovieId")
     val preferredMovieId: Int
 )
+
+data class AddMovieResponse(
+    @SerializedName("success")
+    val success: Boolean,
+    @SerializedName("status")
+    val status: String, // "added" or "compare"
+    @SerializedName("data")
+    val data: CompareData?
+)
+
+data class CompareData(
+    @SerializedName("compareWith")
+    val compareWith: Movie?
+)
