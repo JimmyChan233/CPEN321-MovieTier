@@ -112,4 +112,5 @@ interface ApiService {
     // Recommendations
     @GET("recommendations")
     suspend fun getRecommendations(): Response<ApiResponse<List<Movie>>>
+
 }
