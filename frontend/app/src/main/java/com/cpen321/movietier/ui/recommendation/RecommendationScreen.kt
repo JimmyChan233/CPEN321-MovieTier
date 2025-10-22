@@ -2,42 +2,41 @@ package com.cpen321.movietier.ui.recommendation
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.cpen321.movietier.ui.components.EmptyState
-import com.cpen321.movietier.ui.components.ErrorState
-import com.cpen321.movietier.ui.components.LoadingState
-import com.cpen321.movietier.ui.components.PosterGrid
-import com.cpen321.movietier.ui.components.MovieDetailBottomSheet
-import com.cpen321.movietier.ui.theme.MovieTierTheme
+import com.cpen321.movietier.data.model.Movie
+import com.cpen321.movietier.ui.components.*
 import com.cpen321.movietier.ui.viewmodels.RecommendationViewModel
+import com.cpen321.movietier.ui.viewmodels.RankingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecommendationScreen(
     navController: NavController,
-    recommendationViewModel: RecommendationViewModel = hiltViewModel()
+    recommendationViewModel: RecommendationViewModel = hiltViewModel(),
+    rankingViewModel: RankingViewModel = hiltViewModel()
 ) {
     val uiState by recommendationViewModel.uiState.collectAsState()
-    var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
+    var selectedMovie by remember { mutableStateOf<Movie?>(null) }
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("recommendation_screen"),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            CenterAlignedTopAppBar(title = { Text("Discover", style = MaterialTheme.typography.titleMedium) })
+            CenterAlignedTopAppBar(
+                title = { Text("Discover", style = MaterialTheme.typography.titleMedium) }
+            )
         }
     ) { padding ->
+
         Crossfade(
             targetState = when {
                 uiState.isLoading -> RecommendationState.LOADING
@@ -56,47 +55,58 @@ fun RecommendationScreen(
                         hint = "Finding recommendations..."
                     )
                 }
+
                 RecommendationState.ERROR -> {
-                    Box(
+                    ErrorState(
+                        message = uiState.errorMessage ?: "Failed to load recommendations",
+                        onRetry = { recommendationViewModel.loadRecommendations() },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .testTag("recommendation_error")
-                    ) {
-                        ErrorState(
-                            message = uiState.errorMessage ?: "Failed to load recommendations",
-                            onRetry = { recommendationViewModel.loadRecommendations() }
-                        )
-                    }
+                    )
                 }
+
                 RecommendationState.EMPTY -> {
-                    Box(
+                    EmptyState(
+                        icon = Icons.Default.Favorite,
+                        title = "No recommendations yet",
+                        message = "Rank some movies to get personalized suggestions",
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .testTag("recommendation_empty")
-                    ) {
-                        EmptyState(
-                            icon = Icons.Default.Favorite,
-                            title = "No recommendations yet",
-                            message = "Rank some movies to get personalized recommendations"
-                        )
-                    }
+                    )
                 }
+
                 RecommendationState.CONTENT -> {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)) {
-                        PosterGrid(
-                            movies = uiState.recommendations,
-                            onMovieClick = { movie -> selectedMovie = movie },
-                            modifier = Modifier.fillMaxSize()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                    ) {
+                        Text(
+                            text = "Recommended for You",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
+
+                        LazyColumn(
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(uiState.recommendations, key = { it.id }) { movie ->
+                                RecommendationCard(
+                                    movie = movie,
+                                    onClick = { selectedMovie = movie },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
 
                         selectedMovie?.let { movie ->
                             MovieDetailBottomSheet(
                                 movie = movie,
-                                onAddToRanking = { /* TODO: hook to ranking action */ },
+                                onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
                                 onDismissRequest = { selectedMovie = null }
                             )
                         }
@@ -109,13 +119,4 @@ fun RecommendationScreen(
 
 private enum class RecommendationState {
     LOADING, ERROR, EMPTY, CONTENT
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun RecommendationScreenPreview() {
-    MovieTierTheme {
-        val navController = rememberNavController()
-        RecommendationScreen(navController = navController)
-    }
 }
