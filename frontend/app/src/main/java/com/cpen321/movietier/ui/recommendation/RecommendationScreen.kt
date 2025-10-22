@@ -22,14 +22,26 @@ import com.cpen321.movietier.ui.viewmodels.RankingViewModel
 @Composable
 fun RecommendationScreen(
     navController: NavController,
-    recommendationViewModel: RecommendationViewModel = hiltViewModel(),
-    rankingViewModel: RankingViewModel = hiltViewModel()
+    recommendationViewModel: RecommendationViewModel = hiltViewModel()
 ) {
     val uiState by recommendationViewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
+
+    LaunchedEffect(Unit) {
+        recommendationViewModel.events.collect { event ->
+            when (event) {
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> {
+                    println("Snack: ${event.text}") // for debugging
+                    snackbarHostState.showSnackbar(event.text)
+                }
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Discover", style = MaterialTheme.typography.titleMedium) }
@@ -106,7 +118,11 @@ fun RecommendationScreen(
                         selectedMovie?.let { movie ->
                             MovieDetailBottomSheet(
                                 movie = movie,
-                                onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
+                                onAddToWatchlist = {
+                                    recommendationViewModel.addToWatchlist(movie)
+                                    // Close sheet so snackbar is visible immediately
+                                    selectedMovie = null
+                                },
                                 onDismissRequest = { selectedMovie = null }
                             )
                         }
