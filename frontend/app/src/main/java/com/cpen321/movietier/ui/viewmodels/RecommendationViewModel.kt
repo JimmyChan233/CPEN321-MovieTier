@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.cpen321.movietier.data.repository.WatchlistRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 data class RecommendationUiState(
     val isLoading: Boolean = false,
@@ -20,11 +22,15 @@ data class RecommendationUiState(
 
 @HiltViewModel
 class RecommendationViewModel @Inject constructor(
-    private val movieRepository: MovieRepository
+    private val movieRepository: MovieRepository,
+    private val watchlistRepository: WatchlistRepository
+
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RecommendationUiState())
     val uiState: StateFlow<RecommendationUiState> = _uiState.asStateFlow()
+    private val _events = MutableSharedFlow<FeedEvent>()
+    val events = _events
 
     init {
         loadRecommendations()
@@ -47,6 +53,22 @@ class RecommendationViewModel @Inject constructor(
                     )
                 }
                 is Result.Loading -> {}
+            }
+        }
+    }
+    fun addToWatchlist(movie: Movie) {
+        viewModelScope.launch {
+            when (val res = watchlistRepository.addToWatchlist(movie.id, movie.title, movie.posterPath, movie.overview)) {
+                is Result.Success -> { _events.emit(FeedEvent.Message("Added to watchlist")) }
+                is Result.Error -> {
+                    val msg = res.message ?: "Failed to add to watchlist"
+                    if (msg.contains("already", ignoreCase = true)) {
+                        _events.emit(FeedEvent.Message("Movie already in watchlist"))
+                    } else {
+                        _events.emit(FeedEvent.Message(msg))
+                    }
+                }
+                else -> {}
             }
         }
     }

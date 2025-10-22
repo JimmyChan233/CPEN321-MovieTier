@@ -17,20 +17,47 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 // Add to watchlist
 router.post('/', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { movieId, title, posterPath, overview } = req.body as { movieId: number; title: string; posterPath?: string; overview?: string };
-    if (!movieId || !title) {
-      return res.status(400).json({ success: false, message: 'movieId and title are required' });
+    const { movieId, title, posterPath, overview } = req.body as {
+      movieId: number
+      title: string
+      posterPath?: string
+      overview?: string
     }
-    const item = await WatchlistItem.findOneAndUpdate(
-      { userId: req.userId, movieId },
-      { userId: req.userId, movieId, title, posterPath, overview },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    res.json({ success: true, data: item });
+
+    if (!movieId || !title) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'movieId and title are required' })
+    }
+
+    // 🔍 Step 1: Check for duplicate
+    const existing = await WatchlistItem.findOne({ userId: req.userId, movieId })
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'Movie already in watchlist',
+      })
+    }
+
+    // ✅ Step 2: Add new movie if not found
+    const item = new WatchlistItem({
+      userId: req.userId,
+      movieId,
+      title,
+      posterPath,
+      overview,
+    })
+    await item.save()
+
+    return res.json({ success: true, data: item })
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to add to watchlist' });
+    console.error(error)
+    res
+      .status(500)
+      .json({ success: false, message: 'Failed to add to watchlist' })
   }
-});
+})
+
 
 // Remove from watchlist (by movieId)
 router.delete('/:movieId', authenticate, async (req: AuthRequest, res) => {
