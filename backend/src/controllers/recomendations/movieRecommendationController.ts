@@ -39,9 +39,10 @@ export const getRecommendations = async (req: Request, res: Response) => {
       console.error('Discover error:', err);
     }
 
-    // 3b. Get similar movies for top 5 ranked (language-aware)
-    const top5 = rankedMovies.slice(0, Math.min(5, rankedMovies.length));
-    for (const movie of top5) {
+    // 3b. Get similar movies for top 30% (max 10) of ranked movies
+    const similarCount = Math.min(10, Math.max(3, Math.ceil(rankedMovies.length * 0.3)));
+    const topForSimilar = rankedMovies.slice(0, similarCount);
+    for (const movie of topForSimilar) {
       try {
         const { data } = await tmdb.get(`/movie/${movie.movieId}/similar`, {
           params: { language: 'en-US', page: 1 }
@@ -49,7 +50,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
         if (data?.results?.length) {
           const similar = data.results
             .filter((r: any) => !seenMovieIds.has(r.id))
-            .slice(0, 5)
+            .slice(0, 8)
             .map((r: any) => ({
               id: r.id,
               title: r.title,
@@ -67,9 +68,10 @@ export const getRecommendations = async (req: Request, res: Response) => {
       }
     }
 
-    // 3c. Get recommendations for top 3 ranked (no language forcing)
-    const top3 = rankedMovies.slice(0, Math.min(3, rankedMovies.length));
-    for (const movie of top3) {
+    // 3c. Get recommendations for top 20% (max 8) of ranked movies
+    const recCount = Math.min(8, Math.max(3, Math.ceil(rankedMovies.length * 0.2)));
+    const topForRecs = rankedMovies.slice(0, recCount);
+    for (const movie of topForRecs) {
       try {
         const { data } = await tmdb.get(`/movie/${movie.movieId}/recommendations`, {
           params: { page: 1 }
@@ -77,7 +79,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
         if (data?.results?.length) {
           const recs = data.results
             .filter((r: any) => !seenMovieIds.has(r.id))
-            .slice(0, 5)
+            .slice(0, 8)
             .map((r: any) => ({
               id: r.id,
               title: r.title,
