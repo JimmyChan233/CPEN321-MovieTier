@@ -39,7 +39,7 @@ router.get('/search', authenticate, async (req, res) => {
 
     const includeCast = String(req.query.includeCast || 'false').toLowerCase() === 'true';
 
-    const baseResults: any[] = (data.results || []).map((m: any) => ({
+    let baseResults: any[] = (data.results || []).map((m: any) => ({
       id: m.id,
       title: m.title,
       overview: m.overview || null,
@@ -47,6 +47,45 @@ router.get('/search', authenticate, async (req, res) => {
       releaseDate: m.release_date || null,
       voteAverage: m.vote_average ?? null
     }));
+
+    // If no results and query likely Chinese, search zh-CN and return English titles via detail fetch
+    const hasCjk = /[\u3400-\u9FBF\uF900-\uFAFF]/.test(query);
+    if (baseResults.length === 0 && hasCjk) {
+      try {
+        const { data: zh } = await tmdb.get('/search/movie', {
+          params: { query, include_adult: false, language: 'zh-CN', page: 1 }
+        });
+        const zhResults: any[] = Array.isArray(zh?.results) ? zh.results : [];
+        const limit = Math.min(zhResults.length, 10);
+        const detailed = await Promise.all(
+          zhResults.slice(0, limit).map(async (m: any) => {
+            try {
+              const { data: det } = await tmdb.get(`/movie/${m.id}`, { params: { language: 'en-US' } });
+              return {
+                id: det.id ?? m.id,
+                title: det.title ?? m.title,
+                overview: det.overview || m.overview || null,
+                posterPath: det.poster_path || m.poster_path || null,
+                releaseDate: det.release_date || m.release_date || null,
+                voteAverage: det.vote_average ?? m.vote_average ?? null
+              };
+            } catch {
+              return {
+                id: m.id,
+                title: m.title,
+                overview: m.overview || null,
+                posterPath: m.poster_path || null,
+                releaseDate: m.release_date || null,
+                voteAverage: m.vote_average ?? null
+              };
+            }
+          })
+        );
+        baseResults = detailed;
+      } catch {
+        // ignore fallback failures; proceed with empty results
+      }
+    }
 
     if (!includeCast || baseResults.length === 0) {
       return res.json({ success: true, data: baseResults });
