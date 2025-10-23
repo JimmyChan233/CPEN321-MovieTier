@@ -107,7 +107,7 @@ router.get('/search', authenticate, async (req, res) => {
     const combined = enriched.concat(baseResults.slice(limit));
     res.json({ success: true, data: combined });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to search movies' });
+    res.status(500).json({ success: false, message: 'Unable to search movies. Please try again' });
   }
 });
 
@@ -130,7 +130,7 @@ router.get('/ranked', authenticate, async (req: AuthRequest, res) => {
     }));
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get ranked movies' });
+    res.status(500).json({ success: false, message: 'Unable to load rankings. Please try again' });
   }
 });
 
@@ -205,7 +205,7 @@ router.post('/rank', authenticate, async (req: AuthRequest, res) => {
     };
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to rank movie' });
+    res.status(500).json({ success: false, message: 'Unable to rank movie. Please try again' });
   }
 });
 
@@ -240,7 +240,7 @@ router.delete('/ranked/:id', authenticate, async (req: AuthRequest, res) => {
     );
     res.json({ success: true, message: 'Removed from rankings' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to remove ranked movie' });
+    res.status(500).json({ success: false, message: 'Unable to remove from rankings. Please try again' });
   }
 });
 
@@ -282,7 +282,7 @@ router.get('/:movieId/providers', authenticate, async (req, res) => {
 
     res.json({ success: true, data: payload });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get watch providers' });
+    res.status(500).json({ success: false, message: 'Unable to load watch providers. Please try again' });
   }
 });
 
@@ -317,7 +317,7 @@ router.get('/:movieId/details', authenticate, async (req, res) => {
     };
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get movie details' });
+    res.status(500).json({ success: false, message: 'Unable to load movie details. Please try again' });
   }
 });
 

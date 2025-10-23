@@ -28,7 +28,8 @@ data class FriendRequestUi(
     val id: String,
     val senderId: String,
     val senderName: String = "",
-    val senderEmail: String = ""
+    val senderEmail: String = "",
+    val senderProfileImage: String? = null
 )
 
 @HiltViewModel
@@ -98,7 +99,8 @@ class FriendViewModel @Inject constructor(
                             id = fr.id,
                             senderId = user?.id ?: fr.senderId ?: "",
                             senderName = user?.name ?: "",
-                            senderEmail = user?.email ?: ""
+                            senderEmail = user?.email ?: "",
+                            senderProfileImage = user?.profileImageUrl
                         )
                     }
                     _uiState.value = _uiState.value.copy(requests = enriched)
@@ -168,7 +170,8 @@ class FriendViewModel @Inject constructor(
                             id = fr.id,
                             senderId = fr.receiver?.id ?: fr.receiverId ?: "",
                             senderName = user?.name ?: "",
-                            senderEmail = user?.email ?: ""
+                            senderEmail = user?.email ?: "",
+                            senderProfileImage = user?.profileImageUrl
                         )
                     }
                     _uiState.value = _uiState.value.copy(outgoingRequests = list)

@@ -25,7 +25,7 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
 
     res.json({ success: true, data: users });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to search users' });
+    res.status(500).json({ success: false, message: 'Unable to search users. Please try again' });
   }
 });
 
@@ -67,7 +67,7 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
     res.json({ success: true, data: user });
   } catch (error) {
     logger.error('Profile update error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update profile' });
+    res.status(500).json({ success: false, message: 'Unable to update profile. Please try again' });
   }
 });
 
@@ -83,7 +83,7 @@ router.get('/:userId', authenticate, async (req, res) => {
     }
     res.json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get user' });
+    res.status(500).json({ success: false, message: 'Unable to load user. Please try again' });
   }
 });
 
@@ -97,7 +97,7 @@ router.get('/:userId/watchlist', authenticate, async (req, res) => {
     const items = await WatchlistItem.find({ userId }).sort({ createdAt: -1 });
     res.json({ success: true, data: items });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get user watchlist' });
+    res.status(500).json({ success: false, message: 'Unable to load user watchlist. Please try again' });
   }
 });
 

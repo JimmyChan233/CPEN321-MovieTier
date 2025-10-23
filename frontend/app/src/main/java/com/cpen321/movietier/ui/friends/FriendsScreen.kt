@@ -404,9 +404,16 @@ fun AddFriendDialog(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            Column(Modifier.weight(1f)) {
-                                                Text(user.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                                Text(user.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                com.cpen321.movietier.ui.components.Avatar(
+                                                    imageUrl = user.profileImageUrl,
+                                                    name = user.name,
+                                                    size = 40.dp
+                                                )
+                                                Column(Modifier.weight(1f)) {
+                                                    Text(user.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                                    // Do not display email when searching by name
+                                                }
                                             }
                                             when {
                                                 isFriend -> Text("Friends", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -463,7 +470,7 @@ private fun RequestRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Avatar(
-                imageUrl = null,
+                imageUrl = request.senderProfileImage,
                 name = request.senderName.ifBlank { request.senderId.takeLast(6) },
                 size = 40.dp
             )
@@ -507,7 +514,7 @@ private fun OutgoingRequestRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Avatar(
-                imageUrl = null,
+                imageUrl = request.senderProfileImage,
                 name = request.senderName.ifBlank { request.senderId.takeLast(6) },
                 size = 40.dp
             )

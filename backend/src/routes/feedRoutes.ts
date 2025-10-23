@@ -72,7 +72,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get feed' });
+    res.status(500).json({ success: false, message: 'Unable to load feed. Please try again' });
   }
 });
 

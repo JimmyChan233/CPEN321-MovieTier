@@ -11,7 +11,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const items = await WatchlistItem.find({ userId: req.userId }).sort({ createdAt: -1 });
     res.json({ success: true, data: items });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get watchlist' });
+    res.status(500).json({ success: false, message: 'Unable to load watchlist. Please try again' });
   }
 });
 
@@ -67,7 +67,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
     console.error(error)
     res
       .status(500)
-      .json({ success: false, message: 'Failed to add to watchlist' })
+      .json({ success: false, message: 'Unable to add to watchlist. Please try again' })
   }
 })
 
@@ -78,11 +78,11 @@ router.delete('/:movieId', authenticate, async (req: AuthRequest, res) => {
     const movieId = Number(req.params.movieId);
     const result = await WatchlistItem.deleteOne({ userId: req.userId, movieId });
     if (result.deletedCount === 0) {
-      return res.status(404).json({ success: false, message: 'Item not found' });
+      return res.status(404).json({ success: false, message: 'Movie not found in watchlist' });
     }
     res.json({ success: true, message: 'Removed from watchlist' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to remove from watchlist' });
+    res.status(500).json({ success: false, message: 'Unable to remove from watchlist. Please try again' });
   }
 });
 

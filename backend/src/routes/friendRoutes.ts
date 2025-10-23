@@ -125,7 +125,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
     // Check if already friends
     const existingFriendship = await Friendship.findOne({ userId: req.userId, friendId: friend._id });
     if (existingFriendship) {
-      return res.status(400).json({ success: false, message: 'Error: Friend already exists' });
+      return res.status(400).json({ success: false, message: 'Already friends with this user' });
     }
 
     // Check if a pending request already exists from current user to target
@@ -135,7 +135,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
       status: 'pending'
     });
     if (existingPending) {
-      return res.status(400).json({ success: false, message: 'Error: Request was already sent.' });
+      return res.status(400).json({ success: false, message: 'Friend request already sent' });
     }
 
     // Also check if reverse pending request exists (the other user already sent you a request)
@@ -162,7 +162,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
 
     res.json({ success: true, data: request });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to send request' });
+    res.status(500).json({ success: false, message: 'Unable to send friend request. Please try again' });
   }
 });
 

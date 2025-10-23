@@ -95,6 +95,6 @@ export const getRecommendations = async (req: Request, res: Response) => {
     res.json({ success: true, data: finalList });
   } catch (error) {
     console.error('Recommendation error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get recommendations' });
+    res.status(500).json({ success: false, message: 'Unable to load recommendations. Please try again' });
   }
 };

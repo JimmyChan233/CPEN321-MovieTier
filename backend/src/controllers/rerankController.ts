@@ -54,7 +54,7 @@ export const startRerank = async (req: Request, res: Response) => {
       }
     });
   } catch (e) {
-    return res.status(500).json({ success: false, message: 'Failed to start rerank' });
+    return res.status(500).json({ success: false, message: 'Unable to start rerank. Please try again' });
   }
 };
 

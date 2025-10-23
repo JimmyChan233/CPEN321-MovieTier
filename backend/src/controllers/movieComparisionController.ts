@@ -122,7 +122,7 @@ export const addMovie = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to add movie' });
+    res.status(500).json({ success: false, message: 'Unable to add movie to ranking. Please try again' });
   }
 };
 
@@ -244,6 +244,6 @@ export const compareMovies = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to compare movies' });
+    res.status(500).json({ success: false, message: 'Unable to save comparison. Please try again' });
   }
 };
