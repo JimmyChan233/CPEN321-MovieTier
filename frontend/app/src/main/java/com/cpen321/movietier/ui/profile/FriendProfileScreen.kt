@@ -21,6 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.material3.SnackbarResult
+import com.cpen321.movietier.ui.navigation.NavRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +109,13 @@ fun FriendProfileScreen(
                             scope.launch {
                                 when (val res = vm.addToMyWatchlist(item)) {
                                     is com.cpen321.movietier.data.repository.Result.Success -> {
-                                        snackbarHostState.showSnackbar("Added to my watchlist")
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = "Added to my watchlist",
+                                            actionLabel = "View"
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            navController.navigate(NavRoutes.WATCHLIST)
+                                        }
                                     }
                                     is com.cpen321.movietier.data.repository.Result.Error -> {
                                         snackbarHostState.showSnackbar(res.message ?: "Failed to add to my watchlist")
