@@ -32,6 +32,7 @@ fun WatchlistScreen(
     vm: WatchlistViewModel = hiltViewModel()
 ) {
     val ui by vm.ui.collectAsState()
+    val compareState by vm.compareState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -115,6 +116,12 @@ fun WatchlistScreen(
                                 }, modifier = Modifier.fillMaxWidth()) {
                                     Text("Where to Watch")
                                 }
+                                Spacer(Modifier.height(8.dp))
+                                Button(onClick = {
+                                    vm.addToRanking(item)
+                                }, modifier = Modifier.fillMaxWidth()) {
+                                    Text("Add to Ranking")
+                                }
                             }
                         }
                     }
@@ -123,6 +130,48 @@ fun WatchlistScreen(
                     item { Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
+        }
+
+        // Comparison dialog
+        if (compareState != null) {
+            val state = compareState!!
+            AlertDialog(
+                onDismissRequest = { /* block dismiss during compare */ },
+                title = { Text("Which movie do you prefer?") },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "Help us place '${state.newMovie.title}' in your rankings:",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Button(
+                            onClick = {
+                                vm.choosePreferred(
+                                    newMovie = state.newMovie,
+                                    compareWith = state.compareWith,
+                                    preferred = state.newMovie
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(state.newMovie.title) }
+                        Button(
+                            onClick = {
+                                vm.choosePreferred(
+                                    newMovie = state.newMovie,
+                                    compareWith = state.compareWith,
+                                    preferred = state.compareWith
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(state.compareWith.title) }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {}
+            )
         }
     }
 
@@ -181,5 +230,19 @@ fun WatchlistScreen(
     // Also refresh whenever navigating to this screen (handles bottom nav tab switching)
     LaunchedEffect(navController.currentBackStackEntry) {
         vm.load()
+    }
+
+    // Handle events (success/error messages)
+    LaunchedEffect(Unit) {
+        vm.events.collect { event ->
+            when (event) {
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> {
+                    snackbarHostState.showSnackbar(event.text)
+                }
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> {
+                    snackbarHostState.showSnackbar(event.text)
+                }
+            }
+        }
     }
 }
