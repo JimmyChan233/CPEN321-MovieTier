@@ -4,6 +4,8 @@ import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.local.TokenManager
 import com.cpen321.movietier.data.model.LoginRequest
 import com.cpen321.movietier.data.model.LoginResponse
+import com.cpen321.movietier.data.model.UpdateProfileRequest
+import com.cpen321.movietier.data.model.User
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -109,6 +111,44 @@ class AuthRepository @Inject constructor(
                 Result.Success(Unit)
             } else {
                 Result.Error(Exception("Delete account failed: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun updateProfile(name: String?, profileImageUrl: String?): Result<User> {
+        return try {
+            val request = UpdateProfileRequest(name = name, profileImageUrl = profileImageUrl)
+            val response = apiService.updateProfile(request)
+            if (response.isSuccessful && response.body() != null) {
+                val apiResponse = response.body()!!
+                if (apiResponse.success && apiResponse.data != null) {
+                    val updatedUser = apiResponse.data
+                    // Update local storage
+                    tokenManager.saveUserInfo(
+                        updatedUser.id,
+                        updatedUser.email,
+                        updatedUser.name
+                    )
+                    Result.Success(updatedUser)
+                } else {
+                    Result.Error(Exception(apiResponse.message))
+                }
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = if (errorBody != null) {
+                    try {
+                        val gson = com.google.gson.Gson()
+                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
+                        errorResponse.message
+                    } catch (e: Exception) {
+                        "Failed to update profile"
+                    }
+                } else {
+                    "Failed to update profile"
+                }
+                Result.Error(Exception(errorMessage))
             }
         } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")

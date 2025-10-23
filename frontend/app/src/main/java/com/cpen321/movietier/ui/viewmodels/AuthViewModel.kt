@@ -280,4 +280,26 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
             successMessage = null
         )
     }
+
+    fun updateProfile(name: String?, profileImageUrl: String?) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = authRepository.updateProfile(name, profileImageUrl)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        user = result.data,
+                        successMessage = "Profile updated successfully"
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message ?: result.exception.message ?: "Failed to update profile"
+                    )
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
 }

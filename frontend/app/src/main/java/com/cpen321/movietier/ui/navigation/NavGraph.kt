@@ -11,6 +11,7 @@ import com.cpen321.movietier.ui.ranking.RankingScreen
 import com.cpen321.movietier.ui.recommendation.RecommendationScreen
 import com.cpen321.movietier.ui.profile.ProfileScreen
 import com.cpen321.movietier.ui.profile.FriendProfileScreen
+import com.cpen321.movietier.ui.profile.EditProfileScreen
 
 object NavRoutes {
     const val AUTH = "auth"
@@ -19,6 +20,7 @@ object NavRoutes {
     const val RANKING = "ranking"
     const val RECOMMENDATION = "recommendation"
     const val PROFILE = "profile"
+    const val EDIT_PROFILE = "edit_profile"
     const val PROFILE_USER = "profile/{userId}"
     const val WATCHLIST = "watchlist"
 }
@@ -60,6 +62,10 @@ fun NavGraph(
 
         composable(NavRoutes.PROFILE) {
             ProfileScreen(navController = navController)
+        }
+
+        composable(NavRoutes.EDIT_PROFILE) {
+            EditProfileScreen(navController = navController)
         }
 
         composable(NavRoutes.PROFILE_USER) { backStackEntry ->

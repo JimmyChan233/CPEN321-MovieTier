@@ -91,7 +91,7 @@ fun ProfileScreen(
 
                     // Avatar and user info header
                     Avatar(
-                        imageUrl = null,
+                        imageUrl = user.profileImageUrl,
                         name = user.name,
                         size = 80.dp
                     )
@@ -112,7 +112,18 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Edit Profile Button
+                    Button(
+                        onClick = { navController.navigate(NavRoutes.EDIT_PROFILE) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.filledTonalButtonColors()
+                    ) {
+                        Text("Edit Profile")
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("My Watchlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         TextButton(onClick = { navController.navigate(NavRoutes.WATCHLIST) }) { Text("View All") }

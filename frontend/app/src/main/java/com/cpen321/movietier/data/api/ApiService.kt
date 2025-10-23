@@ -29,6 +29,9 @@ interface ApiService {
         @Body user: User
     ): Response<ApiResponse<User>>
 
+    @PUT("users/profile")
+    suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<ApiResponse<User>>
+
     @GET("users/search")
     suspend fun searchUsers(@Query("query") query: String): Response<ApiResponse<List<User>>>
 

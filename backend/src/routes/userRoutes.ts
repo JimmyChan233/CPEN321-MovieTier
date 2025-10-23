@@ -28,6 +28,43 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Update current user's profile (name and profile picture)
+router.put('/profile', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { name, profileImageUrl } = req.body as { name?: string; profileImageUrl?: string };
+
+    if (!name && !profileImageUrl) {
+      return res.status(400).json({ success: false, message: 'At least one field (name or profileImageUrl) is required' });
+    }
+
+    const updateFields: any = {};
+    if (name) {
+      if (name.trim().length < 1) {
+        return res.status(400).json({ success: false, message: 'Name cannot be empty' });
+      }
+      updateFields.name = name.trim();
+    }
+    if (profileImageUrl !== undefined) {
+      updateFields.profileImageUrl = profileImageUrl;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    ).select('_id email name profileImageUrl');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update profile' });
+  }
+});
+
 router.get('/:userId', authenticate, async (req, res) => {
   try {
     const { userId } = req.params as { userId: string };

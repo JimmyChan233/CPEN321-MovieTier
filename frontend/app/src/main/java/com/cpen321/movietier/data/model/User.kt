@@ -39,3 +39,10 @@ data class ApiResponse<T>(
     @SerializedName("data")
     val data: T?
 )
+
+data class UpdateProfileRequest(
+    @SerializedName("name")
+    val name: String? = null,
+    @SerializedName("profileImageUrl")
+    val profileImageUrl: String? = null
+)
