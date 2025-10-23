@@ -27,7 +27,7 @@ export const addMovie = async (req: Request, res: Response) => {
 
     const rankedMovies = await RankedMovie.find({ userId: userObjectId }).sort({ rank: 1 });
 
-    // 🟩 Case 1: First movie
+    // Case 1: First movie
     if (rankedMovies.length === 0) {
       const rankedMovie = new RankedMovie({
         userId: userObjectId,
@@ -90,7 +90,7 @@ export const addMovie = async (req: Request, res: Response) => {
       return res.json({ success: true, status: 'added', data: rankedMovie });
     }
 
-    // 🟨 Case 2: Duplicate movie
+    // Case 2: Duplicate movie
     if (rankedMovies.some((m: IRankedMovie) => m.movieId === movieId)) {
       await removeFromWatchlistAll(userObjectId, userId, movieId)
       return res.status(400).json({
@@ -99,7 +99,7 @@ export const addMovie = async (req: Request, res: Response) => {
       });
     }
 
-    // 🟦 Case 3: Begin comparison
+    // Case 3: Begin comparison
     const middleIndex = Math.floor(rankedMovies.length / 2);
     const compareWith = rankedMovies[middleIndex];
     startSession(userId, { movieId, title, posterPath }, rankedMovies.length - 1);

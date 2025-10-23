@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-10-23      | 3.1 (Recommendation refresh), 3.4 (Recommendation use case) | Added refresh button to Discover page with improved randomization algorithm. Algorithm now randomly selects from top 30% of ranked movies, fetches from multiple TMDB pages (1-5), uses Fisher-Yates shuffle, and takes random windows to ensure variety on each refresh. |
 | 2025-10-23      | 3.1 (Watchlist synchronization) | Added automatic watchlist-ranking synchronization: movies are now removed from watchlist when added to rankings, ensuring watchlist only contains unwatched movies. |
 | 2025-10-15      | 3.1 (Feed notes + Watchlist), 3.4 (Feed detail + Watchlist), Design notes | Documented Feed enhancements (TMDB description, PST yyyy-MM-dd HH:mm timestamps, card layout), Ranking add via TMDB search, added Watchlist feature (add from feed detail, Profile preview + View All, friend watchlist view), and UI feedback notes. |
 | 2025-10-20      | 3.1, 3.4, Design notes | Added "Where to Watch" feature: Feed detail bottom sheet, Watchlist items, and Friend Profile watchlist fetch TMDB watch providers (country from device locale with CA fallback) and either open the TMDB watch link or show available platforms. Feed detail shows an availability line under actions. |
@@ -93,7 +94,8 @@ Design notes:
 
 - Use cases for feature 5: Recommendation
 
-1. View Recommended Movie List: The user can view a list of recommended movies that the application suggests based on their previously ranked movies. 
+1. View Recommended Movie List: The user can view a list of recommended movies that the application suggests based on their previously ranked movies.
+2. Refresh Recommendations: Users can refresh the recommendation list to see different movie suggestions. The system uses randomized algorithms to provide variety on each refresh while still maintaining relevance based on user rankings. 
 
 
 ### **3.5. Formal Use Case Specifications (5 Most Major Use Cases)**

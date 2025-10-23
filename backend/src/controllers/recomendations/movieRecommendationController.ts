@@ -9,45 +9,56 @@ export const getRecommendations = async (req: Request, res: Response) => {
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const tmdb = getTmdbClient();
 
-    // 1️⃣ Fetch ranked movies
+    // Step 1: Fetch ranked movies
     const rankedMovies = await RankedMovie.find({ userId: userObjectId }).sort({ rank: 1 });
     if (rankedMovies.length === 0) {
       return res.json({ success: true, data: [] });
     }
 
-    // 2️⃣ Take top 20% (minimum 1)
-    const topCount = Math.max(1, Math.ceil(rankedMovies.length * 0.2));
-    const topMovies = rankedMovies.slice(0, topCount);
+    // Step 2: Randomly select from top 30% movies (not always the same ones)
+    const topCount = Math.max(2, Math.ceil(rankedMovies.length * 0.3));
+    const topMoviePool = rankedMovies.slice(0, topCount);
 
-    // 3️⃣ Collect all recommended movies (with randomization for variety)
+    // Shuffle the pool and take 2-3 random movies each time
+    const shuffledPool = topMoviePool.sort(() => Math.random() - 0.5);
+    const numToUse = Math.min(3, Math.max(2, shuffledPool.length));
+    const selectedMovies = shuffledPool.slice(0, numToUse);
+
+    // Step 3: Collect recommendations from multiple pages for maximum variety
     const allRecs: any[] = [];
     const seenMovieIds = new Set(rankedMovies.map((m: any) => m.movieId));
 
-    for (const movie of topMovies) {
-      try {
-        // Randomly fetch from pages 1-3 for variety on each refresh
-        const randomPage = Math.floor(Math.random() * 3) + 1;
-        const { data } = await tmdb.get(`/movie/${movie.movieId}/recommendations`, {
-          params: { language: 'en-US', page: randomPage },
-        });
+    for (const movie of selectedMovies) {
+      // Fetch from 2 random pages per movie for more variety
+      const pages = [
+        Math.floor(Math.random() * 5) + 1,
+        Math.floor(Math.random() * 5) + 1
+      ];
 
-        if (data?.results?.length) {
-          const recs = data.results
-            .filter((r: any) => !seenMovieIds.has(r.id)) // remove already ranked
-            .map((r: any) => ({
-              id: r.id,
-              title: r.title,
-              overview: r.overview || null,
-              posterPath: r.poster_path || null,
-              releaseDate: r.release_date || null,
-              voteAverage: r.vote_average ?? null,
-              relatedTo: movie.title,
-              rankWeight: movie.rank, // to help with sorting
-            }));
-          allRecs.push(...recs);
+      for (const page of pages) {
+        try {
+          const { data } = await tmdb.get(`/movie/${movie.movieId}/recommendations`, {
+            params: { language: 'en-US', page },
+          });
+
+          if (data?.results?.length) {
+            const recs = data.results
+              .filter((r: any) => !seenMovieIds.has(r.id)) // remove already ranked
+              .map((r: any) => ({
+                id: r.id,
+                title: r.title,
+                overview: r.overview || null,
+                posterPath: r.poster_path || null,
+                releaseDate: r.release_date || null,
+                voteAverage: r.vote_average ?? null,
+                relatedTo: movie.title,
+                rankWeight: movie.rank,
+              }));
+            allRecs.push(...recs);
+          }
+        } catch (err) {
+          console.error(`TMDB error for movie ${movie.movieId}, page ${page}:`, err);
         }
-      } catch (err) {
-        console.error(`TMDB error for movie ${movie.movieId}:`, err);
       }
     }
 
@@ -55,26 +66,31 @@ export const getRecommendations = async (req: Request, res: Response) => {
       return res.json({ success: true, data: [] });
     }
 
-    // 4️⃣ Shuffle for variety, then prioritize highly-rated movies
-    const shuffled = allRecs.sort(() => Math.random() - 0.5);
+    // Step 4: Remove duplicates first
+    const uniqueMovies = Array.from(
+      new Map(allRecs.map((m: any) => [m.id, m])).values()
+    );
 
-    // Still prefer higher-rated movies, but with randomization
-    const topMovieTitle = topMovies[0].title;
-    const sorted = shuffled.sort((a, b) => {
-      // Add some randomness to ratings (±0.5) to vary results
-      const aRating = (a.voteAverage ?? 0) + (Math.random() - 0.5);
-      const bRating = (b.voteAverage ?? 0) + (Math.random() - 0.5);
+    // Fisher-Yates shuffle for true randomization
+    for (let i = uniqueMovies.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [uniqueMovies[i], uniqueMovies[j]] = [uniqueMovies[j], uniqueMovies[i]];
+    }
 
-      if (a.relatedTo === topMovieTitle && b.relatedTo !== topMovieTitle) return -1;
-      if (b.relatedTo === topMovieTitle && a.relatedTo !== topMovieTitle) return 1;
+    // Step 5: Lightly sort by quality, but keep high randomness
+    const sorted = uniqueMovies.sort((a, b) => {
+      // Add significant randomness to ratings (±2.0) for more variety
+      const aRating = (a.voteAverage ?? 0) + (Math.random() * 4 - 2);
+      const bRating = (b.voteAverage ?? 0) + (Math.random() * 4 - 2);
       return bRating - aRating;
     });
 
-    // 5️⃣ Remove duplicates by movieId and slice final list 10–20
-    const uniqueMovies = Array.from(
-      new Map(sorted.map((m: any) => [m.id, m])).values()
-    );
-    const finalList = uniqueMovies.slice(0, Math.min(20, Math.max(10, uniqueMovies.length)));
+    // Step 6: Take a random window of 15-20 movies (not always from the start)
+    const totalMovies = sorted.length;
+    const desiredCount = Math.min(totalMovies, 15 + Math.floor(Math.random() * 6)); // 15-20
+    const maxStartIndex = Math.max(0, totalMovies - desiredCount);
+    const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+    const finalList = sorted.slice(startIndex, startIndex + desiredCount);
 
     res.json({ success: true, data: finalList });
   } catch (error) {

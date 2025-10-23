@@ -63,7 +63,9 @@ fun FriendProfileScreen(
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(ui.watchlist, key = { it.id }) { item ->
-                    WatchItemRow(item) {
+                    WatchItemRow(
+                        item,
+                        onWhereToWatch = {
                         scope.launch {
                             // Prefer exact TMDB watch page for the movie
                             val tmdbLink = "https://www.themoviedb.org/movie/${item.movieId}/watch?locale=${country}"
@@ -100,7 +102,21 @@ fun FriendProfileScreen(
                                 else -> {}
                             }
                         }
-                    }
+                        },
+                        onAddToMyWatchlist = {
+                            scope.launch {
+                                when (val res = vm.addToMyWatchlist(item)) {
+                                    is com.cpen321.movietier.data.repository.Result.Success -> {
+                                        snackbarHostState.showSnackbar("Added to my watchlist")
+                                    }
+                                    is com.cpen321.movietier.data.repository.Result.Error -> {
+                                        snackbarHostState.showSnackbar(res.message ?: "Failed to add to my watchlist")
+                                    }
+                                    else -> {}
+                                }
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -108,7 +124,11 @@ fun FriendProfileScreen(
 }
 
 @Composable
-private fun WatchItemRow(item: WatchlistItem, onWhereToWatch: () -> Unit) {
+private fun WatchItemRow(
+    item: WatchlistItem,
+    onWhereToWatch: () -> Unit,
+    onAddToMyWatchlist: () -> Unit
+) {
     Card(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AsyncImage(
@@ -120,8 +140,13 @@ private fun WatchItemRow(item: WatchlistItem, onWhereToWatch: () -> Unit) {
                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 item.overview?.let { Text(it, maxLines = 3, style = MaterialTheme.typography.bodyMedium) }
                 Spacer(Modifier.height(8.dp))
-                FilledTonalButton(onClick = onWhereToWatch, modifier = Modifier.fillMaxWidth()) {
-                    Text("Where to Watch")
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilledTonalButton(onClick = onWhereToWatch, modifier = Modifier.fillMaxWidth()) {
+                        Text("Where to Watch")
+                    }
+                    Button(onClick = onAddToMyWatchlist, modifier = Modifier.fillMaxWidth()) {
+                        Text("Add to My Watchlist")
+                    }
                 }
             }
         }

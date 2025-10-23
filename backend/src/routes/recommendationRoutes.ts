@@ -9,7 +9,7 @@ const router = Router();
 //   res.json({ success: true, message: 'Recommendations route - placeholder', data: [] });
 // });
 
-// ✅ Get personalized movie recommendations
+// Get personalized movie recommendations
 router.get('/', authenticate, getRecommendations);
 
 

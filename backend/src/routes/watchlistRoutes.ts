@@ -31,7 +31,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         .json({ success: false, message: 'movieId and title are required' })
     }
 
-    // 🔍 Step 1: Check for duplicate
+    // Step 1: Check for duplicate
     const existing = await WatchlistItem.findOne({ userId: req.userId, movieId })
     if (existing) {
       return res.status(400).json({
@@ -40,7 +40,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
       })
     }
 
-    // ✅ Step 2: Enrich from TMDB if fields are missing
+    // Step 2: Enrich from TMDB if fields are missing
     let finalPoster = posterPath
     let finalOverview = overview
     if (!finalPoster || !finalOverview) {
@@ -52,7 +52,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
       } catch {}
     }
 
-    // ✅ Step 3: Add new movie
+    // Step 3: Add new movie
     const item = new WatchlistItem({
       userId: req.userId,
       movieId,

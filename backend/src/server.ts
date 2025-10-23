@@ -37,8 +37,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Database connection
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/movietier')
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
