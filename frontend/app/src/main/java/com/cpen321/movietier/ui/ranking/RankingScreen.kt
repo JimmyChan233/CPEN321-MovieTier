@@ -26,6 +26,11 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.foundation.background
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,10 +111,34 @@ fun RankingScreen(
                             items = uiState.rankedMovies,
                             key = { it.id }
                         ) { rankedMovie ->
-                            RankedMovieRow(
-                                rankedMovie = rankedMovie,
-                                onClick = { /* Navigate to detail or rerank */ }
-                            )
+                            var menuOpen by remember { mutableStateOf(false) }
+                            Box(modifier = Modifier
+                                .combinedClickable(
+                                    onClick = { /* open detail or noop */ },
+                                    onLongClick = { menuOpen = true }
+                                )
+                            ) {
+                                RankedMovieRow(
+                                    rankedMovie = rankedMovie,
+                                    onClick = { /* Navigate to detail or rerank */ }
+                                )
+                                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text("Rerank") },
+                                        onClick = {
+                                            menuOpen = false
+                                            rankingViewModel.startRerank(rankedMovie)
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Delete") },
+                                        onClick = {
+                                            menuOpen = false
+                                            rankingViewModel.deleteRank(rankedMovie.id)
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -283,33 +312,35 @@ private fun RankedMovieRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Large rank number/chip
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(60.dp)
+            // Left column: rank number on top, poster below
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
                     Text(
                         text = "#${rankedMovie.rank}",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
                 }
-            }
 
-            // Poster
-            rankedMovie.movie.posterPath?.let { poster ->
-                AsyncImage(
-                    model = "https://image.tmdb.org/t/p/w154$poster",
-                    contentDescription = rankedMovie.movie.title,
-                    modifier = Modifier
-                        .height(120.dp)
-                        .aspectRatio(2f / 3f)
-                        .clip(MaterialTheme.shapes.small),
-                    contentScale = ContentScale.Crop
-                )
+                rankedMovie.movie.posterPath?.let { poster ->
+                    AsyncImage(
+                        model = "https://image.tmdb.org/t/p/w185$poster",
+                        contentDescription = rankedMovie.movie.title,
+                        modifier = Modifier
+                            .height(140.dp)
+                            .aspectRatio(2f / 3f)
+                            .clip(MaterialTheme.shapes.small),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
 
             // Movie info in a smaller MovieCard style
@@ -319,21 +350,26 @@ private fun RankedMovieRow(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                (details?.releaseDate ?: rankedMovie.movie.releaseDate)?.let { releaseDate ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = releaseDate.take(4),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                (details?.voteAverage ?: rankedMovie.movie.voteAverage)?.let { rating ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Rating: %.1f".format(rating),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                // Year and rating on the same line
+                run {
+                    val year = (details?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
+                    val rating = (details?.voteAverage ?: rankedMovie.movie.voteAverage)
+                    val line = buildString {
+                        if (!year.isNullOrBlank()) append(year)
+                        if (rating != null) {
+                            if (isNotEmpty()) append(" • ")
+                            append("★ ")
+                            append("%.1f".format(rating))
+                        }
+                    }
+                    if (line.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = line,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 details?.cast?.take(3)?.let { cast ->
                     if (cast.isNotEmpty()) {

@@ -86,6 +86,11 @@ interface ApiService {
         @Body body: CompareMoviesRequest
     ): Response<AddMovieResponse>
 
+    @DELETE("movies/ranked/{id}")
+    suspend fun deleteRankedMovie(
+        @Path("id") id: String
+    ): Response<ApiResponse<Unit>>
+
     @GET("movies/{movieId}/providers")
     suspend fun getMovieProviders(
         @Path("movieId") movieId: Int,

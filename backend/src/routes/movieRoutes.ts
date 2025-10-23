@@ -10,6 +10,7 @@ import {
 } from '../controllers/movieComparisionController';
 import axios from 'axios';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
+import mongoose from 'mongoose';
 
 const router = Router();
 
@@ -176,6 +177,29 @@ router.post('/add', authenticate, addMovie);
 
 //placeholder compare
 router.post('/compare', authenticate, compareMovies);
+
+// Delete a ranked movie and re-sequence ranks
+router.delete('/ranked/:id', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as { id: string };
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid id' });
+    }
+    const doc = await RankedMovie.findOne({ _id: id, userId: req.userId });
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Ranked movie not found' });
+    }
+    const removedRank = doc.rank;
+    await doc.deleteOne();
+    await RankedMovie.updateMany(
+      { userId: req.userId, rank: { $gt: removedRank } },
+      { $inc: { rank: -1 } }
+    );
+    res.json({ success: true, message: 'Removed from rankings' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to remove ranked movie' });
+  }
+});
 
 // Get watch providers for a TMDB movie id
 router.get('/:movieId/providers', authenticate, async (req, res) => {

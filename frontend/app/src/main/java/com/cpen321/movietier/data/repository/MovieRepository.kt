@@ -152,4 +152,17 @@ suspend fun compareMovies(
             Result.Error(e, "Network error: ${e.message}")
         }
     }
+
+    suspend fun deleteRankedMovie(id: String): Result<Unit> {
+        return try {
+            val response = apiService.deleteRankedMovie(id)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(Exception("Failed to delete ranked movie: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
 }

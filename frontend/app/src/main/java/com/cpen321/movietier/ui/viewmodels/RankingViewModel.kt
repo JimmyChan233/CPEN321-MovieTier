@@ -101,6 +101,44 @@ class RankingViewModel @Inject constructor(
         }
     }
 
+    fun deleteRank(id: String) {
+        viewModelScope.launch {
+            when (val res = movieRepository.deleteRankedMovie(id)) {
+                is Result.Success -> {
+                    _events.emit(RankingEvent.Message("Removed from rankings"))
+                    loadRankedMovies()
+                }
+                is Result.Error -> {
+                    _events.emit(RankingEvent.Message(res.message ?: "Failed to remove"))
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun startRerank(item: RankedMovie) {
+        val list = _uiState.value.rankedMovies.sortedBy { it.rank }
+        if (list.size <= 1) {
+            viewModelScope.launch { _events.emit(RankingEvent.Message("Not enough movies to rerank")) }
+            return
+        }
+        val idx = list.indexOfFirst { it.id == item.id }
+        if (idx == -1) {
+            viewModelScope.launch { _events.emit(RankingEvent.Message("Movie not found in rankings")) }
+            return
+        }
+        val neighbor = when {
+            idx + 1 < list.size -> list[idx + 1]
+            idx - 1 >= 0 -> list[idx - 1]
+            else -> null
+        }
+        if (neighbor == null) {
+            viewModelScope.launch { _events.emit(RankingEvent.Message("No comparison candidate available")) }
+        } else {
+            _compareState.value = CompareUiState(newMovie = item.movie, compareWith = neighbor.movie)
+        }
+    }
+
 //    fun addMovieFromSearch(movie: Movie) {
 //        viewModelScope.launch {
 //            when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {
