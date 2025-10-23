@@ -93,7 +93,10 @@ export const addMovie = async (req: Request, res: Response) => {
     // 🟨 Case 2: Duplicate movie
     if (rankedMovies.some((m: IRankedMovie) => m.movieId === movieId)) {
       await removeFromWatchlistAll(userObjectId, userId, movieId)
-      return res.json({ success: true, status: 'added', data: null });
+      return res.status(400).json({
+        success: false,
+        message: 'Movie already ranked'
+      });
     }
 
     // 🟦 Case 3: Begin comparison

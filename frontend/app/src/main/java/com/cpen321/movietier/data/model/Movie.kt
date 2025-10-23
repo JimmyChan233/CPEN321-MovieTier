@@ -56,7 +56,9 @@ data class AddMovieResponse(
     @SerializedName("success")
     val success: Boolean,
     @SerializedName("status")
-    val status: String, // "added" or "compare"
+    val status: String?, // "added" or "compare"
+    @SerializedName("message")
+    val message: String?,
     @SerializedName("data")
     val data: CompareData?
 )

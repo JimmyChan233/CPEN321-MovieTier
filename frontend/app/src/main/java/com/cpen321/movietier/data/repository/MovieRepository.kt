@@ -62,7 +62,7 @@ class MovieRepository @Inject constructor(
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.Success(response.body()!!)
             } else {
-                Result.Error(Exception("Failed to add movie: ${response.message()}"))
+                Result.Error(Exception(response.body()?.message ?: "Failed to add movie"))
             }
         } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")
@@ -96,7 +96,7 @@ suspend fun compareMovies(
         if (response.isSuccessful && response.body()?.success == true) {
             Result.Success(response.body()!!)
         } else {
-            Result.Error(Exception("Failed to compare movies: ${response.message()}"))
+            Result.Error(Exception(response.body()?.message ?: "Failed to compare movies"))
         }
     } catch (e: Exception) {
         Result.Error(e, "Network error: ${e.message}")
