@@ -133,7 +133,8 @@ fun FriendsScreen(
                             ) { req ->
                                 OutgoingRequestRow(
                                     request = req,
-                                    onCancel = { friendViewModel.cancelOutgoingRequest(req.id) }
+                                    onCancel = { friendViewModel.cancelOutgoingRequest(req.id) },
+                                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
                                 )
                             }
                             item(key = "after_outgoing_spacer") { Spacer(Modifier.height(16.dp)) }
@@ -163,7 +164,8 @@ fun FriendsScreen(
                                 RequestRow(
                                     request = req,
                                     onAccept = { friendViewModel.respondToRequest(req.id, true) },
-                                    onReject = { friendViewModel.respondToRequest(req.id, false) }
+                                    onReject = { friendViewModel.respondToRequest(req.id, false) },
+                                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
                                 )
                             }
                         }
@@ -455,7 +457,8 @@ fun AddFriendDialog(
 private fun RequestRow(
     request: FriendRequestUi,
     onAccept: () -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
+    onViewProfile: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -491,6 +494,7 @@ private fun RequestRow(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onReject) { Text("Reject") }
                 Button(onClick = onAccept) { Text("Accept") }
+                TextButton(onClick = onViewProfile) { Text("View Profile") }
             }
         }
     }
@@ -499,7 +503,8 @@ private fun RequestRow(
 @Composable
 private fun OutgoingRequestRow(
     request: FriendRequestUi,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onViewProfile: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -532,7 +537,10 @@ private fun OutgoingRequestRow(
                     )
                 }
             }
-            OutlinedButton(onClick = onCancel) { Text("Cancel") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onCancel) { Text("Cancel") }
+                TextButton(onClick = onViewProfile) { Text("View Profile") }
+            }
         }
     }
 }
