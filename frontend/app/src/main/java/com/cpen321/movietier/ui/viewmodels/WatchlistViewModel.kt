@@ -44,4 +44,14 @@ class WatchlistViewModel @Inject constructor(
     suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
         return movieRepository.getWatchProviders(movieId, country)
     }
+
+    fun removeFromWatchlist(movieId: Int) {
+        viewModelScope.launch {
+            when (val res = repo.removeFromWatchlist(movieId)) {
+                is Result.Success -> load()
+                is Result.Error -> _ui.value = _ui.value.copy(error = res.message)
+                else -> {}
+            }
+        }
+    }
 }

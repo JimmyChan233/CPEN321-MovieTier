@@ -1,8 +1,12 @@
 package com.cpen321.movietier.ui.watchlist
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -21,7 +25,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun WatchlistScreen(
     navController: NavController,
@@ -32,10 +36,17 @@ fun WatchlistScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var itemToDelete by remember { mutableStateOf<com.cpen321.movietier.data.model.WatchlistItem?>(null) }
 
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
-            title = { Text("My Watchlist", style = MaterialTheme.typography.titleMedium) }
+            title = { Text("My Watchlist", style = MaterialTheme.typography.titleMedium) },
+            navigationIcon = {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            }
         )
     }, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         if (ui.isLoading) {
@@ -47,7 +58,17 @@ fun WatchlistScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(ui.items, key = { it.id }) { item ->
-                    Card(Modifier.fillMaxWidth()) {
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = {
+                                    itemToDelete = item
+                                    showDeleteDialog = true
+                                }
+                            )
+                    ) {
                         Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title, modifier = Modifier.height(140.dp).aspectRatio(2f/3f))
                             Column(Modifier.weight(1f)) {
@@ -103,6 +124,45 @@ fun WatchlistScreen(
                 }
             }
         }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog && itemToDelete != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteDialog = false
+                itemToDelete = null
+            },
+            title = { Text("Remove from Watchlist") },
+            text = { Text("Remove \"${itemToDelete?.title}\" from your watchlist?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        itemToDelete?.let { vm.removeFromWatchlist(it.movieId) }
+                        showDeleteDialog = false
+                        itemToDelete = null
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Removed from watchlist")
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        itemToDelete = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     // Refresh watchlist when screen resumes to reflect changes from ranking actions
