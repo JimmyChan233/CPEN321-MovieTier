@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import FeedActivity from '../models/feed/FeedActivity';
+import RankedMovie from '../models/movie/RankedMovie';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
 import { Friendship } from '../models/friend/Friend';
 import { sseService } from '../services/sse/sseService';
@@ -31,23 +32,43 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
       } catch {}
     }));
 
-    const shaped = activities.map((a: any) => ({
-      _id: a._id,
-      userId: a.userId?._id,
-      userName: a.userId?.name,
-      userProfileImage: a.userId?.profileImageUrl,
-      activityType: a.activityType,
-      movie: {
-        id: a.movieId,
-        title: a.movieTitle,
-        posterPath: a.posterPath || null,
-        overview: a.overview || null,
-        releaseDate: null,
-        voteAverage: null
-      },
-      rank: a.rank ?? null,
-      createdAt: a.createdAt
+    // Fetch current ranks from RankedMovie to ensure accuracy
+    const movieRankMap = new Map<string, number>();
+    await Promise.all(activities.map(async (a: any) => {
+      try {
+        const rankedMovie = await RankedMovie.findOne({
+          userId: a.userId?._id,
+          movieId: a.movieId
+        });
+        if (rankedMovie) {
+          const key = `${a.userId?._id}_${a.movieId}`;
+          movieRankMap.set(key, rankedMovie.rank);
+        }
+      } catch {}
     }));
+
+    const shaped = activities.map((a: any) => {
+      const key = `${a.userId?._id}_${a.movieId}`;
+      const currentRank = movieRankMap.get(key);
+
+      return {
+        _id: a._id,
+        userId: a.userId?._id,
+        userName: a.userId?.name,
+        userProfileImage: a.userId?.profileImageUrl,
+        activityType: a.activityType,
+        movie: {
+          id: a.movieId,
+          title: a.movieTitle,
+          posterPath: a.posterPath || null,
+          overview: a.overview || null,
+          releaseDate: null,
+          voteAverage: null
+        },
+        rank: currentRank ?? null,
+        createdAt: a.createdAt
+      };
+    });
 
     res.json({ success: true, data: shaped });
   } catch (error) {
