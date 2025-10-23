@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ext": "ts,js,json",
+  "ignore": ["src/**/*.spec.ts", "src/**/*.test.ts", "node_modules"],
+  "exec": "ts-node src/server.ts",
+  "verbose": true,
+  "events": {
+    "restart": "echo '\n\n🔄 File changed - Restarting server...\n'",
+    "start": "echo '\n✅ Server started successfully\n'",
+    "crash": "echo '\n❌ Server crashed - waiting for file changes...\n'"
+  }
+}

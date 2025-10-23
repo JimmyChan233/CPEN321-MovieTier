@@ -1,6 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import User, { IUser } from '../../models/user/User';
+import { logger } from '../../utils/logger';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -30,24 +31,29 @@ export class AuthService {
 
   async signIn(idToken: string): Promise<{ user: IUser; token: string }> {
     const googleData = await this.verifyGoogleToken(idToken);
+    logger.info(`Sign in attempt for email: ${googleData.email}`);
 
     const user = await User.findOne({ email: googleData.email });
 
     if (!user) {
+      logger.warn(`Sign in failed: user not found for ${googleData.email}`);
       throw new Error('User not found. Please sign up first.');
     }
 
     const token = this.generateToken(String(user._id));
+    logger.success(`User signed in: ${user.email} (${user._id})`);
 
     return { user, token };
   }
 
   async signUp(idToken: string): Promise<{ user: IUser; token: string }> {
     const googleData = await this.verifyGoogleToken(idToken);
+    logger.info(`Sign up attempt for email: ${googleData.email}`);
 
     const existingUser = await User.findOne({ email: googleData.email });
 
     if (existingUser) {
+      logger.warn(`Sign up failed: user already exists for ${googleData.email}`);
       throw new Error('User already exists. Please sign in.');
     }
 
@@ -59,6 +65,7 @@ export class AuthService {
     });
 
     await user.save();
+    logger.success(`New user created: ${user.email} (${user._id})`);
 
     const token = this.generateToken(String(user._id));
 

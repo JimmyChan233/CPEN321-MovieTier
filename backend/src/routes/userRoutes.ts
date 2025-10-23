@@ -3,6 +3,7 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 import User from '../models/user/User';
 import mongoose from 'mongoose';
 import WatchlistItem from '../models/watch/WatchlistItem';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -32,14 +33,17 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
 router.put('/profile', authenticate, async (req: AuthRequest, res) => {
   try {
     const { name, profileImageUrl } = req.body as { name?: string; profileImageUrl?: string };
+    logger.info(`Profile update request for user ${req.userId}`, { name: name ? 'updating' : 'unchanged', image: profileImageUrl !== undefined ? 'updating' : 'unchanged' });
 
     if (!name && !profileImageUrl) {
+      logger.warn('Profile update failed: no fields provided');
       return res.status(400).json({ success: false, message: 'At least one field (name or profileImageUrl) is required' });
     }
 
     const updateFields: any = {};
     if (name) {
       if (name.trim().length < 1) {
+        logger.warn('Profile update failed: empty name');
         return res.status(400).json({ success: false, message: 'Name cannot be empty' });
       }
       updateFields.name = name.trim();
@@ -55,12 +59,14 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
     ).select('_id email name profileImageUrl');
 
     if (!user) {
+      logger.error(`Profile update failed: user ${req.userId} not found`);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    logger.success(`Profile updated for user ${req.userId}`);
     res.json({ success: true, data: user });
   } catch (error) {
-    console.error('Update profile error:', error);
+    logger.error('Profile update error:', error);
     res.status(500).json({ success: false, message: 'Failed to update profile' });
   }
 });

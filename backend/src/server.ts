@@ -11,8 +11,10 @@ import recommendationRoutes from './routes/recommendationRoutes';
 import watchlistRoutes from './routes/watchlistRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { Request, Response, NextFunction } from 'express';
+import { logger } from './utils/logger';
 
 dotenv.config();
+logger.info('Environment variables loaded');
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
@@ -22,25 +24,34 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Simple request logger
+// Request logger middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
   const { method, originalUrl } = req;
-  console.log(`➡️  ${method} ${originalUrl}`);
+
   res.on('finish', () => {
-    const ms = Date.now() - start;
-    console.log(`⬅️  ${method} ${originalUrl} ${res.statusCode} ${ms}ms`);
+    const duration = Date.now() - start;
+    logger.http(method, originalUrl, res.statusCode, duration);
   });
   next();
 });
 
 // Database connection
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/movietier';
+logger.info('Connecting to MongoDB...', { uri: mongoUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') });
+
 mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/movietier')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+  .connect(mongoUri)
+  .then(() => {
+    logger.success('Connected to MongoDB');
+  })
+  .catch((err) => {
+    logger.error('MongoDB connection error:', err.message);
+    process.exit(1);
+  });
 
 // Routes
+logger.info('Registering API routes...');
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
@@ -48,6 +59,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/watchlist', watchlistRoutes);
+logger.success('API routes registered');
 
 // Health check
 app.get('/health', (req, res) => {
@@ -59,8 +71,9 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.success(`Server running on port ${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`API endpoints available at: http://localhost:${PORT}/api`);
 });
 
 export default app;

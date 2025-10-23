@@ -17,9 +17,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class WatchlistSort { DATE_DESC, DATE_ASC, RATING_DESC, RATING_ASC }
+
 data class WatchlistUiState(
     val isLoading: Boolean = false,
     val items: List<WatchlistItem> = emptyList(),
+    val displayed: List<WatchlistItem> = emptyList(),
+    val sort: WatchlistSort = WatchlistSort.DATE_DESC,
     val error: String? = null
 )
 
@@ -48,8 +52,17 @@ class WatchlistViewModel @Inject constructor(
         viewModelScope.launch {
             _ui.value = _ui.value.copy(isLoading = true)
             when (val res = repo.getWatchlist()) {
-                is Result.Success -> _ui.value = WatchlistUiState(false, res.data, null)
-                is Result.Error -> _ui.value = WatchlistUiState(false, emptyList(), res.message)
+                is Result.Success -> {
+                    val items = res.data
+                    _ui.value = _ui.value.copy(
+                        isLoading = false,
+                        items = items,
+                        displayed = sortList(items, _ui.value.sort),
+                        error = null
+                    )
+                    prefetchRatings(items)
+                }
+                is Result.Error -> _ui.value = WatchlistUiState(false, emptyList(), emptyList(), WatchlistSort.DATE_DESC, res.message)
                 else -> {}
             }
         }
@@ -66,6 +79,49 @@ class WatchlistViewModel @Inject constructor(
                 is Result.Error -> _ui.value = _ui.value.copy(error = res.message)
                 else -> {}
             }
+        }
+    }
+
+    private val ratingsCache = mutableMapOf<Int, Double?>()
+
+    private fun prefetchRatings(items: List<WatchlistItem>) {
+        items.take(40).forEach { item ->
+            if (!ratingsCache.containsKey(item.movieId)) {
+                viewModelScope.launch {
+                    when (val res = movieRepository.getMovieDetails(item.movieId)) {
+                        is Result.Success -> {
+                            ratingsCache[item.movieId] = res.data.voteAverage
+                            if (_ui.value.sort == WatchlistSort.RATING_DESC || _ui.value.sort == WatchlistSort.RATING_ASC) {
+                                _ui.value = _ui.value.copy(displayed = sortList(_ui.value.items, _ui.value.sort))
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
+    }
+
+    private fun sortList(list: List<WatchlistItem>, sort: WatchlistSort): List<WatchlistItem> {
+        return when (sort) {
+            WatchlistSort.DATE_DESC -> list.sortedByDescending { it.createdAt }
+            WatchlistSort.DATE_ASC -> list.sortedBy { it.createdAt }
+            WatchlistSort.RATING_DESC -> list.sortedWith(
+                compareByDescending<WatchlistItem> { ratingsCache[it.movieId] ?: Double.NEGATIVE_INFINITY }
+                    .thenByDescending { it.createdAt }
+            )
+            WatchlistSort.RATING_ASC -> list.sortedWith(
+                compareBy<WatchlistItem> { ratingsCache[it.movieId] ?: Double.POSITIVE_INFINITY }
+                    .thenByDescending { it.createdAt }
+            )
+        }
+    }
+
+    fun setSort(sort: WatchlistSort) {
+        val items = _ui.value.items
+        _ui.value = _ui.value.copy(sort = sort, displayed = sortList(items, sort))
+        if (sort == WatchlistSort.RATING_ASC || sort == WatchlistSort.RATING_DESC) {
+            prefetchRatings(items)
         }
     }
 

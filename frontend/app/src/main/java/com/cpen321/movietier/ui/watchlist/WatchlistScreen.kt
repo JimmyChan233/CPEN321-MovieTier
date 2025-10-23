@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -41,11 +42,35 @@ fun WatchlistScreen(
     var itemToDelete by remember { mutableStateOf<com.cpen321.movietier.data.model.WatchlistItem?>(null) }
 
     Scaffold(topBar = {
+        var sortMenu by remember { mutableStateOf(false) }
         CenterAlignedTopAppBar(
             title = { Text("My Watchlist", style = MaterialTheme.typography.titleMedium) },
             navigationIcon = {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            },
+            actions = {
+                IconButton(onClick = { sortMenu = true }) {
+                    Icon(Icons.Default.Sort, contentDescription = "Sort")
+                }
+                DropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Date Added (Newest)") },
+                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_DESC) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Date Added (Oldest)") },
+                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_ASC) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Rating (High → Low)") },
+                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_DESC) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Rating (Low → High)") },
+                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_ASC) }
+                    )
                 }
             }
         )
@@ -58,7 +83,7 @@ fun WatchlistScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(ui.items, key = { it.id }) { item ->
+                items(ui.displayed, key = { it.id }) { item ->
                     Card(
                         Modifier
                             .fillMaxWidth()
@@ -126,7 +151,7 @@ fun WatchlistScreen(
                         }
                     }
                 }
-                if (ui.items.isEmpty()) {
+                if (ui.displayed.isEmpty()) {
                     item { Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
