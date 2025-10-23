@@ -11,6 +11,7 @@ class MovieRepository @Inject constructor(
     private val apiService: ApiService,
     private val providersCache: ProvidersCache
 ) {
+    private val detailsCache = mutableMapOf<Int, Movie>()
     suspend fun searchMovies(query: String): Result<List<Movie>> {
         return try {
             val response = apiService.searchMovies(query)
@@ -132,6 +133,22 @@ suspend fun compareMovies(
             }
         } catch (e: Exception) {
             // Optional: fall back to stale cache in the future
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun getMovieDetails(movieId: Int): Result<Movie> {
+        detailsCache[movieId]?.let { return Result.Success(it) }
+        return try {
+            val response = apiService.getMovieDetails(movieId)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                val data = response.body()!!.data!!
+                detailsCache[movieId] = data
+                Result.Success(data)
+            } else {
+                Result.Error(Exception("Failed to get details: ${response.message()}"))
+            }
+        } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }

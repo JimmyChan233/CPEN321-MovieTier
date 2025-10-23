@@ -22,6 +22,10 @@ import com.cpen321.movietier.ui.components.LoadingState
 import com.cpen321.movietier.ui.components.MovieCard
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.RankingViewModel
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +147,7 @@ fun RankingScreen(
                     }
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.heightIn(max = 300.dp)
+                        modifier = Modifier.heightIn(max = 520.dp)
                     ) {
                         items(searchResults, key = { it.id }) { movie ->
                             Card(Modifier.fillMaxWidth().testTag("search_result_${'$'}{movie.id}")) {
@@ -152,12 +156,38 @@ fun RankingScreen(
                                         .fillMaxWidth()
                                         .padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
+                                    AsyncImage(
+                                        model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w154$it" },
+                                        contentDescription = movie.title,
+                                        modifier = Modifier
+                                            .height(96.dp)
+                                            .aspectRatio(2f / 3f)
+                                            .clip(MaterialTheme.shapes.small),
+                                        contentScale = ContentScale.Crop
+                                    )
                                     Column(Modifier.weight(1f)) {
-                                        Text(movie.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                                        movie.releaseDate?.take(4)?.let { year ->
-                                            Text(year, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(
+                                            movie.title,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        val subtitle = buildString {
+                                            movie.releaseDate?.take(4)?.let { append(it) }
+                                            val castStr = movie.cast?.take(3)?.joinToString()
+                                            if (!castStr.isNullOrBlank()) {
+                                                if (isNotEmpty()) append(" • ")
+                                                append(castStr)
+                                            }
+                                        }
+                                        if (subtitle.isNotBlank()) {
+                                            Text(
+                                                subtitle,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 3
+                                            )
                                         }
                                     }
                                     TextButton(onClick = {
@@ -232,6 +262,14 @@ private fun RankedMovieRow(
     rankedMovie: com.cpen321.movietier.data.model.RankedMovie,
     onClick: () -> Unit
 ) {
+    val vm: RankingViewModel = hiltViewModel()
+    var details by remember(rankedMovie.movie.id) { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
+    LaunchedEffect(rankedMovie.movie.id) {
+        when (val res = vm.getMovieDetails(rankedMovie.movie.id)) {
+            is com.cpen321.movietier.data.repository.Result.Success -> details = res.data
+            else -> {}
+        }
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -261,6 +299,19 @@ private fun RankedMovieRow(
                 }
             }
 
+            // Poster
+            rankedMovie.movie.posterPath?.let { poster ->
+                AsyncImage(
+                    model = "https://image.tmdb.org/t/p/w154$poster",
+                    contentDescription = rankedMovie.movie.title,
+                    modifier = Modifier
+                        .height(120.dp)
+                        .aspectRatio(2f / 3f)
+                        .clip(MaterialTheme.shapes.small),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
             // Movie info in a smaller MovieCard style
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -268,7 +319,7 @@ private fun RankedMovieRow(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                rankedMovie.movie.releaseDate?.let { releaseDate ->
+                (details?.releaseDate ?: rankedMovie.movie.releaseDate)?.let { releaseDate ->
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = releaseDate.take(4),
@@ -276,13 +327,37 @@ private fun RankedMovieRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                rankedMovie.movie.voteAverage?.let { rating ->
+                (details?.voteAverage ?: rankedMovie.movie.voteAverage)?.let { rating ->
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Rating: %.1f".format(rating),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+                details?.cast?.take(3)?.let { cast ->
+                    if (cast.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = cast.joinToString(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                (details?.overview ?: rankedMovie.movie.overview)?.let { overview ->
+                    if (overview.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = overview,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }

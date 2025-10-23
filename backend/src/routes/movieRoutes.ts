@@ -35,7 +35,9 @@ router.get('/search', authenticate, async (req, res) => {
       }
     });
 
-    const mapped = (data.results || []).map((m: any) => ({
+    const includeCast = String(req.query.includeCast || 'false').toLowerCase() === 'true';
+
+    const baseResults: any[] = (data.results || []).map((m: any) => ({
       id: m.id,
       title: m.title,
       overview: m.overview || null,
@@ -44,7 +46,25 @@ router.get('/search', authenticate, async (req, res) => {
       voteAverage: m.vote_average ?? null
     }));
 
-    res.json({ success: true, data: mapped });
+    if (!includeCast || baseResults.length === 0) {
+      return res.json({ success: true, data: baseResults });
+    }
+
+    // Enrich with top cast names (up to 3) for first up to 10 results
+    const limit = Math.min(baseResults.length, 10);
+    const enriched = await Promise.all(
+      baseResults.slice(0, limit).map(async (r) => {
+        try {
+          const { data: credits } = await tmdb.get(`/movie/${r.id}/credits`, { params: { language: 'en-US' } });
+          const cast = Array.isArray(credits?.cast) ? credits.cast.slice(0, 3).map((c: any) => c.name).filter(Boolean) : [];
+          return { ...r, cast };
+        } catch {
+          return { ...r, cast: [] };
+        }
+      })
+    );
+    const combined = enriched.concat(baseResults.slice(limit));
+    res.json({ success: true, data: combined });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to search movies' });
   }
@@ -192,6 +212,41 @@ router.get('/:movieId/providers', authenticate, async (req, res) => {
     res.json({ success: true, data: payload });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get watch providers' });
+  }
+});
+
+// Get movie details + top cast from TMDB
+router.get('/:movieId/details', authenticate, async (req, res) => {
+  try {
+    const movieId = Number(req.params.movieId);
+    if (!movieId || Number.isNaN(movieId)) {
+      return res.status(400).json({ success: false, message: 'Invalid movie id' });
+    }
+    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ success: false, message: 'TMDB API key not configured' });
+    }
+    const tmdb = getTmdbClient();
+    const [detailsResp, creditsResp] = await Promise.all([
+      tmdb.get(`/movie/${movieId}`, { params: { language: 'en-US' } }),
+      tmdb.get(`/movie/${movieId}/credits`, { params: { language: 'en-US' } })
+    ]);
+    const d = detailsResp.data || {};
+    const cast = Array.isArray(creditsResp.data?.cast)
+      ? creditsResp.data.cast.slice(0, 5).map((c: any) => c?.name).filter(Boolean)
+      : [];
+    const shaped = {
+      id: d.id,
+      title: d.title,
+      overview: d.overview || null,
+      posterPath: d.poster_path || null,
+      releaseDate: d.release_date || null,
+      voteAverage: d.vote_average ?? null,
+      cast
+    };
+    res.json({ success: true, data: shaped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get movie details' });
   }
 });
 

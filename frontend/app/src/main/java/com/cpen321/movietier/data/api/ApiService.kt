@@ -62,7 +62,10 @@ interface ApiService {
 
     // Movies
     @GET("movies/search")
-    suspend fun searchMovies(@Query("query") query: String): Response<ApiResponse<List<Movie>>>
+    suspend fun searchMovies(
+        @Query("query") query: String,
+        @Query("includeCast") includeCast: Boolean = true
+    ): Response<ApiResponse<List<Movie>>>
 
     @GET("movies/ranked")
     suspend fun getRankedMovies(): Response<ApiResponse<List<RankedMovie>>>
@@ -88,6 +91,11 @@ interface ApiService {
         @Path("movieId") movieId: Int,
         @Query("country") country: String = "US"
     ): Response<ApiResponse<WatchProviders>>
+
+    @GET("movies/{movieId}/details")
+    suspend fun getMovieDetails(
+        @Path("movieId") movieId: Int
+    ): Response<ApiResponse<Movie>>
 
     // Feed
     @GET("feed")

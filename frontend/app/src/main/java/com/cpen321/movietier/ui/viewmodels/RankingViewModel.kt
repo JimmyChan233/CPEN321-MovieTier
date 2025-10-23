@@ -49,6 +49,10 @@ class RankingViewModel @Inject constructor(
         loadRankedMovies()
     }
 
+    suspend fun getMovieDetails(movieId: Int): Result<Movie> {
+        return movieRepository.getMovieDetails(movieId)
+    }
+
     fun loadRankedMovies() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)

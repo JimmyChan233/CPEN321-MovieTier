@@ -14,7 +14,9 @@ data class Movie(
     @SerializedName("releaseDate")
     val releaseDate: String?,
     @SerializedName("voteAverage")
-    val voteAverage: Double?
+    val voteAverage: Double?,
+    @SerializedName("cast")
+    val cast: List<String>? = null
 )
 
 data class RankedMovie(
