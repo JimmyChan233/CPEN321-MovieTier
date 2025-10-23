@@ -203,7 +203,10 @@ fun FriendsScreen(
 
     if (showAddFriendDialog) {
         AddFriendDialog(
-            onDismiss = { showAddFriendDialog = false },
+            onDismiss = {
+                friendViewModel.clearSearch()
+                showAddFriendDialog = false
+            },
             onSendRequest = { email ->
                 friendViewModel.sendFriendRequest(email)
                 showAddFriendDialog = false
@@ -460,9 +463,22 @@ private fun RequestRow(
     onReject: () -> Unit,
     onViewProfile: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        label = "request_row_scale"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onViewProfile
+            )
             .testTag("request_row_${'$'}{request.id}")
     ) {
         Row(
@@ -475,7 +491,7 @@ private fun RequestRow(
             Avatar(
                 imageUrl = request.senderProfileImage,
                 name = request.senderName.ifBlank { request.senderId.takeLast(6) },
-                size = 40.dp
+                size = 48.dp
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -494,7 +510,6 @@ private fun RequestRow(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onReject) { Text("Reject") }
                 Button(onClick = onAccept) { Text("Accept") }
-                TextButton(onClick = onViewProfile) { Text("View Profile") }
             }
         }
     }
@@ -506,9 +521,22 @@ private fun OutgoingRequestRow(
     onCancel: () -> Unit,
     onViewProfile: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        label = "outgoing_request_row_scale"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onViewProfile
+            )
             .testTag("outgoing_request_row_${'$'}{request.id}")
     ) {
         Row(
@@ -521,7 +549,7 @@ private fun OutgoingRequestRow(
             Avatar(
                 imageUrl = request.senderProfileImage,
                 name = request.senderName.ifBlank { request.senderId.takeLast(6) },
-                size = 40.dp
+                size = 48.dp
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -537,10 +565,7 @@ private fun OutgoingRequestRow(
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onCancel) { Text("Cancel") }
-                TextButton(onClick = onViewProfile) { Text("View Profile") }
-            }
+            OutlinedButton(onClick = onCancel) { Text("Cancel") }
         }
     }
 }

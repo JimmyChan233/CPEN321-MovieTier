@@ -89,6 +89,10 @@ class FriendViewModel @Inject constructor(
         }
     }
 
+    fun clearSearch() {
+        _searchResults.value = emptyList()
+    }
+
     fun loadRequests() {
         viewModelScope.launch {
             when (val result = friendRepository.getFriendRequestsDetailed()) {
@@ -116,6 +120,7 @@ class FriendViewModel @Inject constructor(
             when (val res = friendRepository.sendFriendRequest(email)) {
                 is Result.Success -> {
                     _events.emit(UiEvent.Message("Friend request sent"))
+                    clearSearch()
                     loadRequests()
                     loadOutgoingRequests()
                 }
