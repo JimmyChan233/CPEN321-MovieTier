@@ -17,6 +17,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 import android.net.Uri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,5 +103,18 @@ fun WatchlistScreen(
                 }
             }
         }
+    }
+
+    // Refresh watchlist when screen resumes to reflect changes from ranking actions
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.load()
+            }
+        }
+        val lifecycle = lifecycleOwner.lifecycle
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 }

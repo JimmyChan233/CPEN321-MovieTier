@@ -11,6 +11,12 @@ import {
   endSession,
 } from '../utils/comparisonSession';
 import { IRankedMovie } from '../models/movie/RankedMovie';
+import WatchlistItem from '../models/watch/WatchlistItem';
+
+async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
+  try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}
+  try { await WatchlistItem.deleteOne({ userId: userIdStr as any, movieId }); } catch {}
+}
 
 
 export const addMovie = async (req: Request, res: Response) => {
@@ -31,6 +37,9 @@ export const addMovie = async (req: Request, res: Response) => {
         rank: 1,
       });
       await rankedMovie.save();
+
+      // Remove from watchlist if present
+      await removeFromWatchlistAll(userObjectId, userId, movieId)
 
     //   // Optional: add feed activity
     //   const activity = new FeedActivity({
@@ -83,7 +92,8 @@ export const addMovie = async (req: Request, res: Response) => {
 
     // 🟨 Case 2: Duplicate movie
     if (rankedMovies.some((m: IRankedMovie) => m.movieId === movieId)) {
-      return res.status(400).json({ success: false, message: 'Movie already ranked' });
+      await removeFromWatchlistAll(userObjectId, userId, movieId)
+      return res.json({ success: true, status: 'added', data: null });
     }
 
     // 🟦 Case 3: Begin comparison
@@ -148,6 +158,9 @@ export const compareMovies = async (req: Request, res: Response) => {
       });
 
       await movie.save();
+
+      // Remove from watchlist if present
+      await removeFromWatchlistAll(userObjectId, userId, movie.movieId)
       endSession(userId);
 
     //   // Optional: feed update
