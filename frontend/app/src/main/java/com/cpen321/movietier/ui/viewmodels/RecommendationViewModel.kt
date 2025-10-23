@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.cpen321.movietier.data.repository.WatchlistRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
+import com.cpen321.movietier.data.model.WatchProviders
 
 data class RecommendationUiState(
     val isLoading: Boolean = false,
@@ -71,5 +72,9 @@ class RecommendationViewModel @Inject constructor(
                 else -> {}
             }
         }
+    }
+
+    suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
+        return movieRepository.getWatchProviders(movieId, country)
     }
 }

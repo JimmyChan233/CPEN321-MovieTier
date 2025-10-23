@@ -18,6 +18,10 @@ import com.cpen321.movietier.data.model.Movie
 import com.cpen321.movietier.ui.components.*
 import com.cpen321.movietier.ui.viewmodels.RecommendationViewModel
 import com.cpen321.movietier.ui.viewmodels.RankingViewModel
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +32,9 @@ fun RecommendationScreen(
     val uiState by recommendationViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
 
     LaunchedEffect(Unit) {
         recommendationViewModel.events.collect { event ->
@@ -132,6 +139,44 @@ fun RecommendationScreen(
                         selectedMovie?.let { movie ->
                             MovieDetailBottomSheet(
                                 movie = movie,
+                                onOpenWhereToWatch = {
+                                    scope.launch {
+                                        // Prefer exact TMDB watch page for the movie
+                                        val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
+                                            context.startActivity(intent)
+                                            return@launch
+                                        } catch (_: Exception) {}
+
+                                        when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
+                                            is com.cpen321.movietier.data.repository.Result.Success -> {
+                                                val link = res.data.link
+                                                val providers = buildList {
+                                                    addAll(res.data.providers.flatrate)
+                                                    addAll(res.data.providers.rent)
+                                                    addAll(res.data.providers.buy)
+                                                }.distinct()
+                                                if (!link.isNullOrBlank()) {
+                                                    try {
+                                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                                        context.startActivity(intent)
+                                                    } catch (e: Exception) {
+                                                        snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                                    }
+                                                } else if (providers.isNotEmpty()) {
+                                                    snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                                } else {
+                                                    snackbarHostState.showSnackbar("No streaming info found")
+                                                }
+                                            }
+                                            is com.cpen321.movietier.data.repository.Result.Error -> {
+                                                snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                            }
+                                            else -> {}
+                                        }
+                                    }
+                                },
                                 onAddToWatchlist = {
                                     recommendationViewModel.addToWatchlist(movie)
                                     // Close sheet so snackbar is visible immediately
