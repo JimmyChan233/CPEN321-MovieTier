@@ -221,10 +221,14 @@ router.get('/:movieId/providers', authenticate, async (req, res) => {
     }
 
     const tmdb = getTmdbClient();
-    const { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
-    const result = data?.results?.[country] || {};
+  const { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
+  const result = data?.results?.[country] || {};
 
-    const link: string | null = result.link || null;
+  let link: string | null = result.link || null;
+  if (!link) {
+    // Fallback to TMDB movie watch page for the exact movie
+    link = `https://www.themoviedb.org/movie/${movieId}/watch?locale=${country}`;
+  }
     const mapProviders = (arr: any[] | undefined) =>
       Array.isArray(arr) ? arr.map((p: any) => p.provider_name).filter(Boolean) : [];
 

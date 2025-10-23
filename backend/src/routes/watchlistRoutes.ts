@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import WatchlistItem from '../models/watch/WatchlistItem';
+import { getTmdbClient } from '../services/tmdb/tmdbClient';
 
 const router = Router();
 
@@ -39,13 +40,25 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
       })
     }
 
-    // ✅ Step 2: Add new movie if not found
+    // ✅ Step 2: Enrich from TMDB if fields are missing
+    let finalPoster = posterPath
+    let finalOverview = overview
+    if (!finalPoster || !finalOverview) {
+      try {
+        const tmdb = getTmdbClient()
+        const { data } = await tmdb.get(`/movie/${movieId}`, { params: { language: 'en-US' } })
+        if (!finalPoster) finalPoster = data?.poster_path || undefined
+        if (!finalOverview) finalOverview = data?.overview || undefined
+      } catch {}
+    }
+
+    // ✅ Step 3: Add new movie
     const item = new WatchlistItem({
       userId: req.userId,
       movieId,
       title,
-      posterPath,
-      overview,
+      posterPath: finalPoster,
+      overview: finalOverview,
     })
     await item.save()
 
@@ -74,4 +87,3 @@ router.delete('/:movieId', authenticate, async (req: AuthRequest, res) => {
 });
 
 export default router;
-

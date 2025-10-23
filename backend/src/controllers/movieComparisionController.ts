@@ -45,13 +45,26 @@ export const addMovie = async (req: Request, res: Response) => {
     //   await activity.save();
 
     // --- FEED + SSE Notification ---
+    // Enrich details for activity if missing
+    let finalPosterPath = posterPath
+    let finalOverview = overview
+    try {
+      if (!finalPosterPath || !finalOverview) {
+        const { getTmdbClient } = await import('../services/tmdb/tmdbClient')
+        const tmdb = getTmdbClient()
+        const { data } = await tmdb.get(`/movie/${movieId}`, { params: { language: 'en-US' } })
+        if (!finalPosterPath) finalPosterPath = data?.poster_path || undefined
+        if (!finalOverview) finalOverview = data?.overview || undefined
+      }
+    } catch {}
+
     const activity = new FeedActivity({
       userId,
       activityType: 'ranked_movie',
       movieId,
       movieTitle: title,
-      posterPath,
-      overview,
+      posterPath: finalPosterPath,
+      overview: finalOverview,
       rank: 1,
     });
     await activity.save();
@@ -158,13 +171,24 @@ export const compareMovies = async (req: Request, res: Response) => {
     //   });
 
     // --- FEED + SSE Notification ---
+      // Enrich details for activity when finalizing insert
+      let finalPosterPath: string | undefined = movie.posterPath
+      let finalOverview: string | undefined = undefined
+      try {
+        const { getTmdbClient } = await import('../services/tmdb/tmdbClient')
+        const tmdb = getTmdbClient()
+        const { data } = await tmdb.get(`/movie/${movie.movieId}`, { params: { language: 'en-US' } })
+        if (!finalPosterPath) finalPosterPath = data?.poster_path || undefined
+        finalOverview = data?.overview || undefined
+      } catch {}
+
       const activity = new FeedActivity({
         userId,
         activityType: 'ranked_movie',
         movieId: movie.movieId,
         movieTitle: movie.title,
-        posterPath: movie.posterPath,
-        overview: null,
+        posterPath: finalPosterPath,
+        overview: finalOverview,
         rank: movie.rank,
       });
       await activity.save();
