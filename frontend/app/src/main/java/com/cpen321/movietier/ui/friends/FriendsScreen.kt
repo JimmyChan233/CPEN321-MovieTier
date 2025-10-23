@@ -264,14 +264,37 @@ private fun FriendRow(
                 )
             }
 
+            var showConfirm by remember { mutableStateOf(false) }
             IconButton(
-                onClick = onRemove,
+                onClick = { showConfirm = true },
                 modifier = Modifier.testTag("remove_friend_button_${friend.id}")
             ) {
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = "Remove ${friend.name}",
                     tint = MaterialTheme.colorScheme.error
+                )
+            }
+
+            if (showConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showConfirm = false },
+                    title = { Text("Remove Friend?") },
+                    text = {
+                        Text(
+                            "Are you sure you want to remove ${friend.name}? You will no longer see their updates.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showConfirm = false
+                            onRemove()
+                        }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showConfirm = false }) { Text("Cancel") }
+                    }
                 )
             }
         }
