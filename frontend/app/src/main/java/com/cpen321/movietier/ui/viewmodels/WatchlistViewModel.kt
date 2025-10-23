@@ -83,6 +83,8 @@ class WatchlistViewModel @Inject constructor(
     }
 
     private val ratingsCache = mutableMapOf<Int, Double?>()
+    private val _details = MutableStateFlow<Map<Int, Movie>>(emptyMap())
+    val details = _details.asStateFlow()
 
     private fun prefetchRatings(items: List<WatchlistItem>) {
         items.take(40).forEach { item ->
@@ -91,6 +93,9 @@ class WatchlistViewModel @Inject constructor(
                     when (val res = movieRepository.getMovieDetails(item.movieId)) {
                         is Result.Success -> {
                             ratingsCache[item.movieId] = res.data.voteAverage
+                            val map = _details.value.toMutableMap()
+                            map[item.movieId] = res.data
+                            _details.value = map
                             if (_ui.value.sort == WatchlistSort.RATING_DESC || _ui.value.sort == WatchlistSort.RATING_ASC) {
                                 _ui.value = _ui.value.copy(displayed = sortList(_ui.value.items, _ui.value.sort))
                             }

@@ -38,6 +38,7 @@ fun WatchlistScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
+    val details by vm.details.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf<com.cpen321.movietier.data.model.WatchlistItem?>(null) }
 
@@ -99,6 +100,19 @@ fun WatchlistScreen(
                             AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title, modifier = Modifier.height(140.dp).aspectRatio(2f/3f))
                             Column(Modifier.weight(1f)) {
                                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                val det = details[item.movieId]
+                                val metaLine = buildString {
+                                    det?.releaseDate?.take(4)?.let { append(it) }
+                                    det?.voteAverage?.let { rating ->
+                                        if (isNotEmpty()) append(" • ")
+                                        append("★ ")
+                                        append("%.1f".format(rating))
+                                    }
+                                }
+                                if (metaLine.isNotBlank()) {
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(metaLine, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                                 item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
                                 Spacer(Modifier.height(8.dp))
                                 FilledTonalButton(onClick = {

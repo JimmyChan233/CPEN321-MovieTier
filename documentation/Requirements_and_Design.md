@@ -12,6 +12,7 @@
 | 2025-10-20      | 3.1, 3.4, Design notes | Refinements: Feed preview now shows availability inline (top 4 platforms, " …" if more). Feed detail "Where to Watch" opens the TMDB watch link. Availability text uses grey tone. Added on-device caching (DataStore, 6h TTL) for provider results to reduce API calls. Default country fallback changed to Canada (CA). |
 | 2025-10-14      | 3.1, 3.4 (Manage Friend), Design notes | Implemented and finalized Friends feature: send/accept/reject/cancel requests, remove friend, search by name/email, outgoing requests visible (top) and cancellable, real-time SSE with reconnection/backoff, and in-app feedback messages. |
 | 2025-10-22      | 3.1, 3.4, Design notes | Ranking UX: search shows posters and top actors; ranking list shows poster, year, star rating, actors, and overview; year+rating on one line; rank chip above poster. Long‑press menu per row (Rerank, Delete). Backend adds movie details and delete‑rank endpoints. |
+| 2025-10-22      | 3.1 (Watchlist) | Watchlist improvements: added sorting (date added asc/desc, rating asc/desc) and display of year + star rating on each item. |
 
 ---
 
@@ -40,6 +41,8 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 6. Watchlist - Users can save movies to a personal watchlist (e.g., from the Feed detail). The watchlist is visible on the user's Profile (with a "View All" page) and friends can view each other's watchlists from the friend profile page.
    - Watchlist-Ranking Synchronization: Movies are automatically removed from the watchlist when added to rankings. This ensures the watchlist only contains unwatched movies.
+   - Sorting: Date added (Newest/Oldest) and Rating (High→Low / Low→High).
+   - Display: Each item shows year and star rating (e.g., "2023 • ★ 8.4") above the description.
    - Where to Watch: Feed preview shows an inline availability line limited to the top 4 platforms (adds " …" if more). Feed detail's "Where to Watch" opens the TMDB watch link. Watchlist and Friend Profile show availability on button press. Country is detected from device locale with CA fallback. Availability text uses the grey on-surface-variant tone.
 
 ### **3.2. Use Case Diagram**
