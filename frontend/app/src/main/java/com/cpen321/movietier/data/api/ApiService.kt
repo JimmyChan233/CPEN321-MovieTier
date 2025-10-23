@@ -91,6 +91,11 @@ interface ApiService {
         @Path("id") id: String
     ): Response<ApiResponse<Unit>>
 
+    @POST("movies/rerank/start")
+    suspend fun startRerank(
+        @Body body: Map<String, String> // { rankedId }
+    ): Response<AddMovieResponse>
+
     @GET("movies/{movieId}/providers")
     suspend fun getMovieProviders(
         @Path("movieId") movieId: Int,

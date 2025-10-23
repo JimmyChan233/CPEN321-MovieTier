@@ -117,25 +117,30 @@ class RankingViewModel @Inject constructor(
     }
 
     fun startRerank(item: RankedMovie) {
-        val list = _uiState.value.rankedMovies.sortedBy { it.rank }
-        if (list.size <= 1) {
-            viewModelScope.launch { _events.emit(RankingEvent.Message("Not enough movies to rerank")) }
-            return
-        }
-        val idx = list.indexOfFirst { it.id == item.id }
-        if (idx == -1) {
-            viewModelScope.launch { _events.emit(RankingEvent.Message("Movie not found in rankings")) }
-            return
-        }
-        val neighbor = when {
-            idx + 1 < list.size -> list[idx + 1]
-            idx - 1 >= 0 -> list[idx - 1]
-            else -> null
-        }
-        if (neighbor == null) {
-            viewModelScope.launch { _events.emit(RankingEvent.Message("No comparison candidate available")) }
-        } else {
-            _compareState.value = CompareUiState(newMovie = item.movie, compareWith = neighbor.movie)
+        viewModelScope.launch {
+            when (val res = movieRepository.startRerank(item.id)) {
+                is Result.Success -> {
+                    val body = res.data
+                    when (body.status) {
+                        "added" -> {
+                            _events.emit(RankingEvent.Message("Repositioned '${item.movie.title}'"))
+                            loadRankedMovies()
+                        }
+                        "compare" -> {
+                            val cmp = body.data?.compareWith
+                            if (cmp != null) {
+                                _compareState.value = CompareUiState(newMovie = item.movie, compareWith = cmp)
+                            } else {
+                                _events.emit(RankingEvent.Message("Comparison data missing"))
+                            }
+                        }
+                    }
+                }
+                is Result.Error -> {
+                    _events.emit(RankingEvent.Message(res.message ?: "Failed to start rerank"))
+                }
+                else -> {}
+            }
         }
     }
 

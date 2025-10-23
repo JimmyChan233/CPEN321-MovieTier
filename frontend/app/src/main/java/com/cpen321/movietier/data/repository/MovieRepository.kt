@@ -165,4 +165,17 @@ suspend fun compareMovies(
             Result.Error(e, "Network error: ${e.message}")
         }
     }
+
+    suspend fun startRerank(rankedId: String): Result<AddMovieResponse> {
+        return try {
+            val response = apiService.startRerank(mapOf("rankedId" to rankedId))
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!)
+            } else {
+                Result.Error(Exception("Failed to start rerank: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
 }

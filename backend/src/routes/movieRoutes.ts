@@ -8,6 +8,7 @@ import {
   addMovie,
   compareMovies,
 } from '../controllers/movieComparisionController';
+import { startRerank } from '../controllers/rerankController';
 import axios from 'axios';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
 import mongoose from 'mongoose';
@@ -177,6 +178,9 @@ router.post('/add', authenticate, addMovie);
 
 //placeholder compare
 router.post('/compare', authenticate, compareMovies);
+
+// start re-rank session for an existing ranked item
+router.post('/rerank/start', authenticate, startRerank);
 
 // Delete a ranked movie and re-sequence ranks
 router.delete('/ranked/:id', authenticate, async (req: AuthRequest, res) => {
