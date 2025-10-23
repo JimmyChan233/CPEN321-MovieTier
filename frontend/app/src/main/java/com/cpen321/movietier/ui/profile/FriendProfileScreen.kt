@@ -3,6 +3,8 @@ package com.cpen321.movietier.ui.profile
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -36,7 +38,14 @@ fun FriendProfileScreen(
     val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
 
     Scaffold(topBar = {
-        CenterAlignedTopAppBar(title = { Text(ui.userName ?: "Profile") })
+        CenterAlignedTopAppBar(
+            title = { Text(ui.userName ?: "Profile") },
+            navigationIcon = {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            }
+        )
     }, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             // Header
