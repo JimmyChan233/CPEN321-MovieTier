@@ -101,6 +101,9 @@ export const addMovie = async (req: Request, res: Response) => {
     const compareWith = rankedMovies[middleIndex];
     startSession(userId, { movieId, title, posterPath }, rankedMovies.length - 1);
 
+    // Remove from watchlist immediately when starting comparison
+    await removeFromWatchlistAll(userObjectId, userId, movieId)
+
     return res.json({
       success: true,
       status: 'compare',
