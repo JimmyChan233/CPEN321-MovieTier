@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -49,7 +50,15 @@ fun RecommendationScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Discover", style = MaterialTheme.typography.titleMedium) }
+                title = { Text("Discover", style = MaterialTheme.typography.titleMedium) },
+                actions = {
+                    IconButton(onClick = { recommendationViewModel.loadRecommendations() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh recommendations"
+                        )
+                    }
+                }
             )
         }
     ) { padding ->
