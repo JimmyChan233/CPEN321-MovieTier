@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-10-23      | 3.1 (Profile editing), 3.4 (Edit profile use case) | Added profile editing feature: users can now edit their display name and upload/change profile pictures. Profile images are stored as base64 in MongoDB. Frontend uses Android photo picker with automatic image resizing. Profile data persists in DataStore for offline access. |
 | 2025-10-23      | 3.1 (Recommendation refresh), 3.4 (Recommendation use case) | Added refresh button to Discover page with improved randomization algorithm. Algorithm now randomly selects from top 30% of ranked movies, fetches from multiple TMDB pages (1-5), uses Fisher-Yates shuffle, and takes random windows to ensure variety on each refresh. |
 | 2025-10-23      | 3.1 (Watchlist synchronization) | Added automatic watchlist-ranking synchronization: movies are now removed from watchlist when added to rankings, ensuring watchlist only contains unwatched movies. |
 | 2025-10-15      | 3.1 (Feed notes + Watchlist), 3.4 (Feed detail + Watchlist), Design notes | Documented Feed enhancements (TMDB description, PST yyyy-MM-dd HH:mm timestamps, card layout), Ranking add via TMDB search, added Watchlist feature (add from feed detail, Profile preview + View All, friend watchlist view), and UI feedback notes. |
@@ -26,6 +27,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 ### **3.1. List of Features**
 
 1. Authentication - There will be a google login/auth page that will allow users to sign up or sign into their account. A user can also delete their account.
+   - Profile Editing: Users can edit their display name and upload/change profile pictures from the Profile screen. Profile images are automatically resized and stored as base64 data URIs in MongoDB. All profile data persists locally in DataStore.
 2. Manage Friends - The user can send friend requests (by email or by searching name/email), accept/reject incoming requests, view pending requests, and remove existing friends. Real-time notifications are delivered when a request is received or handled.
 3. Feed - A user gets real time updates of their friends activities on their feed. Users get live notification whenever a friend ranks a new movie. Feed contains all friend activities (sorted in reverse chronological order) which include the movie name, ranking, friend name, and movie banner of the friends ranking. 
 4. Ranked Movie List - Users will be able to generate a ranked list of movies they have seen. They can search for movies, add movies, and then rank the movie, based on comparison between previously ranked movies.  The app will then assign a final ranking to the movie based on the comparison done by the user.
@@ -53,12 +55,13 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 ### **3.4. Use Case Description**
 
-- Use cases for feature 1: Authentication 
+- Use cases for feature 1: Authentication
 
 1. Sign In : When a user has already created their account, they can just sign in with their google account.
-2. Sign Up: All new users will use the Sign Up use case to create an account. 
-3. Delete Account: When  a user wants to delete an account. 
+2. Sign Up: All new users will use the Sign Up use case to create an account.
+3. Delete Account: When  a user wants to delete an account.
 4. Sign Out: When a user wants to sign out of the app, they can use the sign out use case.
+5. Edit Profile: Users can edit their display name and profile picture from the Profile screen. Changes are saved to the backend and persisted locally in DataStore.
 
 - Use cases for feature 2: Manage Friend
  

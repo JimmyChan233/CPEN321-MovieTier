@@ -49,8 +49,9 @@ class AuthViewModel @Inject constructor(
                 authRepository.authToken,
                 authRepository.userId,
                 authRepository.userEmail,
-                authRepository.userName
-            ) { token, userId, userEmail, userName ->
+                authRepository.userName,
+                authRepository.userProfileImageUrl
+            ) { token, userId, userEmail, userName, profileImageUrl ->
                 if (token != null && userId != null && userEmail != null && userName != null) {
                     AuthUiState(
                         isAuthenticated = true,
@@ -58,7 +59,7 @@ class AuthViewModel @Inject constructor(
                             id = userId,
                             email = userEmail,
                             name = userName,
-                            profileImageUrl = null
+                            profileImageUrl = profileImageUrl
                         )
                     )
                 } else if (token != null) {

@@ -25,6 +25,7 @@ class AuthRepository @Inject constructor(
     val userId: Flow<String?> = tokenManager.userId
     val userEmail: Flow<String?> = tokenManager.userEmail
     val userName: Flow<String?> = tokenManager.userName
+    val userProfileImageUrl: Flow<String?> = tokenManager.userProfileImageUrl
 
     suspend fun signIn(idToken: String): Result<LoginResponse> {
         return try {
@@ -36,7 +37,8 @@ class AuthRepository @Inject constructor(
                     tokenManager.saveUserInfo(
                         loginResponse.user.id,
                         loginResponse.user.email,
-                        loginResponse.user.name
+                        loginResponse.user.name,
+                        loginResponse.user.profileImageUrl
                     )
                     Result.Success(loginResponse)
                 } else {
@@ -73,7 +75,8 @@ class AuthRepository @Inject constructor(
                     tokenManager.saveUserInfo(
                         loginResponse.user.id,
                         loginResponse.user.email,
-                        loginResponse.user.name
+                        loginResponse.user.name,
+                        loginResponse.user.profileImageUrl
                     )
                     Result.Success(loginResponse)
                 } else {
@@ -129,7 +132,8 @@ class AuthRepository @Inject constructor(
                     tokenManager.saveUserInfo(
                         updatedUser.id,
                         updatedUser.email,
-                        updatedUser.name
+                        updatedUser.name,
+                        updatedUser.profileImageUrl
                     )
                     Result.Success(updatedUser)
                 } else {

@@ -23,6 +23,7 @@ class TokenManager @Inject constructor(
         private val USER_ID_KEY = stringPreferencesKey("user_id")
         private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
+        private val USER_PROFILE_IMAGE_URL_KEY = stringPreferencesKey("user_profile_image_url")
     }
 
     val authToken: Flow<String?> = context.dataStore.data.map { preferences ->
@@ -41,17 +42,26 @@ class TokenManager @Inject constructor(
         preferences[USER_NAME_KEY]
     }
 
+    val userProfileImageUrl: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_PROFILE_IMAGE_URL_KEY]
+    }
+
     suspend fun saveAuthToken(token: String) {
         context.dataStore.edit { preferences ->
             preferences[AUTH_TOKEN_KEY] = token
         }
     }
 
-    suspend fun saveUserInfo(userId: String, email: String, name: String) {
+    suspend fun saveUserInfo(userId: String, email: String, name: String, profileImageUrl: String? = null) {
         context.dataStore.edit { preferences ->
             preferences[USER_ID_KEY] = userId
             preferences[USER_EMAIL_KEY] = email
             preferences[USER_NAME_KEY] = name
+            if (profileImageUrl != null) {
+                preferences[USER_PROFILE_IMAGE_URL_KEY] = profileImageUrl
+            } else {
+                preferences.remove(USER_PROFILE_IMAGE_URL_KEY)
+            }
         }
     }
 
