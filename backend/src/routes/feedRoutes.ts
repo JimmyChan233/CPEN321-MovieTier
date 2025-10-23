@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import FeedActivity from '../models/feed/FeedActivity';
+import { getTmdbClient } from '../services/tmdb/tmdbClient';
 import { Friendship } from '../models/friend/Friend';
 import { sseService } from '../services/sse/sseService';
 
@@ -17,6 +18,18 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     .sort({ createdAt: -1 })
     .limit(50)
     .populate('userId', 'name email profileImageUrl');
+
+    // Enrich missing overview/poster for first few items to avoid burst calls
+    const tmdb = getTmdbClient();
+    const toEnrich = activities.filter((a: any) => (!a.overview || !a.posterPath) && a.movieId).slice(0, 8);
+    await Promise.all(toEnrich.map(async (a: any) => {
+      try {
+        const { data } = await tmdb.get(`/movie/${a.movieId}`, { params: { language: 'en-US' } });
+        if (!a.overview && data?.overview) a.overview = data.overview;
+        if (!a.posterPath && data?.poster_path) a.posterPath = data.poster_path;
+        await a.save();
+      } catch {}
+    }));
 
     const shaped = activities.map((a: any) => ({
       _id: a._id,

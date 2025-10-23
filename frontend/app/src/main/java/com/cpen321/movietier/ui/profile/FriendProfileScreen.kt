@@ -56,6 +56,14 @@ fun FriendProfileScreen(
                 items(ui.watchlist, key = { it.id }) { item ->
                     WatchItemRow(item) {
                         scope.launch {
+                            // Prefer exact TMDB watch page for the movie
+                            val tmdbLink = "https://www.themoviedb.org/movie/${item.movieId}/watch?locale=${country}"
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
+                                context.startActivity(intent)
+                                return@launch
+                            } catch (_: Exception) {}
+
                             when (val res = vm.getWatchProviders(item.movieId, country)) {
                                 is com.cpen321.movietier.data.repository.Result.Success -> {
                                     val link = res.data.link

@@ -219,6 +219,14 @@ fun FeedScreen(
                                 movie = movie,
                                 onOpenWhereToWatch = {
                                     scope.launch {
+                                        val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+                                        // Prefer exact TMDB watch page for the movie
+                                        try {
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(tmdbLink))
+                                            context.startActivity(intent)
+                                            return@launch
+                                        } catch (_: Exception) {}
+
                                         when (val res = feedViewModel.getWatchProviders(movie.id, country)) {
                                             is com.cpen321.movietier.data.repository.Result.Success -> {
                                                 val link = res.data.link
