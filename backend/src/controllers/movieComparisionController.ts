@@ -100,9 +100,11 @@ export const addMovie = async (req: Request, res: Response) => {
     }
 
     // Case 3: Begin comparison
-    const middleIndex = Math.floor(rankedMovies.length / 2);
+    // Use the same middle calculation as compareMovies to avoid repetitive comparisons
+    const high = rankedMovies.length - 1;
+    const middleIndex = Math.floor((0 + high) / 2);
     const compareWith = rankedMovies[middleIndex];
-    startSession(userId, { movieId, title, posterPath }, rankedMovies.length - 1);
+    startSession(userId, { movieId, title, posterPath }, high);
 
     // Remove from watchlist immediately when starting comparison
     await removeFromWatchlistAll(userObjectId, userId, movieId)
