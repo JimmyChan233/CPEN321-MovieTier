@@ -35,6 +35,11 @@ fun RecommendationScreen(
                     println("Snack: ${event.text}") // for debugging
                     snackbarHostState.showSnackbar(event.text)
                 }
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> {
+                    // Close bottom sheet if open and show error
+                    selectedMovie = null
+                    snackbarHostState.showSnackbar(event.text)
+                }
             }
         }
     }

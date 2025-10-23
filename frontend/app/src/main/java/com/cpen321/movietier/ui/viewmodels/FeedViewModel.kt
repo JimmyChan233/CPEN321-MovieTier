@@ -87,7 +87,7 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             when (val res = watchlistRepository.addToWatchlist(movie.id, movie.title, movie.posterPath, movie.overview)) {
                 is Result.Success -> { _events.emit(FeedEvent.Message("Added to watchlist")) }
-                is Result.Error -> { _events.emit(FeedEvent.Message(res.message ?: "Failed to add to watchlist")) }
+                is Result.Error -> { _events.emit(FeedEvent.Error(res.message ?: "Failed to add to watchlist")) }
                 else -> {}
             }
         }
@@ -97,7 +97,7 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {
                 is Result.Success -> handleAddOrCompare(movie, res.data)
-                is Result.Error -> _events.emit(FeedEvent.Message(res.message ?: "Failed to add to rankings"))
+                is Result.Error -> _events.emit(FeedEvent.Error(res.message ?: "Failed to add to rankings"))
                 else -> {}
             }
         }
@@ -115,7 +115,7 @@ class FeedViewModel @Inject constructor(
                 if (cmp != null) {
                     _compareState.value = FeedCompareState(newMovie = newMovie, compareWith = cmp)
                 } else {
-                    _events.emit(FeedEvent.Message("Comparison data missing"))
+                    _events.emit(FeedEvent.Error("Comparison data missing"))
                 }
             }
         }
@@ -131,7 +131,7 @@ class FeedViewModel @Inject constructor(
                             if (next != null) {
                                 _compareState.value = FeedCompareState(newMovie = newMovie, compareWith = next)
                             } else {
-                                _events.emit(FeedEvent.Message("Comparison data missing"))
+                                _events.emit(FeedEvent.Error("Comparison data missing"))
                                 _compareState.value = null
                             }
                         }
@@ -143,7 +143,7 @@ class FeedViewModel @Inject constructor(
                     }
                 }
                 is Result.Error -> {
-                    _events.emit(FeedEvent.Message(res.message ?: "Comparison failed"))
+                    _events.emit(FeedEvent.Error(res.message ?: "Comparison failed"))
                     _compareState.value = null
                 }
                 else -> {}
@@ -163,4 +163,5 @@ class FeedViewModel @Inject constructor(
 
 sealed class FeedEvent {
     data class Message(val text: String): FeedEvent()
+    data class Error(val text: String): FeedEvent()
 }

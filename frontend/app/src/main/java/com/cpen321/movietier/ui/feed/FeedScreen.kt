@@ -326,7 +326,14 @@ fun FeedScreen(
     LaunchedEffect(Unit) {
         feedViewModel.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> {
+                    snackbarHostState.showSnackbar(event.text)
+                }
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> {
+                    // Close bottom sheet so error message is visible at top
+                    selectedMovie = null
+                    snackbarHostState.showSnackbar(event.text)
+                }
             }
         }
     }
