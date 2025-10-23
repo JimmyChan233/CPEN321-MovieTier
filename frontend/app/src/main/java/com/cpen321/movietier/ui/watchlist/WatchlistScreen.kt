@@ -117,4 +117,9 @@ fun WatchlistScreen(
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
+
+    // Also refresh whenever navigating to this screen (handles bottom nav tab switching)
+    LaunchedEffect(navController.currentBackStackEntry) {
+        vm.load()
+    }
 }
