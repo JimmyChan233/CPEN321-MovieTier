@@ -7,8 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -52,7 +52,7 @@ fun WatchlistScreen(
             },
             actions = {
                 IconButton(onClick = { sortMenu = true }) {
-                    Icon(Icons.Default.Sort, contentDescription = "Sort")
+                    Icon(Icons.Filled.MoreVert, contentDescription = "Sort")
                 }
                 DropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
                     DropdownMenuItem(
