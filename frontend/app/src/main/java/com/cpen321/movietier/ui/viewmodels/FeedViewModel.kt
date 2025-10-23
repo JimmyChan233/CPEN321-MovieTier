@@ -9,6 +9,7 @@ import com.cpen321.movietier.data.repository.WatchlistRepository
 import com.cpen321.movietier.data.repository.MovieRepository
 import com.cpen321.movietier.data.model.Movie
 import com.cpen321.movietier.data.model.WatchProviders
+import com.cpen321.movietier.data.model.AddMovieResponse
 import com.cpen321.movietier.data.api.SseClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,11 @@ data class FeedUiState(
     val errorMessage: String? = null
 )
 
+data class FeedCompareState(
+    val newMovie: Movie,
+    val compareWith: Movie
+)
+
 @HiltViewModel
 class FeedViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
@@ -37,6 +43,9 @@ class FeedViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<FeedEvent>()
     val events = _events
+
+    private val _compareState = MutableStateFlow<FeedCompareState?>(null)
+    val compareState: StateFlow<FeedCompareState?> = _compareState.asStateFlow()
 
     init {
         loadFeed()
@@ -87,8 +96,56 @@ class FeedViewModel @Inject constructor(
     fun addToRanking(movie: Movie) {
         viewModelScope.launch {
             when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {
-                is Result.Success -> { _events.emit(FeedEvent.Message("Added to rankings")) }
-                is Result.Error -> { _events.emit(FeedEvent.Message(res.message ?: "Failed to add to rankings")) }
+                is Result.Success -> handleAddOrCompare(movie, res.data)
+                is Result.Error -> _events.emit(FeedEvent.Message(res.message ?: "Failed to add to rankings"))
+                else -> {}
+            }
+        }
+    }
+
+    private suspend fun handleAddOrCompare(newMovie: Movie, response: AddMovieResponse) {
+        when (response.status) {
+            "added" -> {
+                _events.emit(FeedEvent.Message("Added '${newMovie.title}' to rankings"))
+                // Optional: refresh feed to reflect your own activity
+                loadFeed()
+            }
+            "compare" -> {
+                val cmp = response.data?.compareWith
+                if (cmp != null) {
+                    _compareState.value = FeedCompareState(newMovie = newMovie, compareWith = cmp)
+                } else {
+                    _events.emit(FeedEvent.Message("Comparison data missing"))
+                }
+            }
+        }
+    }
+
+    fun choosePreferred(newMovie: Movie, compareWith: Movie, preferred: Movie) {
+        viewModelScope.launch {
+            when (val res = movieRepository.compareMovies(newMovie.id, compareWith.id, preferred.id)) {
+                is Result.Success -> {
+                    when (res.data.status) {
+                        "compare" -> {
+                            val next = res.data.data?.compareWith
+                            if (next != null) {
+                                _compareState.value = FeedCompareState(newMovie = newMovie, compareWith = next)
+                            } else {
+                                _events.emit(FeedEvent.Message("Comparison data missing"))
+                                _compareState.value = null
+                            }
+                        }
+                        "added" -> {
+                            _events.emit(FeedEvent.Message("Added '${newMovie.title}' to rankings"))
+                            _compareState.value = null
+                            loadFeed()
+                        }
+                    }
+                }
+                is Result.Error -> {
+                    _events.emit(FeedEvent.Message(res.message ?: "Comparison failed"))
+                    _compareState.value = null
+                }
                 else -> {}
             }
         }

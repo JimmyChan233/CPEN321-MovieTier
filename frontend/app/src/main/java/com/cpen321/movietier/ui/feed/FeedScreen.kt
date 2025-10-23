@@ -68,6 +68,7 @@ fun FeedScreen(
     feedViewModel: FeedViewModel = hiltViewModel()
 ) {
     val uiState by feedViewModel.uiState.collectAsState()
+    val compareState by feedViewModel.compareState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
@@ -265,7 +266,7 @@ fun FeedScreen(
                                 availabilityLoading = loadingAvail,
                                 onAddToRanking = {
                                     feedViewModel.addToRanking(movie)
-                                    selectedMovie = null
+                                    // keep sheet open if compare dialog will show; it can still display over it
                                 },
                                 onAddToWatchlist = {
                                     feedViewModel.addToWatchlist(movie)
@@ -273,6 +274,47 @@ fun FeedScreen(
                                     selectedMovie = null
                                 },
                                 onDismissRequest = { selectedMovie = null }
+                            )
+                        }
+
+                        if (compareState != null) {
+                            val state = compareState!!
+                            AlertDialog(
+                                onDismissRequest = { /* block dismiss during compare */ },
+                                title = { Text("Which movie do you prefer?") },
+                                text = {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Text(
+                                            "Help us place '${state.newMovie.title}' in your rankings:",
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        Button(
+                                            onClick = {
+                                                feedViewModel.choosePreferred(
+                                                    newMovie = state.newMovie,
+                                                    compareWith = state.compareWith,
+                                                    preferred = state.newMovie
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) { Text(state.newMovie.title) }
+                                        Button(
+                                            onClick = {
+                                                feedViewModel.choosePreferred(
+                                                    newMovie = state.newMovie,
+                                                    compareWith = state.compareWith,
+                                                    preferred = state.compareWith
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) { Text(state.compareWith.title) }
+                                    }
+                                },
+                                confirmButton = {},
+                                dismissButton = {}
                             )
                         }
                     }
