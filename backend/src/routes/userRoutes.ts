@@ -33,15 +33,16 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
 // Update current user's profile (name and/or profile picture)
 router.put('/profile', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { name, profilePicture } = req.body as { name?: string; profilePicture?: string };
+    const { name, profilePicture, profileImageUrl } = req.body as { name?: string; profilePicture?: string; profileImageUrl?: string };
+    const newPicture = profileImageUrl !== undefined ? profileImageUrl : profilePicture;
     logger.info(`Profile update request for user ${req.userId}`, {
       name: name !== undefined ? 'updating' : 'unchanged',
-      picture: profilePicture !== undefined ? 'updating' : 'unchanged',
+      picture: newPicture !== undefined ? 'updating' : 'unchanged',
     });
 
-    if (!name && profilePicture === undefined) {
+    if (!name && newPicture === undefined) {
       logger.warn('Profile update failed: no fields provided');
-      return res.status(400).json({ success: false, message: 'At least one field (name or profilePicture) is required' });
+      return res.status(400).json({ success: false, message: 'At least one field (name or profile picture) is required' });
     }
 
     const updateFields: any = {};
@@ -56,7 +57,7 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
     }
 
     // Handle profile picture update
-    if (profilePicture !== undefined) {
+    if (newPicture !== undefined) {
       const currentUser = await User.findById(req.userId).select('profileImageUrl googlePictureUrl');
       if (!currentUser) {
         logger.error(`Profile update failed: user ${req.userId} not found`);
@@ -64,7 +65,7 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
       }
 
       // If profilePicture is null/empty/"REMOVE", reset to Google picture
-      if (!profilePicture || profilePicture === 'REMOVE') {
+      if (!newPicture || newPicture === 'REMOVE') {
         // Delete old MinIO image if it exists
         if (currentUser.profileImageUrl && minioService.isMinioUrl(currentUser.profileImageUrl)) {
           logger.info(`Deleting old MinIO image: ${currentUser.profileImageUrl}`);
@@ -73,21 +74,21 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
         updateFields.profileImageUrl = currentUser.googlePictureUrl || null;
       } else {
         // Validate URL format
-        if (!profilePicture.startsWith('http://') && !profilePicture.startsWith('https://')) {
+        if (!newPicture.startsWith('http://') && !newPicture.startsWith('https://')) {
           return res.status(400).json({ success: false, message: 'Invalid profile picture URL format' });
         }
 
         // Delete old MinIO image if it exists and is different from new URL
         if (
           currentUser.profileImageUrl &&
-          currentUser.profileImageUrl !== profilePicture &&
+          currentUser.profileImageUrl !== newPicture &&
           minioService.isMinioUrl(currentUser.profileImageUrl)
         ) {
           logger.info(`Deleting old MinIO image: ${currentUser.profileImageUrl}`);
           await minioService.deleteFile(currentUser.profileImageUrl);
         }
 
-        updateFields.profileImageUrl = profilePicture;
+        updateFields.profileImageUrl = newPicture;
       }
     }
 
