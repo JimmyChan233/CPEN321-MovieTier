@@ -7,6 +7,8 @@ import com.cpen321.movietier.data.model.LoginResponse
 import com.cpen321.movietier.data.model.UpdateProfileRequest
 import com.cpen321.movietier.data.model.User
 import kotlinx.coroutines.flow.Flow
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -162,10 +164,7 @@ class AuthRepository @Inject constructor(
     suspend fun uploadProfilePicture(imageBytes: ByteArray): Result<User> {
         return try {
             // Step 1: Upload image to media server
-            val requestFile = okhttp3.RequestBody.create(
-                okhttp3.MediaType.parse("image/jpeg"),
-                imageBytes
-            )
+            val requestFile = imageBytes.toRequestBody("image/jpeg".toMediaType())
             val body = okhttp3.MultipartBody.Part.createFormData(
                 "file",
                 "profile.jpg",
