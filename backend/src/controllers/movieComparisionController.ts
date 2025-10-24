@@ -54,6 +54,11 @@ export const addMovie = async (req: Request, res: Response) => {
     //   await activity.save();
 
     // --- FEED + SSE Notification ---
+    // Delete old feed activities for this movie (handles rerank case)
+    try {
+      await FeedActivity.deleteMany({ userId, movieId });
+    } catch {}
+
     // Enrich details for activity if missing
     let finalPosterPath = posterPath
     let finalOverview = overview
@@ -192,6 +197,11 @@ export const compareMovies = async (req: Request, res: Response) => {
     //   });
 
     // --- FEED + SSE Notification ---
+      // Delete old feed activities for this movie (handles rerank case)
+      try {
+        await FeedActivity.deleteMany({ userId, movieId: movie.movieId });
+      } catch {}
+
       // Enrich details for activity when finalizing insert
       let finalPosterPath: string | undefined = movie.posterPath
       let finalOverview: string | undefined = undefined
