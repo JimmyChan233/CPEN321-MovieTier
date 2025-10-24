@@ -41,12 +41,6 @@ interface ApiService {
     @GET("users/search")
     suspend fun searchUsers(@Query("query") query: String): Response<ApiResponse<List<User>>>
 
-    // Media
-    @Multipart
-    @POST("media/upload")
-    suspend fun uploadMedia(
-        @Part file: okhttp3.MultipartBody.Part
-    ): retrofit2.Response<MediaUploadResponse>
 
     // Friends
     @GET("friends")
