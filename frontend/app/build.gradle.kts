@@ -103,6 +103,9 @@ dependencies {
     // Material Design Components
     implementation(libs.material)
 
+    // Chrome Custom Tabs for in-app browser
+    implementation("androidx.browser:browser:1.8.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

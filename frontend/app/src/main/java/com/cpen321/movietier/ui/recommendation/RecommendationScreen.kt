@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cpen321.movietier.data.model.Movie
 import com.cpen321.movietier.ui.components.*
+import com.cpen321.movietier.ui.components.YouTubePlayerDialog
 import com.cpen321.movietier.ui.viewmodels.RecommendationViewModel
 import com.cpen321.movietier.ui.viewmodels.RankingViewModel
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +40,8 @@ fun RecommendationScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
     var trailerKey by remember { mutableStateOf<String?>(null) }
+    var showTrailerDialog by remember { mutableStateOf(false) }
+    var trailerMovieTitle by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var country by remember { mutableStateOf("CA") }
@@ -181,16 +184,8 @@ fun RecommendationScreen(
                                 },
                                 onPlayTrailer = trailerKey?.let {
                                     {
-                                        // Open YouTube app or browser with trailer
-                                        val youtubeIntent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$trailerKey"))
-                                        youtubeIntent.putExtra("force_fullscreen", true)
-                                        try {
-                                            context.startActivity(youtubeIntent)
-                                        } catch (e: Exception) {
-                                            // Fallback to web browser
-                                            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$trailerKey"))
-                                            context.startActivity(webIntent)
-                                        }
+                                        trailerMovieTitle = movie.title
+                                        showTrailerDialog = true
                                     }
                                 },
                                 onOpenWhereToWatch = {
@@ -239,6 +234,17 @@ fun RecommendationScreen(
                                 onDismissRequest = {
                                     selectedMovie = null
                                     trailerKey = null
+                                }
+                            )
+                        }
+
+                        // Trailer Player Dialog
+                        if (showTrailerDialog && trailerKey != null) {
+                            YouTubePlayerDialog(
+                                videoKey = trailerKey!!,
+                                movieTitle = trailerMovieTitle,
+                                onDismiss = {
+                                    showTrailerDialog = false
                                 }
                             )
                         }
