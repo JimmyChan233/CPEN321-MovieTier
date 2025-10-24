@@ -282,10 +282,10 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
         )
     }
 
-    fun updateProfile(name: String?) {
+    fun updateProfile(name: String?, profilePicture: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            when (val result = authRepository.updateProfile(name)) {
+            when (val result = authRepository.updateProfile(name, profilePicture)) {
                 is Result.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

@@ -33,12 +33,10 @@ interface ApiService {
     @PUT("users/profile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<ApiResponse<User>>
 
+    // Media upload
     @Multipart
-    @POST("users/profile/picture")
-    suspend fun uploadProfilePicture(@Part profileImage: MultipartBody.Part): Response<ApiResponse<User>>
-
-    @DELETE("users/profile/picture")
-    suspend fun deleteProfilePicture(): Response<ApiResponse<User>>
+    @POST("media/upload")
+    suspend fun uploadMedia(@Part file: MultipartBody.Part): Response<MediaUploadResponse>
 
     @GET("users/search")
     suspend fun searchUsers(@Query("query") query: String): Response<ApiResponse<List<User>>>

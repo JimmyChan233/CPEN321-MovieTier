@@ -43,6 +43,26 @@ data class ApiResponse<T>(
 data class UpdateProfileRequest(
     @SerializedName("name")
     val name: String? = null,
-    @SerializedName("profileImageUrl")
-    val profileImageUrl: String? = null
+    @SerializedName("profilePicture")
+    val profilePicture: String? = null
+)
+
+data class MediaUploadData(
+    @SerializedName("url")
+    val url: String,
+    @SerializedName("filename")
+    val filename: String?,
+    @SerializedName("size")
+    val size: Int?,
+    @SerializedName("mimetype")
+    val mimetype: String?
+)
+
+data class MediaUploadResponse(
+    @SerializedName("success")
+    val success: Boolean,
+    @SerializedName("message")
+    val message: String? = null,
+    @SerializedName("data")
+    val data: MediaUploadData?
 )

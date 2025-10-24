@@ -120,9 +120,9 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun updateProfile(name: String?): Result<User> {
+    suspend fun updateProfile(name: String?, profilePicture: String?): Result<User> {
         return try {
-            val request = UpdateProfileRequest(name = name, profileImageUrl = null)
+            val request = UpdateProfileRequest(name = name, profilePicture = profilePicture)
             val response = apiService.updateProfile(request)
             if (response.isSuccessful && response.body() != null) {
                 val apiResponse = response.body()!!
@@ -161,46 +161,43 @@ class AuthRepository @Inject constructor(
 
     suspend fun uploadProfilePicture(imageBytes: ByteArray): Result<User> {
         return try {
+            // Step 1: Upload image to media server
             val requestFile = okhttp3.RequestBody.create(
                 okhttp3.MediaType.parse("image/jpeg"),
                 imageBytes
             )
             val body = okhttp3.MultipartBody.Part.createFormData(
-                "profileImage",
+                "file",
                 "profile.jpg",
                 requestFile
             )
-            val response = apiService.uploadProfilePicture(body)
-            if (response.isSuccessful && response.body() != null) {
-                val apiResponse = response.body()!!
-                if (apiResponse.success && apiResponse.data != null) {
-                    val updatedUser = apiResponse.data
-                    // Update local storage
-                    tokenManager.saveUserInfo(
-                        updatedUser.id,
-                        updatedUser.email,
-                        updatedUser.name,
-                        updatedUser.profileImageUrl
-                    )
-                    Result.Success(updatedUser)
-                } else {
-                    Result.Error(Exception(apiResponse.message))
-                }
-            } else {
-                val errorBody = response.errorBody()?.string()
+            val uploadResponse = apiService.uploadMedia(body)
+
+            if (!uploadResponse.isSuccessful || uploadResponse.body() == null) {
+                val errorBody = uploadResponse.errorBody()?.string()
                 val errorMessage = if (errorBody != null) {
                     try {
                         val gson = com.google.gson.Gson()
-                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
-                        errorResponse.message
+                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.MediaUploadResponse::class.java)
+                        errorResponse.message ?: "Failed to upload image"
                     } catch (e: Exception) {
-                        "Failed to upload profile picture"
+                        "Failed to upload image"
                     }
                 } else {
-                    "Failed to upload profile picture"
+                    "Failed to upload image"
                 }
-                Result.Error(Exception(errorMessage))
+                return Result.Error(Exception(errorMessage))
             }
+
+            val uploadResult = uploadResponse.body()!!
+            if (!uploadResult.success || uploadResult.data == null) {
+                return Result.Error(Exception(uploadResult.message ?: "Failed to upload image"))
+            }
+
+            val imageUrl = uploadResult.data.url
+
+            // Step 2: Update user profile with the image URL
+            return updateProfile(name = null, profilePicture = imageUrl)
         } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")
         }
@@ -208,37 +205,8 @@ class AuthRepository @Inject constructor(
 
     suspend fun deleteProfilePicture(): Result<User> {
         return try {
-            val response = apiService.deleteProfilePicture()
-            if (response.isSuccessful && response.body() != null) {
-                val apiResponse = response.body()!!
-                if (apiResponse.success && apiResponse.data != null) {
-                    val updatedUser = apiResponse.data
-                    // Update local storage
-                    tokenManager.saveUserInfo(
-                        updatedUser.id,
-                        updatedUser.email,
-                        updatedUser.name,
-                        updatedUser.profileImageUrl
-                    )
-                    Result.Success(updatedUser)
-                } else {
-                    Result.Error(Exception(apiResponse.message))
-                }
-            } else {
-                val errorBody = response.errorBody()?.string()
-                val errorMessage = if (errorBody != null) {
-                    try {
-                        val gson = com.google.gson.Gson()
-                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
-                        errorResponse.message
-                    } catch (e: Exception) {
-                        "Failed to delete profile picture"
-                    }
-                } else {
-                    "Failed to delete profile picture"
-                }
-                Result.Error(Exception(errorMessage))
-            }
+            // Simply update profile with REMOVE to reset to Google picture
+            return updateProfile(name = null, profilePicture = "REMOVE")
         } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")
         }

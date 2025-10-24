@@ -2,7 +2,6 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import path from 'path';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import friendRoutes from './routes/friendRoutes';
@@ -10,10 +9,10 @@ import movieRoutes from './routes/movieRoutes';
 import feedRoutes from './routes/feedRoutes';
 import recommendationRoutes from './routes/recommendationRoutes';
 import watchlistRoutes from './routes/watchlistRoutes';
+import mediaRoutes from './routes/mediaRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from './utils/logger';
-import { ImageStorageService } from './services/imageStorageService';
 
 dotenv.config();
 logger.info('Environment variables loaded');
@@ -25,15 +24,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static files (profile pictures)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-logger.info('Static file serving enabled for /uploads');
-
-// Initialize image storage
-ImageStorageService.initialize()
-  .then(() => logger.success('Image storage initialized'))
-  .catch((err) => logger.error('Failed to initialize image storage:', err.message));
 
 // Request logger middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -70,6 +60,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/watchlist', watchlistRoutes);
+app.use('/api/media', mediaRoutes);
 logger.success('API routes registered');
 
 // Health check
