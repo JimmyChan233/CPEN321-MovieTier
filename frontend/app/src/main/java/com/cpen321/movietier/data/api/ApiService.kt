@@ -135,4 +135,7 @@ interface ApiService {
     @GET("recommendations")
     suspend fun getRecommendations(): Response<ApiResponse<List<Movie>>>
 
+    @GET("recommendations/trending")
+    suspend fun getTrendingMovies(): Response<ApiResponse<List<Movie>>>
+
 }

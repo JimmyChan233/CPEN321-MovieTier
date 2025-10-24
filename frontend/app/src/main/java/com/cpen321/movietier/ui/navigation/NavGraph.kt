@@ -37,7 +37,7 @@ fun NavGraph(
         composable(NavRoutes.AUTH) {
             AuthScreen(
                 onAuthSuccess = {
-                    navController.navigate(NavRoutes.FEED) {
+                    navController.navigate(NavRoutes.RECOMMENDATION) {
                         popUpTo(NavRoutes.AUTH) { inclusive = true }
                     }
                 }

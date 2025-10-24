@@ -141,7 +141,7 @@ fun RecommendationScreen(
                             .padding(padding)
                     ) {
                         Text(
-                            text = "Recommended for You",
+                            text = if (uiState.isShowingTrending) "Trending Now" else "Recommended for You",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

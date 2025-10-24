@@ -9,6 +9,38 @@ interface UserPreferences {
   minVoteAverage: number;
 }
 
+export const getTrendingMovies = async (req: Request, res: Response) => {
+  try {
+    const tmdb = getTmdbClient();
+
+    // Fetch trending movies from TMDB (trending/movie/week for weekly trending)
+    const { data } = await tmdb.get('/trending/movie/week', {
+      params: {
+        language: 'en-US'
+      }
+    });
+
+    if (!data?.results || data.results.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Map to our movie format
+    const movies = data.results.slice(0, 20).map((movie: any) => ({
+      id: movie.id,
+      title: movie.title,
+      overview: movie.overview || null,
+      posterPath: movie.poster_path || null,
+      releaseDate: movie.release_date || null,
+      voteAverage: movie.vote_average ?? null
+    }));
+
+    res.json({ success: true, data: movies });
+  } catch (error) {
+    console.error('Trending movies error:', error);
+    res.status(500).json({ success: false, message: 'Unable to load trending movies. Please try again' });
+  }
+};
+
 export const getRecommendations = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;

@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-10-24      | 3.1 (Discover/Recommendation), 3.4 (Recommendation use case), Navigation order | Added trending movies feature: When users have no ranked movies, the Discover page now displays trending movies from TMDB instead of an empty state. Backend endpoint `/api/recommendations/trending` fetches weekly trending movies. Navigation order changed to: Discover, Ranking, Feed, Friends, Profile (Discover is now the first tab and default landing page after authentication). |
 | 2025-10-24      | 3.1 (Profile editing), 3.4 (Edit profile use case), 4.3 (External modules) | Refactored profile picture storage to use MinIO cloud object storage instead of database. Implemented two-step upload flow: (1) Frontend uploads image to POST /api/media/upload and receives public URL, (2) Frontend updates profile via PUT /api/users/profile with profilePicture field set to that URL. MinIO provides S3-compatible object storage with public-read bucket policy. Old images automatically deleted when updating/removing profile pictures. Removed Sharp dependency. |
 | 2025-10-23      | 3.1 (Profile editing), 3.4 (Edit profile use case) | Added profile editing feature: users can now edit their display name and upload/change profile pictures. Frontend uses Android photo picker with automatic image resizing. Profile data persists in DataStore for offline access. |
 | 2025-10-23      | 3.1 (Recommendation refresh), 3.4 (Recommendation use case) | Added refresh button to Discover page with improved randomization algorithm. Algorithm now randomly selects from top 30% of ranked movies, fetches from multiple TMDB pages (1-5), uses Fisher-Yates shuffle, and takes random windows to ensure variety on each refresh. |
@@ -38,7 +39,9 @@ In this app instead of giving out boring stars to rate a movie, the user decides
    - Long‑press a ranking to open actions: Rerank (start comparison) or Delete (remove and re‑sequence ranks).
 
 
-5. Recommendation - Based on users top movies rankings there will be a recommended list of movies that the user can watch. The recommendation list will be generated based on the top movies on the users tiered list. The list will exclude all the movies which are already ranked by the user. Each movie in the list will contain the movie name, movie banner, and movie duration. 
+5. Discover (Recommendation) - Based on users top movies rankings there will be a recommended list of movies that the user can watch. The recommendation list will be generated based on the top movies on the users tiered list. The list will exclude all the movies which are already ranked by the user. Each movie in the list will contain the movie name, movie banner, and movie duration.
+   - Trending Movies: When users have no ranked movies, the Discover page displays trending movies from TMDB (weekly trending) instead of an empty state. This provides new users with popular movie suggestions to start their ranking journey.
+   - Navigation: Discover is now the first tab in the bottom navigation and the default landing page after authentication, prioritizing movie discovery. Navigation order: Discover → Ranking → Feed → Friends → Profile. 
 
 6. Watchlist - Users can save movies to a personal watchlist (e.g., from the Feed detail). The watchlist is visible on the user's Profile (with a "View All" page) and friends can view each other's watchlists from the friend profile page.
    - Watchlist-Ranking Synchronization: Movies are automatically removed from the watchlist when added to rankings. This ensures the watchlist only contains unwatched movies.
@@ -99,10 +102,11 @@ Design notes:
    - Delete: removes the movie and shifts lower ranks up by one.
 
 
-- Use cases for feature 5: Recommendation
+- Use cases for feature 5: Discover (Recommendation)
 
 1. View Recommended Movie List: The user can view a list of recommended movies that the application suggests based on their previously ranked movies.
-2. Refresh Recommendations: Users can refresh the recommendation list to see different movie suggestions. The system uses randomized algorithms to provide variety on each refresh while still maintaining relevance based on user rankings. 
+2. View Trending Movies: When users have no ranked movies, the system displays trending movies from TMDB to help them discover popular films and start their ranking journey.
+3. Refresh Recommendations: Users can refresh the recommendation list to see different movie suggestions. The system uses randomized algorithms to provide variety on each refresh while still maintaining relevance based on user rankings. 
 
 
 ### **3.5. Formal Use Case Specifications (5 Most Major Use Cases)**
@@ -115,9 +119,9 @@ Design notes:
 
 **Primary actor(s)**: User, Google Authentication API
 
-**Postcondition(s)**: 
+**Postcondition(s)**:
 
-User is logged in and redirected to the home feed
+User is logged in and redirected to the Discover page
 **Main success scenario**: 
 
 1. User clicks “Sign In”
@@ -125,7 +129,7 @@ User is logged in and redirected to the home feed
 3. User enters credentials and clicks submits
 4. Google validates credentials and returns auth token
 5. System checks its database for user account
-5. System verifies token, signs the user in, and takes them to the home feed
+5. System verifies token, signs the user in, and takes them to the Discover page
 
 **Failure scenario(s)**:
 

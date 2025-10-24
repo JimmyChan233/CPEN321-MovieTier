@@ -18,7 +18,8 @@ import com.cpen321.movietier.data.model.WatchProviders
 data class RecommendationUiState(
     val isLoading: Boolean = false,
     val recommendations: List<Movie> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isShowingTrending: Boolean = false
 )
 
 @HiltViewModel
@@ -39,22 +40,48 @@ class RecommendationViewModel @Inject constructor(
 
     fun loadRecommendations() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+            // First, try to get personalized recommendations
             when (val result = movieRepository.getRecommendations()) {
                 is Result.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        recommendations = result.data
-                    )
+                    if (result.data.isNotEmpty()) {
+                        // User has rankings, show personalized recommendations
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            recommendations = result.data,
+                            isShowingTrending = false
+                        )
+                    } else {
+                        // User has no rankings, fetch trending movies
+                        loadTrendingMovies()
+                    }
                 }
                 is Result.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = result.message
-                    )
+                    // If recommendations fail, try trending movies as fallback
+                    loadTrendingMovies()
                 }
                 is Result.Loading -> {}
             }
+        }
+    }
+
+    private suspend fun loadTrendingMovies() {
+        when (val trendingResult = movieRepository.getTrendingMovies()) {
+            is Result.Success -> {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    recommendations = trendingResult.data,
+                    isShowingTrending = true
+                )
+            }
+            is Result.Error -> {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = trendingResult.message
+                )
+            }
+            is Result.Loading -> {}
         }
     }
     fun addToWatchlist(movie: Movie) {

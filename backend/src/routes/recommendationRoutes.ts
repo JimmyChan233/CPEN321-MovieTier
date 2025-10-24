@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
-import { getRecommendations } from '../controllers/recomendations/movieRecommendationController';
+import { getRecommendations, getTrendingMovies } from '../controllers/recomendations/movieRecommendationController';
 
 
 const router = Router();
@@ -11,6 +11,9 @@ const router = Router();
 
 // Get personalized movie recommendations
 router.get('/', authenticate, getRecommendations);
+
+// Get trending movies (for users with no rankings)
+router.get('/trending', authenticate, getTrendingMovies);
 
 
 export default router;
