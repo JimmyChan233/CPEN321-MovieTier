@@ -9,7 +9,6 @@ import movieRoutes from './routes/movieRoutes';
 import feedRoutes from './routes/feedRoutes';
 import recommendationRoutes from './routes/recommendationRoutes';
 import watchlistRoutes from './routes/watchlistRoutes';
-import mediaRoutes from './routes/mediaRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from './utils/logger';
@@ -60,7 +59,6 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/watchlist', watchlistRoutes);
-app.use('/api/media', mediaRoutes);
 logger.success('API routes registered');
 
 // Health check

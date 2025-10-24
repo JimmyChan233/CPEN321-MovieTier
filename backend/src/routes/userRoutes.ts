@@ -4,7 +4,6 @@ import User from '../models/user/User';
 import mongoose from 'mongoose';
 import WatchlistItem from '../models/watch/WatchlistItem';
 import { logger } from '../utils/logger';
-import minioService from '../services/minio.service';
 
 const router = Router();
 
@@ -30,71 +29,25 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
-// Update current user's profile (name and/or profile picture)
+// Update current user's profile (name only)
 router.put('/profile', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { name, profilePicture, profileImageUrl } = req.body as { name?: string; profilePicture?: string; profileImageUrl?: string };
-    const newPicture = profileImageUrl !== undefined ? profileImageUrl : profilePicture;
-    logger.info(`Profile update request for user ${req.userId}`, {
-      name: name !== undefined ? 'updating' : 'unchanged',
-      picture: newPicture !== undefined ? 'updating' : 'unchanged',
-    });
+    const { name } = req.body as { name?: string };
+    logger.info(`Profile update request for user ${req.userId}`, { name: name ? 'updating' : 'unchanged' });
 
-    if (!name && newPicture === undefined) {
-      logger.warn('Profile update failed: no fields provided');
-      return res.status(400).json({ success: false, message: 'At least one field (name or profile picture) is required' });
+    if (!name) {
+      logger.warn('Profile update failed: no name provided');
+      return res.status(400).json({ success: false, message: 'Name is required' });
     }
 
-    const updateFields: any = {};
-
-    // Validate and set name
-    if (name !== undefined) {
-      if (name.trim().length < 1) {
-        logger.warn('Profile update failed: empty name');
-        return res.status(400).json({ success: false, message: 'Name cannot be empty' });
-      }
-      updateFields.name = name.trim();
-    }
-
-    // Handle profile picture update
-    if (newPicture !== undefined) {
-      const currentUser = await User.findById(req.userId).select('profileImageUrl googlePictureUrl');
-      if (!currentUser) {
-        logger.error(`Profile update failed: user ${req.userId} not found`);
-        return res.status(404).json({ success: false, message: 'User not found' });
-      }
-
-      // If profilePicture is null/empty/"REMOVE", reset to Google picture
-      if (!newPicture || newPicture === 'REMOVE') {
-        // Delete old MinIO image if it exists
-        if (currentUser.profileImageUrl && minioService.isMinioUrl(currentUser.profileImageUrl)) {
-          logger.info(`Deleting old MinIO image: ${currentUser.profileImageUrl}`);
-          await minioService.deleteFile(currentUser.profileImageUrl);
-        }
-        updateFields.profileImageUrl = currentUser.googlePictureUrl || null;
-      } else {
-        // Validate URL format
-        if (!newPicture.startsWith('http://') && !newPicture.startsWith('https://')) {
-          return res.status(400).json({ success: false, message: 'Invalid profile picture URL format' });
-        }
-
-        // Delete old MinIO image if it exists and is different from new URL
-        if (
-          currentUser.profileImageUrl &&
-          currentUser.profileImageUrl !== newPicture &&
-          minioService.isMinioUrl(currentUser.profileImageUrl)
-        ) {
-          logger.info(`Deleting old MinIO image: ${currentUser.profileImageUrl}`);
-          await minioService.deleteFile(currentUser.profileImageUrl);
-        }
-
-        updateFields.profileImageUrl = newPicture;
-      }
+    if (name.trim().length < 1) {
+      logger.warn('Profile update failed: empty name');
+      return res.status(400).json({ success: false, message: 'Name cannot be empty' });
     }
 
     const user = await User.findByIdAndUpdate(
       req.userId,
-      { $set: updateFields },
+      { $set: { name: name.trim() } },
       { new: true, runValidators: true }
     ).select('_id email name profileImageUrl');
 

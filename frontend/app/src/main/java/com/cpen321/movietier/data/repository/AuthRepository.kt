@@ -7,8 +7,6 @@ import com.cpen321.movietier.data.model.LoginResponse
 import com.cpen321.movietier.data.model.UpdateProfileRequest
 import com.cpen321.movietier.data.model.User
 import kotlinx.coroutines.flow.Flow
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -122,9 +120,9 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun updateProfile(name: String?, profilePicture: String?): Result<User> {
+    suspend fun updateProfile(name: String?): Result<User> {
         return try {
-            val request = UpdateProfileRequest(name = name, profilePicture = profilePicture)
+            val request = UpdateProfileRequest(name = name, profilePicture = null)
             val response = apiService.updateProfile(request)
             if (response.isSuccessful && response.body() != null) {
                 val apiResponse = response.body()!!
@@ -156,56 +154,6 @@ class AuthRepository @Inject constructor(
                 }
                 Result.Error(Exception(errorMessage))
             }
-        } catch (e: Exception) {
-            Result.Error(e, "Network error: ${e.message}")
-        }
-    }
-
-    suspend fun uploadProfilePicture(imageBytes: ByteArray): Result<User> {
-        return try {
-            // Step 1: Upload image to media server
-            val requestFile = imageBytes.toRequestBody("image/jpeg".toMediaType())
-            val body = okhttp3.MultipartBody.Part.createFormData(
-                "file",
-                "profile.jpg",
-                requestFile
-            )
-            val uploadResponse = apiService.uploadMedia(body)
-
-            if (!uploadResponse.isSuccessful || uploadResponse.body() == null) {
-                val errorBody = uploadResponse.errorBody()?.string()
-                val errorMessage = if (errorBody != null) {
-                    try {
-                        val gson = com.google.gson.Gson()
-                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.MediaUploadResponse::class.java)
-                        errorResponse.message ?: "Failed to upload image"
-                    } catch (e: Exception) {
-                        "Failed to upload image"
-                    }
-                } else {
-                    "Failed to upload image"
-                }
-                return Result.Error(Exception(errorMessage))
-            }
-
-            val uploadResult = uploadResponse.body()!!
-            if (!uploadResult.success || uploadResult.data == null) {
-                return Result.Error(Exception(uploadResult.message ?: "Failed to upload image"))
-            }
-
-            val imageUrl = uploadResult.data.url
-
-            // Step 2: Update user profile with the image URL
-            return updateProfile(name = null, profilePicture = imageUrl)
-        } catch (e: Exception) {
-            Result.Error(e, "Network error: ${e.message}")
-        }
-    }
-
-    suspend fun deleteProfilePicture(): Result<User> {
-        return try {
-            // Simply update profile with REMOVE to reset to Google picture
-            return updateProfile(name = null, profilePicture = "REMOVE")
         } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")
         }
