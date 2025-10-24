@@ -10,6 +10,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.cpen321.movietier.data.model.Movie
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,6 +24,7 @@ fun MovieDetailBottomSheet(
     onAddToRanking: (() -> Unit)? = null,
     onAddToWatchlist: (() -> Unit)? = null,
     onOpenWhereToWatch: (() -> Unit)? = null,
+    onPlayTrailer: (() -> Unit)? = null,
     availabilityText: String? = null,
     availabilityLoading: Boolean = false,
     onDismissRequest: () -> Unit,
@@ -35,14 +42,39 @@ fun MovieDetailBottomSheet(
             horizontalAlignment = Alignment.Start
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                AsyncImage(
-                    model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                    contentDescription = "Poster: ${movie.title}",
+                // Poster with play button overlay
+                Box(
                     modifier = Modifier
                         .height(160.dp)
-                        .aspectRatio(2f / 3f),
-                    contentScale = ContentScale.Crop
-                )
+                        .aspectRatio(2f / 3f)
+                ) {
+                    AsyncImage(
+                        model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+                        contentDescription = "Poster: ${movie.title}",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Play button overlay
+                    if (onPlayTrailer != null) {
+                        FilledIconButton(
+                            onClick = onPlayTrailer,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(56.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = Color.Black.copy(alpha = 0.6f),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Play Trailer",
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = movie.title,

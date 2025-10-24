@@ -111,6 +111,11 @@ interface ApiService {
         @Path("movieId") movieId: Int
     ): Response<ApiResponse<Movie>>
 
+    @GET("movies/{movieId}/videos")
+    suspend fun getMovieVideos(
+        @Path("movieId") movieId: Int
+    ): Response<ApiResponse<MovieVideo?>>
+
     // Feed
     @GET("feed")
     suspend fun getFeed(): Response<ApiResponse<List<FeedActivity>>>

@@ -130,6 +130,19 @@ suspend fun compareMovies(
         }
     }
 
+    suspend fun getMovieVideos(movieId: Int): Result<MovieVideo?> {
+        return try {
+            val response = apiService.getMovieVideos(movieId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data)
+            } else {
+                Result.Error(Exception("Failed to get movie videos: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
     suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
         // 1) Try cache first
         providersCache.get(movieId, country)?.let { return Result.Success(it) }

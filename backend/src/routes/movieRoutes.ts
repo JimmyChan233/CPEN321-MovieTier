@@ -326,4 +326,41 @@ router.get('/:movieId/details', authenticate, async (req, res) => {
   }
 });
 
+// Get movie videos/trailers from TMDB
+router.get('/:movieId/videos', authenticate, async (req, res) => {
+  try {
+    const movieId = Number(req.params.movieId);
+    if (!movieId || Number.isNaN(movieId)) {
+      return res.status(400).json({ success: false, message: 'Invalid movie id' });
+    }
+    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ success: false, message: 'TMDB API key not configured' });
+    }
+    const tmdb = getTmdbClient();
+    const { data } = await tmdb.get(`/movie/${movieId}/videos`, { params: { language: 'en-US' } });
+
+    // Filter for YouTube trailers, prioritize official trailers
+    const videos = Array.isArray(data?.results) ? data.results : [];
+    const youtubeVideos = videos.filter((v: any) => v.site === 'YouTube');
+
+    // Prioritize: Official Trailer > Trailer > Teaser
+    const trailer = youtubeVideos.find((v: any) => v.type === 'Trailer' && v.official)
+      || youtubeVideos.find((v: any) => v.type === 'Trailer')
+      || youtubeVideos.find((v: any) => v.type === 'Teaser')
+      || youtubeVideos[0];
+
+    const shaped = trailer ? {
+      key: trailer.key,
+      name: trailer.name,
+      type: trailer.type,
+      site: trailer.site
+    } : null;
+
+    res.json({ success: true, data: shaped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Unable to load movie videos. Please try again' });
+  }
+});
+
 export default router;

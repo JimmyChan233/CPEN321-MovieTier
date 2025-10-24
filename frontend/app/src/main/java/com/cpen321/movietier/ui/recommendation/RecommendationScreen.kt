@@ -38,6 +38,7 @@ fun RecommendationScreen(
     val compareState by rankingViewModel.compareState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
+    var trailerKey by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var country by remember { mutableStateOf("CA") }
@@ -163,11 +164,34 @@ fun RecommendationScreen(
                         }
 
                         selectedMovie?.let { movie ->
+                            // Fetch trailer when movie is selected
+                            LaunchedEffect(movie.id) {
+                                val result = recommendationViewModel.getMovieVideos(movie.id)
+                                trailerKey = when (result) {
+                                    is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
+                                    else -> null
+                                }
+                            }
+
                             MovieDetailBottomSheet(
                                 movie = movie,
                                 onAddToRanking = {
                                     rankingViewModel.addMovieFromSearch(movie)
                                     selectedMovie = null
+                                },
+                                onPlayTrailer = trailerKey?.let {
+                                    {
+                                        // Open YouTube app or browser with trailer
+                                        val youtubeIntent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$trailerKey"))
+                                        youtubeIntent.putExtra("force_fullscreen", true)
+                                        try {
+                                            context.startActivity(youtubeIntent)
+                                        } catch (e: Exception) {
+                                            // Fallback to web browser
+                                            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$trailerKey"))
+                                            context.startActivity(webIntent)
+                                        }
+                                    }
                                 },
                                 onOpenWhereToWatch = {
                                     scope.launch {
@@ -212,7 +236,10 @@ fun RecommendationScreen(
                                     // Close sheet so snackbar is visible immediately
                                     selectedMovie = null
                                 },
-                                onDismissRequest = { selectedMovie = null }
+                                onDismissRequest = {
+                                    selectedMovie = null
+                                    trailerKey = null
+                                }
                             )
                         }
 

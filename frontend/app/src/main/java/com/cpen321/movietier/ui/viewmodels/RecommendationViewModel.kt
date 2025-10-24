@@ -3,6 +3,7 @@ package com.cpen321.movietier.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.data.model.Movie
+import com.cpen321.movietier.data.model.MovieVideo
 import com.cpen321.movietier.data.repository.MovieRepository
 import com.cpen321.movietier.data.repository.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -103,5 +104,9 @@ class RecommendationViewModel @Inject constructor(
 
     suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
         return movieRepository.getWatchProviders(movieId, country)
+    }
+
+    suspend fun getMovieVideos(movieId: Int): Result<MovieVideo?> {
+        return movieRepository.getMovieVideos(movieId)
     }
 }

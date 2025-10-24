@@ -67,3 +67,14 @@ data class CompareData(
     @SerializedName("compareWith")
     val compareWith: Movie?
 )
+
+data class MovieVideo(
+    @SerializedName("key")
+    val key: String,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("type")
+    val type: String,
+    @SerializedName("site")
+    val site: String
+)
