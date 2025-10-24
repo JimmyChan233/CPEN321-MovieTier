@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-10-24      | 3.1 (Ranking UI), Design notes | Redesigned ranking list actions UI: Replaced long-press dropdown menu with visible icon buttons in top-right corner of each card. Rerank button (refresh icon) uses filled tonal style, delete button (delete icon) uses error container colors. Added confirmation dialog for delete action to prevent accidental deletions. More discoverable and visually appealing. |
 | 2025-10-24      | 3.1 (Feed), Bug fix | Fixed duplicate feed entries on rerank: When a user reranks a movie, the system now deletes the original feed activity before creating a new one. This prevents duplicate entries for the same movie appearing in friends' feeds. |
 | 2025-10-24      | 3.1 (Discover/Recommendation), 3.4 (Recommendation use case), Navigation order | Added trending movies feature: When users have no ranked movies, the Discover page now displays trending movies from TMDB instead of an empty state. Backend endpoint `/api/recommendations/trending` fetches weekly trending movies. Navigation order changed to: Discover, Ranking, Feed, Friends, Profile (Discover is now the first tab and default landing page after authentication). |
 | 2025-10-24      | 3.1 (Profile editing), 3.4 (Edit profile use case), 4.3 (External modules) | Refactored profile picture storage to use MinIO cloud object storage instead of database. Implemented two-step upload flow: (1) Frontend uploads image to POST /api/media/upload and receives public URL, (2) Frontend updates profile via PUT /api/users/profile with profilePicture field set to that URL. MinIO provides S3-compatible object storage with public-read bucket policy. Old images automatically deleted when updating/removing profile pictures. Removed Sharp dependency. |
@@ -14,7 +15,7 @@
 | 2025-10-20      | 3.1, 3.4, Design notes | Added "Where to Watch" feature: Feed detail bottom sheet, Watchlist items, and Friend Profile watchlist fetch TMDB watch providers (country from device locale with CA fallback) and either open the TMDB watch link or show available platforms. Feed detail shows an availability line under actions. |
 | 2025-10-20      | 3.1, 3.4, Design notes | Refinements: Feed preview now shows availability inline (top 4 platforms, " …" if more). Feed detail "Where to Watch" opens the TMDB watch link. Availability text uses grey tone. Added on-device caching (DataStore, 6h TTL) for provider results to reduce API calls. Default country fallback changed to Canada (CA). |
 | 2025-10-14      | 3.1, 3.4 (Manage Friend), Design notes | Implemented and finalized Friends feature: send/accept/reject/cancel requests, remove friend, search by name/email, outgoing requests visible (top) and cancellable, real-time SSE with reconnection/backoff, and in-app feedback messages. |
-| 2025-10-22      | 3.1, 3.4, Design notes | Ranking UX: search shows posters and top actors; ranking list shows poster, year, star rating, actors, and overview; year+rating on one line; rank chip above poster. Long‑press menu per row (Rerank, Delete). Backend adds movie details and delete‑rank endpoints. |
+| 2025-10-22      | 3.1, 3.4, Design notes | Ranking UX: search shows posters and top actors; ranking list shows poster, year, star rating, actors, and overview; year+rating on one line; rank chip above poster. Backend adds movie details and delete‑rank endpoints. |
 | 2025-10-22      | 3.1 (Watchlist) | Watchlist improvements: added sorting (date added asc/desc, rating asc/desc) and display of year + star rating on each item. |
 
 ---
@@ -36,8 +37,8 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 3. Feed - A user gets real time updates of their friends activities on their feed. Users get live notification whenever a friend ranks a new movie. Feed contains all friend activities (sorted in reverse chronological order) which include the movie name, ranking, friend name, and movie banner of the friends ranking. 
 4. Ranked Movie List - Users will be able to generate a ranked list of movies they have seen. They can search for movies, add movies, and then rank the movie, based on comparison between previously ranked movies.  The app will then assign a final ranking to the movie based on the comparison done by the user.
    - Search results include posters (2:3) and a subtitle with year + up to 3 actors.
-   - Ranking list entries show rank chip, poster, year and star rating on one line (e.g., “2023 • ★ 8.4”), top actors, and a short overview.
-   - Long‑press a ranking to open actions: Rerank (start comparison) or Delete (remove and re‑sequence ranks).
+   - Ranking list entries show rank chip, poster, year and star rating on one line (e.g., "2023 • ★ 8.4"), top actors, and a short overview.
+   - Action buttons: Each ranking card displays visible icon buttons in the top-right corner for Rerank (refresh icon) and Delete (delete icon with error colors). Delete action requires confirmation.
 
 
 5. Discover (Recommendation) - Based on users top movies rankings there will be a recommended list of movies that the user can watch. The recommendation list will be generated based on the top movies on the users tiered list. The list will exclude all the movies which are already ranked by the user. Each movie in the list will contain the movie name, movie banner, and movie duration.
@@ -95,12 +96,12 @@ Design notes:
 - Use cases for feature 4: Ranked Movie List
 
 1. Search a Movie: Users can search names of a movie by using the Search Movie use case.
-2. Add a Movie: Users can add a movie to their ranked lists. 
+2. Add a Movie: Users can add a movie to their ranked lists.
 3. Compare Movies: To rank a movie users must compare the movie with some other movies they have already ranked for the system to generate an accurate ranking of the movie.
-4. View Ranking List: The users can view their ranked movie list. 
-5. Manage Ranking Entry (long‑press actions): Long‑press a ranking to open actions.
-   - Rerank: starts the comparison flow using an adjacent movie as the initial comparator.
-   - Delete: removes the movie and shifts lower ranks up by one.
+4. View Ranking List: The users can view their ranked movie list.
+5. Manage Ranking Entry: Each ranking displays action buttons for managing entries.
+   - Rerank: Tap the refresh icon button to start the comparison flow using an adjacent movie as the initial comparator.
+   - Delete: Tap the delete icon button to remove the movie (requires confirmation), shifts lower ranks up by one.
 
 
 - Use cases for feature 5: Discover (Recommendation)
