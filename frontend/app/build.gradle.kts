@@ -79,6 +79,9 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
+    // Location Services
+    implementation(libs.play.services.location)
+
     // HTTP client
     implementation(libs.retrofit)
     implementation(libs.converter.gson)

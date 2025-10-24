@@ -27,6 +27,10 @@ import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.FeedViewModel
 import kotlinx.coroutines.launch
+import com.cpen321.movietier.utils.LocationHelper
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 
 private fun normalizeProviderName(name: String): String {
@@ -76,7 +80,27 @@ fun FeedScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
-    val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
+    var country by remember { mutableStateOf("CA") }
+
+    // Request location permission and get country code
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            scope.launch {
+                country = LocationHelper.getCountryCode(context)
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (LocationHelper.hasLocationPermission(context)) {
+            country = LocationHelper.getCountryCode(context)
+        } else {
+            locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -165,9 +189,8 @@ fun FeedScreen(
                                 key = { it.id }
                             ) { activity ->
                                 var availability by remember(activity.movie.id) { mutableStateOf<String?>(null) }
-                                val countryPerItem = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
                                 LaunchedEffect(activity.movie.id) {
-                                    when (val res = feedViewModel.getWatchProviders(activity.movie.id, countryPerItem)) {
+                                    when (val res = feedViewModel.getWatchProviders(activity.movie.id, country)) {
                                         is com.cpen321.movietier.data.repository.Result.Success -> {
                                             val providers = buildList {
                                                 addAll(res.data.providers.flatrate)

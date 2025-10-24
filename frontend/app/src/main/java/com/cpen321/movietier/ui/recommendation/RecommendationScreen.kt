@@ -22,6 +22,10 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import android.content.Intent
 import android.net.Uri
+import com.cpen321.movietier.utils.LocationHelper
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +38,27 @@ fun RecommendationScreen(
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val country = remember { java.util.Locale.getDefault().country.takeIf { it.isNotBlank() } ?: "CA" }
+    var country by remember { mutableStateOf("CA") }
+
+    // Request location permission and get country code
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            scope.launch {
+                country = LocationHelper.getCountryCode(context)
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (LocationHelper.hasLocationPermission(context)) {
+            country = LocationHelper.getCountryCode(context)
+        } else {
+            locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
+        }
+    }
 
     LaunchedEffect(Unit) {
         recommendationViewModel.events.collect { event ->
