@@ -28,7 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.HorizontalDivider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,11 +112,27 @@ fun RankingScreen(
                             items = uiState.rankedMovies,
                             key = { it.id }
                         ) { rankedMovie ->
+                            var showActions by remember { mutableStateOf(false) }
+
                             RankedMovieRow(
                                 rankedMovie = rankedMovie,
-                                onRerank = { rankingViewModel.startRerank(rankedMovie) },
-                                onDelete = { rankingViewModel.deleteRank(rankedMovie.id) }
+                                onClick = { showActions = true }
                             )
+
+                            if (showActions) {
+                                MovieActionSheet(
+                                    movieTitle = rankedMovie.movie.title,
+                                    onDismiss = { showActions = false },
+                                    onRerank = {
+                                        showActions = false
+                                        rankingViewModel.startRerank(rankedMovie)
+                                    },
+                                    onDelete = {
+                                        showActions = false
+                                        rankingViewModel.deleteRank(rankedMovie.id)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -264,12 +283,10 @@ private enum class RankingState {
 @Composable
 private fun RankedMovieRow(
     rankedMovie: com.cpen321.movietier.data.model.RankedMovie,
-    onRerank: () -> Unit,
-    onDelete: () -> Unit
+    onClick: () -> Unit
 ) {
     val vm: RankingViewModel = hiltViewModel()
     var details by remember(rankedMovie.movie.id) { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(rankedMovie.movie.id) {
         when (val res = vm.getMovieDetails(rankedMovie.movie.id)) {
@@ -280,135 +297,194 @@ private fun RankedMovieRow(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .testTag("ranked_movie_${rankedMovie.rank}"),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Left column: rank number on top, poster below
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Left column: rank number on top, poster below
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = "#${rankedMovie.rank}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
-                    }
-
-                    rankedMovie.movie.posterPath?.let { poster ->
-                        AsyncImage(
-                            model = "https://image.tmdb.org/t/p/w185$poster",
-                            contentDescription = rankedMovie.movie.title,
-                            modifier = Modifier
-                                .height(140.dp)
-                                .aspectRatio(2f / 3f)
-                                .clip(MaterialTheme.shapes.small),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
+                    Text(
+                        text = "#${rankedMovie.rank}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
                 }
 
-                // Movie info in a smaller MovieCard style
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = rankedMovie.movie.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                rankedMovie.movie.posterPath?.let { poster ->
+                    AsyncImage(
+                        model = "https://image.tmdb.org/t/p/w185$poster",
+                        contentDescription = rankedMovie.movie.title,
+                        modifier = Modifier
+                            .height(140.dp)
+                            .aspectRatio(2f / 3f)
+                            .clip(MaterialTheme.shapes.small),
+                        contentScale = ContentScale.Crop
                     )
-                    // Year and rating on the same line
-                    run {
-                        val year = (details?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
-                        val rating = (details?.voteAverage ?: rankedMovie.movie.voteAverage)
-                        val line = buildString {
-                            if (!year.isNullOrBlank()) append(year)
-                            if (rating != null) {
-                                if (isNotEmpty()) append(" • ")
-                                append("★ ")
-                                append("%.1f".format(rating))
-                            }
-                        }
-                        if (line.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = line,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    details?.cast?.take(3)?.let { cast ->
-                        if (cast.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = cast.joinToString(),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                    (details?.overview ?: rankedMovie.movie.overview)?.let { overview ->
-                        if (overview.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = overview,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 4,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
                 }
             }
 
-            // Action buttons in top-right corner
+            // Movie info in a smaller MovieCard style
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = rankedMovie.movie.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                // Year and rating on the same line
+                run {
+                    val year = (details?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
+                    val rating = (details?.voteAverage ?: rankedMovie.movie.voteAverage)
+                    val line = buildString {
+                        if (!year.isNullOrBlank()) append(year)
+                        if (rating != null) {
+                            if (isNotEmpty()) append(" • ")
+                            append("★ ")
+                            append("%.1f".format(rating))
+                        }
+                    }
+                    if (line.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = line,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                details?.cast?.take(3)?.let { cast ->
+                    if (cast.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = cast.joinToString(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                (details?.overview ?: rankedMovie.movie.overview)?.let { overview ->
+                    if (overview.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = overview,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MovieActionSheet(
+    movieTitle: String,
+    onDismiss: () -> Unit,
+    onRerank: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            // Title
+            Text(
+                text = movieTitle,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // Rerank option
             Row(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    .fillMaxWidth()
+                    .clickable {
+                        onRerank()
+                    }
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Rerank button
-                FilledTonalIconButton(
-                    onClick = onRerank,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Rerank",
-                        modifier = Modifier.size(20.dp)
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Column {
+                    Text(
+                        text = "Rerank",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "Compare and adjust position",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
 
-                // Delete button
-                FilledTonalIconButton(
-                    onClick = { showDeleteConfirm = true },
-                    modifier = Modifier.size(36.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+            // Delete option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        showDeleteConfirm = true
+                    }
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Column {
+                    Text(
+                        text = "Delete from Rankings",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.error
                     )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        modifier = Modifier.size(20.dp)
+                    Text(
+                        text = "Remove from your list",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -428,7 +504,7 @@ private fun RankedMovieRow(
             },
             title = { Text("Delete Ranking?") },
             text = {
-                Text("Are you sure you want to remove \"${rankedMovie.movie.title}\" from your rankings? This action cannot be undone.")
+                Text("Are you sure you want to remove \"$movieTitle\" from your rankings? This action cannot be undone.")
             },
             confirmButton = {
                 TextButton(
