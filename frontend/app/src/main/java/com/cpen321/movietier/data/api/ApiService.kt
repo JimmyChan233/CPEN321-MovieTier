@@ -1,6 +1,7 @@
 package com.cpen321.movietier.data.api
 
 import com.cpen321.movietier.data.model.*
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -31,6 +32,13 @@ interface ApiService {
 
     @PUT("users/profile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<ApiResponse<User>>
+
+    @Multipart
+    @POST("users/profile/picture")
+    suspend fun uploadProfilePicture(@Part profileImage: MultipartBody.Part): Response<ApiResponse<User>>
+
+    @DELETE("users/profile/picture")
+    suspend fun deleteProfilePicture(): Response<ApiResponse<User>>
 
     @GET("users/search")
     suspend fun searchUsers(@Query("query") query: String): Response<ApiResponse<List<User>>>

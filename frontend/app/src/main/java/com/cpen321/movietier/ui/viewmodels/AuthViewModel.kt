@@ -282,10 +282,10 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
         )
     }
 
-    fun updateProfile(name: String?, profileImageUrl: String?) {
+    fun updateProfile(name: String?) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            when (val result = authRepository.updateProfile(name, profileImageUrl)) {
+            when (val result = authRepository.updateProfile(name)) {
                 is Result.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -297,6 +297,50 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = result.message ?: result.exception.message ?: "Failed to update profile"
+                    )
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    fun uploadProfilePicture(imageBytes: ByteArray) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = authRepository.uploadProfilePicture(imageBytes)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        user = result.data,
+                        successMessage = "Profile picture updated successfully"
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message ?: result.exception.message ?: "Failed to upload profile picture"
+                    )
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    fun deleteProfilePicture() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = authRepository.deleteProfilePicture()) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        user = result.data,
+                        successMessage = "Profile picture removed successfully"
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message ?: result.exception.message ?: "Failed to remove profile picture"
                     )
                 }
                 is Result.Loading -> {}

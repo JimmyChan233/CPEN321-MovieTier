@@ -120,9 +120,9 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun updateProfile(name: String?, profileImageUrl: String?): Result<User> {
+    suspend fun updateProfile(name: String?): Result<User> {
         return try {
-            val request = UpdateProfileRequest(name = name, profileImageUrl = profileImageUrl)
+            val request = UpdateProfileRequest(name = name, profileImageUrl = null)
             val response = apiService.updateProfile(request)
             if (response.isSuccessful && response.body() != null) {
                 val apiResponse = response.body()!!
@@ -151,6 +151,91 @@ class AuthRepository @Inject constructor(
                     }
                 } else {
                     "Failed to update profile"
+                }
+                Result.Error(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun uploadProfilePicture(imageBytes: ByteArray): Result<User> {
+        return try {
+            val requestFile = okhttp3.RequestBody.create(
+                okhttp3.MediaType.parse("image/jpeg"),
+                imageBytes
+            )
+            val body = okhttp3.MultipartBody.Part.createFormData(
+                "profileImage",
+                "profile.jpg",
+                requestFile
+            )
+            val response = apiService.uploadProfilePicture(body)
+            if (response.isSuccessful && response.body() != null) {
+                val apiResponse = response.body()!!
+                if (apiResponse.success && apiResponse.data != null) {
+                    val updatedUser = apiResponse.data
+                    // Update local storage
+                    tokenManager.saveUserInfo(
+                        updatedUser.id,
+                        updatedUser.email,
+                        updatedUser.name,
+                        updatedUser.profileImageUrl
+                    )
+                    Result.Success(updatedUser)
+                } else {
+                    Result.Error(Exception(apiResponse.message))
+                }
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = if (errorBody != null) {
+                    try {
+                        val gson = com.google.gson.Gson()
+                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
+                        errorResponse.message
+                    } catch (e: Exception) {
+                        "Failed to upload profile picture"
+                    }
+                } else {
+                    "Failed to upload profile picture"
+                }
+                Result.Error(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun deleteProfilePicture(): Result<User> {
+        return try {
+            val response = apiService.deleteProfilePicture()
+            if (response.isSuccessful && response.body() != null) {
+                val apiResponse = response.body()!!
+                if (apiResponse.success && apiResponse.data != null) {
+                    val updatedUser = apiResponse.data
+                    // Update local storage
+                    tokenManager.saveUserInfo(
+                        updatedUser.id,
+                        updatedUser.email,
+                        updatedUser.name,
+                        updatedUser.profileImageUrl
+                    )
+                    Result.Success(updatedUser)
+                } else {
+                    Result.Error(Exception(apiResponse.message))
+                }
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = if (errorBody != null) {
+                    try {
+                        val gson = com.google.gson.Gson()
+                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
+                        errorResponse.message
+                    } catch (e: Exception) {
+                        "Failed to delete profile picture"
+                    }
+                } else {
+                    "Failed to delete profile picture"
                 }
                 Result.Error(Exception(errorMessage))
             }

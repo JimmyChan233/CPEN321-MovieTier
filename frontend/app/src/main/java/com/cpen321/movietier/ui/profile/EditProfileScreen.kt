@@ -1,7 +1,6 @@
 package com.cpen321.movietier.ui.profile
 
 import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -73,7 +72,7 @@ fun EditProfileScreen(
                 inputStream?.close()
 
                 bytes?.let { imageBytes ->
-                    // Resize image if too large (optional but recommended for base64)
+                    // Resize image if too large
                     val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                     val maxSize = 512 // Max width/height
                     val scale = minOf(
@@ -89,9 +88,10 @@ fun EditProfileScreen(
                     )
 
                     val outputStream = ByteArrayOutputStream()
-                    scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, outputStream)
-                    val base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
-                    profileImageUrl = "data:image/jpeg;base64,$base64"
+                    scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, outputStream)
+
+                    // Upload immediately
+                    authViewModel.uploadProfilePicture(outputStream.toByteArray())
                 }
             } catch (e: Exception) {
                 snackbarMessage = "Failed to load image: ${e.message}"
@@ -184,20 +184,16 @@ fun EditProfileScreen(
                         showSnackbar = true
                         return@Button
                     }
-                    // Only send fields that changed
+                    // Only send name if changed
                     val nameChanged = name != uiState.user?.name
-                    val imageChanged = profileImageUrl != uiState.user?.profileImageUrl
 
-                    if (!nameChanged && !imageChanged) {
+                    if (!nameChanged) {
                         snackbarMessage = "No changes to save"
                         showSnackbar = true
                         return@Button
                     }
 
-                    authViewModel.updateProfile(
-                        name = if (nameChanged) name else null,
-                        profileImageUrl = if (imageChanged) profileImageUrl else null
-                    )
+                    authViewModel.updateProfile(name = name)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
@@ -214,10 +210,10 @@ fun EditProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Remove photo button (if photo exists)
-            if (profileImageUrl != null) {
+            // Remove photo button (if photo exists and not Google default)
+            if (profileImageUrl != null && !profileImageUrl!!.contains("googleusercontent.com")) {
                 TextButton(
-                    onClick = { profileImageUrl = null },
+                    onClick = { authViewModel.deleteProfilePicture() },
                     enabled = !uiState.isLoading
                 ) {
                     Text("Remove Photo")

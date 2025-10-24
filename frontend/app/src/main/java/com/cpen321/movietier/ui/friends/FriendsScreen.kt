@@ -251,7 +251,7 @@ private fun FriendRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Avatar(
-                imageUrl = null,
+                imageUrl = friend.profileImageUrl,
                 name = friend.name,
                 size = 48.dp
             )
