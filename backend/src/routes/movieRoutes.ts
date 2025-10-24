@@ -233,11 +233,16 @@ router.delete('/ranked/:id', authenticate, async (req: AuthRequest, res) => {
       return res.status(404).json({ success: false, message: 'Ranked movie not found' });
     }
     const removedRank = doc.rank;
+    const removedMovieId = doc.movieId;
     await doc.deleteOne();
     await RankedMovie.updateMany(
       { userId: req.userId, rank: { $gt: removedRank } },
       { $inc: { rank: -1 } }
     );
+    // remove related feed activities
+    try {
+      await FeedActivity.deleteMany({ userId: req.userId, movieId: removedMovieId });
+    } catch {}
     res.json({ success: true, message: 'Removed from rankings' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to remove from rankings. Please try again' });

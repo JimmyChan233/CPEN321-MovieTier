@@ -114,7 +114,7 @@ fun RankingScreen(
                             var menuOpen by remember { mutableStateOf(false) }
                             Box(modifier = Modifier
                                 .combinedClickable(
-                                    onClick = { /* open detail or noop */ },
+                                    onClick = { menuOpen = true },
                                     onLongClick = { menuOpen = true }
                                 )
                             ) {
