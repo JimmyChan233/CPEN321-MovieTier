@@ -31,9 +31,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 @Composable
 fun RecommendationScreen(
     navController: NavController,
-    recommendationViewModel: RecommendationViewModel = hiltViewModel()
+    recommendationViewModel: RecommendationViewModel = hiltViewModel(),
+    rankingViewModel: RankingViewModel = hiltViewModel()
 ) {
     val uiState by recommendationViewModel.uiState.collectAsState()
+    val compareState by rankingViewModel.compareState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
     val scope = rememberCoroutineScope()
@@ -163,6 +165,10 @@ fun RecommendationScreen(
                         selectedMovie?.let { movie ->
                             MovieDetailBottomSheet(
                                 movie = movie,
+                                onAddToRanking = {
+                                    rankingViewModel.addMovieFromSearch(movie)
+                                    selectedMovie = null
+                                },
                                 onOpenWhereToWatch = {
                                     scope.launch {
                                         // Prefer exact TMDB watch page for the movie
@@ -209,7 +215,64 @@ fun RecommendationScreen(
                                 onDismissRequest = { selectedMovie = null }
                             )
                         }
+
+                        // Comparison Dialog
+                        if (compareState != null) {
+                            val state = compareState!!
+                            AlertDialog(
+                                onDismissRequest = { /* Disabled during ranking */ },
+                                title = { Text("Which movie do you prefer?") },
+                                text = {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Text(
+                                            "Help us place '${state.newMovie.title}' in your rankings:",
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        Button(
+                                            onClick = {
+                                                rankingViewModel.compareMovies(
+                                                    newMovie = state.newMovie,
+                                                    compareWith = state.compareWith,
+                                                    preferredMovie = state.newMovie
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(state.newMovie.title)
+                                        }
+                                        Button(
+                                            onClick = {
+                                                rankingViewModel.compareMovies(
+                                                    newMovie = state.newMovie,
+                                                    compareWith = state.compareWith,
+                                                    preferredMovie = state.compareWith
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(state.compareWith.title)
+                                        }
+                                    }
+                                },
+                                confirmButton = {},
+                                dismissButton = {}
+                            )
+                        }
                     }
+                }
+            }
+        }
+    }
+
+    // Listen to ranking events
+    LaunchedEffect(Unit) {
+        rankingViewModel.events.collect { event ->
+            when (event) {
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
+                    snackbarHostState.showSnackbar(event.text)
                 }
             }
         }
