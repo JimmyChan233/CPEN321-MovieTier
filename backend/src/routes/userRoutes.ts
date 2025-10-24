@@ -49,7 +49,23 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
       updateFields.name = name.trim();
     }
     if (profileImageUrl !== undefined) {
-      updateFields.profileImageUrl = profileImageUrl;
+      // If null/empty/"REMOVE" -> reset to Google default picture
+      if (profileImageUrl === null || profileImageUrl === '' || profileImageUrl === 'REMOVE') {
+        const current = await User.findById(req.userId).select('googlePictureUrl');
+        updateFields.profileImageUrl = current?.googlePictureUrl || null;
+      } else {
+        // Accept data URI or https URL
+        const isDataUri = typeof profileImageUrl === 'string' && profileImageUrl.startsWith('data:image/');
+        const isHttp = typeof profileImageUrl === 'string' && /^https?:\/\//i.test(profileImageUrl);
+        if (!isDataUri && !isHttp) {
+          return res.status(400).json({ success: false, message: 'Invalid profile image format' });
+        }
+        // Optional: limit data URI size (~1MB)
+        if (isDataUri && profileImageUrl.length > 1_400_000) {
+          return res.status(400).json({ success: false, message: 'Image too large' });
+        }
+        updateFields.profileImageUrl = profileImageUrl;
+      }
     }
 
     const user = await User.findByIdAndUpdate(

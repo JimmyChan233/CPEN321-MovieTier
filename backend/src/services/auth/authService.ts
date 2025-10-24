@@ -61,7 +61,8 @@ export class AuthService {
       email: googleData.email,
       name: googleData.name,
       googleId: googleData.googleId,
-      profileImageUrl: googleData.picture
+      profileImageUrl: googleData.picture,
+      googlePictureUrl: googleData.picture
     });
 
     await user.save();
