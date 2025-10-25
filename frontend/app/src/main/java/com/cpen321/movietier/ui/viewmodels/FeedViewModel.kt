@@ -3,6 +3,7 @@ package com.cpen321.movietier.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.data.model.FeedActivity
+import com.cpen321.movietier.data.model.FeedComment
 import com.cpen321.movietier.data.repository.FeedRepository
 import com.cpen321.movietier.data.repository.Result
 import com.cpen321.movietier.data.repository.WatchlistRepository
@@ -153,6 +154,95 @@ class FeedViewModel @Inject constructor(
 
     suspend fun getWatchProviders(movieId: Int, country: String = "CA"): Result<WatchProviders> {
         return movieRepository.getWatchProviders(movieId, country)
+    }
+
+    fun toggleLike(activityId: String) {
+        viewModelScope.launch {
+            // Find the activity
+            val activity = _uiState.value.feedActivities.find { it.id == activityId } ?: return@launch
+
+            // Optimistically update UI
+            val updatedActivities = _uiState.value.feedActivities.map { act ->
+                if (act.id == activityId) {
+                    act.copy(
+                        isLikedByUser = !act.isLikedByUser,
+                        likeCount = if (act.isLikedByUser) {
+                            maxOf(act.likeCount - 1, 0)
+                        } else {
+                            act.likeCount + 1
+                        }
+                    )
+                } else {
+                    act
+                }
+            }
+            _uiState.value = _uiState.value.copy(feedActivities = updatedActivities)
+
+            // Make API call
+            val result = if (activity.isLikedByUser) {
+                feedRepository.unlikeActivity(activityId)
+            } else {
+                feedRepository.likeActivity(activityId)
+            }
+
+            // Revert on error
+            if (result is Result.Error) {
+                val revertedActivities = _uiState.value.feedActivities.map { act ->
+                    if (act.id == activityId) {
+                        activity
+                    } else {
+                        act
+                    }
+                }
+                _uiState.value = _uiState.value.copy(feedActivities = revertedActivities)
+                _events.emit(FeedEvent.Error(result.message ?: "Failed to toggle like"))
+            }
+        }
+    }
+
+    private val _commentsState = MutableStateFlow<Map<String, List<FeedComment>>>(emptyMap())
+    val commentsState: StateFlow<Map<String, List<FeedComment>>> = _commentsState.asStateFlow()
+
+    fun loadComments(activityId: String) {
+        viewModelScope.launch {
+            when (val result = feedRepository.getComments(activityId)) {
+                is Result.Success -> {
+                    _commentsState.value = _commentsState.value + (activityId to result.data)
+                }
+                is Result.Error -> {
+                    _events.emit(FeedEvent.Error(result.message ?: "Failed to load comments"))
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun addComment(activityId: String, text: String) {
+        viewModelScope.launch {
+            when (val result = feedRepository.addComment(activityId, text)) {
+                is Result.Success -> {
+                    // Add comment to list
+                    val currentComments = _commentsState.value[activityId] ?: emptyList()
+                    _commentsState.value = _commentsState.value + (activityId to (currentComments + result.data))
+
+                    // Update comment count in feed
+                    val updatedActivities = _uiState.value.feedActivities.map { act ->
+                        if (act.id == activityId) {
+                            act.copy(commentCount = act.commentCount + 1)
+                        } else {
+                            act
+                        }
+                    }
+                    _uiState.value = _uiState.value.copy(feedActivities = updatedActivities)
+
+                    _events.emit(FeedEvent.Message("Comment added"))
+                }
+                is Result.Error -> {
+                    _events.emit(FeedEvent.Error(result.message ?: "Failed to add comment"))
+                }
+                else -> {}
+            }
+        }
     }
 
     override fun onCleared() {

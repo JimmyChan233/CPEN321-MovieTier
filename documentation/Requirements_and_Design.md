@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-10-25      | 3.1 (Feed), 3.4 (Feed use cases), 4.1 (UserFeed interfaces), 4.2 (Database), Design notes | **Feed Interaction Features - Likes and Comments**: Added social engagement features to feed activities. (1) Backend: Created Like and Comment models with MongoDB schemas, compound indexes for performance (userId+activityId unique for likes, activityId+createdAt for comments). Added endpoints: POST/DELETE /api/feed/:activityId/like for liking/unliking, GET/POST /api/feed/:activityId/comments for viewing/adding comments (500 char limit). Updated GET /api/feed to include likeCount, commentCount, and isLikedByUser fields. (2) Frontend: Updated FeedActivity model with new fields, added like/unlike toggle with optimistic UI updates, created CommentBottomSheet component for viewing and posting comments. Feed cards now display thumbs up icon (filled when liked) and comment bubble icon with counts. Comment sheet shows all comments with user avatars, timestamps, and inline comment input field. (3) UI: Like button shows primary color when liked, comment count updates in real-time after posting. |
 | 2025-10-25      | 3.1 (UI consistency), Design notes | **Star Rating Display Standardization**: Replaced text-based ratings ("★ 8.4") with consistent 5-star visual display across entire app using StarRating component. (1) Display format: Year + 5 stars with partial fill + rating number (e.g., "2023 ⭐⭐⭐⭐⭐ 8.4"). TMDB 0-10 scale converted to 0-5 stars, gold filled stars (#FFD700), 14dp star size, 8dp spacing. (2) Updated screens: Profile watchlist preview, Friends profile watchlist, Feed activity cards, Feed movie detail bottom sheet, Watchlist screen, all movie detail sheets. (3) Fixed FriendProfileScreen top banner overflow: added maxLines=1 and ellipsis to prevent wide banner with long friend names. Consistent format now matches Discover, Ranking, and Recommendation screens. |
 | 2025-10-25      | 3.1 (Discover), 4.3 (External modules), 4.4 (Backend frameworks), UI consistency | **Featured Movie Quote Card & UI Consistency Improvements**: (1) Fixed quote card bug on Discover page: removed plot description fallback that was incorrectly showing movie summaries as "quotes". Expanded curated quote database from ~120 to 575+ movies (5x increase) covering all major genres, franchises, and eras. Increased Wikiquote API timeout from 3.5s to 6s for better real quote fetching. Added smart movie-themed fallback messages. (2) Standardized "add to ranking" behavior across all screens (Ranking, Feed, Discover/Recommendation, Friends, Watchlist): bottom sheets now close on success/error, feedback messages display at top of screen overlaying current page, auto-dismiss after 4 seconds. Added RankingEvent.Error type for proper error handling. (3) Backend: Added cheerio library for Wikiquote HTML scraping, fixed TypeScript compilation errors. |
 | 2025-10-24      | 4.1 (UserManager), 4.3 (External modules), 4.4 (Backend/Frontend frameworks) | **Firebase Cloud Messaging Implementation**: Implemented push notifications for real-time user engagement. (1) Backend: Added FCM token registration endpoint (POST /api/users/fcm-token), integrated firebase-admin SDK for sending notifications, extended User model with fcmToken field, integrated notifications into feed activity creation and friend request flows. (2) Frontend: Added Firebase Cloud Messaging SDK (BOM 33.7.0), implemented MovieTierFirebaseMessagingService for receiving notifications, created two notification channels (feed_updates and friend_requests), automatic token registration on app startup and refresh, notification permission handling for Android 13+. (3) Notifications sent for: friend ranks new movie, incoming friend request, friend request accepted. Documentation includes setup guide in documentation/FCM_SETUP.md. |
@@ -38,7 +39,8 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 1. Authentication - There will be a google login/auth page that will allow users to sign up or sign into their account. A user can also delete their account.
    - Profile Editing: Users can edit their display name from the Profile screen via PUT /api/users/profile. Profile pictures are sourced from the user's Google account during sign-up and stored in the profileImageUrl field. All profile data persists locally in DataStore.
 2. Manage Friends - The user can send friend requests (by email or by searching name/email), accept/reject incoming requests, view pending requests, and remove existing friends. Real-time notifications are delivered when a request is received or handled.
-3. Feed - A user gets real time updates of their friends activities on their feed. Users get live notification whenever a friend ranks a new movie. Feed contains all friend activities (sorted in reverse chronological order) which include the movie name, ranking, friend name, and movie banner of the friends ranking. Feed activity cards display year and 5-star rating (with partial star fill, gold color #FFD700, 14dp size, 8dp spacing) for each movie. Movie detail sheets opened from Feed also use the same consistent 5-star rating format. 
+3. Feed - A user gets real time updates of their friends activities on their feed. Users get live notification whenever a friend ranks a new movie. Feed contains all friend activities (sorted in reverse chronological order) which include the movie name, ranking, friend name, and movie banner of the friends ranking. Feed activity cards display year and 5-star rating (with partial star fill, gold color #FFD700, 14dp size, 8dp spacing) for each movie. Movie detail sheets opened from Feed also use the same consistent 5-star rating format.
+   - Social Interactions: Users can like and comment on friend activities. Feed cards display thumbs up icon (filled with primary color when liked by user) and comment icon with counts. Tapping the like button toggles the like status with optimistic UI updates. Tapping the comment button opens a bottom sheet showing all comments with user avatars, names, timestamps, and an inline text field for adding new comments (500 character limit). Like and comment counts update in real-time. 
 4. Ranked Movie List - Users will be able to generate a ranked list of movies they have seen. They can search for movies, add movies, and then rank the movie, based on comparison between previously ranked movies.  The app will then assign a final ranking to the movie based on the comparison done by the user.
    - Search results include posters (2:3) and a subtitle with year + up to 3 actors.
    - Ranking list entries show rank chip, poster, year and 5-star rating display on one line (e.g., "2023 ⭐⭐⭐⭐⭐ 8.4" with partial star fill based on TMDB rating converted from 0-10 to 0-5 scale), top actors, and a short overview. Star rating uses gold color (#FFD700), 14dp star size, and 8dp spacing.
@@ -182,8 +184,12 @@ The user is on the “Feed” page
 
 **Main success scenario**:
 
-1. System retrieves latest friend activity (new movies ranked by friends)
-2. System displays the friend activities in a reverse chronological order 
+1. System retrieves the latest friend activities (newly ranked movies) including each activity's like count, comment count, and whether the current user has liked it.
+2. System displays the activities in reverse chronological order with like and comment affordances on every card.
+3. User taps the like button on an activity; the UI toggles immediately and the system records the like through `POST /api/feed/{activityId}/like`.
+4. User taps the comment button; the system opens the comment bottom sheet and loads up to 100 comments through `GET /api/feed/{activityId}/comments`.
+5. User submits a new comment; the system validates the input (non-empty, ≤500 chars), persists it through `POST /api/feed/{activityId}/comments`, and appends the comment while incrementing the on-card count.
+
 **Failure scenario(s)**:
 
 - 1a.User has no friends yet
@@ -192,6 +198,12 @@ The user is on the “Feed” page
 
 - 1b. User’s friends have not ranked any movies
   - 1b1. The system displays “No Friend Activity Yet”
+
+- 3a. Backend returns `Already liked`
+  - 3a1. The system reverts the optimistic toggle and shows an error snack bar.
+
+- 5a. Comment submission fails (validation or network)
+  - 5a1. The system surfaces the error and preserves the user's draft so it can be retried.
 
 <a name="uc4"></a>
 
@@ -506,12 +518,32 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 - `GET /api/feed`
   - **Parameters**: None (requires JWT)
   - **Returns**: `{ success: boolean, data: FeedActivity[] }` (limit 50, sorted by createdAt descending)
-  - **Description**: Retrieves activity feed of friends' movie rankings with user profile data, movie details, and current ranks.
+  - **Description**: Retrieves activity feed of friends' movie rankings with user profile data, movie details, current ranks, like counts, comment counts, and whether the requesting user liked each activity.
 
 - `GET /api/feed/stream`
   - **Parameters**: None (requires JWT, Server-Sent Events endpoint)
   - **Returns**: Stream of `feed_activity` events with `{ activityId: string }`
   - **Description**: Establishes SSE connection for real-time feed updates when friends rank movies.
+
+- `POST /api/feed/{activityId}/like`
+  - **Parameters**: `activityId: string` (path, requires JWT)
+  - **Returns**: `{ success: boolean, message: string }`
+  - **Description**: Registers a like from the current user. Duplicate likes are prevented by a unique compound index on `(userId, activityId)`.
+
+- `DELETE /api/feed/{activityId}/like`
+  - **Parameters**: `activityId: string` (path, requires JWT)
+  - **Returns**: `{ success: boolean, message: string }`
+  - **Description**: Removes an existing like from the current user.
+
+- `GET /api/feed/{activityId}/comments`
+  - **Parameters**: `activityId: string` (path, requires JWT)
+  - **Returns**: `{ success: boolean, data: Comment[] }` ordered oldest→newest (limit 100)
+  - **Description**: Retrieves comments for a feed activity with populated author metadata (name, profile image).
+
+- `POST /api/feed/{activityId}/comments`
+  - **Parameters**: `activityId: string` (path), body `{ text: string }` (requires JWT)
+  - **Returns**: `{ success: boolean, data: Comment }`
+  - **Description**: Adds a comment on a feed activity after validating length (1–500 chars) and activity existence.
 
 **Internal Service Interface (sseService.ts):**
 - `addClient(userId: string, res: Response): void`
@@ -522,6 +554,10 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 
 - `send(userId: string, event: string, data: object): void`
   - Sends SSE event to specific user's connected clients.
+
+**Data Models:**
+- `Like` (Mongoose model) - fields: `userId`, `activityId`, timestamps; indexes: unique `(userId, activityId)` and `(activityId)` for fast counts.
+- `Comment` (Mongoose model) - fields: `userId`, `activityId`, `text`, timestamps; index: `(activityId, createdAt)` for ordered queries.
 
 #### 5. **Watchlist Manager**
 
@@ -553,7 +589,13 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 
 
 1. **UserDB**
-   - **Purpose**: This is the sole database for our application. We will have separate tables in this database to store user login credentials, ranked movie lists, friends, requests, recommendations, and friend activities. 
+   - **Purpose**: MongoDB cluster that stores all application data (users, ranked movies, friends, notifications, feed, watchlists).
+   - **Collections of note**:
+     - `users`: Google auth metadata, profile info, `fcmToken`.
+     - `feedactivities`: Friend ranking events with references to `users` and TMDB movie metadata.
+     - `likes`: New collection for feed engagement. Fields: `_id`, `userId`, `activityId`, `createdAt`, `updatedAt`. Indexes: unique compound `(userId, activityId)` to prevent duplicate likes, and single-field `(activityId)` to support aggregation when returning like counts.
+     - `comments`: New collection for feed discussions. Fields: `_id`, `userId`, `activityId`, `text`, timestamps. Index `(activityId, createdAt)` enables chronological pagination. Validation enforces 1–500 character messages.
+     - `rankedmovies`, `watchlists`, `friendships`, `friendrequests`, `notifications`: existing collections unchanged by this iteration.
 
 ### **4.3. External Modules**
 

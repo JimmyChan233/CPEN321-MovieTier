@@ -31,6 +31,7 @@ import com.cpen321.movietier.data.model.Movie
 import com.cpen321.movietier.ui.components.EmptyState
 import com.cpen321.movietier.ui.components.FeedActivityCard
 import com.cpen321.movietier.ui.components.MovieDetailBottomSheet
+import com.cpen321.movietier.ui.components.CommentBottomSheet
 import com.cpen321.movietier.ui.components.shimmerPlaceholder
 import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.theme.MovieTierTheme
@@ -82,8 +83,10 @@ fun FeedScreen(
 ) {
     val uiState by feedViewModel.uiState.collectAsState()
     val compareState by feedViewModel.compareState.collectAsState()
+    val commentsState by feedViewModel.commentsState.collectAsState()
 
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
+    var showCommentsForActivity by remember { mutableStateOf<String?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -226,7 +229,12 @@ fun FeedScreen(
                                 FeedActivityCard(
                                     activity = activity,
                                     availabilityText = availability,
-                                    onClick = { selectedMovie = activity.movie }
+                                    onClick = { selectedMovie = activity.movie },
+                                    onLikeClick = { feedViewModel.toggleLike(activity.id) },
+                                    onCommentClick = {
+                                        showCommentsForActivity = activity.id
+                                        feedViewModel.loadComments(activity.id)
+                                    }
                                 )
                             }
                         }
@@ -415,6 +423,18 @@ fun FeedScreen(
                 }
             }
         }
+    }
+
+    // Comment bottom sheet
+    showCommentsForActivity?.let { activityId ->
+        val comments = commentsState[activityId] ?: emptyList()
+        CommentBottomSheet(
+            comments = comments,
+            onDismiss = { showCommentsForActivity = null },
+            onAddComment = { text ->
+                feedViewModel.addComment(activityId, text)
+            }
+        )
     }
 
     LaunchedEffect(Unit) {

@@ -126,6 +126,21 @@ interface ApiService {
     @GET("feed/stream")
     suspend fun connectFeedStream(): Response<Unit>
 
+    @POST("feed/{activityId}/like")
+    suspend fun likeActivity(@Path("activityId") activityId: String): Response<ApiResponse<Unit>>
+
+    @DELETE("feed/{activityId}/like")
+    suspend fun unlikeActivity(@Path("activityId") activityId: String): Response<ApiResponse<Unit>>
+
+    @GET("feed/{activityId}/comments")
+    suspend fun getComments(@Path("activityId") activityId: String): Response<ApiResponse<List<FeedComment>>>
+
+    @POST("feed/{activityId}/comments")
+    suspend fun addComment(
+        @Path("activityId") activityId: String,
+        @Body body: Map<String, String> // { "text": "comment text" }
+    ): Response<ApiResponse<FeedComment>>
+
     // Watchlist
     @GET("watchlist")
     suspend fun getWatchlist(): Response<ApiResponse<List<WatchlistItem>>>

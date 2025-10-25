@@ -5,6 +5,8 @@ import RankedMovie from '../models/movie/RankedMovie';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
 import { Friendship } from '../models/friend/Friend';
 import { sseService } from '../services/sse/sseService';
+import Like from '../models/feed/Like';
+import Comment from '../models/feed/Comment';
 
 const router = Router();
 
@@ -47,9 +49,31 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
       } catch {}
     }));
 
+    // Fetch like counts and user's like status for all activities
+    const activityIds = activities.map(a => a._id);
+    const likeCounts = await Like.aggregate([
+      { $match: { activityId: { $in: activityIds } } },
+      { $group: { _id: '$activityId', count: { $sum: 1 } } }
+    ]);
+    const likeCountMap = new Map(likeCounts.map((lc: any) => [String(lc._id), lc.count]));
+
+    const userLikes = await Like.find({
+      userId: req.userId,
+      activityId: { $in: activityIds }
+    });
+    const userLikeSet = new Set(userLikes.map(l => String(l.activityId)));
+
+    // Fetch comment counts for all activities
+    const commentCounts = await Comment.aggregate([
+      { $match: { activityId: { $in: activityIds } } },
+      { $group: { _id: '$activityId', count: { $sum: 1 } } }
+    ]);
+    const commentCountMap = new Map(commentCounts.map((cc: any) => [String(cc._id), cc.count]));
+
     const shaped = activities.map((a: any) => {
       const key = `${a.userId?._id}_${a.movieId}`;
       const currentRank = movieRankMap.get(key);
+      const activityIdStr = String(a._id);
 
       return {
         _id: a._id,
@@ -66,6 +90,9 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
           voteAverage: null
         },
         rank: currentRank ?? null,
+        likeCount: likeCountMap.get(activityIdStr) || 0,
+        commentCount: commentCountMap.get(activityIdStr) || 0,
+        isLikedByUser: userLikeSet.has(activityIdStr),
         createdAt: a.createdAt
       };
     });
@@ -92,6 +119,124 @@ router.get('/stream', authenticate, async (req: AuthRequest, res) => {
     req.on('close', () => sseService.removeClient(String(req.userId!), res));
   } catch {
     res.end();
+  }
+});
+
+// Like an activity
+router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { activityId } = req.params;
+
+    // Verify activity exists
+    const activity = await FeedActivity.findById(activityId);
+    if (!activity) {
+      return res.status(404).json({ success: false, message: 'Activity not found' });
+    }
+
+    // Create like (unique index prevents duplicates)
+    const like = new Like({
+      userId: req.userId,
+      activityId: activityId
+    });
+    await like.save();
+
+    res.json({ success: true, message: 'Activity liked' });
+  } catch (error: any) {
+    if (error.code === 11000) {
+      // Duplicate key error - already liked
+      return res.status(400).json({ success: false, message: 'Already liked' });
+    }
+    res.status(500).json({ success: false, message: 'Failed to like activity' });
+  }
+});
+
+// Unlike an activity
+router.delete('/:activityId/like', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { activityId } = req.params;
+
+    const result = await Like.findOneAndDelete({
+      userId: req.userId,
+      activityId: activityId
+    });
+
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Like not found' });
+    }
+
+    res.json({ success: true, message: 'Like removed' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to unlike activity' });
+  }
+});
+
+// Get comments for an activity
+router.get('/:activityId/comments', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { activityId } = req.params;
+
+    const comments = await Comment.find({ activityId })
+      .sort({ createdAt: 1 })
+      .populate('userId', 'name profileImageUrl')
+      .limit(100);
+
+    const shaped = comments.map((c: any) => ({
+      _id: c._id,
+      userId: c.userId?._id,
+      userName: c.userId?.name,
+      userProfileImage: c.userId?.profileImageUrl,
+      text: c.text,
+      createdAt: c.createdAt
+    }));
+
+    res.json({ success: true, data: shaped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to load comments' });
+  }
+});
+
+// Add a comment to an activity
+router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { activityId } = req.params;
+    const { text } = req.body;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Comment text is required' });
+    }
+
+    if (text.length > 500) {
+      return res.status(400).json({ success: false, message: 'Comment must be 500 characters or less' });
+    }
+
+    // Verify activity exists
+    const activity = await FeedActivity.findById(activityId);
+    if (!activity) {
+      return res.status(404).json({ success: false, message: 'Activity not found' });
+    }
+
+    const comment = new Comment({
+      userId: req.userId,
+      activityId: activityId,
+      text: text.trim()
+    });
+    await comment.save();
+
+    // Populate user info for response
+    await comment.populate('userId', 'name profileImageUrl');
+
+    const shaped = {
+      _id: comment._id,
+      userId: (comment.userId as any)?._id,
+      userName: (comment.userId as any)?.name,
+      userProfileImage: (comment.userId as any)?.profileImageUrl,
+      text: comment.text,
+      createdAt: comment.createdAt
+    };
+
+    res.json({ success: true, data: shaped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to add comment' });
   }
 });
 
