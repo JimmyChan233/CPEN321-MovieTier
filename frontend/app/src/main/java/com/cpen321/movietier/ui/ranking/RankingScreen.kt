@@ -254,35 +254,85 @@ fun RankingScreen(
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
                         "Help us place '${state.newMovie.title}' in your rankings:",
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                    Button(
-                        onClick = {
-                            rankingViewModel.compareMovies(
-                                newMovie = state.newMovie,
-                                compareWith = state.compareWith,
-                                preferredMovie = state.newMovie
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
+
+                    // Side-by-side posters with clickable movie names
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(state.newMovie.title)
-                    }
-                    Button(
-                        onClick = {
-                            rankingViewModel.compareMovies(
-                                newMovie = state.newMovie,
-                                compareWith = state.compareWith,
-                                preferredMovie = state.compareWith
+                        // First movie
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            AsyncImage(
+                                model = state.newMovie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+                                contentDescription = state.newMovie.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(2f / 3f)
+                                    .clip(MaterialTheme.shapes.medium),
+                                contentScale = ContentScale.Crop
                             )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(state.compareWith.title)
+                            Button(
+                                onClick = {
+                                    rankingViewModel.compareMovies(
+                                        newMovie = state.newMovie,
+                                        compareWith = state.compareWith,
+                                        preferredMovie = state.newMovie
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    state.newMovie.title,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        // Second movie
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            AsyncImage(
+                                model = state.compareWith.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+                                contentDescription = state.compareWith.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(2f / 3f)
+                                    .clip(MaterialTheme.shapes.medium),
+                                contentScale = ContentScale.Crop
+                            )
+                            Button(
+                                onClick = {
+                                    rankingViewModel.compareMovies(
+                                        newMovie = state.newMovie,
+                                        compareWith = state.compareWith,
+                                        preferredMovie = state.compareWith
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    state.compareWith.title,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                     }
                 }
             },
