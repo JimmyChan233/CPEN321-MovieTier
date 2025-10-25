@@ -9,6 +9,8 @@ import com.cpen321.movietier.data.repository.WatchlistRepository
 import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.repository.MovieRepository
 import com.cpen321.movietier.data.model.WatchProviders
+import com.cpen321.movietier.data.model.Movie
+import com.cpen321.movietier.data.model.MovieVideo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,12 +58,29 @@ class FriendProfileViewModel @Inject constructor(
         return movieRepository.getWatchProviders(movieId, country)
     }
 
-    suspend fun addToMyWatchlist(item: WatchlistItem): com.cpen321.movietier.data.repository.Result<WatchlistItem> {
+    suspend fun addToMyWatchlist(movieId: Int, title: String, overview: String?, posterPath: String?): com.cpen321.movietier.data.repository.Result<WatchlistItem> {
         return watchlistRepository.addToWatchlist(
-            movieId = item.movieId,
-            title = item.title,
-            posterPath = item.posterPath,
-            overview = item.overview
+            movieId = movieId,
+            title = title,
+            posterPath = posterPath,
+            overview = overview
         )
+    }
+
+    suspend fun getMovieVideos(movieId: Int): Result<MovieVideo?> {
+        return movieRepository.getMovieVideos(movieId)
+    }
+
+    suspend fun addToRanking(movie: Movie): Result<*> {
+        return movieRepository.addMovie(
+            movieId = movie.id,
+            title = movie.title,
+            posterPath = movie.posterPath,
+            overview = movie.overview
+        )
+    }
+
+    suspend fun getMovieDetails(movieId: Int): Result<Movie> {
+        return movieRepository.getMovieDetails(movieId)
     }
 }
