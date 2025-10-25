@@ -31,6 +31,9 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = Color(0xFF5B7FA3),          // Lighter slate-blue accent
     onTertiary = Color(0xFFFFFFFF),
 
+    error = Color(0xFFFF5252),             // Brighter red for delete button visibility
+    onError = Color(0xFFFFFFFF),
+
     background = Color(0xFF0B1220),        // Deep navy background
     onBackground = Color(0xFFE6EDF7),
     surface = Color(0xFF162238),           // Elevated surface
