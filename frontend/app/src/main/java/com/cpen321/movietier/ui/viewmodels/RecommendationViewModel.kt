@@ -109,4 +109,8 @@ class RecommendationViewModel @Inject constructor(
     suspend fun getMovieVideos(movieId: Int): Result<MovieVideo?> {
         return movieRepository.getMovieVideos(movieId)
     }
+
+    suspend fun getMovieQuote(title: String, year: String? = null): Result<String> {
+        return movieRepository.getMovieQuote(title, year)
+    }
 }
