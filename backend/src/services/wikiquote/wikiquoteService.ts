@@ -27,14 +27,14 @@ function extractCandidatesFromHtml(html: string): string[] {
 
   // Prefer items in a Quotes section
   const headings = $('h2, h3');
-  headings.each((_, h) => {
+  headings.each((_: number, h: any) => {
     const txt = cleanText($(h).text());
     if (/^quotes?\b/i.test(txt)) {
       // collect list items until next heading
       let el = $(h).next();
       while (el.length && !['H2', 'H3'].includes(el[0].tagName.toUpperCase())) {
         if (el.is('ul, ol')) {
-          el.find('li').each((_, li) => {
+          el.find('li').each((_: number, li: any) => {
             const t = cleanText($(li).text());
             if (t.length >= 12 && t.length <= 180) out.push(t);
           });
@@ -46,7 +46,7 @@ function extractCandidatesFromHtml(html: string): string[] {
 
   // Fallback: any list items on the page
   if (out.length === 0) {
-    $('ul > li').each((_, li) => {
+    $('ul > li').each((_: number, li: any) => {
       const t = cleanText($(li).text());
       if (t.length >= 12 && t.length <= 180) out.push(t);
     });

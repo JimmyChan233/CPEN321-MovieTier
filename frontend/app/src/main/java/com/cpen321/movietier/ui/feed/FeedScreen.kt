@@ -306,7 +306,7 @@ fun FeedScreen(
                                 availabilityLoading = loadingAvail,
                                 onAddToRanking = {
                                     feedViewModel.addToRanking(movie)
-                                    // keep sheet open if compare dialog will show; it can still display over it
+                                    // Sheet will close when success/error message is received
                                 },
                                 onAddToWatchlist = {
                                     feedViewModel.addToWatchlist(movie)
@@ -421,6 +421,8 @@ fun FeedScreen(
         feedViewModel.events.collect { event ->
             when (event) {
                 is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> {
+                    // Close bottom sheet so message is visible at top
+                    selectedMovie = null
                     snackbarHostState.showSnackbar(event.text)
                 }
                 is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> {

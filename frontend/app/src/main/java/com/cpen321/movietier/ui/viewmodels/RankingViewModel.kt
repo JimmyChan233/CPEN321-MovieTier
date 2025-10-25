@@ -94,7 +94,7 @@ class RankingViewModel @Inject constructor(
                     loadRankedMovies()
                 }
                 is Result.Error -> {
-                    _events.emit(RankingEvent.Message(res.message ?: "Failed to add movie"))
+                    _events.emit(RankingEvent.Error(res.message ?: "Failed to add movie"))
                 }
                 else -> {}
             }
@@ -179,7 +179,7 @@ class RankingViewModel @Inject constructor(
                     }
                 }
                 is Result.Error -> {
-                    _events.emit(RankingEvent.Message(res.message ?: "Failed to add movie"))
+                    _events.emit(RankingEvent.Error(res.message ?: "Failed to add movie"))
                 }
                 else -> {}
             }
@@ -219,4 +219,5 @@ class RankingViewModel @Inject constructor(
 
 sealed class RankingEvent {
     data class Message(val text: String): RankingEvent()
+    data class Error(val text: String): RankingEvent()
 }

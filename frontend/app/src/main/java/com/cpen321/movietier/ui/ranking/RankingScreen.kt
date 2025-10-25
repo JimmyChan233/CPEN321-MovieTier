@@ -161,6 +161,7 @@ fun RankingScreen(
         rankingViewModel.events.collect { ev ->
             when (ev) {
                 is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> snackbarHostState.showSnackbar(ev.text)
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> snackbarHostState.showSnackbar(ev.text)
             }
         }
     }

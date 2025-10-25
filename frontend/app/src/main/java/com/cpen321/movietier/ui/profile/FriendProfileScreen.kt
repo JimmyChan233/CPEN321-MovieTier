@@ -91,6 +91,24 @@ fun FriendProfileScreen(
         }
     }
 
+    // Listen to ranking events
+    LaunchedEffect(Unit) {
+        rankingViewModel.events.collect { event ->
+            when (event) {
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
+                    // Close bottom sheet so message is visible at top
+                    selectedMovie = null
+                    snackbarHostState.showSnackbar(event.text)
+                }
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> {
+                    // Close bottom sheet so error message is visible at top
+                    selectedMovie = null
+                    snackbarHostState.showSnackbar(event.text)
+                }
+            }
+        }
+    }
+
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
             title = { Text(ui.userName ?: "Profile") },
@@ -154,7 +172,7 @@ fun FriendProfileScreen(
                 movie = movie,
                 onAddToRanking = {
                     rankingViewModel.addMovieFromSearch(movie)
-                    selectedMovie = null
+                    // Sheet will close when success/error message is received
                 },
                 onAddToWatchlist = {
                     scope.launch {
