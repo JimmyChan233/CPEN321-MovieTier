@@ -47,6 +47,7 @@ fun RecommendationScreen(
     var trailerKey by remember { mutableStateOf<String?>(null) }
     var showTrailerDialog by remember { mutableStateOf(false) }
     var trailerMovieTitle by remember { mutableStateOf("") }
+    var featuredMovieOffset by remember { mutableStateOf(0) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var country by remember { mutableStateOf("CA") }
@@ -154,22 +155,44 @@ fun RecommendationScreen(
                 }
 
                 RecommendationState.CONTENT -> {
+                    // Get featured movie of the day
+                    val featuredMovieData = remember(uiState.recommendations, featuredMovieOffset) {
+                        getFeaturedMovieOfDay(uiState.recommendations, featuredMovieOffset)
+                    }
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
                     ) {
-                        Text(
-                            text = if (uiState.isShowingTrending) "Trending Now" else "Recommended for You",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-
                         LazyColumn(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            // Featured movie card
+                            featuredMovieData?.let { (movie, quote) ->
+                                item {
+                                    FeaturedMovieCard(
+                                        movie = movie,
+                                        quote = quote,
+                                        onClick = { selectedMovie = movie },
+                                        onRefresh = { featuredMovieOffset++ },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+
+                            // Section title
+                            item {
+                                Text(
+                                    text = if (uiState.isShowingTrending) "Trending Now" else "Recommended for You",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+
+                            // Recommendation cards
                             items(uiState.recommendations, key = { it.id }) { movie ->
                                 RecommendationCard(
                                     movie = movie,
@@ -327,4 +350,61 @@ fun RecommendationScreen(
 
 private enum class RecommendationState {
     LOADING, ERROR, EMPTY, CONTENT
+}
+
+private fun getFeaturedMovieOfDay(
+    recommendations: List<com.cpen321.movietier.data.model.Movie>,
+    offset: Int = 0
+): Pair<com.cpen321.movietier.data.model.Movie, String>? {
+    // Filter high-rated, family-friendly movies
+    val eligibleMovies = recommendations.filter { movie ->
+        (movie.voteAverage ?: 0.0) >= 7.5
+    }
+
+    if (eligibleMovies.isEmpty()) return null
+
+    // Use day of year + offset to pick a movie (offset increments on refresh)
+    val dayOfYear = java.time.LocalDate.now().dayOfYear
+    val index = (dayOfYear + offset) % eligibleMovies.size
+    val movie = eligibleMovies[index]
+
+    // Famous movie quotes mapped to popular movies
+    val movieQuotes = mapOf(
+        "The Shawshank Redemption" to "Get busy living, or get busy dying.",
+        "The Godfather" to "I'm gonna make him an offer he can't refuse.",
+        "The Dark Knight" to "Why so serious?",
+        "Forrest Gump" to "Life is like a box of chocolates.",
+        "Inception" to "You mustn't be afraid to dream a little bigger, darling.",
+        "The Matrix" to "There is no spoon.",
+        "Pulp Fiction" to "The path of the righteous man is beset on all sides.",
+        "Fight Club" to "The first rule of Fight Club is: you do not talk about Fight Club.",
+        "Star Wars" to "May the Force be with you.",
+        "The Lord of the Rings" to "Even the smallest person can change the course of the future.",
+        "Gladiator" to "Are you not entertained?",
+        "Interstellar" to "We used to look up at the sky and wonder at our place in the stars.",
+        "The Lion King" to "Remember who you are.",
+        "Toy Story" to "To infinity and beyond!",
+        "Finding Nemo" to "Just keep swimming.",
+        "Spirited Away" to "Once you've met someone you never really forget them.",
+        "Your Name" to "I wanted to meet you.",
+        "The Avengers" to "That's my secret, Captain. I'm always angry.",
+        "Spider-Man" to "With great power comes great responsibility.",
+        "The Silence of the Lambs" to "A census taker once tried to test me. I ate his liver with some fava beans.",
+        "Casablanca" to "Here's looking at you, kid.",
+        "Good Will Hunting" to "It's not your fault.",
+        "The Pursuit of Happyness" to "Don't ever let somebody tell you you can't do something.",
+        "Up" to "Adventure is out there!",
+        "WALL-E" to "Define dancing.",
+        "Coco" to "Remember me, though I have to say goodbye.",
+        "Inside Out" to "Do you ever look at someone and wonder what's going on inside their head?",
+        "The Social Network" to "I'm CEO, bitch.",
+        "Whiplash" to "There are no two words in the English language more harmful than 'good job'."
+    )
+
+    // Find a quote for the movie, or use a generic inspiring quote
+    val quote = movieQuotes.entries.firstOrNull {
+        movie.title.contains(it.key, ignoreCase = true)
+    }?.value ?: "A timeless masterpiece that captivates audiences worldwide."
+
+    return Pair(movie, quote)
 }
