@@ -128,55 +128,6 @@ Design notes:
 
 ### **3.5. Formal Use Case Specifications (5 Most Major Use Cases)**
 
-<a name="uc6"></a>
-
-#### Use Case 6: ADD MOVIE TO WATCHLIST
-
-**Description**: User adds a movie to their watchlist for later viewing. The system prevents duplicates and enriches movie metadata from TMDB.
-
-**Primary actor(s)**: User, TMDB API, Backend Server
-
-**Precondition(s)**:
-
-User is authenticated and viewing a movie (from Discover page, Feed, or Search results)
-
-**Postcondition(s)**:
-
-Movie is added to the user's watchlist and persisted in MongoDB. The watchlist screen displays the newly added movie when accessed.
-
-**Main success scenario**:
-
-1. User taps "Add to Watchlist" button on a movie card or detail sheet
-2. System sends POST request to `/api/watchlist` with movieId, title, posterPath, and overview
-3. Backend validates required fields (movieId, title)
-4. Backend checks for duplicate entries using compound index (userId, movieId)
-5. Backend enriches missing metadata (poster/overview) by fetching from TMDB API (`GET /movie/{movieId}`)
-6. Backend creates WatchlistItem document and saves to MongoDB
-7. System returns success response with saved item data
-8. App displays confirmation message: "Added to watchlist"
-9. Movie appears in user's watchlist (accessible from Profile or Watchlist screen)
-
-**Failure scenario(s)**:
-
-- 3a. Missing required fields (movieId or title)
-  - 3a1. Backend returns 400 error: "movieId and title are required"
-  - 3a2. App displays error message to user
-
-- 4a. Movie already exists in user's watchlist
-  - 4a1. Backend detects duplicate via unique compound index (userId, movieId)
-  - 4a2. Backend returns 400 error: "Movie already in watchlist"
-  - 4a3. App displays message informing user the movie is already saved
-
-- 5a. TMDB API request fails or times out
-  - 5a1. Backend catches error and continues with provided metadata
-  - 5a2. Movie is saved with potentially incomplete poster/overview data
-  - 5a3. System completes successfully (TMDB enrichment is best-effort)
-
-- 7a. Database save operation fails
-  - 7a1. Backend returns 500 error: "Unable to add to watchlist. Please try again"
-  - 7a2. App displays error message to user
-  - 7a3. User can retry the operation
-
 
 <a name="uc2"></a>
 
@@ -304,6 +255,55 @@ The user is on the “Feed” page
 - 4a. User has watched all movies in the recommended list
   -4a1. The system displays a message: “All caught up! You have seen all the movies in your recommended list.”
   -4a2. The system extracts and displays a list of all time favorite movies from TMDB api
+
+<a name="uc6"></a>
+
+#### Use Case 6: ADD MOVIE TO WATCHLIST
+
+**Description**: User adds a movie to their watchlist for later viewing. The system prevents duplicates and enriches movie metadata from TMDB.
+
+**Primary actor(s)**: User, TMDB API, Backend Server
+
+**Precondition(s)**:
+
+User is authenticated and viewing a movie (from Discover page, Feed, or Search results)
+
+**Postcondition(s)**:
+
+Movie is added to the user's watchlist and persisted in MongoDB. The watchlist screen displays the newly added movie when accessed.
+
+**Main success scenario**:
+
+1. User taps "Add to Watchlist" button on a movie card or detail sheet
+2. System sends POST request to `/api/watchlist` with movieId, title, posterPath, and overview
+3. Backend validates required fields (movieId, title)
+4. Backend checks for duplicate entries using compound index (userId, movieId)
+5. Backend enriches missing metadata (poster/overview) by fetching from TMDB API (`GET /movie/{movieId}`)
+6. Backend creates WatchlistItem document and saves to MongoDB
+7. System returns success response with saved item data
+8. App displays confirmation message: "Added to watchlist"
+9. Movie appears in user's watchlist (accessible from Profile or Watchlist screen)
+
+**Failure scenario(s)**:
+
+- 3a. Missing required fields (movieId or title)
+  - 3a1. Backend returns 400 error: "movieId and title are required"
+  - 3a2. App displays error message to user
+
+- 4a. Movie already exists in user's watchlist
+  - 4a1. Backend detects duplicate via unique compound index (userId, movieId)
+  - 4a2. Backend returns 400 error: "Movie already in watchlist"
+  - 4a3. App displays message informing user the movie is already saved
+
+- 5a. TMDB API request fails or times out
+  - 5a1. Backend catches error and continues with provided metadata
+  - 5a2. Movie is saved with potentially incomplete poster/overview data
+  - 5a3. System completes successfully (TMDB enrichment is best-effort)
+
+- 7a. Database save operation fails
+  - 7a1. Backend returns 500 error: "Unable to add to watchlist. Please try again"
+  - 7a2. App displays error message to user
+  - 7a3. User can retry the operation
 
 
 
