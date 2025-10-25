@@ -5,7 +5,7 @@
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
 | 2025-10-24      | 4.1 (UserManager), 4.3 (External modules), 4.4 (Backend/Frontend frameworks) | **Firebase Cloud Messaging Implementation**: Implemented push notifications for real-time user engagement. (1) Backend: Added FCM token registration endpoint (POST /api/users/fcm-token), integrated firebase-admin SDK for sending notifications, extended User model with fcmToken field, integrated notifications into feed activity creation and friend request flows. (2) Frontend: Added Firebase Cloud Messaging SDK (BOM 33.7.0), implemented MovieTierFirebaseMessagingService for receiving notifications, created two notification channels (feed_updates and friend_requests), automatic token registration on app startup and refresh, notification permission handling for Android 13+. (3) Notifications sent for: friend ranks new movie, incoming friend request, friend request accepted. Documentation includes setup guide in documentation/FCM_SETUP.md. |
-| 2025-10-24      | 4.1, 4.4, 4.6, 4.7 | **M3 Milestone Completion**: Added complete design documentation to fulfill M3 requirements. (1) Section 4.1: Added comprehensive component interfaces with HTTP/REST API endpoints for all major components (UserManager, FriendManager, MovieListsManager, UserFeed, WatchlistManager) including parameters, return types, and descriptions. Documented internal service interfaces. (2) Section 4.4: Added detailed frameworks and libraries documentation for both backend (Express.js, Mongoose, google-auth-library, jsonwebtoken, axios, TypeScript, Jest) and frontend (Jetpack Compose, Hilt, Retrofit, Coil, Kotlin Coroutines) with version numbers and purposes. (3) Section 4.6: Added sequence diagram section structure for all 5 major use cases (Sign In, Send Friend Request, View Feed, Compare Movies, View Recommendations) with titled subsections prepared for diagram insertion. (4) Section 4.7: Documented NFR implementation including ranking performance and usability constraints. Ensures complete alignment between design documentation and code implementation. |
+| 2025-10-24      | 3.4, 3.5, 4.1, 4.4, 4.6, 4.7 | **M3 Milestone Completion**: Added complete design documentation to fulfill M3 requirements. (1) Section 3.4: Added "Use cases for feature 6: Watchlist" with 7 detailed use cases covering add, view, remove, sort, ranking integration, watch providers, and friend watchlist viewing. (2) Section 3.5: Replaced authentication use case with "Use Case 6: ADD MOVIE TO WATCHLIST" formal specification including preconditions, postconditions, main success scenario (9 steps covering user interaction, API calls, validation, TMDB enrichment, database persistence), and 4 failure scenarios (missing fields, duplicates, TMDB API failures, database errors). (3) Section 4.1: Added comprehensive component interfaces with HTTP/REST API endpoints for all major components (UserManager, FriendManager, MovieListsManager, UserFeed, WatchlistManager) including parameters, return types, and descriptions. Documented internal service interfaces. (4) Section 4.4: Added detailed frameworks and libraries documentation for both backend (Express.js, Mongoose, google-auth-library, jsonwebtoken, axios, TypeScript, Jest) and frontend (Jetpack Compose, Hilt, Retrofit, Coil, Kotlin Coroutines) with version numbers and purposes. (5) Section 4.6: Added sequence diagram section structure for major use cases (Use Case 6: Add Movie to Watchlist, Send Friend Request, View Feed, Compare Movies, View Recommendations) with titled subsections prepared for diagram insertion. (6) Section 4.7: Documented NFR implementation including ranking performance and usability constraints. Ensures complete alignment between design documentation and code implementation. |
 | 2025-10-24      | 3.1 (Discover), 3.4 (Recommendation use case), 4.3 (External modules), Design notes | Added in-app trailer playback: Movie detail sheets on Discover page now include a play button overlay on the poster when a trailer is available. Clicking the play button opens the trailer in a 9:16 popup window using WebView to load the full YouTube mobile page. The popup includes a close button and supports fullscreen toggling. Backend endpoint `/api/movies/:movieId/videos` fetches trailer information from TMDB API. Provides seamless in-app viewing without leaving the app. |
 | 2025-10-24      | 3.1 (Discover), 3.4 (Recommendation use case) | Added "Add to Ranking" functionality from Discover page: Users can now add movies to their rankings directly from the Discover page movie detail sheet. Clicking the "Add to Ranking" button triggers the interactive comparison flow on the same page (same UX as the ranking screen). No navigation required - the entire ranking process happens inline on the Discover page. |
 | 2025-10-24      | 3.1 (Ranking UI), Design notes | Redesigned ranking list actions UI: Tap any ranking card to open a Material Design 3 modal bottom sheet with action options. Sheet displays movie title and two actions: "Rerank" (with description "Compare and adjust position") and "Delete from Rankings" (with error color styling). Delete action requires confirmation dialog. Clean, intuitive, and follows Android design patterns. |
@@ -114,40 +114,68 @@ Design notes:
 2. View Trending Movies: When users have no ranked movies, the system displays trending movies from TMDB to help them discover popular films and start their ranking journey.
 3. Refresh Recommendations: Users can refresh the recommendation list to see different movie suggestions. The system uses randomized algorithms to provide variety on each refresh while still maintaining relevance based on user rankings.
 4. View Movie Trailer: Users can watch movie trailers directly within the app. Tapping the play button on a movie's detail sheet opens the trailer in a popup WebView player that loads the YouTube mobile page. Users can manually toggle fullscreen using YouTube's native controls and close the popup using the X button.
-5. Add Movie from Discover: Users can add movies to their rankings directly from the Discover page without navigation. The comparison flow appears inline on the same page. 
+5. Add Movie from Discover: Users can add movies to their rankings directly from the Discover page without navigation. The comparison flow appears inline on the same page.
 
+- Use cases for feature 6: Watchlist
+
+1. Add Movie to Watchlist: Users can add movies to their watchlist from the Discover page, Feed, or Search results. The system checks for duplicates and enriches missing metadata (poster, overview) from TMDB API before saving.
+2. View Watchlist: Users can view their complete watchlist sorted by date added (newest/oldest) or rating (high/low). Each entry displays the movie poster, title, release year, rating, and overview.
+3. Remove Movie from Watchlist: Users can long-press a watchlist item to open a delete confirmation dialog. Upon confirmation, the movie is removed from the watchlist.
+4. Sort Watchlist: Users can sort their watchlist by Date Added (Newest/Oldest) or Rating (High→Low/Low→High) via the top-right menu.
+5. Add to Ranking from Watchlist: Users can add movies from their watchlist directly to their ranked list. This triggers the comparison flow, and upon successful ranking, the movie is automatically removed from the watchlist.
+6. View Watch Providers: Users can tap "Where to Watch" on any watchlist item to open the TMDB watch page or view available streaming services (flatrate/rent/buy) based on their location (country code from device GPS).
+7. View Friend's Watchlist: Users can view their friends' watchlists from the friend profile page.
 
 ### **3.5. Formal Use Case Specifications (5 Most Major Use Cases)**
 
-<a name="uc1"></a>
+<a name="uc6"></a>
 
-#### Use Case 1: SIGN IN
+#### Use Case 6: ADD MOVIE TO WATCHLIST
 
-**Description**: User logs in to their account through Google Authentication API.
+**Description**: User adds a movie to their watchlist for later viewing. The system prevents duplicates and enriches movie metadata from TMDB.
 
-**Primary actor(s)**: User, Google Authentication API
+**Primary actor(s)**: User, TMDB API, Backend Server
+
+**Precondition(s)**:
+
+User is authenticated and viewing a movie (from Discover page, Feed, or Search results)
 
 **Postcondition(s)**:
 
-User is logged in and redirected to the Discover page
-**Main success scenario**: 
+Movie is added to the user's watchlist and persisted in MongoDB. The watchlist screen displays the newly added movie when accessed.
 
-1. User clicks “Sign In”
-2. System redirects to Google Authentication page
-3. User enters credentials and clicks submits
-4. Google validates credentials and returns auth token
-5. System checks its database for user account
-5. System verifies token, signs the user in, and takes them to the Discover page
+**Main success scenario**:
+
+1. User taps "Add to Watchlist" button on a movie card or detail sheet
+2. System sends POST request to `/api/watchlist` with movieId, title, posterPath, and overview
+3. Backend validates required fields (movieId, title)
+4. Backend checks for duplicate entries using compound index (userId, movieId)
+5. Backend enriches missing metadata (poster/overview) by fetching from TMDB API (`GET /movie/{movieId}`)
+6. Backend creates WatchlistItem document and saves to MongoDB
+7. System returns success response with saved item data
+8. App displays confirmation message: "Added to watchlist"
+9. Movie appears in user's watchlist (accessible from Profile or Watchlist screen)
 
 **Failure scenario(s)**:
 
-- 3a. User enters invalid credentials 
-  - 3a1. Google rejects login attempt
-  - 3a2. App displays error message and asks the user to retry
+- 3a. Missing required fields (movieId or title)
+  - 3a1. Backend returns 400 error: "movieId and title are required"
+  - 3a2. App displays error message to user
 
-- 5a. User account does not exists in database
-  - 5a1. System displays error message: “User Does Not Exist Please Sign Up”
-  - 5a2. User can use the Sign Up use case
+- 4a. Movie already exists in user's watchlist
+  - 4a1. Backend detects duplicate via unique compound index (userId, movieId)
+  - 4a2. Backend returns 400 error: "Movie already in watchlist"
+  - 4a3. App displays message informing user the movie is already saved
+
+- 5a. TMDB API request fails or times out
+  - 5a1. Backend catches error and continues with provided metadata
+  - 5a2. Movie is saved with potentially incomplete poster/overview data
+  - 5a3. System completes successfully (TMDB enrichment is best-effort)
+
+- 7a. Database save operation fails
+  - 7a1. Backend returns 500 error: "Unable to add to watchlist. Please try again"
+  - 7a2. App displays error message to user
+  - 7a3. User can retry the operation
 
 
 <a name="uc2"></a>
@@ -614,7 +642,7 @@ The user is on the “Feed” page
 
 The following sequence diagrams illustrate how the main components interact to realize the 5 most major use cases.
 
-#### **4.6.1. Use Case 1: Sign In**
+#### **4.6.1. Use Case 6: Add Movie to Watchlist**
 
 #### **4.6.2. Use Case 2: Send Friend Request**
 
