@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.cpen321.movietier.ui.components.StarRating
 import com.cpen321.movietier.ui.viewmodels.WatchlistViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
@@ -149,17 +150,24 @@ fun WatchlistScreen(
                             Column(Modifier.weight(1f)) {
                                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                 val det = details[item.movieId]
-                                val metaLine = buildString {
-                                    det?.releaseDate?.take(4)?.let { append(it) }
+                                // Year and rating on single line (consistent with Ranking format)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    det?.releaseDate?.take(4)?.let { year ->
+                                        Text(
+                                            text = year,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                     det?.voteAverage?.let { rating ->
-                                        if (isNotEmpty()) append(" • ")
-                                        append("★ ")
-                                        append("%.1f".format(rating))
+                                        StarRating(rating = rating, starSize = 14.dp)
                                     }
                                 }
-                                if (metaLine.isNotBlank()) {
+                                if (det != null) {
                                     Spacer(Modifier.height(4.dp))
-                                    Text(metaLine, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
                                 Spacer(Modifier.height(8.dp))

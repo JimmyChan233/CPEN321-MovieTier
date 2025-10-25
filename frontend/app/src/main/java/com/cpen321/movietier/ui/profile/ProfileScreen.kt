@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.ui.components.Avatar
 import com.cpen321.movietier.ui.components.LoadingState
+import com.cpen321.movietier.ui.components.StarRating
 import com.cpen321.movietier.ui.navigation.NavRoutes
 import coil.compose.AsyncImage
 import com.cpen321.movietier.ui.viewmodels.WatchlistViewModel
@@ -35,7 +36,8 @@ import androidx.compose.ui.text.style.TextOverflow
 fun ProfileScreen(
     navController: NavController,
     authViewModel: AuthViewModel = hiltViewModel(),
-    themeViewModel: ThemeViewModel = hiltViewModel()
+    themeViewModel: ThemeViewModel = hiltViewModel(),
+    watchlistVm: WatchlistViewModel = hiltViewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -77,8 +79,8 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Watchlist section
-                    val watchlistVm: WatchlistViewModel = hiltViewModel()
                     val watchUi by watchlistVm.ui.collectAsState()
+                    val movieDetails by watchlistVm.details.collectAsState()
 
                     // Avatar and user info header
                     Avatar(
@@ -122,6 +124,7 @@ fun ProfileScreen(
                     Spacer(Modifier.height(8.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                         watchUi.items.take(3).forEach { item ->
+                            val details = movieDetails[item.movieId]
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -154,6 +157,27 @@ fun ProfileScreen(
                                             overflow = TextOverflow.Ellipsis
                                         )
                                         Spacer(Modifier.height(6.dp))
+
+                                        // Year and rating on single line (consistent with Ranking/Watchlist format)
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            details?.releaseDate?.take(4)?.let { year ->
+                                                Text(
+                                                    text = year,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            details?.voteAverage?.let { rating ->
+                                                StarRating(rating = rating, starSize = 14.dp)
+                                            }
+                                        }
+                                        if (details != null) {
+                                            Spacer(Modifier.height(6.dp))
+                                        }
+
                                         item.overview?.let {
                                             Text(
                                                 text = it,

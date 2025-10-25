@@ -91,6 +91,26 @@ fun FeedActivityCard(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 // Description + availability on the left
                 Column(modifier = Modifier.weight(1f)) {
+                    // Year and rating on single line (consistent with Ranking/Watchlist format)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        activity.movie.releaseDate?.take(4)?.let { year ->
+                            Text(
+                                text = year,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        activity.movie.voteAverage?.let { rating ->
+                            StarRating(rating = rating, starSize = 14.dp)
+                        }
+                    }
+                    if (activity.movie.releaseDate != null || activity.movie.voteAverage != null) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+
                     val desc = activity.movie.overview
                     if (!desc.isNullOrBlank()) {
                         Text(

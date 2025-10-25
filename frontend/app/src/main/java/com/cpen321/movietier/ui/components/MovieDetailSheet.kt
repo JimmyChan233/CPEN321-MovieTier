@@ -82,15 +82,20 @@ fun MovieDetailBottomSheet(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
+                    // Year and rating on single line (consistent with Feed/Ranking/Watchlist format)
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         movie.releaseDate?.take(4)?.let { year ->
-                            AssistChip(onClick = {}, label = { Text(year) })
+                            Text(
+                                text = year,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         movie.voteAverage?.let { rating ->
-                            StarRating(rating = rating, starSize = 16.dp)
+                            StarRating(rating = rating, starSize = 14.dp)
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))

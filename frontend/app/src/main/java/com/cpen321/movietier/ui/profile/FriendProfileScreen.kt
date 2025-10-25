@@ -111,7 +111,13 @@ fun FriendProfileScreen(
 
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
-            title = { Text(ui.userName ?: "Profile") },
+            title = {
+                Text(
+                    text = ui.userName ?: "Profile",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
             navigationIcon = {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -411,8 +417,9 @@ private fun WatchItemCard(
 
                 Spacer(Modifier.height(8.dp))
 
+                // Year and rating on single line (consistent with Ranking/Watchlist format)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     releaseDate?.take(4)?.let { year ->
