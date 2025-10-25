@@ -85,18 +85,9 @@ fun MovieCard(
                         )
                     }
 
-                    // Rating Chip
+                    // Rating
                     movie.voteAverage?.let { rating ->
-                        AssistChip(
-                            onClick = { },
-                            label = {
-                                Text(
-                                    text = "%.1f".format(rating),
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            },
-                            modifier = Modifier.height(28.dp)
-                        )
+                        StarRating(rating = rating, starSize = 14.dp)
                     }
                 }
             }

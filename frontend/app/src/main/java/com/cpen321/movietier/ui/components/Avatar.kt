@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -69,21 +68,20 @@ private fun getInitials(name: String): String {
 private fun getColorFromName(name: String): Color {
     // Generate a consistent color based on the name's hash code
     val hash = name.hashCode()
+    // Curated navy/blue/gold palette for better brand cohesion
     val colors = listOf(
-        Color(0xFF6200EE),
-        Color(0xFF03DAC6),
-        Color(0xFFBB86FC),
-        Color(0xFF3700B3),
-        Color(0xFFE91E63),
-        Color(0xFF9C27B0),
-        Color(0xFF673AB7),
-        Color(0xFF3F51B5),
-        Color(0xFF2196F3),
-        Color(0xFF009688),
-        Color(0xFF4CAF50),
-        Color(0xFFFF9800),
-        Color(0xFFFF5722),
-        Color(0xFF795548)
+        Color(0xFF1E3A8A), // deep blue
+        Color(0xFF0F1E3F), // dark navy
+        Color(0xFF233B6E), // navy
+        Color(0xFF2A4971), // slate-blue
+        Color(0xFF385C8A), // mid blue
+        Color(0xFF3B82F6), // bright blue accent
+        Color(0xFF60A5FA), // light blue accent
+        Color(0xFFE0B74D), // muted gold
+        Color(0xFFB8860B), // goldenrod
+        Color(0xFF8C6D1F), // dark gold
+        Color(0xFF1B2A41), // bluish slate
+        Color(0xFF111A2E)  // surface navy
     )
     return colors[hash.mod(colors.size)]
 }

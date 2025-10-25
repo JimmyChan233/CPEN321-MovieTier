@@ -32,6 +32,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.cpen321.movietier.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +57,20 @@ fun RankingScreen(
             .testTag("ranking_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(title = { Text("My Rankings", style = MaterialTheme.typography.titleMedium) })
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.in_app_icon),
+                            contentDescription = "MovieTier",
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                },
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            )
         },
         floatingActionButton = {
             FloatingActionButton(

@@ -82,12 +82,15 @@ fun MovieDetailBottomSheet(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         movie.releaseDate?.take(4)?.let { year ->
                             AssistChip(onClick = {}, label = { Text(year) })
                         }
                         movie.voteAverage?.let { rating ->
-                            AssistChip(onClick = {}, label = { Text("★ %.1f".format(rating)) })
+                            StarRating(rating = rating, starSize = 16.dp)
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))

@@ -10,8 +10,13 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import com.cpen321.movietier.R
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cpen321.movietier.data.model.Movie
@@ -86,16 +91,24 @@ fun RecommendationScreen(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Discover", style = MaterialTheme.typography.titleMedium) },
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.in_app_icon),
+                            contentDescription = "MovieTier",
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                },
                 actions = {
                     IconButton(onClick = { recommendationViewModel.loadRecommendations() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh recommendations"
-                        )
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh recommendations")
                     }
-                }
+                },
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         }
     ) { padding ->

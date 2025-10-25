@@ -48,19 +48,6 @@ fun FriendsScreen(
             .fillMaxSize()
             .testTag("friends_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Friends", style = MaterialTheme.typography.titleMedium) },
-                actions = {
-                    IconButton(
-                        onClick = { showAddFriendDialog = true },
-                        modifier = Modifier.testTag("add_friend_button")
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Friend")
-                    }
-                }
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddFriendDialog = true },

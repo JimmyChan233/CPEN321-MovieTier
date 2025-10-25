@@ -85,11 +85,7 @@ fun RecommendationCard(
                         )
                     }
                     movie.voteAverage?.let { rating ->
-                        Text(
-                            text = "★ %.1f".format(rating),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        StarRating(rating = rating, starSize = 14.dp)
                     }
                 }
             }

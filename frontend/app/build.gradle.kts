@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -46,6 +45,20 @@ android {
         compose = true
         buildConfig = true
     }
+}
+
+// Apply Google Services plugin only if a google-services.json exists
+val hasGoogleServices = listOf(
+    file("google-services.json"),
+    file("src/debug/google-services.json"),
+    file("src/release/google-services.json"),
+    file("app/google-services.json")
+).any { it.exists() }
+
+if (hasGoogleServices) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.lifecycle("[MovieTier] google-services.json not found; skipping Google Services plugin for this build.")
 }
 
 secrets {

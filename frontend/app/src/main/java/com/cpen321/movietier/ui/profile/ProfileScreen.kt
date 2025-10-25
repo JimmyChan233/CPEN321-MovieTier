@@ -56,19 +56,7 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .testTag("profile_screen"),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Profile", style = MaterialTheme.typography.titleMedium) },
-                actions = {
-                    IconButton(
-                        onClick = { if (!uiState.isLoading) authViewModel.signOut() },
-                        modifier = Modifier.testTag("sign_out_icon_button")
-                    ) {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Sign Out")
-                    }
-                }
-            )
-        }
+        // Top app bar intentionally removed per design request
     ) { padding ->
         Crossfade(
             targetState = uiState.user,

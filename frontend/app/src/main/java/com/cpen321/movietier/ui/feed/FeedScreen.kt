@@ -13,7 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cpen321.movietier.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -73,7 +78,6 @@ fun FeedScreen(
 ) {
     val uiState by feedViewModel.uiState.collectAsState()
     val compareState by feedViewModel.compareState.collectAsState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
 
@@ -105,12 +109,21 @@ fun FeedScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection)
             .testTag("feed_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Friend Activity", style = MaterialTheme.typography.titleMedium) },
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.in_app_icon),
+                            contentDescription = "MovieTier",
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                },
                 actions = {
                     IconButton(
                         onClick = { feedViewModel.refreshFeed() },
@@ -119,7 +132,7 @@ fun FeedScreen(
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 },
-                scrollBehavior = scrollBehavior
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         }
     ) { padding ->

@@ -22,6 +22,7 @@ import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.ThemeViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -35,11 +36,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Request notification permission (Android 13+)
-        FcmHelper.requestNotificationPermission(this)
+        // Only attempt FCM setup if google_app_id is present (i.e., google-services.json added)
+        val googleAppIdResId = resources.getIdentifier("google_app_id", "string", packageName)
+        val hasGoogleAppId = googleAppIdResId != 0 && runCatching { getString(googleAppIdResId) }.getOrNull()?.isNotBlank() == true
 
-        // Initialize FCM and register token
-        FcmHelper.initializeFcm(apiService, lifecycleScope)
+        if (hasGoogleAppId) {
+            // Initialize FirebaseApp since auto-init provider is disabled when missing config
+            runCatching { FirebaseApp.initializeApp(applicationContext) }
+            // Request notification permission (Android 13+)
+            FcmHelper.requestNotificationPermission(this)
+            // Initialize FCM and register token
+            FcmHelper.initializeFcm(apiService, lifecycleScope)
+        }
 
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
