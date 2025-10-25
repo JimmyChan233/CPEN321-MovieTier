@@ -5,6 +5,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -14,6 +16,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -45,6 +51,7 @@ fun WatchlistScreen(
     val details by vm.details.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf<com.cpen321.movietier.data.model.WatchlistItem?>(null) }
+    val listState = rememberLazyListState()
 
     // Request location permission and get country code
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -82,19 +89,35 @@ fun WatchlistScreen(
                 DropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
                     DropdownMenuItem(
                         text = { Text("Date Added (Newest)") },
-                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_DESC) }
+                        onClick = {
+                            sortMenu = false
+                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_DESC)
+                            scope.launch { listState.animateScrollToItem(0) }
+                        }
                     )
                     DropdownMenuItem(
                         text = { Text("Date Added (Oldest)") },
-                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_ASC) }
+                        onClick = {
+                            sortMenu = false
+                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_ASC)
+                            scope.launch { listState.animateScrollToItem(0) }
+                        }
                     )
                     DropdownMenuItem(
                         text = { Text("Rating (High → Low)") },
-                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_DESC) }
+                        onClick = {
+                            sortMenu = false
+                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_DESC)
+                            scope.launch { listState.animateScrollToItem(0) }
+                        }
                     )
                     DropdownMenuItem(
                         text = { Text("Rating (Low → High)") },
-                        onClick = { sortMenu = false; vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_ASC) }
+                        onClick = {
+                            sortMenu = false
+                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_ASC)
+                            scope.launch { listState.animateScrollToItem(0) }
+                        }
                     )
                 }
             }
@@ -104,6 +127,7 @@ fun WatchlistScreen(
             Box(Modifier.fillMaxSize().padding(padding)) { CircularProgressIndicator(Modifier.padding(24.dp)) }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -204,32 +228,86 @@ fun WatchlistScreen(
                 text = {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
                             "Help us place '${state.newMovie.title}' in your rankings:",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyMedium
                         )
-                        Button(
-                            onClick = {
-                                vm.choosePreferred(
-                                    newMovie = state.newMovie,
-                                    compareWith = state.compareWith,
-                                    preferred = state.newMovie
+
+                        // Side-by-side posters with clickable movie names
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // First movie
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                AsyncImage(
+                                    model = state.newMovie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+                                    contentDescription = state.newMovie.title,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(2f / 3f)
+                                        .clip(MaterialTheme.shapes.medium),
+                                    contentScale = ContentScale.Crop
                                 )
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text(state.newMovie.title) }
-                        Button(
-                            onClick = {
-                                vm.choosePreferred(
-                                    newMovie = state.newMovie,
-                                    compareWith = state.compareWith,
-                                    preferred = state.compareWith
+                                Button(
+                                    onClick = {
+                                        vm.choosePreferred(
+                                            newMovie = state.newMovie,
+                                            compareWith = state.compareWith,
+                                            preferred = state.newMovie
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        state.newMovie.title,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+
+                            // Second movie
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                AsyncImage(
+                                    model = state.compareWith.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+                                    contentDescription = state.compareWith.title,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(2f / 3f)
+                                        .clip(MaterialTheme.shapes.medium),
+                                    contentScale = ContentScale.Crop
                                 )
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text(state.compareWith.title) }
+                                Button(
+                                    onClick = {
+                                        vm.choosePreferred(
+                                            newMovie = state.newMovie,
+                                            compareWith = state.compareWith,
+                                            preferred = state.compareWith
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        state.compareWith.title,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
                     }
                 },
                 confirmButton = {},
