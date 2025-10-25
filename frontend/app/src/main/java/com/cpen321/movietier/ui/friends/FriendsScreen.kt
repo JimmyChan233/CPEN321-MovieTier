@@ -31,6 +31,9 @@ import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.FriendViewModel
 import com.cpen321.movietier.ui.viewmodels.FriendRequestUi
 import com.cpen321.movietier.ui.navigation.NavRoutes
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.cpen321.movietier.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +51,22 @@ fun FriendsScreen(
             .fillMaxSize()
             .testTag("friends_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.in_app_icon),
+                            contentDescription = "MovieTier",
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                },
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddFriendDialog = true },
