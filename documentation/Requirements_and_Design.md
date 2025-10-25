@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-10-24      | 4.1 (UserManager), 4.3 (External modules), 4.4 (Backend/Frontend frameworks) | **Firebase Cloud Messaging Implementation**: Implemented push notifications for real-time user engagement. (1) Backend: Added FCM token registration endpoint (POST /api/users/fcm-token), integrated firebase-admin SDK for sending notifications, extended User model with fcmToken field, integrated notifications into feed activity creation and friend request flows. (2) Frontend: Added Firebase Cloud Messaging SDK (BOM 33.7.0), implemented MovieTierFirebaseMessagingService for receiving notifications, created two notification channels (feed_updates and friend_requests), automatic token registration on app startup and refresh, notification permission handling for Android 13+. (3) Notifications sent for: friend ranks new movie, incoming friend request, friend request accepted. Documentation includes setup guide in documentation/FCM_SETUP.md. |
 | 2025-10-24      | 4.1, 4.4, 4.6, 4.7 | **M3 Milestone Completion**: Added complete design documentation to fulfill M3 requirements. (1) Section 4.1: Added comprehensive component interfaces with HTTP/REST API endpoints for all major components (UserManager, FriendManager, MovieListsManager, UserFeed, WatchlistManager) including parameters, return types, and descriptions. Documented internal service interfaces. (2) Section 4.4: Added detailed frameworks and libraries documentation for both backend (Express.js, Mongoose, google-auth-library, jsonwebtoken, axios, TypeScript, Jest) and frontend (Jetpack Compose, Hilt, Retrofit, Coil, Kotlin Coroutines) with version numbers and purposes. (3) Section 4.6: Added sequence diagram section structure for all 5 major use cases (Sign In, Send Friend Request, View Feed, Compare Movies, View Recommendations) with titled subsections prepared for diagram insertion. (4) Section 4.7: Documented NFR implementation including ranking performance and usability constraints. Ensures complete alignment between design documentation and code implementation. |
 | 2025-10-24      | 3.1 (Discover), 3.4 (Recommendation use case), 4.3 (External modules), Design notes | Added in-app trailer playback: Movie detail sheets on Discover page now include a play button overlay on the poster when a trailer is available. Clicking the play button opens the trailer in a 9:16 popup window using WebView to load the full YouTube mobile page. The popup includes a close button and supports fullscreen toggling. Backend endpoint `/api/movies/:movieId/videos` fetches trailer information from TMDB API. Provides seamless in-app viewing without leaving the app. |
 | 2025-10-24      | 3.1 (Discover), 3.4 (Recommendation use case) | Added "Add to Ranking" functionality from Discover page: Users can now add movies to their rankings directly from the Discover page movie detail sheet. Clicking the "Add to Ranking" button triggers the interactive comparison flow on the same page (same UX as the ranking screen). No navigation required - the entire ranking process happens inline on the Discover page. |
@@ -336,6 +337,11 @@ The user is on the “Feed” page
   - **Returns**: `{ success: boolean, data: User }`
   - **Description**: Retrieves public profile of any user by ID.
 
+- `POST /api/users/fcm-token`
+  - **Parameters**: `{ token: string }` (FCM device token, requires JWT in Authorization header)
+  - **Returns**: `{ success: boolean, message: string }`
+  - **Description**: Registers or updates Firebase Cloud Messaging token for push notifications. Called automatically on app startup and token refresh.
+
 **Internal Service Interface (authService.ts):**
 - `verifyGoogleToken(idToken: string): Promise<{ email: string, name: string, googleId: string, picture?: string }>`
   - Verifies Google OAuth token and extracts user information.
@@ -524,8 +530,12 @@ The user is on the “Feed” page
    - **Purpose**: Authorize sign in and sign ups of users into the application
 2. **TMDB API**
    - **Purpose**: Fetch related movies to generate recommended movie lists, respond to the search movies and movie related information. Also provides movie video/trailer data (via `/movie/{id}/videos` endpoint) for in-app trailer playback, and watch provider information for "Where to Watch" features.
-3. **Firebase Cloud Notifications**
-   - **Purpose**: Send real time push notifications to the user when a friend ranks a movie.
+3. **Firebase Cloud Messaging (FCM)**
+   - **Purpose**: Send real-time push notifications to users for:
+     - Feed updates when friends rank new movies
+     - Incoming friend requests
+     - Friend request acceptances
+   - **Implementation**: Firebase Admin SDK on backend, Firebase Messaging SDK on Android frontend. Device tokens are registered via `/api/users/fcm-token` endpoint and stored in User model.
 
 ### **4.4. Frameworks and Libraries**
 
@@ -554,7 +564,7 @@ The user is on the “Feed” page
 **Utilities:**
 - **cors** (v2.8.5): Middleware for enabling Cross-Origin Resource Sharing.
 - **dotenv** (v16.3.1): Environment variable loader for configuration management.
-- **firebase-admin** (v12.0.0): Firebase Admin SDK for push notifications (configured but notification service implementation varies).
+- **firebase-admin** (v12.0.0): Firebase Admin SDK for sending push notifications via Firebase Cloud Messaging. Handles token-based messaging for feed updates and friend request notifications.
 
 #### Frontend (Android + Kotlin)
 
@@ -577,6 +587,10 @@ The user is on the “Feed” page
 - **Google Play Services Auth** (v21.4.0): Google Sign-In SDK for Android.
 - **Credentials API** (v1.5.0): Android Credential Manager for secure authentication flows.
 - **GoogleID** (v1.1.1): Google Identity Services library for one-tap sign-in.
+
+**Push Notifications:**
+- **Firebase Cloud Messaging** (Firebase BOM 33.7.0): Receives and displays push notifications for feed updates and friend requests. Automatically registers device tokens with backend on app startup and token refresh.
+- **Firebase Analytics** (via BOM): Analytics integration for Firebase services.
 
 **Image Loading:**
 - **Coil Compose** (v2.7.0): Image loading library optimized for Jetpack Compose, handles TMDB poster/backdrop images.

@@ -32,6 +32,9 @@ interface ApiService {
     @PUT("users/profile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<ApiResponse<User>>
 
+    @POST("users/fcm-token")
+    suspend fun registerFcmToken(@Body body: Map<String, String>): Response<ApiResponse<Unit>>
+
     @GET("users/search")
     suspend fun searchUsers(@Query("query") query: String): Response<ApiResponse<List<User>>>
 

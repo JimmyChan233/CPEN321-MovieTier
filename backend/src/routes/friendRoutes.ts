@@ -3,6 +3,7 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 import { Friendship, FriendRequest } from '../models/friend/Friend';
 import User from '../models/user/User';
 import { sseService } from '../services/sse/sseService';
+import notificationService from '../services/notification.service';
 
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -160,6 +161,19 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
       senderId: req.userId
     });
 
+    // Send FCM push notification
+    if (friend.fcmToken) {
+      try {
+        await notificationService.sendFriendRequestNotification(
+          friend.fcmToken,
+          self.name,
+          String(request._id)
+        );
+      } catch (error) {
+        console.error('Failed to send FCM friend request notification:', error);
+      }
+    }
+
     res.json({ success: true, data: request });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to send friend request. Please try again' });
@@ -216,9 +230,26 @@ router.post('/respond', authenticate, async (req: AuthRequest, res) => {
         { $set: { status: 'rejected' } }
       );
 
-      // Notify both users
+      // Notify both users via SSE
       sseService.send(String(senderId), 'friend_request_accepted', { userId: receiverId });
       sseService.send(String(receiverId), 'friend_request_accepted', { userId: senderId });
+
+      // Send FCM push notification to sender
+      try {
+        const [sender, receiver] = await Promise.all([
+          User.findById(senderId).select('fcmToken name'),
+          User.findById(receiverId).select('name')
+        ]);
+
+        if (sender?.fcmToken && receiver?.name) {
+          await notificationService.sendFriendRequestAcceptedNotification(
+            sender.fcmToken,
+            receiver.name
+          );
+        }
+      } catch (error) {
+        console.error('Failed to send FCM friend request accepted notification:', error);
+      }
     } else {
       request.status = 'rejected';
       await request.save();

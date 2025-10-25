@@ -12,6 +12,8 @@ import {
 } from '../utils/comparisonSession';
 import { IRankedMovie } from '../models/movie/RankedMovie';
 import WatchlistItem from '../models/watch/WatchlistItem';
+import User from '../models/user/User';
+import notificationService from '../services/notification.service';
 
 async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
   try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}
@@ -83,13 +85,36 @@ export const addMovie = async (req: Request, res: Response) => {
     });
     await activity.save();
 
-    // Notify friends via SSE
+    // Get user info for notifications
+    const user = await User.findById(userId).select('name');
+    const userName = user?.name || 'A friend';
+
+    // Notify friends via SSE and FCM
     const friendships = await Friendship.find({ userId });
-    friendships.forEach((f) => {
-      sseService.send(String(f.friendId), 'feed_activity', {
+    for (const friendship of friendships) {
+      const friendId = String(friendship.friendId);
+
+      // Send SSE notification
+      sseService.send(friendId, 'feed_activity', {
         activityId: activity._id,
       });
-    });
+
+      // Send FCM push notification
+      try {
+        const friend = await User.findById(friendId).select('fcmToken');
+        if (friend?.fcmToken) {
+          await notificationService.sendFeedNotification(
+            friend.fcmToken,
+            userName,
+            title,
+            String(activity._id)
+          );
+        }
+      } catch (error) {
+        // Continue even if FCM fails for one friend
+        console.error(`Failed to send FCM notification to friend ${friendId}:`, error);
+      }
+    }
 
 
       return res.json({ success: true, status: 'added', data: rankedMovie });
@@ -224,13 +249,36 @@ export const compareMovies = async (req: Request, res: Response) => {
       });
       await activity.save();
 
-      // Notify friends via SSE
+      // Get user info for notifications
+      const user = await User.findById(userId).select('name');
+      const userName = user?.name || 'A friend';
+
+      // Notify friends via SSE and FCM
       const friendships = await Friendship.find({ userId });
-      friendships.forEach((f) => {
-        sseService.send(String(f.friendId), 'feed_activity', {
+      for (const friendship of friendships) {
+        const friendId = String(friendship.friendId);
+
+        // Send SSE notification
+        sseService.send(friendId, 'feed_activity', {
           activityId: activity._id,
         });
-      });
+
+        // Send FCM push notification
+        try {
+          const friend = await User.findById(friendId).select('fcmToken');
+          if (friend?.fcmToken) {
+            await notificationService.sendFeedNotification(
+              friend.fcmToken,
+              userName,
+              movie.title,
+              String(activity._id)
+            );
+          }
+        } catch (error) {
+          // Continue even if FCM fails for one friend
+          console.error(`Failed to send FCM notification to friend ${friendId}:`, error);
+        }
+      }
 
 
       return res.json({ success: true, status: 'added', data: movie });

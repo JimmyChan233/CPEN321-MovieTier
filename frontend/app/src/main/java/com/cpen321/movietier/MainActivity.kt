@@ -12,20 +12,35 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cpen321.movietier.data.api.ApiService
+import com.cpen321.movietier.fcm.FcmHelper
 import com.cpen321.movietier.ui.navigation.NavGraph
 import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.ThemeViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var apiService: ApiService
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Request notification permission (Android 13+)
+        FcmHelper.requestNotificationPermission(this)
+
+        // Initialize FCM and register token
+        FcmHelper.initializeFcm(apiService, lifecycleScope)
+
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val themeMode by themeViewModel.themeMode.collectAsState()

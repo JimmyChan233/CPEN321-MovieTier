@@ -64,6 +64,33 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Register/update FCM token for push notifications
+router.post('/fcm-token', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { token } = req.body as { token?: string };
+
+    if (!token || token.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'FCM token is required' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { $set: { fcmToken: token.trim() } },
+      { new: true }
+    ).select('_id email name profileImageUrl fcmToken');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    logger.success(`FCM token registered for user ${req.userId}`);
+    res.json({ success: true, message: 'FCM token registered successfully' });
+  } catch (error) {
+    logger.error('FCM token registration error:', error);
+    res.status(500).json({ success: false, message: 'Unable to register FCM token. Please try again' });
+  }
+});
+
 router.get('/:userId', authenticate, async (req, res) => {
   try {
     const { userId } = req.params as { userId: string };
