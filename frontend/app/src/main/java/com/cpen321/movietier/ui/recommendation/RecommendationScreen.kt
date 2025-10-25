@@ -165,7 +165,7 @@ fun RecommendationScreen(
                         overrideQuote = null
                         featuredMovieData?.first?.let { m ->
                             val year = m.releaseDate?.take(4)
-                            val fetched = withTimeoutOrNull(2000) {
+                            val fetched = withTimeoutOrNull(3500) {
                                 when (val res = recommendationViewModel.getMovieQuote(m.title, year)) {
                                     is com.cpen321.movietier.data.repository.Result.Success -> res.data
                                     else -> null

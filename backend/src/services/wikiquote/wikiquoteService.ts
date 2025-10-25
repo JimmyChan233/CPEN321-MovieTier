@@ -21,6 +21,39 @@ function cleanText(t: string): string {
     .trim();
 }
 
+function extractCandidatesFromHtml(html: string): string[] {
+  const $ = cheerio.load(html);
+  const out: string[] = [];
+
+  // Prefer items in a Quotes section
+  const headings = $('h2, h3');
+  headings.each((_, h) => {
+    const txt = cleanText($(h).text());
+    if (/^quotes?\b/i.test(txt)) {
+      // collect list items until next heading
+      let el = $(h).next();
+      while (el.length && !['H2', 'H3'].includes(el[0].tagName.toUpperCase())) {
+        if (el.is('ul, ol')) {
+          el.find('li').each((_, li) => {
+            const t = cleanText($(li).text());
+            if (t.length >= 12 && t.length <= 180) out.push(t);
+          });
+        }
+        el = el.next();
+      }
+    }
+  });
+
+  // Fallback: any list items on the page
+  if (out.length === 0) {
+    $('ul > li').each((_, li) => {
+      const t = cleanText($(li).text());
+      if (t.length >= 12 && t.length <= 180) out.push(t);
+    });
+  }
+  return out;
+}
+
 export async function fetchMovieQuote(title: string, year?: string | number): Promise<string | null> {
   const cacheKey = keyFor(title, year);
   const hit = cache.get(cacheKey);
@@ -44,44 +77,49 @@ export async function fetchMovieQuote(title: string, year?: string | number): Pr
     const results: any[] = search.data?.query?.search || [];
     if (!results.length) return null;
 
-    // Prefer titles that look like films
-    const pick = results.find(r => /\(film\)|film/i.test(r.title)) || results[0];
-    const pageTitle = pick.title;
+    // Build candidate titles: prefer entries that look like film pages, try several
+    const byFilm = results.filter(r => /(\(\d{4}\)\s*film|\(film\))/i.test(r.title));
+    const others = results.filter(r => !byFilm.includes(r));
+    const titleVariants = [
+      ...byFilm.map(r => r.title),
+      `${title} (${year} film)`,
+      `${title} (film)`,
+      title,
+      ...others.map(r => r.title)
+    ].filter((v, i, arr) => !!v && arr.indexOf(v) === i);
 
-    // 2) Find the "Quotes" section index
-    const sectionsResp = await axios.get('https://en.wikiquote.org/w/api.php', {
-      params: { action: 'parse', page: pageTitle, prop: 'sections', format: 'json', origin: '*' },
-      timeout: 8000
-    });
-    const sections: any[] = sectionsResp.data?.parse?.sections || [];
-    const quotesSection = sections.find(s => /quotes?/i.test(s.line));
-    const sectionIndex = quotesSection?.index;
+    for (const pageTitle of titleVariants) {
+      try {
+        // Try to get Quotes section index
+        const sectionsResp = await axios.get('https://en.wikiquote.org/w/api.php', {
+          params: { action: 'parse', page: pageTitle, prop: 'sections', format: 'json', origin: '*' },
+          timeout: 8000
+        });
+        const sections: any[] = sectionsResp.data?.parse?.sections || [];
+        const quotesSection = sections.find(s => /quotes?/i.test(s.line));
+        const sectionIndex = quotesSection?.index;
 
-    // 3) Fetch HTML for that section
-    const htmlResp = await axios.get('https://en.wikiquote.org/w/api.php', {
-      params: { action: 'parse', page: pageTitle, prop: 'text', format: 'json', origin: '*', ...(sectionIndex ? { section: sectionIndex } : {}) },
-      timeout: 8000
-    });
-    const html = htmlResp.data?.parse?.text?.['*'] || '';
-    if (!html) return null;
+        // Fetch HTML for that section (or whole page if section missing)
+        const htmlResp = await axios.get('https://en.wikiquote.org/w/api.php', {
+          params: { action: 'parse', page: pageTitle, prop: 'text', format: 'json', origin: '*', ...(sectionIndex ? { section: sectionIndex } : {}) },
+          timeout: 8000
+        });
+        const html = htmlResp.data?.parse?.text?.['*'] || '';
+        if (!html) continue;
 
-    // 4) Parse and pick a short spoken line (li under quotes section)
-    const $ = cheerio.load(html);
-    const candidates: string[] = [];
-    $('ul > li').each((_, el) => {
-      const text = cleanText($(el).text());
-      if (text.length >= 12 && text.length <= 180) {
-        candidates.push(text);
+        const candidates = extractCandidatesFromHtml(html);
+        if (candidates.length) {
+          // Pick a random candidate for variety
+          const quote = candidates[Math.floor(Math.random() * candidates.length)];
+          cache.set(cacheKey, { quote, ts: Date.now() });
+          return quote;
+        }
+      } catch {
+        // try next variant
       }
-    });
-
-    const quote = candidates[0] || null;
-    if (quote) {
-      cache.set(cacheKey, { quote, ts: Date.now() });
     }
-    return quote;
+    return null;
   } catch (e) {
     return null;
   }
 }
-
