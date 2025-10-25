@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import android.graphics.drawable.GradientDrawable
 
 enum class ThemeMode { System, Light, Dark }
 
@@ -39,10 +40,10 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF1E3A8A),
+    primary = Color(0xFF5B8FDB),           // Same blue as dark mode
     onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFDDE7FF),
-    onPrimaryContainer = Color(0xFF0B1220),
+    primaryContainer = Color(0xFF1E3A6E),  // Same as dark mode
+    onPrimaryContainer = Color(0xFFFFFFFF),
 
     secondary = Color(0xFFD4AF37),
     onSecondary = Color(0xFF0B1220),
@@ -80,9 +81,19 @@ fun MovieTierTheme(
             val window = (view.context as? Activity)?.window
             if (window != null) {
                 runCatching {
-                    window.statusBarColor = colorScheme.primary.toArgb()
+                    // Create a gradient drawable for smooth status bar transition
+                    val gradientDrawable = GradientDrawable(
+                        GradientDrawable.Orientation.TOP_BOTTOM,
+                        intArrayOf(
+                            Color(0xFF0B1220).toArgb(), // Deep navy at top
+                            colorScheme.primary.toArgb() // Primary color at bottom
+                        )
+                    )
+                    window.statusBarColor = android.graphics.Color.TRANSPARENT
+                    window.setBackgroundDrawable(gradientDrawable)
+
                     val insets = WindowCompat.getInsetsController(window, view)
-                    insets.isAppearanceLightStatusBars = !useDark
+                    insets.isAppearanceLightStatusBars = false // Always use light icons for dark gradient
                 }
             }
         }
