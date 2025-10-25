@@ -499,23 +499,45 @@ private fun RequestRow(
                 name = request.senderName.ifBlank { request.senderId.takeLast(6) },
                 size = 48.dp
             )
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 Text(
                     text = request.senderName.ifBlank { "Incoming request" },
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (request.senderEmail.isNotBlank()) {
                     Text(
                         text = request.senderEmail,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onReject) { Text("Reject") }
-                Button(onClick = onAccept) { Text("Accept") }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                Button(
+                    onClick = onAccept,
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Text("Accept", style = MaterialTheme.typography.labelSmall)
+                }
+                OutlinedButton(
+                    onClick = onReject,
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Text("Reject", style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
     }
