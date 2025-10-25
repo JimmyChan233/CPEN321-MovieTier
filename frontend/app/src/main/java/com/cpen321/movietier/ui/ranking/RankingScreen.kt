@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.ui.components.EmptyState
 import com.cpen321.movietier.ui.components.LoadingState
 import com.cpen321.movietier.ui.components.MovieCard
+import com.cpen321.movietier.ui.components.StarRating
 import com.cpen321.movietier.ui.theme.MovieTierTheme
 import com.cpen321.movietier.ui.viewmodels.RankingViewModel
 import coil.compose.AsyncImage
@@ -362,25 +363,23 @@ private fun RankedMovieRow(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                // Year and rating on the same line
-                run {
+                Spacer(modifier = Modifier.height(4.dp))
+                // Year and rating row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     val year = (details?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
-                    val rating = (details?.voteAverage ?: rankedMovie.movie.voteAverage)
-                    val line = buildString {
-                        if (!year.isNullOrBlank()) append(year)
-                        if (rating != null) {
-                            if (isNotEmpty()) append(" • ")
-                            append("★ ")
-                            append("%.1f".format(rating))
-                        }
-                    }
-                    if (line.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                    if (!year.isNullOrBlank()) {
                         Text(
-                            text = line,
+                            text = year,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                    val rating = (details?.voteAverage ?: rankedMovie.movie.voteAverage)
+                    rating?.let {
+                        StarRating(rating = it, starSize = 14.dp)
                     }
                 }
                 details?.cast?.take(3)?.let { cast ->

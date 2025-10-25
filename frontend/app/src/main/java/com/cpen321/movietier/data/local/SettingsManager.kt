@@ -27,7 +27,8 @@ class SettingsManager @Inject constructor(
         when (prefs[THEME_MODE_KEY]) {
             "Light" -> ThemeMode.Light
             "Dark" -> ThemeMode.Dark
-            else -> ThemeMode.System
+            "System" -> ThemeMode.System
+            else -> ThemeMode.Dark // Default to dark mode for new users
         }
     }
 
