@@ -11,6 +11,7 @@
 # Local configuration files with secrets
 backend/.env
 frontend/local.properties
+frontend/app/google-services.json
 
 # Build directories
 frontend/build/
