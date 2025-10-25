@@ -68,7 +68,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 ### **3.4. Use Case Description**
 
-- Use cases for feature 1: Authentication
+- **Use cases for feature 1: Authentication**
 
 1. Sign In : When a user has already created their account, they can just sign in with their google account.
 2. Sign Up: All new users will use the Sign Up use case to create an account.
@@ -76,7 +76,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 4. Sign Out: When a user wants to sign out of the app, they can use the sign out use case.
 5. Edit Profile: Users can edit their display name from the Profile screen. Changes are saved to the backend via PUT /api/users/profile and persisted locally in DataStore. Profile pictures are automatically set from Google account during sign-up.
 
-- Use cases for feature 2: Manage Friend
+- **Use cases for feature 2: Manage Friend**
  
 1. Send Friend Request: Users send friend requests to other users by entering their email or selecting from search results (name/email). Users receive in-app feedback on success/failure.
 2. Accept Friend Request: To accept friend requests received by the user.
@@ -91,13 +91,13 @@ Design notes:
 - Basic rate limiting is enforced for sending friend requests to reduce spam (fixed window, max 5/min per user).
 - Client behavior: SSE connection uses infinite read timeout with reconnection/backoff to remain stable during idle periods; UI provides immediate in-app feedback (snackbars) for all friend actions.
 
-- Use cases for feature 3: Feed
+- **Use cases for feature 3: Feed**
 
 1. View Feed: The user can view all their friends' activities in their feed. 
 2. View Live Update Notification: Every time a friend ranks a movie, a push notification will be received by the user. 
 3. Open Movie Detail from Feed: The user taps a feed entry to open a detail sheet with poster/description and can add the movie to their Watchlist or Rankings (with confirmation messages).
 
-- Use cases for feature 4: Ranked Movie List
+- **Use cases for feature 4: Ranked Movie List**
 
 1. Search a Movie: Users can search names of a movie by using the Search Movie use case.
 2. Add a Movie: Users can add a movie to their ranked lists.
@@ -108,7 +108,7 @@ Design notes:
    - Delete: Remove the movie (requires confirmation), shifts lower ranks up by one.
 
 
-- Use cases for feature 5: Discover (Recommendation)
+- **Use cases for feature 5: Discover (Recommendation)**
 
 1. View Recommended Movie List: The user can view a list of recommended movies that the application suggests based on their previously ranked movies.
 2. View Trending Movies: When users have no ranked movies, the system displays trending movies from TMDB to help them discover popular films and start their ranking journey.
@@ -116,7 +116,7 @@ Design notes:
 4. View Movie Trailer: Users can watch movie trailers directly within the app. Tapping the play button on a movie's detail sheet opens the trailer in a popup WebView player that loads the YouTube mobile page. Users can manually toggle fullscreen using YouTube's native controls and close the popup using the X button.
 5. Add Movie from Discover: Users can add movies to their rankings directly from the Discover page without navigation. The comparison flow appears inline on the same page.
 
-- Use cases for feature 6: Watchlist
+- **Use cases for feature 6: Watchlist**
 
 1. Add Movie to Watchlist: Users can add movies to their watchlist from the Discover page, Feed, or Search results. The system checks for duplicates and enriches missing metadata (poster, overview) from TMDB API before saving.
 2. View Watchlist: Users can view their complete watchlist sorted by date added (newest/oldest) or rating (high/low). Each entry displays the movie poster, title, release year, rating, and overview.
