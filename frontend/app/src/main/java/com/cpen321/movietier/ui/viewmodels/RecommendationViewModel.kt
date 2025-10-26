@@ -27,7 +27,8 @@ data class RecommendationUiState(
 @HiltViewModel
 class RecommendationViewModel @Inject constructor(
     private val movieRepository: MovieRepository,
-    private val watchlistRepository: WatchlistRepository
+    private val watchlistRepository: WatchlistRepository,
+    private val quoteRepository: com.cpen321.movietier.data.repository.QuoteRepository
 
 ) : ViewModel() {
 
@@ -122,5 +123,17 @@ class RecommendationViewModel @Inject constructor(
         }
         quoteMovieCache[key] = movie
         return movie
+    }
+
+    suspend fun getQuote(
+        title: String,
+        year: String? = null,
+        rating: Double? = null
+    ): String {
+        return when (val result = quoteRepository.getQuote(title, year, rating)) {
+            is Result.Success -> result.data
+            is Result.Error -> title // Fallback to title if all else fails
+            is Result.Loading -> title // Should not happen in this context
+        }
     }
 }
