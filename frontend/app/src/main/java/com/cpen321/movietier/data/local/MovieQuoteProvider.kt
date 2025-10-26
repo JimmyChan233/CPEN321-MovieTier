@@ -1109,6 +1109,16 @@ object MovieQuoteProvider {
 
     fun normalizedTitle(title: String): String = normalize(title)
 
+    fun hasQuoteInDatabase(title: String): Boolean {
+        val normalized = normalize(title)
+        // Check exact match
+        if (quotesByTitle.containsKey(normalized)) return true
+        // Check fuzzy match for subtitles
+        return quotesByTitle.keys.any { key ->
+            normalized.contains(key) && key.length > 5
+        }
+    }
+
     fun getQuote(
         title: String,
         year: String? = null,

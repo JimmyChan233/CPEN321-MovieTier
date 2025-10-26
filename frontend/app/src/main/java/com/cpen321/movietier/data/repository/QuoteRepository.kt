@@ -21,16 +21,13 @@ class QuoteRepository @Inject constructor(
         year: String? = null,
         rating: Double? = null
     ): Result<String> {
-        // Step 1: Try hardcoded database first (instant response)
-        val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
-
-        // Step 2: If we found a real quote (not a fallback), return it
-        // A real quote will be more specific; fallback quotes are generic
-        if (isRealQuote(localQuote)) {
+        // Step 1: Check if this title exists in the hardcoded database
+        if (MovieQuoteProvider.hasQuoteInDatabase(title)) {
+            val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
             return Result.Success(localQuote)
         }
 
-        // Step 3: Try backend API for better quote
+        // Step 2: Not in local database, try backend API for better quote
         val cacheKey = getCacheKey(title, year)
 
         // Check if we've already fetched from API for this title
@@ -45,40 +42,13 @@ class QuoteRepository @Inject constructor(
                 Result.Success(quote)
             } else {
                 // API failed or returned empty, fall back to local quote
+                val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
                 Result.Success(localQuote)
             }
         } catch (e: Exception) {
             // Network error, fall back to local quote
+            val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
             Result.Success(localQuote)
         }
-    }
-
-    /**
-     * Check if a quote is "real" (from the hardcoded database) vs a fallback.
-     * Fallback quotes are mostly short generic phrases like "Cue the popcorn."
-     * Real quotes tend to be longer or more specific.
-     */
-    private fun isRealQuote(quote: String): Boolean {
-        // List of known fallback quotes from MovieQuoteProvider
-        val fallbacks = setOf(
-            "Cue the popcorn.",
-            "Film night, sorted.",
-            "Movie magic incoming.",
-            "Lights, camera, relax.",
-            "Stories worth the screen time.",
-            "Scenes that stay with you.",
-            "Rewind-worthy moments ahead.",
-            "A prime pick for tonight.",
-            "Big screen energy.",
-            "Grab the best seat.",
-            "Blockbuster mood.",
-            "Fresh flick vibes.",
-            "Time to press play.",
-            "Film club favorite.",
-            "Stay through the credits."
-        )
-
-        // If quote is not in fallback list, it's a real quote
-        return !fallbacks.contains(quote)
     }
 }

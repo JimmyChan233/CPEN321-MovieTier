@@ -25,12 +25,13 @@ fun FeaturedMovieCard(
     quote: String,
     onClick: () -> Unit,
     onRefresh: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoadingQuote: Boolean = false
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(260.dp)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
@@ -43,7 +44,7 @@ fun FeaturedMovieCard(
                 contentScale = ContentScale.Crop
             )
 
-            // Dark gradient overlay for text readability
+            // Dark gradient overlay for text readability - stronger at bottom
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -51,8 +52,8 @@ fun FeaturedMovieCard(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.4f),
-                                Color.Black.copy(alpha = 0.85f)
+                                Color.Black.copy(alpha = 0.3f),
+                                Color.Black.copy(alpha = 0.7f)
                             ),
                             startY = 0f,
                             endY = Float.POSITIVE_INFINITY
@@ -80,17 +81,19 @@ fun FeaturedMovieCard(
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Movie title
                 Text(
                     text = movie.title,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
+                // Rating
                 movie.voteAverage?.let { rating ->
                     StarRating(
                         rating = rating,
@@ -99,16 +102,39 @@ fun FeaturedMovieCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "\"$quote\"",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontStyle = FontStyle.Italic,
-                    color = Color.White.copy(alpha = 0.9f),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Quote section with loading state
+                if (isLoadingQuote) {
+                    // Loading indicator
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(32.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Loading quote...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                } else if (quote.isNotEmpty()) {
+                    // Quote display
+                    Text(
+                        text = "\"$quote\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = FontStyle.Italic,
+                        color = Color.White.copy(alpha = 0.95f),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

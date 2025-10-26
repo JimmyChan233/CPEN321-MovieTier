@@ -162,37 +162,17 @@ fun RecommendationScreen(
 
                 RecommendationState.CONTENT -> {
                     val dayOfYear = remember { LocalDate.now().dayOfYear }
-                    val requestedEntry = remember(dayOfYear, featuredMovieOffset) {
-                        MovieQuoteProvider.entryForIndex(dayOfYear + featuredMovieOffset)
-                    }
-                    var currentEntry by remember { mutableStateOf(requestedEntry) }
                     var currentMovie by remember { mutableStateOf<Movie?>(null) }
                     var currentQuote by remember { mutableStateOf("") }
                     var isLoadingQuote by remember { mutableStateOf(false) }
 
-                    LaunchedEffect(requestedEntry, uiState.recommendations) {
-                        val entry = requestedEntry
-                        if (entry.title.isBlank()) {
-                            uiState.recommendations.firstOrNull()?.let { fallback ->
-                                currentEntry = entry
-                                currentMovie = fallback
-                            }
-                            return@LaunchedEffect
-                        }
-
-                        val directMatch = uiState.recommendations.firstOrNull {
-                            MovieQuoteProvider.matchesTitle(it.title, entry.title)
-                        }
-                        val searched = directMatch ?: recommendationViewModel.findMovieByTitle(entry.title)
-                        val fallback = if (searched == null && uiState.recommendations.isNotEmpty()) {
+                    // Select featured movie from recommendations list
+                    LaunchedEffect(dayOfYear, featuredMovieOffset, uiState.recommendations) {
+                        if (uiState.recommendations.isNotEmpty()) {
                             val size = uiState.recommendations.size
-                            val safeIndex = ((featuredMovieOffset % size) + size) % size
-                            uiState.recommendations[safeIndex]
-                        } else null
-                        val resolved = searched ?: fallback
-                        if (resolved != null) {
-                            currentEntry = entry
-                            currentMovie = resolved
+                            val index = ((dayOfYear + featuredMovieOffset) % size + size) % size
+                            currentMovie = uiState.recommendations[index]
+                            currentQuote = "" // Reset quote when movie changes
                         }
                     }
 
@@ -224,10 +204,11 @@ fun RecommendationScreen(
                                 item {
                                     FeaturedMovieCard(
                                         movie = movie,
-                                        quote = currentQuote.ifEmpty { if (isLoadingQuote) "Loading..." else currentEntry.quote },
+                                        quote = currentQuote,
                                         onClick = { selectedMovie = movie },
                                         onRefresh = { featuredMovieOffset++ },
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        isLoadingQuote = isLoadingQuote
                                     )
                                 }
                             }
