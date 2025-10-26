@@ -7,6 +7,8 @@ import { Friendship } from '../models/friend/Friend';
 import { sseService } from '../services/sse/sseService';
 import Like from '../models/feed/Like';
 import Comment from '../models/feed/Comment';
+import User from '../models/user/User';
+import notificationService from '../services/notification.service';
 
 const router = Router();
 
@@ -103,6 +105,97 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Get user's own feed activities
+router.get('/me', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const activities = await FeedActivity.find({
+      userId: req.userId
+    })
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .populate('userId', 'name email profileImageUrl');
+
+    // Enrich missing overview/poster for first few items
+    const tmdb = getTmdbClient();
+    const toEnrich = activities.filter((a: any) => (!a.overview || !a.posterPath) && a.movieId).slice(0, 8);
+    await Promise.all(toEnrich.map(async (a: any) => {
+      try {
+        const { data } = await tmdb.get(`/movie/${a.movieId}`, { params: { language: 'en-US' } });
+        if (!a.overview && data?.overview) a.overview = data.overview;
+        if (!a.posterPath && data?.poster_path) a.posterPath = data.poster_path;
+        await a.save();
+      } catch {}
+    }));
+
+    // Fetch current ranks
+    const movieRankMap = new Map<string, number>();
+    await Promise.all(activities.map(async (a: any) => {
+      try {
+        const rankedMovie = await RankedMovie.findOne({
+          userId: a.userId?._id,
+          movieId: a.movieId
+        });
+        if (rankedMovie) {
+          const key = `${a.userId?._id}_${a.movieId}`;
+          movieRankMap.set(key, rankedMovie.rank);
+        }
+      } catch {}
+    }));
+
+    // Fetch like counts and user's like status
+    const activityIds = activities.map(a => a._id);
+    const likeCounts = await Like.aggregate([
+      { $match: { activityId: { $in: activityIds } } },
+      { $group: { _id: '$activityId', count: { $sum: 1 } } }
+    ]);
+    const likeCountMap = new Map(likeCounts.map((lc: any) => [String(lc._id), lc.count]));
+
+    const userLikes = await Like.find({
+      userId: req.userId,
+      activityId: { $in: activityIds }
+    });
+    const userLikeSet = new Set(userLikes.map(l => String(l.activityId)));
+
+    // Fetch comment counts
+    const commentCounts = await Comment.aggregate([
+      { $match: { activityId: { $in: activityIds } } },
+      { $group: { _id: '$activityId', count: { $sum: 1 } } }
+    ]);
+    const commentCountMap = new Map(commentCounts.map((cc: any) => [String(cc._id), cc.count]));
+
+    const shaped = activities.map((a: any) => {
+      const key = `${a.userId?._id}_${a.movieId}`;
+      const currentRank = movieRankMap.get(key);
+      const activityIdStr = String(a._id);
+
+      return {
+        _id: a._id,
+        userId: a.userId?._id,
+        userName: a.userId?.name,
+        userProfileImage: a.userId?.profileImageUrl,
+        activityType: a.activityType,
+        movie: {
+          id: a.movieId,
+          title: a.movieTitle,
+          posterPath: a.posterPath || null,
+          overview: a.overview || null,
+          releaseDate: null,
+          voteAverage: null
+        },
+        rank: currentRank ?? null,
+        likeCount: likeCountMap.get(activityIdStr) || 0,
+        commentCount: commentCountMap.get(activityIdStr) || 0,
+        isLikedByUser: userLikeSet.has(activityIdStr),
+        createdAt: a.createdAt
+      };
+    });
+
+    res.json({ success: true, data: shaped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Unable to load your activities' });
+  }
+});
+
 // SSE stream for feed events
 router.get('/stream', authenticate, async (req: AuthRequest, res) => {
   try {
@@ -128,7 +221,7 @@ router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => 
     const { activityId } = req.params;
 
     // Verify activity exists
-    const activity = await FeedActivity.findById(activityId);
+    const activity = await FeedActivity.findById(activityId).populate('userId');
     if (!activity) {
       return res.status(404).json({ success: false, message: 'Activity not found' });
     }
@@ -139,6 +232,26 @@ router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => 
       activityId: activityId
     });
     await like.save();
+
+    // Send notification to activity owner (but not if liking own activity)
+    if (String(activity.userId._id) !== String(req.userId)) {
+      try {
+        const liker = await User.findById(req.userId);
+        const activityOwner: any = activity.userId;
+
+        if (activityOwner.fcmToken && liker) {
+          await notificationService.sendLikeNotification(
+            activityOwner.fcmToken,
+            liker.name,
+            activity.movieTitle,
+            String(activity._id)
+          );
+        }
+      } catch (notifError) {
+        // Log but don't fail the like operation
+        console.error('Failed to send like notification:', notifError);
+      }
+    }
 
     res.json({ success: true, message: 'Activity liked' });
   } catch (error: any) {
@@ -210,7 +323,7 @@ router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res)
     }
 
     // Verify activity exists
-    const activity = await FeedActivity.findById(activityId);
+    const activity = await FeedActivity.findById(activityId).populate('userId');
     if (!activity) {
       return res.status(404).json({ success: false, message: 'Activity not found' });
     }
@@ -233,6 +346,27 @@ router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res)
       text: comment.text,
       createdAt: comment.createdAt
     };
+
+    // Send notification to activity owner (but not if commenting on own activity)
+    if (String(activity.userId._id) !== String(req.userId)) {
+      try {
+        const commenter = await User.findById(req.userId);
+        const activityOwner: any = activity.userId;
+
+        if (activityOwner.fcmToken && commenter) {
+          await notificationService.sendCommentNotification(
+            activityOwner.fcmToken,
+            commenter.name,
+            comment.text,
+            activity.movieTitle,
+            String(activity._id)
+          );
+        }
+      } catch (notifError) {
+        // Log but don't fail the comment operation
+        console.error('Failed to send comment notification:', notifError);
+      }
+    }
 
     res.json({ success: true, data: shaped });
   } catch (error) {

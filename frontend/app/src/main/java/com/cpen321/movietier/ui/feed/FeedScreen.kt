@@ -147,21 +147,48 @@ fun FeedScreen(
             )
         }
     ) { padding ->
-        Crossfade(
-            targetState = when {
-                uiState.isLoading -> FeedState.LOADING
-                uiState.feedActivities.isEmpty() -> FeedState.EMPTY
-                else -> FeedState.CONTENT
-            },
-            label = "feed_state"
-        ) { state ->
-            when (state) {
-                FeedState.LOADING -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .testTag("feed_loading"),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Filter toggle buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = uiState.feedFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS,
+                    onClick = { feedViewModel.setFeedFilter(com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS) },
+                    label = { Text("Friends") },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = uiState.feedFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE,
+                    onClick = { feedViewModel.setFeedFilter(com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE) },
+                    label = { Text("My Activities") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            HorizontalDivider()
+
+            Crossfade(
+                targetState = when {
+                    uiState.isLoading -> FeedState.LOADING
+                    uiState.feedActivities.isEmpty() -> FeedState.EMPTY
+                    else -> FeedState.CONTENT
+                },
+                label = "feed_state"
+            ) { state ->
+                when (state) {
+                    FeedState.LOADING -> {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .testTag("feed_loading"),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -173,7 +200,6 @@ fun FeedScreen(
                 FeedState.EMPTY -> {
                     Box(modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
                         .testTag("feed_empty")
                     ) {
                         EmptyState(
@@ -199,7 +225,6 @@ fun FeedScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(padding)
                     ) {
                         LazyColumn(
                             modifier = Modifier
@@ -428,6 +453,7 @@ fun FeedScreen(
             }
         }
     }
+}
 
     // Comment bottom sheet
     showCommentsForActivity?.let { activityId ->

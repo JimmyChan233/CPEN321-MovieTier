@@ -25,6 +25,21 @@ class FeedRepository @Inject constructor(
         }
     }
 
+    suspend fun getMyFeed(): Result<List<FeedActivity>> {
+        return try {
+            val response = apiService.getMyFeed()
+            val body = response.body()
+            if (response.isSuccessful && body?.success == true) {
+                Result.Success(body.data ?: emptyList())
+            } else {
+                val message = body?.message ?: response.message()
+                Result.Error(Exception("Failed to get my feed: $message"), message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
     suspend fun likeActivity(activityId: String): Result<Unit> {
         return try {
             val response = apiService.likeActivity(activityId)

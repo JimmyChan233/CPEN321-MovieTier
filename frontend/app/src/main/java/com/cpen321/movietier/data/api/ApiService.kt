@@ -123,6 +123,9 @@ interface ApiService {
     @GET("feed")
     suspend fun getFeed(): Response<ApiResponse<List<FeedActivity>>>
 
+    @GET("feed/me")
+    suspend fun getMyFeed(): Response<ApiResponse<List<FeedActivity>>>
+
     @GET("feed/stream")
     suspend fun connectFeedStream(): Response<Unit>
 

@@ -199,6 +199,115 @@ class NotificationService {
   }
 
   /**
+   * Send notification when someone likes your activity
+   */
+  async sendLikeNotification(
+    recipientToken: string,
+    likerName: string,
+    movieTitle: string,
+    activityId: string
+  ): Promise<boolean> {
+    if (!this.initialized) {
+      logger.warn('Firebase not initialized, skipping notification');
+      return false;
+    }
+
+    try {
+      const message: admin.messaging.Message = {
+        token: recipientToken,
+        notification: {
+          title: `${likerName} liked your ranking`,
+          body: `${likerName} liked your ranking of "${movieTitle}"`,
+        },
+        data: {
+          type: 'activity_like',
+          activityId,
+          likerName,
+          movieTitle
+        },
+        android: {
+          priority: 'normal',
+          notification: {
+            channelId: 'feed_updates',
+            priority: 'default',
+            defaultSound: true
+          }
+        }
+      };
+
+      const response = await admin.messaging().send(message);
+      logger.info(`Like notification sent successfully: ${response}`);
+      return true;
+    } catch (error: any) {
+      if (error.code === 'messaging/invalid-registration-token' ||
+          error.code === 'messaging/registration-token-not-registered') {
+        logger.warn(`Invalid FCM token for like notification: ${error.message}`);
+      } else {
+        logger.error('Error sending like notification:', error);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Send notification when someone comments on your activity
+   */
+  async sendCommentNotification(
+    recipientToken: string,
+    commenterName: string,
+    commentText: string,
+    movieTitle: string,
+    activityId: string
+  ): Promise<boolean> {
+    if (!this.initialized) {
+      logger.warn('Firebase not initialized, skipping notification');
+      return false;
+    }
+
+    try {
+      const truncatedComment = commentText.length > 50
+        ? commentText.substring(0, 50) + '...'
+        : commentText;
+
+      const message: admin.messaging.Message = {
+        token: recipientToken,
+        notification: {
+          title: `${commenterName} commented on your ranking`,
+          body: `${commenterName} on "${movieTitle}": ${truncatedComment}`,
+        },
+        data: {
+          type: 'activity_comment',
+          activityId,
+          commenterName,
+          movieTitle,
+          commentText: truncatedComment
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'feed_updates',
+            priority: 'high',
+            defaultSound: true,
+            defaultVibrateTimings: true
+          }
+        }
+      };
+
+      const response = await admin.messaging().send(message);
+      logger.info(`Comment notification sent successfully: ${response}`);
+      return true;
+    } catch (error: any) {
+      if (error.code === 'messaging/invalid-registration-token' ||
+          error.code === 'messaging/registration-token-not-registered') {
+        logger.warn(`Invalid FCM token for comment notification: ${error.message}`);
+      } else {
+        logger.error('Error sending comment notification:', error);
+      }
+      return false;
+    }
+  }
+
+  /**
    * Send notifications to multiple users (for batch notifications)
    */
   async sendMulticastNotification(

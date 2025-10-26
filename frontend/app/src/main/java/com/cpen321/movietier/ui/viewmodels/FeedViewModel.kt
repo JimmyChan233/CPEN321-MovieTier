@@ -23,8 +23,14 @@ import javax.inject.Inject
 data class FeedUiState(
     val isLoading: Boolean = false,
     val feedActivities: List<FeedActivity> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val feedFilter: FeedFilter = FeedFilter.FRIENDS
 )
+
+enum class FeedFilter {
+    FRIENDS,  // Show friends' activities
+    MINE      // Show my activities
+}
 
 data class FeedCompareState(
     val newMovie: Movie,
@@ -56,7 +62,11 @@ class FeedViewModel @Inject constructor(
     fun loadFeed() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            when (val result = feedRepository.getFeed()) {
+            val result = when (_uiState.value.feedFilter) {
+                FeedFilter.FRIENDS -> feedRepository.getFeed()
+                FeedFilter.MINE -> feedRepository.getMyFeed()
+            }
+            when (result) {
                 is Result.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -75,6 +85,13 @@ class FeedViewModel @Inject constructor(
     }
 
     fun refreshFeed() = loadFeed()
+
+    fun setFeedFilter(filter: FeedFilter) {
+        if (_uiState.value.feedFilter != filter) {
+            _uiState.value = _uiState.value.copy(feedFilter = filter)
+            loadFeed()
+        }
+    }
 
     private fun connectStream() {
         sseClient.connect("feed/stream") { event, _ ->
