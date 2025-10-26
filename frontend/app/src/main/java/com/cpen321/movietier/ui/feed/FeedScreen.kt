@@ -156,7 +156,7 @@ fun FeedScreen(
                 modifier = Modifier
                     .testTag("feed_filter_bar")
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 0.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -198,7 +198,7 @@ fun FeedScreen(
                                 start = 16.dp,
                                 end = 16.dp,
                                 top = 16.dp,
-                                bottom = 120.dp
+                                bottom = 112.dp
                             ),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
@@ -244,7 +244,7 @@ fun FeedScreen(
                                 start = 16.dp,
                                 end = 16.dp,
                                 top = 16.dp,
-                                bottom = 120.dp
+                                bottom = 112.dp
                             ),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
