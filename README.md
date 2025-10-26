@@ -1,28 +1,141 @@
-# CPEN321-MovieTier
-#### Rank movies. Share with friends. Discover together.
+# MovieTier
+Rank movies, compare tastes with friends, and discover what to watch next.
 
+MovieTier is a social movie companion. It combines a Kotlin Android app and a TypeScript/Express backend backed by MongoDB, TMDB, Firebase Cloud Messaging, and Google OAuth.
 
-MovieTier is a social movie companion app that makes watching, ranking, and sharing films fun and interactive.
-It helps friends discover new movies, compare tastes, and get personalized recommendations.
+## Highlights
+- **Google Sign‑In & JWT auth** with secure token storage.
+- **Friend graph** with incoming/outgoing requests, rate limiting, and real-time Server-Sent Events (SSE).
+- **Interactive ranking** that walks users through binary comparisons and posts feed activities when complete.
+- **Watchlist** with TMDB enrichment and automatic cleanup when a title is ranked.
+- **Activity feed** showing friends’ rankings, complete with like/comment interactions and push notifications.
+- **Recommendations** blending TMDB Discover/Similar/Recommendation APIs based on the user’s ranked list.
+- **Offline quote catalog** on Android, with a legacy `/api/quotes` fallback for future clients.
 
-With MovieTier, users can:
+## Tech Stack
 
-- Sign in securely using Google authentication.
+### Android (frontend)
+- Kotlin + Jetpack Compose (Material 3)
+- MVVM architecture with Hilt DI
+- Retrofit/OkHttp for networking, DataStore for persistence
+- Firebase Cloud Messaging for push notifications
 
-- Add friends and build their movie network.
+### Backend
+- Node.js + Express written in TypeScript
+- MongoDB with Mongoose models and aggregation
+- Google OAuth verification (`google-auth-library`) + JWT sessions
+- Axios-based TMDB client with request/response logging
+- Firebase Admin SDK for push notifications
 
-- Browse a friend’s feed with recent rankings and activity.
+## Repository Layout
+```
+CPEN321-MovieTier/
+├── backend/                    # Express + TypeScript API
+│   ├── src/
+│   │   ├── config/             # Environment bootstrapping
+│   │   ├── controllers/        # Comparison logic & recommendations
+│   │   ├── middleware/         # Auth guards, error handling
+│   │   ├── models/             # Mongoose schemas (User, FeedActivity, etc.)
+│   │   ├── routes/             # REST endpoints
+│   │   ├── services/           # TMDB, notifications, wikiquote, SSE
+│   │   └── server.ts           # Express app entry point
+│   └── package.json
+├── frontend/                   # Android app module
+│   ├── app/src/main/java/com/cpen321/movietier/
+│   │   ├── data/               # Models, Retrofit API, repositories
+│   │   ├── di/                 # Hilt modules
+│   │   ├── ui/                 # Compose screens, navigation
+│   │   ├── fcm/                # Firebase Messaging service + helpers
+│   │   └── utils/              # Location + formatting helpers
+│   └── build.gradle.kts
+└── documentation/              # Requirements, design, refinement notes
+```
 
-- Create and share personal movie tiers and rankings.
+## Prerequisites
+- Android Studio Hedgehog (or newer) + Android SDK 31+
+- Node.js 18+ and npm
+- MongoDB instance (local or Atlas)
+- Google Cloud project with OAuth client IDs
+- Firebase project with Messaging enabled (for push notifications)
 
-- Get movie recommendations based on recent watches or top favourites.
+## Backend Setup
+```bash
+cd backend
+npm install
+cp .env.example .env
+```
 
-By combining social interaction with personalized discovery, MovieTier makes movie watching more engaging and helps users find the next great film.
+Fill out `.env`:
+- `PORT` – optional, defaults to `3000`
+- `MONGODB_URI` – connection string
+- `GOOGLE_CLIENT_ID` – OAuth Web Client ID (used to verify ID tokens)
+- `JWT_SECRET` – signing secret for backend-issued JWTs
+- `TMDB_API_KEY` – API key from themoviedb.org
+- **Push notifications** (choose one):
+  - `FIREBASE_SERVICE_ACCOUNT_PATH` – absolute path to a service account JSON file, **or**
+  - `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (escaped with `\n`)
 
-### Target Audience  
-- **University students & young professionals** who use social apps (e.g., Beli, Letterboxd, Goodreads) and enjoy sharing opinions.  
-- **Casual movie lovers** who want simple, fun recommendations instead of long reviews.  
-- **Friend groups** who want to compare tastes, discover what to watch, and bond over shared favourites.  
+Start the dev server with hot reload:
+```bash
+npm run dev
+```
+
+Useful scripts:
+- `npm run build` – compile TypeScript to `dist/`
+- `npm start` – run compiled server
+- `npm test` – Jest test suite (if present)
+
+## Android Setup
+1. Open the `frontend` directory in Android Studio.
+2. Duplicate `local.defaults.properties` → `local.properties` and update:
+   ```properties
+   sdk.dir=/path/to/android-sdk
+   API_BASE_URL=http://10.0.2.2:3000/api/
+   GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+   ```
+3. If you plan to receive push notifications:
+   - Add your Firebase Cloud Messaging keys via the Secrets Gradle Plugin (`local.properties` supports `FIREBASE_*` entries).
+   - Place `google-services.json` under `frontend/app/` (optional; the build skips the Google Services plugin if missing).
+4. Generate SHA-1 for your debug keystore:
+   ```bash
+   ./gradlew signingReport
+   ```
+   Register it with your Google OAuth Android client.
+5. `Sync Project with Gradle Files`, then `Run` on an emulator or device. The default base URL uses `10.0.2.2` for the Android emulator loopback; replace with your machine’s LAN IP when testing on hardware.
+
+## Feature Overview
+- **Authentication** – Google Sign-In, JWT issuance, sign-out, and account deletion. Frontend stores tokens with DataStore and injects them into Retrofit.
+- **Profiles & Notifications** – Users can rename themselves and register device FCM tokens (`POST /api/users/fcm-token`). Backend uses Firebase Admin to notify on friend requests, acceptance, likes, and comments.
+- **Friend Management** – Send, cancel, accept, or reject requests; bilateral friendships are maintained with compound cleanup. SSE (`/api/friends/stream`) keeps UI badges live.
+- **Ranking Flow** – `/api/movies/add` kicks off the comparison session, `/compare` iterates, and `/rerank/start` lets users reposition existing titles. Finalization writes to `RankedMovie`, posts to the feed, removes any watchlist entry, and pushes notifications.
+- **Watchlist** – CRUD via `/api/watchlist`; the backend enriches missing metadata via TMDB and enforces uniqueness per user.
+- **Feed Engagement** – `/api/feed` (friends) and `/api/feed/me` (self) aggregate activities with like/comment counts. Likes land on `/feed/:id/like` (POST/DELETE) and comments on `/feed/:id/comments` (GET/POST/DELETE). SSE plus FCM provide real-time updates.
+- **Recommendations** – `/api/recommendations` blends TMDB Discover/Similar/Recommendation results scored against the user’s preferences. `/api/recommendations/trending` covers new users.
+- **Movie Utilities** – TMDB search, details, videos, cast, and watch-provider data are proxied through `/api/movies/...`.
+- **Quotes** – Android ships with `MovieQuoteProvider`; backend retains `/api/quotes` as a Wikiquote-based fallback.
+
+## Running & Testing
+- Backend: `npm run dev` for development, `npm test` for Jest suites.
+- Android: Use Android Studio’s “Run” or `./gradlew testDebugUnitTest` / `./gradlew connectedAndroidTest`.
+
+## API Snapshot
+| Area        | Endpoint (prefix `/api`)                  | Notes |
+|-------------|-------------------------------------------|-------|
+| Auth        | `POST auth/signin`, `POST auth/signup`, `POST auth/signout`, `DELETE auth/account` | Google ID token in request body; JWT returned on success. |
+| Users       | `GET users/search`, `PUT users/profile`, `POST users/fcm-token`, `GET users/:userId`, `GET users/:userId/watchlist` | Profile lookups and FCM registration. |
+| Friends     | `GET friends`, `GET friends/requests`, `GET friends/requests/detailed`, `GET friends/requests/outgoing`, `GET friends/requests/outgoing/detailed`, `POST friends/request`, `POST friends/respond`, `DELETE friends/:friendId`, `DELETE friends/requests/:requestId`, `GET friends/stream` | SSE stream emits `friend_request`, `friend_request_accepted`, etc. |
+| Movies      | `GET movies/search`, `GET movies/ranked`, `POST movies/add`, `POST movies/compare`, `POST movies/rerank/start`, `DELETE movies/ranked/:id`, `GET movies/:movieId/details`, `GET movies/:movieId/providers`, `GET movies/:movieId/videos` | All endpoints require JWT bearer token. |
+| Feed        | `GET feed`, `GET feed/me`, `GET feed/stream`, `POST feed/:activityId/like`, `DELETE feed/:activityId/like`, `GET feed/:activityId/comments`, `POST feed/:activityId/comments`, `DELETE feed/:activityId/comments/:commentId` | Likes/comments drive SSE and FCM notifications. |
+| Watchlist   | `GET watchlist`, `POST watchlist`, `DELETE watchlist/:movieId` | Watchlist items removed automatically when ranked. |
+| Recommendations | `GET recommendations`, `GET recommendations/trending` | Blend of TMDB data sources. |
+| Quotes (legacy) | `GET quotes?title=Inception&year=2010` | Scrapes Wikiquote; not used by current Android client. |
+
+## Development Tips
+- Use `10.0.2.2` from the Android emulator to hit the backend on `localhost`.
+- MongoDB must be running before `npm run dev`; the server exits on connection failure.
+- The backend logs TMDB requests to the console for debugging. Provide `TMDB_API_KEY` to avoid 401s.
+- SSE connections are long-lived; in development, restart the Android client after backend restarts to re-subscribe.
+- Keep secrets (`.env`, `local.properties`) out of version control.
 
 ## Contributors
 - Jimmy Chen
@@ -30,167 +143,5 @@ By combining social interaction with personalized discovery, MovieTier makes mov
 - Muskan Bhatia
 - Vansh Khandelia
 
-## Tech Stack
-
-### Frontend (Android)
-- **Language**: Kotlin
-- **UI Framework**: Jetpack Compose with Material Design 3
-- **Architecture**: MVVM + Clean Architecture
-- **Dependency Injection**: Hilt
-- **Networking**: Retrofit + OkHttp
-- **Local Storage**: DataStore
-- **Authentication**: Google Credential Manager API
-
-### Backend
-- **Runtime**: Node.js with Express
-- **Language**: TypeScript
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT + Google OAuth 2.0
-- **External APIs**: TMDB (The Movie Database)
-
-## Project Structure
-
-```
-CPEN321-MovieTier/
-├── frontend/           # Android app
-│   ├── app/
-│   │   └── src/main/
-│   │       ├── java/com/cpen321/movietier/
-│   │       │   ├── data/         # Data layer (models, API, repositories)
-│   │       │   ├── di/           # Dependency injection modules
-│   │       │   └── ui/           # UI layer (screens, viewmodels)
-│   │       └── res/              # Resources (layouts, drawables)
-│   └── build.gradle.kts
-├── backend/            # Node.js server
-│   ├── src/
-│   │   ├── controllers/  # Request handlers
-│   │   ├── models/       # MongoDB schemas
-│   │   ├── routes/       # API routes
-│   │   ├── services/     # Business logic
-│   │   ├── middleware/   # Auth & validation
-│   │   └── server.ts     # Entry point
-│   └── package.json
-└── README.md
-```
-
-## Setup Instructions
-
-### Prerequisites
-- **Android Studio** (latest version)
-- **Node.js** (v18+) and npm
-- **MongoDB** (local or cloud instance)
-- **Google Cloud Console** account (for OAuth)
-
-### Backend Setup
-
-1. **Navigate to backend directory**
-   ```bash
-   cd backend
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables**
-   - Copy `.env.example` to `.env`
-   ```bash
-   cp .env.example .env
-   ```
-   - Fill in your actual values in `.env`:
-     - `GOOGLE_CLIENT_ID`: Your Google OAuth Web Client ID
-     - `JWT_SECRET`: A secure random string
-     - `MONGODB_URI`: Your MongoDB connection string
-     - `TMDB_API_KEY`: Your TMDB API key (get from themoviedb.org)
-
-4. **Start the server**
-   ```bash
-   npm run dev
-   ```
-   Server will run on `http://localhost:3000`
-
-### Frontend Setup
-
-1. **Open project in Android Studio**
-   - Open the `frontend` folder in Android Studio
-
-2. **Configure local properties**
-   - Copy `local.defaults.properties` to `local.properties`
-   - Update values in `local.properties`:
-     ```properties
-     sdk.dir=/path/to/your/Android/sdk
-     API_BASE_URL="http://10.0.2.2:3000/api/"
-     GOOGLE_CLIENT_ID="YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
-     ```
-
-3. **Set up Google OAuth**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project
-   - Enable Google+ API
-   - Create OAuth 2.0 credentials:
-     - **Web Client**: For backend verification
-     - **Android Client**: For your app (add SHA-1 fingerprint)
-   - Configure OAuth consent screen
-   - Add test users for development
-
-4. **Get SHA-1 fingerprint**
-   ```bash
-   cd frontend
-   ./gradlew signingReport
-   ```
-
-5. **Sync and build**
-   - Sync Gradle files
-   - Build and run on emulator or device
-
-## Features Implemented
-
-### ✅ Authentication
-- Google Sign-In with OAuth 2.0
-- Automatic account creation for new users
-- JWT token-based session management
-- Secure token storage with DataStore
-
-### ✅ Profile Management
-- View user profile (name, email)
-- Sign out functionality
-- Delete account with confirmation dialog
-
-### 🚧 In Progress
-- Friend management system
-- Activity feed
-- Movie ranking and comparison
-- Personalized recommendations
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/signin` - Sign in with Google
-- `POST /api/auth/signup` - Create new account
-- `POST /api/auth/signout` - Sign out (authenticated)
-- `DELETE /api/auth/account` - Delete account (authenticated)
-
-### Friends (Coming Soon)
-- `GET /api/friends` - Get friend list
-- `POST /api/friends` - Add friend
-- `DELETE /api/friends/:id` - Remove friend
-
-### Feed (Coming Soon)
-- `GET /api/feed` - Get friend activity feed
-
-### Movies (Coming Soon)
-- `GET /api/movies/search` - Search movies
-- `POST /api/movies/rank` - Rank a movie
-- `GET /api/movies/recommendations` - Get recommendations
-
-## Development Notes
-
-- **Emulator Network**: Use `10.0.2.2` to access `localhost` from Android emulator
-- **Physical Device**: Update `API_BASE_URL` to your computer's local IP
-- **MongoDB**: Ensure MongoDB is running before starting backend
-- **Environment Variables**: Never commit `.env` or `local.properties` files
-
 ## License
-
-This project is part of CPEN 321 coursework at UBC.
+Academic project for UBC CPEN 321. Not licensed for commercial distribution.
