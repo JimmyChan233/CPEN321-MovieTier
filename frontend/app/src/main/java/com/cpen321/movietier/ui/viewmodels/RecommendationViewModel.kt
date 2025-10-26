@@ -93,12 +93,12 @@ class RecommendationViewModel @Inject constructor(
             when (val res = watchlistRepository.addToWatchlist(movie.id, movie.title, movie.posterPath, movie.overview)) {
                 is Result.Success -> { _events.emit(FeedEvent.Message("Added to watchlist")) }
                 is Result.Error -> {
-                    val msg = res.message ?: "Failed to add to watchlist"
-                    if (msg.contains("already", ignoreCase = true)) {
-                        _events.emit(FeedEvent.Message("Movie already in watchlist"))
+                    val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
+                        "Already in Watchlist"
                     } else {
-                        _events.emit(FeedEvent.Message(msg))
+                        res.message ?: "Failed to add to watchlist"
                     }
+                    _events.emit(FeedEvent.Message(msg))
                 }
                 else -> {}
             }

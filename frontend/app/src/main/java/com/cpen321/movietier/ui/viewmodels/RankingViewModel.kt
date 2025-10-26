@@ -94,7 +94,12 @@ class RankingViewModel @Inject constructor(
                     loadRankedMovies()
                 }
                 is Result.Error -> {
-                    _events.emit(RankingEvent.Error(res.message ?: "Failed to add movie"))
+                    val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
+                        "Already in Rankings"
+                    } else {
+                        res.message ?: "Failed to add movie"
+                    }
+                    _events.emit(RankingEvent.Error(msg))
                 }
                 else -> {}
             }
@@ -179,7 +184,12 @@ class RankingViewModel @Inject constructor(
                     }
                 }
                 is Result.Error -> {
-                    _events.emit(RankingEvent.Error(res.message ?: "Failed to add movie"))
+                    val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
+                        "Already in Rankings"
+                    } else {
+                        res.message ?: "Failed to add movie"
+                    }
+                    _events.emit(RankingEvent.Error(msg))
                 }
                 else -> {}
             }

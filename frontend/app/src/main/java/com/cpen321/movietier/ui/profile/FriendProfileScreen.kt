@@ -198,8 +198,13 @@ fun FriendProfileScreen(
                                 }
                             }
                             is com.cpen321.movietier.data.repository.Result.Error -> {
+                                val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
+                                    "Already in Watchlist"
+                                } else {
+                                    res.message ?: "Failed to add to watchlist"
+                                }
                                 snackbarHostState.showSnackbar(
-                                    message = res.message ?: "Failed to add to watchlist",
+                                    message = msg,
                                     duration = SnackbarDuration.Short
                                 )
                             }

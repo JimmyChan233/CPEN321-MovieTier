@@ -105,7 +105,14 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             when (val res = watchlistRepository.addToWatchlist(movie.id, movie.title, movie.posterPath, movie.overview)) {
                 is Result.Success -> { _events.emit(FeedEvent.Message("Added to watchlist")) }
-                is Result.Error -> { _events.emit(FeedEvent.Error(res.message ?: "Failed to add to watchlist")) }
+                is Result.Error -> {
+                    val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
+                        "Already in Watchlist"
+                    } else {
+                        res.message ?: "Failed to add to watchlist"
+                    }
+                    _events.emit(FeedEvent.Error(msg))
+                }
                 else -> {}
             }
         }
@@ -115,7 +122,14 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {
                 is Result.Success -> handleAddOrCompare(movie, res.data)
-                is Result.Error -> _events.emit(FeedEvent.Error(res.message ?: "Failed to add to rankings"))
+                is Result.Error -> {
+                    val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
+                        "Already in Rankings"
+                    } else {
+                        res.message ?: "Failed to add to rankings"
+                    }
+                    _events.emit(FeedEvent.Error(msg))
+                }
                 else -> {}
             }
         }
