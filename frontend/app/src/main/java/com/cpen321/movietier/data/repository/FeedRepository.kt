@@ -84,4 +84,19 @@ class FeedRepository @Inject constructor(
             Result.Error(e, "Network error: ${e.message}")
         }
     }
+
+    suspend fun deleteComment(activityId: String, commentId: String): Result<Unit> {
+        return try {
+            val response = apiService.deleteComment(activityId, commentId)
+            val body = response.body()
+            if (response.isSuccessful && body?.success == true) {
+                Result.Success(Unit)
+            } else {
+                val message = body?.message ?: response.message()
+                Result.Error(Exception("Failed to delete comment: $message"), message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
 }

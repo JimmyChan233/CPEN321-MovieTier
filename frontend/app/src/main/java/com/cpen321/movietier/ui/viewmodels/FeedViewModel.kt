@@ -245,6 +245,34 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    fun deleteComment(activityId: String, commentId: String) {
+        viewModelScope.launch {
+            when (val result = feedRepository.deleteComment(activityId, commentId)) {
+                is Result.Success -> {
+                    // Remove comment from list
+                    val currentComments = _commentsState.value[activityId] ?: emptyList()
+                    _commentsState.value = _commentsState.value + (activityId to currentComments.filter { it.id != commentId })
+
+                    // Update comment count in feed
+                    val updatedActivities = _uiState.value.feedActivities.map { act ->
+                        if (act.id == activityId) {
+                            act.copy(commentCount = maxOf(act.commentCount - 1, 0))
+                        } else {
+                            act
+                        }
+                    }
+                    _uiState.value = _uiState.value.copy(feedActivities = updatedActivities)
+
+                    _events.emit(FeedEvent.Message("Comment deleted"))
+                }
+                is Result.Error -> {
+                    _events.emit(FeedEvent.Error(result.message ?: "Failed to delete comment"))
+                }
+                else -> {}
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         viewModelScope.launch { sseClient.closePath("feed/stream") }

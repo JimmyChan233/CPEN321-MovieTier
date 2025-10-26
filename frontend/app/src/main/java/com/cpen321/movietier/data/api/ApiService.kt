@@ -141,6 +141,12 @@ interface ApiService {
         @Body body: Map<String, String> // { "text": "comment text" }
     ): Response<ApiResponse<FeedComment>>
 
+    @DELETE("feed/{activityId}/comments/{commentId}")
+    suspend fun deleteComment(
+        @Path("activityId") activityId: String,
+        @Path("commentId") commentId: String
+    ): Response<ApiResponse<Unit>>
+
     // Watchlist
     @GET("watchlist")
     suspend fun getWatchlist(): Response<ApiResponse<List<WatchlistItem>>>

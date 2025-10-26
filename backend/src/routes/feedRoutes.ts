@@ -240,4 +240,32 @@ router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res)
   }
 });
 
+// Delete a comment
+router.delete('/:activityId/comments/:commentId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { activityId, commentId } = req.params;
+
+    // Find comment and verify ownership
+    const comment = await Comment.findOne({
+      _id: commentId,
+      activityId: activityId
+    });
+
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Comment not found' });
+    }
+
+    // Only the comment author can delete their comment
+    if (String(comment.userId) !== String(req.userId)) {
+      return res.status(403).json({ success: false, message: 'You can only delete your own comments' });
+    }
+
+    await Comment.findByIdAndDelete(commentId);
+
+    res.json({ success: true, message: 'Comment deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete comment' });
+  }
+});
+
 export default router;

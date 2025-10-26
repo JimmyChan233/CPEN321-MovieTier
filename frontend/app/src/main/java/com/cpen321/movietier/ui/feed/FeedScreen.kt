@@ -85,11 +85,15 @@ fun FeedScreen(
     val compareState by feedViewModel.compareState.collectAsState()
     val commentsState by feedViewModel.commentsState.collectAsState()
 
+    // Get current user ID from TokenManager
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val tokenManager = remember { com.cpen321.movietier.data.local.TokenManager(context) }
+    val currentUserId by tokenManager.userId.collectAsState(initial = null)
+
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
     var showCommentsForActivity by remember { mutableStateOf<String?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     var country by remember { mutableStateOf("CA") }
 
@@ -430,9 +434,13 @@ fun FeedScreen(
         val comments = commentsState[activityId] ?: emptyList()
         CommentBottomSheet(
             comments = comments,
+            currentUserId = currentUserId,
             onDismiss = { showCommentsForActivity = null },
             onAddComment = { text ->
                 feedViewModel.addComment(activityId, text)
+            },
+            onDeleteComment = { commentId ->
+                feedViewModel.deleteComment(activityId, commentId)
             }
         )
     }
