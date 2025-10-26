@@ -32,6 +32,8 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         const { data } = await tmdb.get(`/movie/${a.movieId}`, { params: { language: 'en-US' } });
         if (!a.overview && data?.overview) a.overview = data.overview;
         if (!a.posterPath && data?.poster_path) a.posterPath = data.poster_path;
+        if (!a.releaseDate && data?.release_date) a.releaseDate = data.release_date;
+        if (!a.voteAverage && data?.vote_average) a.voteAverage = data.vote_average;
         await a.save();
       } catch {}
     }));
@@ -88,8 +90,8 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
           title: a.movieTitle,
           posterPath: a.posterPath || null,
           overview: a.overview || null,
-          releaseDate: null,
-          voteAverage: null
+          releaseDate: a.releaseDate || null,
+          voteAverage: a.voteAverage || null
         },
         rank: currentRank ?? null,
         likeCount: likeCountMap.get(activityIdStr) || 0,
@@ -123,6 +125,8 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
         const { data } = await tmdb.get(`/movie/${a.movieId}`, { params: { language: 'en-US' } });
         if (!a.overview && data?.overview) a.overview = data.overview;
         if (!a.posterPath && data?.poster_path) a.posterPath = data.poster_path;
+        if (!a.releaseDate && data?.release_date) a.releaseDate = data.release_date;
+        if (!a.voteAverage && data?.vote_average) a.voteAverage = data.vote_average;
         await a.save();
       } catch {}
     }));
@@ -179,8 +183,8 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
           title: a.movieTitle,
           posterPath: a.posterPath || null,
           overview: a.overview || null,
-          releaseDate: null,
-          voteAverage: null
+          releaseDate: a.releaseDate || null,
+          voteAverage: a.voteAverage || null
         },
         rank: currentRank ?? null,
         likeCount: likeCountMap.get(activityIdStr) || 0,

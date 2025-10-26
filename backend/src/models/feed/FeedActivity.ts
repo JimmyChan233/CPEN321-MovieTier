@@ -7,6 +7,8 @@ export interface IFeedActivity extends Document {
   movieTitle: string;
   posterPath?: string;
   overview?: string;
+  releaseDate?: string;
+  voteAverage?: number;
   rank?: number;
   createdAt: Date;
 }
@@ -19,6 +21,8 @@ const FeedActivitySchema: Schema = new Schema(
     movieTitle: { type: String, required: true },
     posterPath: { type: String },
     overview: { type: String },
+    releaseDate: { type: String },
+    voteAverage: { type: Number },
     rank: { type: Number }
   },
   { timestamps: true }
