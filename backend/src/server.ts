@@ -1,6 +1,7 @@
+// Load environment variables first
+import config from './config';
 import express, { Application } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
@@ -14,11 +15,10 @@ import { errorHandler } from './middleware/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from './utils/logger';
 
-dotenv.config();
 logger.info('Environment variables loaded');
 
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.port;
 
 // Middleware
 app.use(cors());
@@ -38,7 +38,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // Database connection
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/movietier';
+const mongoUri = config.mongodbUri;
 logger.info('Connecting to MongoDB...', { uri: mongoUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') });
 
 mongoose

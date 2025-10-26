@@ -1,3 +1,5 @@
+// Load config first to ensure environment variables are available
+import '../config';
 import admin from 'firebase-admin';
 import { logger } from '../utils/logger';
 
