@@ -76,6 +76,8 @@ class MovieTierFirebaseMessagingService : FirebaseMessagingService() {
             "feed_activity" -> handleFeedNotification(message)
             "friend_request" -> handleFriendRequestNotification(message)
             "friend_request_accepted" -> handleFriendRequestAcceptedNotification(message)
+            "activity_like" -> handleActivityLikeNotification(message)
+            "activity_comment" -> handleActivityCommentNotification(message)
             else -> Log.w(TAG, "Unknown notification type: $notificationType")
         }
     }
@@ -123,6 +125,39 @@ class MovieTierFirebaseMessagingService : FirebaseMessagingService() {
             title = title,
             body = body,
             priority = NotificationCompat.PRIORITY_DEFAULT
+        )
+    }
+
+    private fun handleActivityLikeNotification(message: RemoteMessage) {
+        val likerName = message.data["likerName"] ?: "Someone"
+        val movieTitle = message.data["movieTitle"] ?: "a movie"
+
+        val title = message.notification?.title ?: "$likerName liked your ranking"
+        val body = message.notification?.body ?: "$likerName liked your ranking of \"$movieTitle\""
+
+        showNotification(
+            channelId = FEED_CHANNEL_ID,
+            notificationId = System.currentTimeMillis().toInt(),
+            title = title,
+            body = body,
+            priority = NotificationCompat.PRIORITY_DEFAULT
+        )
+    }
+
+    private fun handleActivityCommentNotification(message: RemoteMessage) {
+        val commenterName = message.data["commenterName"] ?: "Someone"
+        val movieTitle = message.data["movieTitle"] ?: "a movie"
+        val commentText = message.data["commentText"] ?: ""
+
+        val title = message.notification?.title ?: "$commenterName commented on your ranking"
+        val body = message.notification?.body ?: "$commenterName on \"$movieTitle\": $commentText"
+
+        showNotification(
+            channelId = FEED_CHANNEL_ID,
+            notificationId = System.currentTimeMillis().toInt(),
+            title = title,
+            body = body,
+            priority = NotificationCompat.PRIORITY_HIGH
         )
     }
 
