@@ -36,7 +36,8 @@ import com.cpen321.movietier.utils.LocationHelper
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import kotlinx.coroutines.withTimeoutOrNull
+import com.cpen321.movietier.data.local.MovieQuoteProvider
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,24 +161,36 @@ fun RecommendationScreen(
                 }
 
                 RecommendationState.CONTENT -> {
-                    // Get featured movie of the day using all recommendations (includes trending from TMDB)
-                    val featuredMovieData = remember(uiState.recommendations, featuredMovieOffset) {
-                        getFeaturedMovieOfDay(uiState.recommendations, featuredMovieOffset)
+                    val dayOfYear = remember { LocalDate.now().dayOfYear }
+                    val requestedEntry = remember(dayOfYear, featuredMovieOffset) {
+                        MovieQuoteProvider.entryForIndex(dayOfYear + featuredMovieOffset)
                     }
-                    var overrideQuote by remember(featuredMovieData?.first?.id) { mutableStateOf<String?>(null) }
-                    LaunchedEffect(featuredMovieData?.first?.id) {
-                        overrideQuote = null
-                        featuredMovieData?.first?.let { m ->
-                            val year = m.releaseDate?.take(4)
-                            val fetched = withTimeoutOrNull(6000) {
-                                when (val res = recommendationViewModel.getMovieQuote(m.title, year)) {
-                                    is com.cpen321.movietier.data.repository.Result.Success -> res.data
-                                    else -> null
-                                }
+                    var currentEntry by remember { mutableStateOf(requestedEntry) }
+                    var currentMovie by remember { mutableStateOf<Movie?>(null) }
+
+                    LaunchedEffect(requestedEntry, uiState.recommendations) {
+                        val entry = requestedEntry
+                        if (entry.title.isBlank()) {
+                            uiState.recommendations.firstOrNull()?.let { fallback ->
+                                currentEntry = entry
+                                currentMovie = fallback
                             }
-                            if (!fetched.isNullOrBlank()) {
-                                overrideQuote = fetched
-                            }
+                            return@LaunchedEffect
+                        }
+
+                        val directMatch = uiState.recommendations.firstOrNull {
+                            MovieQuoteProvider.matchesTitle(it.title, entry.title)
+                        }
+                        val searched = directMatch ?: recommendationViewModel.findMovieByTitle(entry.title)
+                        val fallback = if (searched == null && uiState.recommendations.isNotEmpty()) {
+                            val size = uiState.recommendations.size
+                            val safeIndex = ((featuredMovieOffset % size) + size) % size
+                            uiState.recommendations[safeIndex]
+                        } else null
+                        val resolved = searched ?: fallback
+                        if (resolved != null) {
+                            currentEntry = entry
+                            currentMovie = resolved
                         }
                     }
 
@@ -191,11 +204,11 @@ fun RecommendationScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             // Featured movie card
-                            featuredMovieData?.let { (movie, quote) ->
+                            currentMovie?.let { movie ->
                                 item {
                                     FeaturedMovieCard(
                                         movie = movie,
-                                        quote = overrideQuote ?: quote,
+                                        quote = currentEntry.quote,
                                         onClick = { selectedMovie = movie },
                                         onRefresh = { featuredMovieOffset++ },
                                         modifier = Modifier.fillMaxWidth()

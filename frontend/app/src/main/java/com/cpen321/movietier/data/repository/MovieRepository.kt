@@ -1,6 +1,7 @@
 package com.cpen321.movietier.data.repository
 
 import com.cpen321.movietier.data.api.ApiService
+import com.cpen321.movietier.data.local.MovieQuoteProvider
 import com.cpen321.movietier.data.local.ProvidersCache
 import com.cpen321.movietier.data.model.*
 import javax.inject.Inject
@@ -130,17 +131,13 @@ suspend fun compareMovies(
         }
     }
 
-    suspend fun getMovieQuote(title: String, year: String? = null): Result<String> {
-        return try {
-            val response = apiService.getQuote(title, year)
-            if (response.isSuccessful && response.body()?.success == true && !response.body()?.data.isNullOrBlank()) {
-                Result.Success(response.body()!!.data!!)
-            } else {
-                Result.Error(Exception(response.body()?.message ?: "Quote not found"))
-            }
-        } catch (e: Exception) {
-            Result.Error(e, "Network error: ${e.message}")
-        }
+    suspend fun getMovieQuote(title: String, year: String? = null, rating: Double? = null): Result<String> {
+        val quote = MovieQuoteProvider.getQuote(
+            title = title,
+            year = year,
+            rating = rating
+        )
+        return Result.Success(quote)
     }
 
     suspend fun getMovieVideos(movieId: Int): Result<MovieVideo?> {

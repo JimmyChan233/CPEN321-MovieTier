@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -15,12 +17,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.vector.ImageVector
 import coil.compose.AsyncImage
 import com.cpen321.movietier.R
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -145,6 +149,30 @@ fun FeedScreen(
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
+        },
+        floatingActionButtonPosition = FabPosition.Center,
+        floatingActionButton = {
+            Row(
+                modifier = Modifier
+                    .testTag("feed_filter_bar")
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterToggleFab(
+                    label = "Friends",
+                    icon = Icons.Filled.People,
+                    selected = uiState.feedFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS,
+                    onClick = { feedViewModel.setFeedFilter(com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS) }
+                )
+                FilterToggleFab(
+                    label = "My Activities",
+                    icon = Icons.Filled.History,
+                    selected = uiState.feedFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE,
+                    onClick = { feedViewModel.setFeedFilter(com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE) }
+                )
+            }
         }
     ) { padding ->
         Column(
@@ -152,29 +180,6 @@ fun FeedScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Filter toggle buttons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = uiState.feedFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS,
-                    onClick = { feedViewModel.setFeedFilter(com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS) },
-                    label = { Text("Friends") },
-                    modifier = Modifier.weight(1f)
-                )
-                FilterChip(
-                    selected = uiState.feedFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE,
-                    onClick = { feedViewModel.setFeedFilter(com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE) },
-                    label = { Text("My Activities") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            HorizontalDivider()
-
             Crossfade(
                 targetState = when {
                     uiState.isLoading -> FeedState.LOADING
@@ -189,9 +194,14 @@ fun FeedScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .testTag("feed_loading"),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                end = 16.dp,
+                                top = 16.dp,
+                                bottom = 112.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                         items(5) {
                             ShimmerFeedCard()
                         }
@@ -230,7 +240,12 @@ fun FeedScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .testTag("feed_list"),
-                            contentPadding = PaddingValues(16.dp),
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                end = 16.dp,
+                                top = 16.dp,
+                                bottom = 112.dp
+                            ),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(
@@ -527,6 +542,49 @@ private fun ShimmerFeedCard() {
                         .shimmerPlaceholder(visible = true)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun FilterToggleFab(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+    }
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    FloatingActionButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        containerColor = containerColor,
+        contentColor = contentColor,
+        elevation = FloatingActionButtonDefaults.elevation(
+            defaultElevation = 6.dp,
+            pressedElevation = 8.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(imageVector = icon, contentDescription = label, modifier = Modifier.size(18.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = contentColor
+            )
         }
     }
 }

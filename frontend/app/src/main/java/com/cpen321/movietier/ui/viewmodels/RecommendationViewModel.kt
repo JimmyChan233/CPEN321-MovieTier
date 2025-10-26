@@ -15,6 +15,7 @@ import javax.inject.Inject
 import com.cpen321.movietier.data.repository.WatchlistRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import com.cpen321.movietier.data.model.WatchProviders
+import com.cpen321.movietier.data.local.MovieQuoteProvider
 
 data class RecommendationUiState(
     val isLoading: Boolean = false,
@@ -34,6 +35,7 @@ class RecommendationViewModel @Inject constructor(
     val uiState: StateFlow<RecommendationUiState> = _uiState.asStateFlow()
     private val _events = MutableSharedFlow<FeedEvent>()
     val events = _events
+    private val quoteMovieCache = mutableMapOf<String, Movie?>()
 
     init {
         loadRecommendations()
@@ -110,7 +112,15 @@ class RecommendationViewModel @Inject constructor(
         return movieRepository.getMovieVideos(movieId)
     }
 
-    suspend fun getMovieQuote(title: String, year: String? = null): Result<String> {
-        return movieRepository.getMovieQuote(title, year)
+    suspend fun findMovieByTitle(title: String): Movie? {
+        val key = MovieQuoteProvider.normalizedTitle(title)
+        quoteMovieCache[key]?.let { return it }
+        val result = movieRepository.searchMovies(title)
+        val movie = when (result) {
+            is Result.Success -> result.data.firstOrNull()
+            else -> null
+        }
+        quoteMovieCache[key] = movie
+        return movie
     }
 }

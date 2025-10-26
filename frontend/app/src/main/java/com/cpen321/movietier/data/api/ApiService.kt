@@ -170,11 +170,4 @@ interface ApiService {
     @GET("recommendations/trending")
     suspend fun getTrendingMovies(): Response<ApiResponse<List<Movie>>>
 
-    // Quotes
-    @GET("quotes")
-    suspend fun getQuote(
-        @Query("title") title: String,
-        @Query("year") year: String? = null
-    ): Response<ApiResponse<String>>
-
 }

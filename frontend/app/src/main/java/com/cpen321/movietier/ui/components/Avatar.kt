@@ -20,15 +20,17 @@ import coil.compose.AsyncImage
 @Composable
 fun Avatar(
     imageUrl: String?,
-    name: String,
+    name: String?,
     modifier: Modifier = Modifier,
     size: Dp = 40.dp,
     contentDescription: String? = null
 ) {
-    if (imageUrl != null) {
+    val displayName = name?.takeIf { it.isNotBlank() }
+
+    if (!imageUrl.isNullOrEmpty()) {
         AsyncImage(
             model = imageUrl,
-            contentDescription = contentDescription ?: "Avatar of $name",
+            contentDescription = contentDescription ?: displayName?.let { "Avatar of $it" } ?: "Avatar",
             modifier = modifier
                 .size(size)
                 .clip(CircleShape),
@@ -36,8 +38,8 @@ fun Avatar(
         )
     } else {
         // Fallback to initials with seeded color
-        val initials = getInitials(name)
-        val backgroundColor = getColorFromName(name)
+        val initials = getInitials(displayName)
+        val backgroundColor = getColorFromName(displayName)
 
         Box(
             modifier = modifier
@@ -56,18 +58,20 @@ fun Avatar(
     }
 }
 
-private fun getInitials(name: String): String {
-    val parts = name.trim().split(" ")
+private fun getInitials(name: String?): String {
+    val safeName = name?.trim().orEmpty()
+    if (safeName.isEmpty()) return "?"
+    val parts = safeName.split(" ").filter { it.isNotBlank() }
     return when {
         parts.isEmpty() -> "?"
         parts.size == 1 -> parts[0].take(1).uppercase()
-        else -> "${parts[0].take(1)}${parts.last().take(1)}".uppercase()
+        else -> "${parts.first().take(1)}${parts.last().take(1)}".uppercase()
     }
 }
 
-private fun getColorFromName(name: String): Color {
+private fun getColorFromName(name: String?): Color {
     // Generate a consistent color based on the name's hash code
-    val hash = name.hashCode()
+    val seed = name?.hashCode() ?: 0
     // Curated navy/blue/gold palette for better brand cohesion
     val colors = listOf(
         Color(0xFF1E3A8A), // deep blue
@@ -83,5 +87,5 @@ private fun getColorFromName(name: String): Color {
         Color(0xFF1B2A41), // bluish slate
         Color(0xFF111A2E)  // surface navy
     )
-    return colors[hash.mod(colors.size)]
+    return colors[seed.mod(colors.size)]
 }
