@@ -122,7 +122,8 @@ fun FriendProfileScreen(
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
-            }
+            },
+            windowInsets = WindowInsets(0, 0, 0, 0)
         )
     }, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Box(Modifier.fillMaxSize()) {
@@ -182,19 +183,25 @@ fun FriendProfileScreen(
                 },
                 onAddToWatchlist = {
                     scope.launch {
+                        // Close the bottom sheet first so snackbar is visible at top
+                        selectedMovie = null
+
                         when (val res = vm.addToMyWatchlist(movie.id, movie.title, movie.overview, movie.posterPath)) {
                             is com.cpen321.movietier.data.repository.Result.Success -> {
                                 val result = snackbarHostState.showSnackbar(
                                     message = "Added to my watchlist",
-                                    actionLabel = "View"
+                                    actionLabel = "View",
+                                    duration = SnackbarDuration.Short
                                 )
-                                selectedMovie = null
                                 if (result == SnackbarResult.ActionPerformed) {
                                     navController.navigate(NavRoutes.WATCHLIST)
                                 }
                             }
                             is com.cpen321.movietier.data.repository.Result.Error -> {
-                                snackbarHostState.showSnackbar(res.message ?: "Failed to add to watchlist")
+                                snackbarHostState.showSnackbar(
+                                    message = res.message ?: "Failed to add to watchlist",
+                                    duration = SnackbarDuration.Short
+                                )
                             }
                             else -> {}
                         }
