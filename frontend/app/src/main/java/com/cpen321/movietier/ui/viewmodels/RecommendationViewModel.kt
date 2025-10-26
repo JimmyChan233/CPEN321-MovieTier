@@ -20,6 +20,7 @@ import com.cpen321.movietier.data.local.MovieQuoteProvider
 data class RecommendationUiState(
     val isLoading: Boolean = false,
     val recommendations: List<Movie> = emptyList(),
+    val trendingMovies: List<Movie> = emptyList(),
     val errorMessage: String? = null,
     val isShowingTrending: Boolean = false
 )
@@ -46,7 +47,10 @@ class RecommendationViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-            // First, try to get personalized recommendations
+            // Load trending movies first (for featured card)
+            loadTrendingMovies()
+
+            // Then, try to get personalized recommendations
             when (val result = movieRepository.getRecommendations()) {
                 is Result.Success -> {
                     if (result.data.isNotEmpty()) {
@@ -57,13 +61,21 @@ class RecommendationViewModel @Inject constructor(
                             isShowingTrending = false
                         )
                     } else {
-                        // User has no rankings, fetch trending movies
-                        loadTrendingMovies()
+                        // User has no rankings, use trending movies for recommendations too
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            recommendations = _uiState.value.trendingMovies,
+                            isShowingTrending = true
+                        )
                     }
                 }
                 is Result.Error -> {
-                    // If recommendations fail, try trending movies as fallback
-                    loadTrendingMovies()
+                    // If recommendations fail, use trending movies
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        recommendations = _uiState.value.trendingMovies,
+                        isShowingTrending = true
+                    )
                 }
                 is Result.Loading -> {}
             }
@@ -74,16 +86,11 @@ class RecommendationViewModel @Inject constructor(
         when (val trendingResult = movieRepository.getTrendingMovies()) {
             is Result.Success -> {
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    recommendations = trendingResult.data,
-                    isShowingTrending = true
+                    trendingMovies = trendingResult.data
                 )
             }
             is Result.Error -> {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = trendingResult.message
-                )
+                // If trending fails, we'll show error when recommendations also fail
             }
             is Result.Loading -> {}
         }

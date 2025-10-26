@@ -166,12 +166,12 @@ fun RecommendationScreen(
                     var currentQuote by remember { mutableStateOf("") }
                     var isLoadingQuote by remember { mutableStateOf(false) }
 
-                    // Select featured movie from recommendations list
-                    LaunchedEffect(dayOfYear, featuredMovieOffset, uiState.recommendations) {
-                        if (uiState.recommendations.isNotEmpty()) {
-                            val size = uiState.recommendations.size
+                    // Select featured movie from trending movies list
+                    LaunchedEffect(dayOfYear, featuredMovieOffset, uiState.trendingMovies) {
+                        if (uiState.trendingMovies.isNotEmpty()) {
+                            val size = uiState.trendingMovies.size
                             val index = ((dayOfYear + featuredMovieOffset) % size + size) % size
-                            currentMovie = uiState.recommendations[index]
+                            currentMovie = uiState.trendingMovies[index]
                             currentQuote = "" // Reset quote when movie changes
                         }
                     }
