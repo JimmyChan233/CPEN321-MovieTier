@@ -4,7 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
-| 2025-10-26      | 3.1 (Feed & Discover), 3.4 (Feed use case), 4.3, 4.4 | **Feed Toggle Redesign & Offline Quotes**: (1) Feed screen now uses compact floating pill toggles for "Friends" vs "My Activities", centered above the list so content flows beneath. Added documentation for new FAB-style segmented controls and adjusted feed padding to avoid overlap. (2) Discover featured quote card now relies on an expanded offline catalog of ~1,050 curated quotes with deterministic rotation and TMDB search fallback—no Wikiquote scraping or `/api/quotes` endpoint required. Updated documentation to reflect offline behaviour and removal of Wikiquote dependency. |
+| 2025-10-26      | 3.1 (Feed & Discover), 3.4 (Feed use case), 4.3, 4.4 | **Feed Toggle Redesign & Offline Quotes**: (1) Feed screen now uses compact floating pill toggles for "Friends" vs "My Activities", centered above the list so content flows beneath. Added documentation for new FAB-style segmented controls and adjusted feed padding to avoid overlap. (2) Discover featured quote card now relies on an expanded offline catalog of ~1,050 curated quotes with deterministic rotation and TMDB search fallback on Android. The legacy `/api/quotes` endpoint (Wikiquote scraper) remains available for compatibility, but the shipping app no longer calls it. Updated documentation to reflect the hybrid approach. |
 | 2025-10-25      | 3.1 (Feed), 3.4 (Feed use cases), 4.1 (UserFeed interfaces), 4.2 (Database), Design notes | **Feed Interaction Features - Likes and Comments**: Added social engagement features to feed activities. (1) Backend: Created Like and Comment models with MongoDB schemas, compound indexes for performance (userId+activityId unique for likes, activityId+createdAt for comments). Added endpoints: POST/DELETE /api/feed/:activityId/like for liking/unliking, GET/POST /api/feed/:activityId/comments for viewing/adding comments (500 char limit). Updated GET /api/feed to include likeCount, commentCount, and isLikedByUser fields. (2) Frontend: Updated FeedActivity model with new fields, added like/unlike toggle with optimistic UI updates, created CommentBottomSheet component for viewing and posting comments. Feed cards now display thumbs up icon (filled when liked) and comment bubble icon with counts. Comment sheet shows all comments with user avatars, timestamps, and inline comment input field. (3) UI: Like button shows primary color when liked, comment count updates in real-time after posting. |
 | 2025-10-25      | 3.1 (UI consistency), Design notes | **Star Rating Display Standardization**: Replaced text-based ratings ("★ 8.4") with consistent 5-star visual display across entire app using StarRating component. (1) Display format: Year + 5 stars with partial fill + rating number (e.g., "2023 ⭐⭐⭐⭐⭐ 8.4"). TMDB 0-10 scale converted to 0-5 stars, gold filled stars (#FFD700), 14dp star size, 8dp spacing. (2) Updated screens: Profile watchlist preview, Friends profile watchlist, Feed activity cards, Feed movie detail bottom sheet, Watchlist screen, all movie detail sheets. (3) Fixed FriendProfileScreen top banner overflow: added maxLines=1 and ellipsis to prevent wide banner with long friend names. Consistent format now matches Discover, Ranking, and Recommendation screens. |
 | 2025-10-25      | 3.1 (Discover), 4.3 (External modules), 4.4 (Backend frameworks), UI consistency | **Featured Movie Quote Card & UI Consistency Improvements**: (1) Fixed quote card bug on Discover page: removed plot description fallback that was incorrectly showing movie summaries as "quotes". Expanded curated quote database from ~120 to 575+ movies (5x increase) covering all major genres, franchises, and eras. Increased Wikiquote API timeout from 3.5s to 6s for better real quote fetching. Added smart movie-themed fallback messages. (2) Standardized "add to ranking" behavior across all screens (Ranking, Feed, Discover/Recommendation, Friends, Watchlist): bottom sheets now close on success/error, feedback messages display at top of screen overlaying current page, auto-dismiss after 4 seconds. Added RankingEvent.Error type for proper error handling. (3) Backend: Added cheerio library for Wikiquote HTML scraping, fixed TypeScript compilation errors. |
@@ -195,12 +195,12 @@ The user is on the “Feed” page
 
 **Failure scenario(s)**:
 
-- 1a.User has no friends yet
-  - 1a1. The system displays “No Friends yet. Add friends to see activity”
-  -1a2. The system displays a link to the “Manage Friends” page
+- 1a. User has no friends yet
+  - 1a1. The system displays “No activity yet” with supporting text “Add friends to see their rankings” and an “Add Friends” CTA button.
+  - 1a2. Tapping the button routes to the Friends tab (`NavRoutes.FRIENDS`) so the user can send invites.
 
 - 1b. User’s friends have not ranked any movies
-  - 1b1. The system displays “No Friend Activity Yet”
+  - 1b1. The system displays “No activity yet” and keeps the feed empty while allowing refresh.
 
 - 3a. Backend returns `Already liked`
   - 3a1. The system reverts the optimistic toggle and shows an error snack bar.
@@ -258,21 +258,21 @@ The user is on the “Feed” page
 
 **Main success scenario**:
 
-1. System extracts the top 5-10 movies from the user’s ranked movie list
-2. System requests TMDB api to fetch related movies to the selected movies
-3. TMDB api sends a list of related movies
-4. System filters the list by removing movies which are already in the user’s list
-5. System displays the recommended movie list with movie title, and movie banner for each movie
+1. System selects the top half of the user’s ranked list (minimum 3 movies) to establish preference signals such as genres, languages, and minimum rating.
+2. System calls TMDB to fetch a blend of discoveries (`/discover/movie` with preference filters), similar titles (`/movie/{id}/similar`), and TMDB recommendations (`/movie/{id}/recommendations`) for the sampled movies.
+3. TMDB APIs return candidate movie lists.
+4. System filters out duplicates and removes any movies the user has already ranked.
+5. System scores the remaining movies based on preference match and TMDB rating, sorts them, and returns the top N with title, overview, poster, release date, and rating for display.
 
 **Failure scenario(s)**:
 
 - 1a. User has no movies ranked
-  - 1a1. System displays a message:”No movies in your movie list, to get a personalized list please rank movies”
-  - 1a2. System extracts a list of all time favorite movies from TMDB and display those movies
+  - 1a1. System responds with an empty list and the app surfaces the message: “No movies in your movie list. Rank a few titles to personalize recommendations.”
+  - 1a2. Frontend fetches `/api/recommendations/trending` to show TMDB’s weekly trending movies instead.
 
-- 4a. User has watched all movies in the recommended list
-  -4a1. The system displays a message: “All caught up! You have seen all the movies in your recommended list.”
-  -4a2. The system extracts and displays a list of all time favorite movies from TMDB api
+- 4a. User has watched or dismissed all returned recommendations
+  -4a1. The UI displays: “All caught up! You’ve seen the current recommendations.”
+  -4a2. User can refresh to fetch a new batch which re-runs Step 2 with fresh TMDB responses.
 
 <a name="uc6"></a>
 
@@ -415,11 +415,19 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
   - **Parameters**: None (requires JWT)
   - **Returns**: `{ success: boolean, data: FriendRequestDetailed[] }`
   - **Description**: Retrieves incoming friend requests with sender profile information.
+- `GET /api/friends/requests`
+  - **Parameters**: None (requires JWT)
+  - **Returns**: `{ success: boolean, data: FriendRequest[] }`
+  - **Description**: Retrieves incoming friend requests without additional profile data. Used for lightweight polling and badge counts.
 
 - `GET /api/friends/requests/outgoing/detailed`
   - **Parameters**: None (requires JWT)
   - **Returns**: `{ success: boolean, data: FriendRequestDetailed[] }`
   - **Description**: Retrieves outgoing pending friend requests with receiver profile information.
+- `GET /api/friends/requests/outgoing`
+  - **Parameters**: None (requires JWT)
+  - **Returns**: `{ success: boolean, data: FriendRequest[] }`
+  - **Description**: Retrieves outgoing pending friend requests without extra profile data.
 
 - `POST /api/friends/request`
   - **Parameters**: `{ email: string }` (requires JWT)
@@ -463,18 +471,18 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 
 - `POST /api/movies/add`
   - **Parameters**: `{ movieId: number, title: string, posterPath?: string, overview?: string }` (requires JWT)
-  - **Returns**: `{ success: boolean, session?: string, comparator?: Movie, complete?: boolean, rank?: number }`
-  - **Description**: Starts interactive ranking session for new movie. Returns first comparator movie or completes immediately if no existing rankings.
+  - **Returns**: `{ success: boolean, status: 'added' | 'compare', data?: { compareWith: { movieId: number, title: string, posterPath?: string } } }`
+  - **Description**: Starts interactive ranking for a new movie. If the user has no rankings, the movie is inserted immediately (`status: "added"`). Otherwise the response includes the first comparator to drive the binary search flow. Any matching watchlist entry is removed at this point.
 
 - `POST /api/movies/compare`
-  - **Parameters**: `{ session: string, winner: 'new' | 'comparator' }` (requires JWT)
-  - **Returns**: `{ success: boolean, comparator?: Movie, complete?: boolean, rank?: number }`
-  - **Description**: Submits comparison result and returns next comparator or final rank. Creates feed activity and triggers SSE on completion.
+  - **Parameters**: `{ movieId: number, comparedMovieId: number, preferredMovieId: number }` (requires JWT)
+  - **Returns**: `{ success: boolean, status: 'added' | 'compare', data?: { compareWith: { movieId: number, title: string, posterPath?: string } } }`
+  - **Description**: Records the user’s choice for the current comparison session. When the session completes, the movie is inserted at the computed rank, feed activity is created, SSE and FCM notifications fire, and the final response returns `status: "added"`. Otherwise it supplies the next comparator.
 
 - `POST /api/movies/rerank/start`
   - **Parameters**: `{ rankedId: string }` (MongoDB ObjectId, requires JWT)
-  - **Returns**: `{ success: boolean, session: string, comparator: Movie }`
-  - **Description**: Starts re-ranking session for existing ranked movie using adjacent movie as initial comparator.
+  - **Returns**: `{ success: boolean, status: 'added' | 'compare', data?: { compareWith: Movie } }`
+  - **Description**: Removes the targeted ranked movie, closes the rank gap, and either re-inserts it immediately (list empty) or restarts the comparison flow with the midpoint comparator (`status: "compare"`).
 
 - `DELETE /api/movies/ranked/{id}`
   - **Parameters**: `id: string` (MongoDB ObjectId, requires JWT)
@@ -499,7 +507,7 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 - `GET /api/recommendations`
   - **Parameters**: None (requires JWT)
   - **Returns**: `{ success: boolean, data: Movie[] }`
-  - **Description**: Generates personalized recommendations based on top 30% of user's ranked movies using TMDB's similar/recommended endpoints.
+  - **Description**: Generates personalized recommendations by analysing roughly the top half of the user’s ranked list for preference signals, then combining TMDB Discover, Similar, and Recommendation endpoints for the top 30% of titles. Results are deduplicated, scored, and trimmed to the top candidates.
 
 - `GET /api/recommendations/trending`
   - **Parameters**: None (requires JWT)
@@ -522,6 +530,10 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
   - **Parameters**: None (requires JWT)
   - **Returns**: `{ success: boolean, data: FeedActivity[] }` (limit 50, sorted by createdAt descending)
   - **Description**: Retrieves activity feed of friends' movie rankings with user profile data, movie details, current ranks, like counts, comment counts, and whether the requesting user liked each activity.
+- `GET /api/feed/me`
+  - **Parameters**: None (requires JWT)
+  - **Returns**: `{ success: boolean, data: FeedActivity[] }`
+  - **Description**: Returns the signed-in user's own ranking activity feed with the same enrichment as the friends feed.
 
 - `GET /api/feed/stream`
   - **Parameters**: None (requires JWT, Server-Sent Events endpoint)
@@ -547,6 +559,10 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
   - **Parameters**: `activityId: string` (path), body `{ text: string }` (requires JWT)
   - **Returns**: `{ success: boolean, data: Comment }`
   - **Description**: Adds a comment on a feed activity after validating length (1–500 chars) and activity existence.
+- `DELETE /api/feed/{activityId}/comments/{commentId}`
+  - **Parameters**: `activityId: string`, `commentId: string` (path params, requires JWT)
+  - **Returns**: `{ success: boolean, message: string }`
+  - **Description**: Allows comment authors to remove their own comment. Returns 403 if someone else attempts deletion.
 
 **Internal Service Interface (sseService.ts):**
 - `addClient(userId: string, res: Response): void`
@@ -561,6 +577,8 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 **Data Models:**
 - `Like` (Mongoose model) - fields: `userId`, `activityId`, timestamps; indexes: unique `(userId, activityId)` and `(activityId)` for fast counts.
 - `Comment` (Mongoose model) - fields: `userId`, `activityId`, `text`, timestamps; index: `(activityId, createdAt)` for ordered queries.
+
+Feed activities also trigger Firebase Cloud Messaging when a friend likes or comments on your ranking. The SSE stream emits an initial `connected` heartbeat followed by event types such as `feed_activity` to coordinate real-time UI updates, while FCM ensures mobile notifications are delivered if the app is backgrounded.
 
 #### 5. **Watchlist Manager**
 
@@ -612,6 +630,8 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
      - Incoming friend requests
      - Friend request acceptances
    - **Implementation**: Firebase Admin SDK on backend, Firebase Messaging SDK on Android frontend. Device tokens are registered via `/api/users/fcm-token` endpoint and stored in User model.
+4. **Wikiquote API (fallback)**
+   - **Purpose**: The backend retains `/api/quotes` which scrapes Wikiquote pages using axios + cheerio. The Android app currently ships with an on-device quote catalog and does not call this endpoint, but it remains available for future or legacy clients.
 
 ### **4.4. Frameworks and Libraries**
 
@@ -627,6 +647,7 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 
 **External API Integration:**
 - **axios** (v1.6.0): Promise-based HTTP client for making requests to TMDB API and other external services.
+- **cheerio** (v1.0.0-rc.12): Lightweight HTML parser used by the Wikiquote fallback scraper.
 
 **Real-time Communication:**
 - **Server-Sent Events (SSE)**: Native Express.js implementation for real-time push notifications to clients (friend requests, feed updates).
@@ -709,7 +730,7 @@ This section describes how each non-functional requirement (defined in section 3
 **Requirement**: Comparative ranking interactions (selecting between two movies) should update the user's tier list in under 1 second.
 
 **Implementation**:
-The binary comparison algorithm uses an in-memory session-based approach to achieve sub-second response times. When a user adds a movie via `POST /api/movies/add`, the backend creates an ephemeral comparison session stored in memory (Map-based cache with TTL) containing the movie being ranked, current comparison range, and algorithm state. Each comparison submission (`POST /api/movies/compare`) performs only simple arithmetic operations (range adjustment, midpoint calculation) and a single database query to fetch the next comparator movie's details. The final rank is determined without iterating through all ranked movies - instead using the converged range boundaries. Database writes (saving the RankedMovie document and creating FeedActivity) occur only after ranking completion, not during intermediate comparisons. MongoDB indexing on `(userId, rank)` ensures O(log n) lookup performance. The entire comparison flow typically completes in 2-4 comparisons for lists of 10-20 movies, with each round-trip taking 100-300ms on average (tested on development environment), well under the 1-second requirement.
+The binary comparison algorithm uses an in-memory Map keyed by userId to track active sessions. When a user adds a movie via `POST /api/movies/add`, the backend records the new movie details plus the current search window (`low`/`high` indices). Each comparison (`POST /api/movies/compare`) adjusts those bounds and fetches only a single comparator document. Sessions are cleared as soon as a movie is inserted or rerank completes; there is no background TTL watcher, keeping the logic simple and fast. Database writes (saving the RankedMovie document, creating FeedActivity, and notifying friends) occur only once per movie. MongoDB indexing on `(userId, rank)` ensures O(log n) lookup performance. The entire comparison flow typically completes in 2-4 comparisons for lists of 10-20 movies, with each round-trip taking 100-300ms on average (tested on development environment), well under the 1-second requirement.
 
 #### **4.7.2. NFR 2: Usability - Minimal Click Depth**
 
