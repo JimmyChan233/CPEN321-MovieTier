@@ -1,7 +1,7 @@
 # Requirements and Design
 
 ## 1. Change History
-
+ 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
 | 2025-10-26      | 3.1 (Feed & Discover), 3.4 (Feed use case), 4.3, 4.4 | **Feed Toggle Redesign & Quote System Clarification**: (1) Feed screen now uses compact floating pill toggles for "Friends" vs "My Activities", centered above the list so content flows beneath. Added documentation for new FAB-style segmented controls and adjusted feed padding to avoid overlap. (2) Clarified Discover featured quote sourcing: The app attempts to fetch quotes from the TMDB tagline service via `/api/quotes` (which now returns TMDB taglines rather than Wikiquote data) and caches successful responses. When the API has no tagline or the request fails, the app falls back to a local offline catalog of ~1,050 curated movie-themed taglines with deterministic daily rotation. Updated documentation to accurately reflect the hybrid approach. |
@@ -326,6 +326,37 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 
 
 ### **3.6. Screen Mock-ups**(optional)
+
+<table>
+  <tr>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/32d24c08-6408-4dc9-8473-ac7667cb27e1" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/45b00579-d371-45cd-904e-da1a63ae5dca" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/65440522-c376-4baf-9b0b-01577e83a61c" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/c6619057-5d7c-4d52-9b49-055065eb9af1" width="220" />
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/f6166db9-6ef1-4458-9a41-76486a30dca8" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/9ee81002-8d85-40d1-aa62-69aef0e69d60" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/1f861abe-398d-4c6f-9f3b-76b1d52afd23" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/310081fd-f358-44b1-888d-babdc5826769" width="220" />
+    </td>
+  </tr>
+</table>
 
 ### **3.7. Non-Functional Requirements**
 
@@ -734,8 +765,10 @@ The following sequence diagrams illustrate how the main components interact to r
 <img width="1392" height="1194" alt="View Feed Sequence Diagram" src="https://github.com/user-attachments/assets/333c5ee9-82b0-4d15-811c-ef98bc7a2528" />
 
 #### **4.6.4. Use Case 4: Compare Movies**
+![Compare Movies](images/RankingUseCase.jpg)
 
 #### **4.6.5. Use Case 5: View Recommended Movie List**
+![Recommendation Use Case](images/RecommendationUseCase.jpg)
 
 ### **4.7. Non-Functional Requirements Implementation**
 
