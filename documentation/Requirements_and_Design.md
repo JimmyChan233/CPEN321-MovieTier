@@ -719,9 +719,19 @@ The following sequence diagrams illustrate how the main components interact to r
 
 #### **4.6.1. Use Case 6: Add Movie to Watchlist**
 
-#### **4.6.2. Use Case 2: Send Friend Request**
+![Add Movie to Watchlist Sequence Diagram](../sequence_diagrams/png/Add%20Movie%20to%20Watchlist%20Sequence%20Diagram.png)
+
+#### **4.6.2a. Use Case 2: Send Friend Request by email**
+
+![Send Friend Request Sequence Diagram](../sequence_diagrams/png/Send%20Friend%20Request%20Sequence%20Diagram.png)
+
+##### **4.6.2b. Send Friend Request by Name**
+
+![Send Friend Request by Name Sequence Diagram](../sequence_diagrams/png/Send%20Friend%20Request%20by%20Name%20Sequence%20Diagram.png)
 
 #### **4.6.3. Use Case 3: View Feed**
+
+![View Feed Sequence Diagram](../sequence_diagrams/png/View%20Feed%20Sequence%20Diagram.png)
 
 #### **4.6.4. Use Case 4: Compare Movies**
 
