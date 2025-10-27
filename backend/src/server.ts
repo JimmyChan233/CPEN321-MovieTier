@@ -14,6 +14,7 @@ import quoteRoutes from './routes/quoteRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from './utils/logger';
+import { sseService } from './services/sse/sseService';
 
 logger.info('Environment variables loaded');
 
@@ -37,19 +38,27 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Database connection
-const mongoUri = config.mongodbUri;
-logger.info('Connecting to MongoDB...', { uri: mongoUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') });
+// Connect to MongoDB with retry logic
+async function connectToDatabase(maxRetries = 5, retryDelay = 2000) {
+  const mongoUri = config.mongodbUri;
+  logger.info('Connecting to MongoDB...', { uri: mongoUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') });
 
-mongoose
-  .connect(mongoUri)
-  .then(() => {
-    logger.success('Connected to MongoDB');
-  })
-  .catch((err) => {
-    logger.error('MongoDB connection error:', err.message);
-    process.exit(1);
-  });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await mongoose.connect(mongoUri);
+      logger.success('Connected to MongoDB');
+      return true;
+    } catch (err: any) {
+      if (attempt === maxRetries) {
+        logger.error(`MongoDB connection failed after ${maxRetries} attempts:`, err.message);
+        return false;
+      }
+      logger.warn(`MongoDB connection attempt ${attempt}/${maxRetries} failed. Retrying in ${retryDelay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+  }
+  return false;
+}
 
 // Routes
 logger.info('Registering API routes...');
@@ -65,17 +74,67 @@ logger.success('API routes registered');
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.json({
+    status: dbConnected ? 'ok' : 'database_disconnected',
+    timestamp: new Date().toISOString(),
+    mongodb: dbConnected ? 'connected' : 'disconnected'
+  });
 });
 
 // Error handling
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
-  logger.success(`Server running on port ${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`API endpoints available at: http://localhost:${PORT}/api`);
+async function startServer() {
+  const connected = await connectToDatabase();
+  if (!connected) {
+    logger.error('Failed to connect to MongoDB. Exiting.');
+    process.exit(1);
+  }
+
+  const server = app.listen(PORT, () => {
+    logger.success(`Server running on port ${PORT}`);
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`API endpoints available at: http://localhost:${PORT}/api`);
+  });
+
+  // Graceful shutdown handlers
+  const gracefulShutdown = async (signal: string) => {
+    logger.info(`${signal} received. Starting graceful shutdown...`);
+
+    // Close all SSE connections
+    sseService.clear();
+
+    // Close the server
+    server.close(async () => {
+      logger.info('HTTP server closed');
+
+      try {
+        await mongoose.disconnect();
+        logger.success('MongoDB connection closed');
+      } catch (err) {
+        logger.error('Error disconnecting from MongoDB:', (err as Error).message);
+      }
+
+      logger.success('Graceful shutdown completed');
+      process.exit(0);
+    });
+
+    // Force exit after 10 seconds
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+}
+
+startServer().catch((err) => {
+  logger.error('Failed to start server:', err.message);
+  process.exit(1);
 });
 
 export default app;

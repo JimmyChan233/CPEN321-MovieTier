@@ -9,8 +9,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import okhttp3.Authenticator
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -25,14 +27,41 @@ object NetworkModule {
     @Singleton
     fun provideAuthInterceptor(tokenManager: TokenManager): Interceptor {
         return Interceptor { chain ->
-            val token = runBlocking {
-                tokenManager.authToken.first()
+            try {
+                val token = runBlocking {
+                    tokenManager.authToken.first()
+                }
+                val request = chain.request().newBuilder()
+                if (token != null) {
+                    request.addHeader("Authorization", "Bearer $token")
+                }
+                chain.proceed(request.build())
+            } catch (e: Exception) {
+                // If we can't get the token, proceed without it
+                // The Authenticator will handle 401 responses
+                chain.proceed(chain.request())
             }
-            val request = chain.request().newBuilder()
-            if (token != null) {
-                request.addHeader("Authorization", "Bearer $token")
-            }
-            chain.proceed(request.build())
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideTokenAuthenticator(tokenManager: TokenManager): Authenticator {
+        return Authenticator { route, response ->
+            if (response.code == 401) {
+                try {
+                    val newToken = runBlocking {
+                        tokenManager.authToken.first()
+                    }
+                    if (newToken != null) {
+                        response.request.newBuilder()
+                            .header("Authorization", "Bearer $newToken")
+                            .build()
+                    } else null
+                } catch (e: Exception) {
+                    null
+                }
+            } else null
         }
     }
 
@@ -52,11 +81,13 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: Interceptor,
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        tokenAuthenticator: Authenticator
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
+            .authenticator(tokenAuthenticator)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)

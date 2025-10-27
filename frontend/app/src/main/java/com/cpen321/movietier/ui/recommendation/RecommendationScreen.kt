@@ -57,6 +57,7 @@ fun RecommendationScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var country by remember { mutableStateOf("CA") }
+    var hasRequestedLocationPermission by remember { mutableStateOf(false) }
 
     // Request location permission and get country code
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -71,10 +72,13 @@ fun RecommendationScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (LocationHelper.hasLocationPermission(context)) {
-            country = LocationHelper.getCountryCode(context)
-        } else {
-            locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
+        if (!hasRequestedLocationPermission) {
+            hasRequestedLocationPermission = true
+            if (LocationHelper.hasLocationPermission(context)) {
+                country = LocationHelper.getCountryCode(context)
+            } else {
+                locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
+            }
         }
     }
 
@@ -82,7 +86,6 @@ fun RecommendationScreen(
         recommendationViewModel.events.collect { event ->
             when (event) {
                 is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> {
-                    println("Snack: ${event.text}") // for debugging
                     snackbarHostState.showSnackbar(event.text)
                 }
                 is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import RankedMovie from '../../models/movie/RankedMovie';
 import { getTmdbClient } from '../../services/tmdb/tmdbClient';
+import { logger } from '../../utils/logger';
 
 interface UserPreferences {
   topGenres: number[];
@@ -36,7 +37,9 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
 
     res.json({ success: true, data: movies });
   } catch (error) {
-    console.error('Trending movies error:', error);
+    logger.error('Trending movies error', {
+      error: (error as Error).message,
+    });
     res.status(500).json({ success: false, message: 'Unable to load trending movies. Please try again' });
   }
 };
@@ -68,7 +71,10 @@ export const getRecommendations = async (req: Request, res: Response) => {
       const discoverResults = await fetchDiscoverRecommendations(tmdb, preferences, seenMovieIds);
       allRecs.push(...discoverResults);
     } catch (err) {
-      console.error('Discover error:', err);
+      logger.warn('Discover recommendations failed', {
+        userId,
+        error: (err as Error).message,
+      });
     }
 
     // 3b. Get similar movies for top 30% (max 10) of ranked movies
@@ -96,7 +102,11 @@ export const getRecommendations = async (req: Request, res: Response) => {
           allRecs.push(...similar);
         }
       } catch (err) {
-        console.error(`Similar movies error for ${movie.movieId}:`, err);
+        logger.warn('Failed to fetch similar movies', {
+          userId,
+          movieId: movie.movieId,
+          error: (err as Error).message,
+        });
       }
     }
 
@@ -125,7 +135,11 @@ export const getRecommendations = async (req: Request, res: Response) => {
           allRecs.push(...recs);
         }
       } catch (err) {
-        console.error(`Recommendations error for ${movie.movieId}:`, err);
+        logger.warn('Failed to fetch TMDB recommendations', {
+          userId,
+          movieId: movie.movieId,
+          error: (err as Error).message,
+        });
       }
     }
 
@@ -191,7 +205,10 @@ export const getRecommendations = async (req: Request, res: Response) => {
 
     res.json({ success: true, data: finalList });
   } catch (error) {
-    console.error('Recommendation error:', error);
+    logger.error('Recommendation error', {
+      userId: (req as any).userId,
+      error: (error as Error).message,
+    });
     res.status(500).json({ success: false, message: 'Unable to load recommendations. Please try again' });
   }
 };
@@ -230,7 +247,10 @@ async function analyzeUserPreferences(tmdb: any, topMovies: any[]): Promise<User
         voteCount++;
       }
     } catch (err) {
-      console.error(`Error fetching details for movie ${movie.movieId}:`, err);
+      logger.warn('Failed to fetch TMDB details for preference analysis', {
+        movieId: movie.movieId,
+        error: (err as Error).message,
+      });
     }
   }
 
@@ -296,7 +316,10 @@ async function fetchDiscoverRecommendations(
         results.push(...discovered);
       }
     } catch (err) {
-      console.error(`Discover error for language ${language}:`, err);
+      logger.warn('Discover API failed for language', {
+        language,
+        error: (err as Error).message,
+      });
     }
   }
 

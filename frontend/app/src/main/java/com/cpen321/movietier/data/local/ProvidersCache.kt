@@ -23,7 +23,7 @@ class ProvidersCache @Inject constructor(
     // Default TTL: 6 hours
     private val ttlMillis: Long = 6L * 60 * 60 * 1000
 
-    private fun keyBase(movieId: Int, country: String) = "providers_${'$'}movieId_${'$'}country"
+    private fun keyBase(movieId: Int, country: String) = "providers_${movieId}_${country}"
 
     private fun jsonKey(movieId: Int, country: String) = stringPreferencesKey(keyBase(movieId, country))
     private fun tsKey(movieId: Int, country: String) = longPreferencesKey(keyBase(movieId, country) + "_ts")

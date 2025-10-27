@@ -191,7 +191,7 @@ fun RankingScreen(
                         modifier = Modifier.heightIn(max = 520.dp)
                     ) {
                         items(searchResults, key = { it.id }) { movie ->
-                            Card(Modifier.fillMaxWidth().testTag("search_result_${'$'}{movie.id}")) {
+                            Card(Modifier.fillMaxWidth().testTag("search_result_${movie.id}")) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()

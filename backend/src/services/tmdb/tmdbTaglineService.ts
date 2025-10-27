@@ -1,4 +1,5 @@
 import { getTmdbClient } from './tmdbClient';
+import { logger } from '../../utils/logger';
 
 type CacheItem = { tagline: string; ts: number };
 const cache = new Map<string, CacheItem>();
@@ -64,7 +65,11 @@ export async function fetchMovieTagline(title: string, year?: string | number): 
     return null;
   } catch (e) {
     // Log error but don't throw - gracefully degrade
-    console.error(`Error fetching tagline for "${title}":`, (e as Error).message);
+    logger.warn('Error fetching movie tagline', {
+      title,
+      year,
+      error: (e as Error).message,
+    });
     return null;
   }
 }

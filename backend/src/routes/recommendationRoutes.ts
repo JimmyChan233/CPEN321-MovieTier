@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
-import { getRecommendations, getTrendingMovies } from '../controllers/recomendations/movieRecommendationController';
+import { getRecommendations, getTrendingMovies } from '../controllers/recommendations/movieRecommendationController';
 
 
 const router = Router();
