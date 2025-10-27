@@ -1,7 +1,7 @@
 # Requirements and Design
 
 ## 1. Change History
-
+ 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
 | 2025-10-26      | 3.1 (Feed & Discover), 3.4 (Feed use case), 4.3, 4.4 | **Feed Toggle Redesign & Quote System Clarification**: (1) Feed screen now uses compact floating pill toggles for "Friends" vs "My Activities", centered above the list so content flows beneath. Added documentation for new FAB-style segmented controls and adjusted feed padding to avoid overlap. (2) Clarified Discover featured quote sourcing: The app attempts to fetch quotes from the TMDB tagline service via `/api/quotes` (which now returns TMDB taglines rather than Wikiquote data) and caches successful responses. When the API has no tagline or the request fails, the app falls back to a local offline catalog of ~1,050 curated movie-themed taglines with deterministic daily rotation. Updated documentation to accurately reflect the hybrid approach. |
