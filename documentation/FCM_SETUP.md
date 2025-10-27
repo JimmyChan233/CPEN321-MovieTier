@@ -1,7 +1,7 @@
 # Firebase Cloud Messaging Setup Guide
 
 This guide will walk you through setting up Firebase Cloud Messaging (FCM) for push notifications in the MovieTier app.
-
+ 
 ## Prerequisites
 
 - Google account
