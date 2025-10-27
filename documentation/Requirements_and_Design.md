@@ -327,6 +327,37 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 
 ### **3.6. Screen Mock-ups**(optional)
 
+<table>
+  <tr>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/32d24c08-6408-4dc9-8473-ac7667cb27e1" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/45b00579-d371-45cd-904e-da1a63ae5dca" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/65440522-c376-4baf-9b0b-01577e83a61c" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/c6619057-5d7c-4d52-9b49-055065eb9af1" width="220" />
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/f6166db9-6ef1-4458-9a41-76486a30dca8" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/9ee81002-8d85-40d1-aa62-69aef0e69d60" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/1f861abe-398d-4c6f-9f3b-76b1d52afd23" width="220" />
+    </td>
+    <td style="padding:12px;">
+      <img src="https://github.com/user-attachments/assets/310081fd-f358-44b1-888d-babdc5826769" width="220" />
+    </td>
+  </tr>
+</table>
+
 ### **3.7. Non-Functional Requirements**
 
 <a name="nfr1"></a>
