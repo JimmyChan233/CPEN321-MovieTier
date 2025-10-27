@@ -50,7 +50,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 
 5. Discover (Recommendation) - Based on users top movies rankings there will be a recommended list of movies that the user can watch. The recommendation list will be generated based on the top movies on the users tiered list. The list will exclude all the movies which are already ranked by the user. Each movie in the list will contain the movie name, movie banner, and movie duration. Movie detail sheets display year and 5-star rating (with partial star fill, gold color #FFD700, 14dp size, 8dp spacing) in a consistent format across the entire app.
-   - Featured Movie Quote Card: The Discover page displays a daily featured movie card with a short, punchy movie quote. The featured card first attempts to fetch a quote from the TMDB tagline service via `/api/quotes`, caching positive responses for 6 hours. If the API has no tagline for the movie or the request fails, the app falls back to a local offline catalog of ~1,050 curated movie-themed taglines that are rotated deterministically (day-of-year plus refresh offset). The rotation first attempts to match the quote to a movie already in the recommendation list, then falls back to a TMDB title search. If no metadata can be resolved, the UI keeps the previous selection and shows a concise movie-themed fallback message instead.
+   - Featured Movie Quote Card: The Discover page displays a daily featured movie card with a short, punchy movie quote. The featured card first attempts to fetch a quote from the TMDB tagline service via `/api/quotes`, caching positive responses for 6 hours. If the backend API returns 404 (no tagline found) or the request fails, the **frontend** falls back to a local offline catalog of ~1,050 curated movie-themed taglines that are rotated deterministically (day-of-year plus refresh offset). The rotation first attempts to match the quote to a movie already in the recommendation list, then falls back to a TMDB title search. If no metadata can be resolved, the UI keeps the previous selection and shows a concise movie-themed fallback message instead.
    - Trending Movies: When users have no ranked movies, the Discover page displays trending movies from TMDB (weekly trending) instead of an empty state. This provides new users with popular movie suggestions to start their ranking journey.
    - Navigation: Discover is now the first tab in the bottom navigation and the default landing page after authentication, prioritizing movie discovery. Navigation order: Discover → Ranking → Feed → Friends → Profile.
    - Trailer Playback: Movie detail sheets on the Discover page show a play button overlay on the poster when a trailer is available. Clicking the play button opens the trailer in a 9:16 popup window using WebView to load the YouTube mobile page. The popup includes a close button (X) in the top-right corner and supports manual fullscreen toggling via YouTube's native controls.
@@ -514,6 +514,11 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
   - **Returns**: `{ success: boolean, data: Movie[] }`
   - **Description**: Returns trending movies from TMDB (weekly trending). Used when user has no ranked movies.
 
+- `GET /api/quotes?title={movieTitle}&year={releaseYear}`
+  - **Parameters**: `title: string, year?: number` (requires JWT)
+  - **Returns**: `{ success: boolean, data?: { quote: string }, message?: string }` or 404 if no quote found
+  - **Description**: Fetches a short, punchy movie tagline/quote from TMDB for the specified movie. Frontend handles 404 response by falling back to local offline quote catalog. This endpoint supports the Featured Movie Quote Card on the Discover page.
+
 **Internal Service Interface (movieComparisonController.ts):**
 - `addMovie(req: AuthRequest, res: Response): Promise<void>`
   - Initiates interactive ranking session with binary comparison algorithm.
@@ -529,10 +534,12 @@ Movie is added to the user's watchlist and persisted in MongoDB. The watchlist s
 - `GET /api/feed`
   - **Parameters**: None (requires JWT)
   - **Returns**: `{ success: boolean, data: FeedActivity[] }` (limit 50, sorted by createdAt descending)
-  - **Description**: Retrieves activity feed of friends' movie rankings with user profile data, movie details, current ranks, like counts, comment counts, and whether the requesting user liked each activity.
+  - **Response Shape**: Each activity includes `_id`, `userId`, `userName`, `userProfileImage`, `activityType`, nested `movie` object (with `id`, `title`, `posterPath`, `overview`, `releaseDate`, `voteAverage`), `rank`, `likeCount`, `commentCount`, `isLikedByUser` (boolean), and `createdAt`.
+  - **Description**: Retrieves activity feed of friends' movie rankings with enriched user profile data (name, profile image), movie details, current ranks, like counts, comment counts, and whether the requesting user liked each activity.
 - `GET /api/feed/me`
   - **Parameters**: None (requires JWT)
   - **Returns**: `{ success: boolean, data: FeedActivity[] }`
+  - **Response Shape**: Same structure as `GET /api/feed` (see above).
   - **Description**: Returns the signed-in user's own ranking activity feed with the same enrichment as the friends feed.
 
 - `GET /api/feed/stream`
@@ -630,8 +637,8 @@ Feed activities also trigger Firebase Cloud Messaging when a friend likes or com
      - Incoming friend requests
      - Friend request acceptances
    - **Implementation**: Firebase Admin SDK on backend, Firebase Messaging SDK on Android frontend. Device tokens are registered via `/api/users/fcm-token` endpoint and stored in User model.
-4. **Wikiquote API (fallback)**
-   - **Purpose**: The backend retains `/api/quotes` which scrapes Wikiquote pages using axios + cheerio. The Android app currently ships with an on-device quote catalog and does not call this endpoint, but it remains available for future or legacy clients.
+4. **TMDB Taglines (Quote Sourcing)**
+   - **Purpose**: The backend provides `/api/quotes` endpoint which attempts to fetch movie taglines from TMDB via tmdbTaglineService. If TMDB has no tagline for the requested movie, the endpoint returns 404. The Android app implements client-side fallback: when the backend returns 404 or error, the frontend uses its embedded offline catalog of ~1,050 curated movie-themed taglines for display.
 
 ### **4.4. Frameworks and Libraries**
 
@@ -647,7 +654,6 @@ Feed activities also trigger Firebase Cloud Messaging when a friend likes or com
 
 **External API Integration:**
 - **axios** (v1.6.0): Promise-based HTTP client for making requests to TMDB API and other external services.
-- **cheerio** (v1.0.0-rc.12): Lightweight HTML parser used by the Wikiquote fallback scraper.
 
 **Real-time Communication:**
 - **Server-Sent Events (SSE)**: Native Express.js implementation for real-time push notifications to clients (friend requests, feed updates).
