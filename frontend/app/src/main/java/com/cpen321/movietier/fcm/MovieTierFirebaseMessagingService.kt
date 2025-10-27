@@ -11,7 +11,6 @@ import androidx.core.app.NotificationCompat
 import com.cpen321.movietier.MainActivity
 import com.cpen321.movietier.R
 import com.cpen321.movietier.data.api.ApiService
-import com.cpen321.movietier.data.local.TokenManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,9 +26,6 @@ class MovieTierFirebaseMessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var apiService: ApiService
-
-    @Inject
-    lateinit var tokenManager: TokenManager
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 

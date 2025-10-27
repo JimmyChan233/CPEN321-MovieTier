@@ -9,7 +9,6 @@ import {
   compareMovies,
 } from '../controllers/movieComparisionController';
 import { startRerank } from '../controllers/rerankController';
-import axios from 'axios';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
 import mongoose from 'mongoose';
 
