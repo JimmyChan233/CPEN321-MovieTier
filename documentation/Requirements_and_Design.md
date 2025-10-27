@@ -765,8 +765,10 @@ The following sequence diagrams illustrate how the main components interact to r
 <img width="1392" height="1194" alt="View Feed Sequence Diagram" src="https://github.com/user-attachments/assets/333c5ee9-82b0-4d15-811c-ef98bc7a2528" />
 
 #### **4.6.4. Use Case 4: Compare Movies**
+![Compare Movies](images/RankingUseCase.jpg)
 
 #### **4.6.5. Use Case 5: View Recommended Movie List**
+![Recommendation Use Case](images/RecommendationUseCase.jpg)
 
 ### **4.7. Non-Functional Requirements Implementation**
 
