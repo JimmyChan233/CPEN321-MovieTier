@@ -103,7 +103,7 @@ class RecommendationViewModel @Inject constructor(
                     val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
                         "Already in Watchlist"
                     } else {
-                        res.message ?: "Failed to add to watchlist"
+                        res.message ?: "Already in Watchlist"
                     }
                     _events.emit(FeedEvent.Message(msg))
                 }

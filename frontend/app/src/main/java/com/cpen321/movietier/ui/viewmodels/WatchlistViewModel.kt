@@ -146,7 +146,7 @@ class WatchlistViewModel @Inject constructor(
                     val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
                         "Already in Rankings"
                     } else {
-                        res.message ?: "Failed to add to rankings"
+                        res.message ?: "Already in Rankings"
                     }
                     _events.emit(FeedEvent.Error(msg))
                 }

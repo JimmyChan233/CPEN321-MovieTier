@@ -109,7 +109,7 @@ class FeedViewModel @Inject constructor(
                     val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
                         "Already in Watchlist"
                     } else {
-                        res.message ?: "Failed to add to watchlist"
+                        res.message ?: "Already in Watchlist"
                     }
                     _events.emit(FeedEvent.Error(msg))
                 }
@@ -126,7 +126,7 @@ class FeedViewModel @Inject constructor(
                     val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
                         "Already in Rankings"
                     } else {
-                        res.message ?: "Failed to add to rankings"
+                        res.message ?: "Already in Rankings"
                     }
                     _events.emit(FeedEvent.Error(msg))
                 }

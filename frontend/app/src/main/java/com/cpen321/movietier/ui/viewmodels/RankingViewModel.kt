@@ -97,7 +97,7 @@ class RankingViewModel @Inject constructor(
                     val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
                         "Already in Rankings"
                     } else {
-                        res.message ?: "Failed to add movie"
+                        res.message ?: "Already in Rankings"
                     }
                     _events.emit(RankingEvent.Error(msg))
                 }
@@ -187,7 +187,7 @@ class RankingViewModel @Inject constructor(
                     val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
                         "Already in Rankings"
                     } else {
-                        res.message ?: "Failed to add movie"
+                        res.message ?: "Already in Rankings"
                     }
                     _events.emit(RankingEvent.Error(msg))
                 }

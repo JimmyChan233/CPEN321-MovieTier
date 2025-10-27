@@ -201,7 +201,7 @@ fun FriendProfileScreen(
                                 val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
                                     "Already in Watchlist"
                                 } else {
-                                    res.message ?: "Failed to add to watchlist"
+                                    res.message ?: "Already in Watchlist"
                                 }
                                 snackbarHostState.showSnackbar(
                                     message = msg,

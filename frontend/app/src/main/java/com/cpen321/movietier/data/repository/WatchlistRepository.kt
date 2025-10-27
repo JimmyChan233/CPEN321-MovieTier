@@ -25,7 +25,7 @@ class WatchlistRepository @Inject constructor(
     suspend fun addToWatchlist(movieId: Int, title: String, posterPath: String?, overview: String?): Result<WatchlistItem> = try {
         val res = apiService.addToWatchlist(AddWatchlistRequest(movieId, title, posterPath, overview))
         if (res.isSuccessful && res.body()?.success == true && res.body()?.data != null) Result.Success(res.body()!!.data!!)
-        else Result.Error(Exception(res.body()?.message ?: "Failed to add to watchlist"))
+        else Result.Error(Exception(res.body()?.message ?: "Already in Watchlist"))
     } catch (e: Exception) { Result.Error(e, e.message) }
 
     suspend fun removeFromWatchlist(movieId: Int): Result<Unit> = try {
