@@ -719,19 +719,19 @@ The following sequence diagrams illustrate how the main components interact to r
 
 #### **4.6.1. Use Case 6: Add Movie to Watchlist**
 
-![Add Movie to Watchlist Sequence Diagram](../sequence_diagrams/png/Add%20Movie%20to%20Watchlist%20Sequence%20Diagram.png)
+<img width="1280" height="827" alt="Add Movie to Watchlist Sequence Diagram" src="https://github.com/user-attachments/assets/2a9a1d05-803f-42d6-870e-0759962b7825" />
 
 #### **4.6.2a. Use Case 2: Send Friend Request by email**
 
-![Send Friend Request Sequence Diagram](../sequence_diagrams/png/Send%20Friend%20Request%20Sequence%20Diagram.png)
+<img width="1124" height="913" alt="Send Friend Request Sequence Diagram" src="https://github.com/user-attachments/assets/1de51589-3aeb-4b50-b044-2e7b83b67bf4" />
 
 ##### **4.6.2b. Send Friend Request by Name**
 
-![Send Friend Request by Name Sequence Diagram](../sequence_diagrams/png/Send%20Friend%20Request%20by%20Name%20Sequence%20Diagram.png)
+<img width="1125" height="898" alt="Send Friend Request by Name Sequence Diagram" src="https://github.com/user-attachments/assets/d29f424f-daac-4f91-b9d5-4b77dd103a45" />
 
 #### **4.6.3. Use Case 3: View Feed**
 
-![View Feed Sequence Diagram](../sequence_diagrams/png/View%20Feed%20Sequence%20Diagram.png)
+<img width="1392" height="1194" alt="View Feed Sequence Diagram" src="https://github.com/user-attachments/assets/333c5ee9-82b0-4d15-811c-ef98bc7a2528" />
 
 #### **4.6.4. Use Case 4: Compare Movies**
 
