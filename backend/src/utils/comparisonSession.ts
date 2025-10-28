@@ -1,4 +1,4 @@
-type CompareSession = {
+interface CompareSession {
   newMovie: {
     movieId: number;
     title: string;

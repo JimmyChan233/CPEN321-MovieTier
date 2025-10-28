@@ -314,7 +314,7 @@ class NotificationService {
     tokens: string[],
     title: string,
     body: string,
-    data: { [key: string]: string }
+    data: Record<string, string>
   ): Promise<number> {
     if (!this.initialized) {
       logger.warn('Firebase not initialized, skipping notification');
