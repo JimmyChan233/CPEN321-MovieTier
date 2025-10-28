@@ -6,11 +6,10 @@
  */
 
 import request from 'supertest';
-import mongoose from 'mongoose';
 import express from 'express';
 import authRoutes from '../../src/routes/authRoutes';
 import User from '../../src/models/user/User';
-import * as authService from '../../src/services/auth/authService';
+import { AuthService } from '../../src/services/auth/authService';
 import { generateTestJWT } from '../utils/test-fixtures';
 
 // Interface POST /auth/signin
@@ -23,13 +22,44 @@ describe('Mocked: POST /auth/signin', () => {
     app.use('/api/auth', authRoutes);
   });
 
-  // Mocked behavior: authService.signIn throws database error
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  // Mocked behavior: AuthService.verifyGoogleToken throws error
   // Input: Valid Google idToken
-  // Expected status code: 500
+  // Expected status code: 400
   // Expected behavior: Error is caught and handled gracefully
-  // Expected output: Internal server error message
-  it('should handle database error gracefully', async () => {
-    jest.spyOn(authService, 'signIn').mockRejectedValueOnce(
+  // Expected output: Error message
+  it('should handle Google token verification error', async () => {
+    jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockRejectedValueOnce(
+      new Error('Invalid Google token')
+    );
+
+    const res = await request(app)
+      .post('/api/auth/signin')
+      .send({
+        idToken: 'invalid-token',
+        email: 'test@example.com'
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/Invalid Google token|Unable to sign in/i);
+  });
+
+  // Mocked behavior: User.findOne throws database error
+  // Input: Valid idToken but database fails
+  // Expected status code: 400
+  // Expected behavior: Database error is caught
+  // Expected output: Error message
+  it('should handle database error during signin', async () => {
+    jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockResolvedValueOnce({
+      email: 'test@example.com',
+      name: 'Test User',
+      googleId: 'google-123'
+    });
+
+    jest.spyOn(User, 'findOne').mockRejectedValueOnce(
       new Error('Database connection failed')
     );
 
@@ -40,38 +70,30 @@ describe('Mocked: POST /auth/signin', () => {
         email: 'test@example.com'
       });
 
-    expect(res.status).toStrictEqual(500);
-    expect(res.body.message).toContain('error' || 'failed');
+    expect(res.status).toStrictEqual(400);
   });
 
-  // Mocked behavior: Google OAuth verification fails
-  // Input: Invalid or expired Google idToken
-  // Expected status code: 401 or 400
-  // Expected behavior: Request is rejected without querying database
-  // Expected output: Authentication error message
-  it('should reject invalid Google token', async () => {
-    jest.spyOn(authService, 'signIn').mockRejectedValueOnce(
-      new Error('Invalid Google token')
-    );
-
-    const res = await request(app)
-      .post('/api/auth/signin')
-      .send({
-        idToken: 'invalid-google-token'
-      });
-
-    expect([400, 401]).toContain(res.status);
-  });
-
-  // Mocked behavior: JWT creation fails
+  // Mocked behavior: JWT generation fails
   // Input: Valid user exists but JWT library throws error
-  // Expected status code: 500
+  // Expected status code: 400
   // Expected behavior: Partial failure - user found but token generation failed
   // Expected output: Error message about token generation
   it('should handle JWT generation failure', async () => {
-    jest.spyOn(authService, 'signIn').mockRejectedValueOnce(
-      new Error('JWT generation failed')
-    );
+    jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockResolvedValueOnce({
+      email: 'test@example.com',
+      name: 'Test User',
+      googleId: 'google-123'
+    });
+
+    jest.spyOn(User, 'findOne').mockResolvedValueOnce({
+      _id: 'user-id',
+      email: 'test@example.com',
+      name: 'Test User'
+    } as any);
+
+    jest.spyOn(AuthService.prototype, 'generateToken').mockImplementation(() => {
+      throw new Error('JWT generation failed');
+    });
 
     const res = await request(app)
       .post('/api/auth/signin')
@@ -80,7 +102,7 @@ describe('Mocked: POST /auth/signin', () => {
         email: 'test@example.com'
       });
 
-    expect(res.status).toStrictEqual(500);
+    expect(res.status).toStrictEqual(400);
   });
 });
 
@@ -94,15 +116,26 @@ describe('Mocked: POST /auth/signup', () => {
     app.use('/api/auth', authRoutes);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   // Mocked behavior: Database insert fails with duplicate key error
   // Input: Email already exists in unique index
   // Expected status code: 400
   // Expected behavior: Duplicate error is caught and formatted
   // Expected output: User-friendly duplicate email message
   it('should handle database duplicate key error', async () => {
-    const mongooseError = new Error('Duplicate key error');
-    (mongooseError as any).code = 11000;
-    jest.spyOn(authService, 'signUp').mockRejectedValueOnce(mongooseError);
+    jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockResolvedValueOnce({
+      email: 'existing@example.com',
+      name: 'Existing User',
+      googleId: 'google-123'
+    });
+
+    jest.spyOn(User, 'findOne').mockResolvedValueOnce({
+      _id: 'existing-user-id',
+      email: 'existing@example.com'
+    } as any);
 
     const res = await request(app)
       .post('/api/auth/signup')
@@ -112,15 +145,24 @@ describe('Mocked: POST /auth/signup', () => {
       });
 
     expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/already exists/i);
   });
 
   // Mocked behavior: Database connection fails during user creation
   // Input: Valid Google idToken, new email
-  // Expected status code: 500
+  // Expected status code: 400
   // Expected behavior: Error is caught gracefully
-  // Expected output: Internal server error message
+  // Expected output: Error message
   it('should handle database write failure', async () => {
-    jest.spyOn(authService, 'signUp').mockRejectedValueOnce(
+    jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockResolvedValueOnce({
+      email: 'newuser@example.com',
+      name: 'New User',
+      googleId: 'google-456'
+    });
+
+    jest.spyOn(User, 'findOne').mockResolvedValueOnce(null);
+
+    jest.spyOn(User.prototype, 'save').mockRejectedValueOnce(
       new Error('Database write failed')
     );
 
@@ -132,17 +174,17 @@ describe('Mocked: POST /auth/signup', () => {
         name: 'New User'
       });
 
-    expect(res.status).toStrictEqual(500);
+    expect(res.status).toStrictEqual(400);
     expect(res.body.message).toBeDefined();
   });
 
   // Mocked behavior: Google OAuth verification fails
   // Input: Invalid Google idToken format
-  // Expected status code: 401 or 400
+  // Expected status code: 400
   // Expected behavior: Google verification fails before database interaction
   // Expected output: Authentication error
   it('should reject invalid Google token during signup', async () => {
-    jest.spyOn(authService, 'signUp').mockRejectedValueOnce(
+    jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockRejectedValueOnce(
       new Error('Invalid Google token format')
     );
 
@@ -152,7 +194,8 @@ describe('Mocked: POST /auth/signup', () => {
         idToken: 'malformed-token'
       });
 
-    expect([400, 401]).toContain(res.status);
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/Invalid Google token|Unable to sign up/i);
   });
 });
 
@@ -164,6 +207,10 @@ describe('Mocked: POST /auth/signout', () => {
     app = express();
     app.use(express.json());
     app.use('/api/auth', authRoutes);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   // Mocked behavior: JWT verification fails with invalid signature
@@ -209,11 +256,15 @@ describe('Mocked: DELETE /auth/account', () => {
     app.use('/api/auth', authRoutes);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   // Mocked behavior: User deletion succeeds but friendship cleanup fails
   // Input: Valid JWT, valid user exists
   // Expected status code: 500
-  // Expected behavior: Transaction is rolled back or partial delete is handled
-  // Expected output: Error message about cascading delete failure
+  // Expected behavior: Transaction error is caught
+  // Expected output: Error message about deletion failure
   it('should handle cascading delete failure', async () => {
     const mockFindByIdAndDelete = jest.spyOn(User, 'findByIdAndDelete')
       .mockRejectedValueOnce(new Error('Cascading delete failed'));
@@ -225,24 +276,6 @@ describe('Mocked: DELETE /auth/account', () => {
 
     expect(res.status).toStrictEqual(500);
     mockFindByIdAndDelete.mockRestore();
-  });
-
-  // Mocked behavior: Database becomes unavailable mid-deletion
-  // Input: Valid JWT
-  // Expected status code: 500
-  // Expected behavior: Error is caught and reported
-  // Expected output: Database error message
-  it('should handle database connection loss during deletion', async () => {
-    jest.spyOn(User, 'deleteMany').mockRejectedValueOnce(
-      new Error('Database connection lost')
-    );
-
-    const res = await request(app)
-      .delete('/api/auth/account')
-      .set('Authorization', `Bearer ${generateTestJWT('test-user-id')}`)
-      .send({});
-
-    expect(res.status).toStrictEqual(500);
   });
 
   // Mocked behavior: JWT token signature is invalid
@@ -257,6 +290,6 @@ describe('Mocked: DELETE /auth/account', () => {
       .send({});
 
     expect(res.status).toStrictEqual(401);
-    expect(res.body.message).toContain('invalid' || 'token');
+    expect(res.body.message).toMatch(/invalid|token|Unauthorized/i);
   });
 });

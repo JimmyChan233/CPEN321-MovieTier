@@ -1,0 +1,509 @@
+/**
+ * Friend Operations API Tests - Unmocked
+ * Additional tests for friend routes to increase coverage
+ * Tests: POST /friends/request, POST /friends/respond, DELETE /friends/:friendId, GET /friends/search
+ */
+
+import request from 'supertest';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import express from 'express';
+import friendRoutes from '../../src/routes/friendRoutes';
+import User from '../../src/models/user/User';
+import { Friendship, FriendRequest } from '../../src/models/friend/Friend';
+import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
+
+describe('Unmocked: POST /friends/request - Additional Tests', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user1: any;
+  let user2: any;
+  let user3: any;
+  let token1: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/friends', friendRoutes);
+
+    user1 = await User.create(mockUsers.validUser);
+    user2 = await User.create({
+      ...mockUsers.validUser,
+      email: 'user2@example.com',
+      googleId: 'google-user2'
+    });
+    user3 = await User.create({
+      ...mockUsers.validUser,
+      email: 'user3@example.com',
+      googleId: 'google-user3'
+    });
+    token1 = generateTestJWT((user1 as any)._id.toString());
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  beforeEach(async () => {
+    await FriendRequest.deleteMany({});
+    await Friendship.deleteMany({});
+  });
+
+  // Input: Valid friend request with email
+  // Expected status code: 201
+  // Expected behavior: Friend request created
+  // Expected output: Success message
+  it('should send friend request by email', async () => {
+    const res = await request(app)
+      .post('/api/friends/request')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ email: user2.email });
+
+    expect(res.status).toStrictEqual(201);
+    expect(res.body.success).toStrictEqual(true);
+
+    const friendReq = await FriendRequest.findOne({
+      senderId: user1._id,
+      receiverId: user2._id
+    });
+    expect(friendReq).toBeDefined();
+  });
+
+  // Input: Send request to self
+  // Expected status code: 400
+  // Expected behavior: Request rejected
+  // Expected output: Error message
+  it('should reject friend request to self', async () => {
+    const res = await request(app)
+      .post('/api/friends/request')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ email: user1.email });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/yourself/i);
+  });
+
+  // Input: Duplicate friend request
+  // Expected status code: 400
+  // Expected behavior: Request rejected
+  // Expected output: Error message
+  it('should reject duplicate friend request', async () => {
+    await FriendRequest.create({
+      senderId: user1._id,
+      receiverId: user2._id,
+      status: 'pending'
+    });
+
+    const res = await request(app)
+      .post('/api/friends/request')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ email: user2.email });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/already|pending/i);
+  });
+
+  // Input: Request to existing friend
+  // Expected status code: 400
+  // Expected behavior: Request rejected
+  // Expected output: Error message
+  it('should reject request to existing friend', async () => {
+    await Friendship.create({
+      userId: user1._id,
+      friendId: user2._id,
+      createdAt: new Date()
+    });
+
+    const res = await request(app)
+      .post('/api/friends/request')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ email: user2.email });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/already.*friend/i);
+  });
+
+  // Input: Missing email field
+  // Expected status code: 400
+  // Expected behavior: Validation error
+  // Expected output: Error message
+  it('should reject request without email', async () => {
+    const res = await request(app)
+      .post('/api/friends/request')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({});
+
+    expect(res.status).toStrictEqual(400);
+  });
+
+  // Input: Invalid email format
+  // Expected status code: 404 or 400
+  // Expected behavior: User not found or validation error
+  // Expected output: Error message
+  it('should reject invalid email format', async () => {
+    const res = await request(app)
+      .post('/api/friends/request')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ email: 'invalid-email' });
+
+    expect([400, 404]).toContain(res.status);
+  });
+});
+
+describe('Unmocked: POST /friends/respond - Additional Tests', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user1: any;
+  let user2: any;
+  let token2: string;
+  let friendReq: any;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/friends', friendRoutes);
+
+    user1 = await User.create(mockUsers.validUser);
+    user2 = await User.create({
+      ...mockUsers.validUser,
+      email: 'user2@example.com',
+      googleId: 'google-user2'
+    });
+    token2 = generateTestJWT((user2 as any)._id.toString());
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  beforeEach(async () => {
+    await FriendRequest.deleteMany({});
+    await Friendship.deleteMany({});
+
+    friendReq = await FriendRequest.create({
+      senderId: user1._id,
+      receiverId: user2._id,
+      status: 'pending'
+    });
+  });
+
+  // Input: Accept friend request
+  // Expected status code: 200
+  // Expected behavior: Friendship created, request removed
+  // Expected output: Success message
+  it('should accept friend request', async () => {
+    const res = await request(app)
+      .post('/api/friends/respond')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({
+        requestId: friendReq._id.toString(),
+        action: 'accept'
+      });
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toStrictEqual(true);
+
+    const friendship = await Friendship.findOne({
+      userId: user2._id,
+      friendId: user1._id
+    });
+    expect(friendship).toBeDefined();
+
+    const reverseFriendship = await Friendship.findOne({
+      userId: user1._id,
+      friendId: user2._id
+    });
+    expect(reverseFriendship).toBeDefined();
+
+    const deletedRequest = await FriendRequest.findById(friendReq._id);
+    expect(deletedRequest).toBeNull();
+  });
+
+  // Input: Reject friend request
+  // Expected status code: 200
+  // Expected behavior: Request deleted, no friendship created
+  // Expected output: Success message
+  it('should reject friend request', async () => {
+    const res = await request(app)
+      .post('/api/friends/respond')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({
+        requestId: friendReq._id.toString(),
+        action: 'reject'
+      });
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toStrictEqual(true);
+
+    const friendship = await Friendship.findOne({
+      userId: user2._id,
+      friendId: user1._id
+    });
+    expect(friendship).toBeNull();
+
+    const deletedRequest = await FriendRequest.findById(friendReq._id);
+    expect(deletedRequest).toBeNull();
+  });
+
+  // Input: Invalid action
+  // Expected status code: 400
+  // Expected behavior: Validation error
+  // Expected output: Error message
+  it('should reject invalid action', async () => {
+    const res = await request(app)
+      .post('/api/friends/respond')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({
+        requestId: friendReq._id.toString(),
+        action: 'invalid'
+      });
+
+    expect(res.status).toStrictEqual(400);
+  });
+
+  // Input: Non-existent request ID
+  // Expected status code: 404
+  // Expected behavior: Request not found
+  // Expected output: Error message
+  it('should return 404 for non-existent request', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+    const res = await request(app)
+      .post('/api/friends/respond')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({
+        requestId: fakeId.toString(),
+        action: 'accept'
+      });
+
+    expect(res.status).toStrictEqual(404);
+  });
+
+  // Input: Missing requestId
+  // Expected status code: 400
+  // Expected behavior: Validation error
+  // Expected output: Error message
+  it('should reject missing requestId', async () => {
+    const res = await request(app)
+      .post('/api/friends/respond')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({
+        action: 'accept'
+      });
+
+    expect(res.status).toStrictEqual(400);
+  });
+
+  // Input: Missing action
+  // Expected status code: 400
+  // Expected behavior: Validation error
+  // Expected output: Error message
+  it('should reject missing action', async () => {
+    const res = await request(app)
+      .post('/api/friends/respond')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({
+        requestId: friendReq._id.toString()
+      });
+
+    expect(res.status).toStrictEqual(400);
+  });
+});
+
+describe('Unmocked: DELETE /friends/:friendId - Additional Tests', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user1: any;
+  let user2: any;
+  let token1: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/friends', friendRoutes);
+
+    user1 = await User.create(mockUsers.validUser);
+    user2 = await User.create({
+      ...mockUsers.validUser,
+      email: 'user2@example.com',
+      googleId: 'google-user2'
+    });
+    token1 = generateTestJWT((user1 as any)._id.toString());
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  beforeEach(async () => {
+    await Friendship.deleteMany({});
+  });
+
+  // Input: Remove existing friend
+  // Expected status code: 200
+  // Expected behavior: Bidirectional friendship removed
+  // Expected output: Success message
+  it('should remove friend (bidirectional)', async () => {
+    await Friendship.create({
+      userId: user1._id,
+      friendId: user2._id
+    });
+    await Friendship.create({
+      userId: user2._id,
+      friendId: user1._id
+    });
+
+    const res = await request(app)
+      .delete(`/api/friends/${user2._id}`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toStrictEqual(true);
+
+    const friendship1 = await Friendship.findOne({
+      userId: user1._id,
+      friendId: user2._id
+    });
+    expect(friendship1).toBeNull();
+
+    const friendship2 = await Friendship.findOne({
+      userId: user2._id,
+      friendId: user1._id
+    });
+    expect(friendship2).toBeNull();
+  });
+
+  // Input: Remove non-existent friend
+  // Expected status code: 404
+  // Expected behavior: Friend not found
+  // Expected output: Error message
+  it('should return 404 for non-existent friend', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+    const res = await request(app)
+      .delete(`/api/friends/${fakeId}`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(404);
+  });
+
+  // Input: Invalid friend ID format
+  // Expected status code: 400
+  // Expected behavior: Validation error
+  // Expected output: Error message
+  it('should reject invalid friend ID format', async () => {
+    const res = await request(app)
+      .delete('/api/friends/invalid-id')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(400);
+  });
+
+  // Input: Remove self as friend
+  // Expected status code: 400
+  // Expected behavior: Request rejected
+  // Expected output: Error message
+  it('should reject removing self', async () => {
+    const res = await request(app)
+      .delete(`/api/friends/${user1._id}`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(400);
+  });
+});
+
+describe('Unmocked: GET /friends/search - Search Users', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user1: any;
+  let user2: any;
+  let token1: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/friends', friendRoutes);
+
+    user1 = await User.create(mockUsers.validUser);
+    user2 = await User.create({
+      ...mockUsers.validUser,
+      email: 'searchable@example.com',
+      name: 'Searchable User',
+      googleId: 'google-searchable'
+    });
+    token1 = generateTestJWT((user1 as any)._id.toString());
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  // Input: Search by partial email
+  // Expected status code: 200
+  // Expected behavior: Return matching users
+  // Expected output: Array of user objects
+  it('should search users by email', async () => {
+    const res = await request(app)
+      .get('/api/friends/search')
+      .set('Authorization', `Bearer ${token1}`)
+      .query({ query: 'searchable' });
+
+    expect(res.status).toStrictEqual(200);
+    expect(Array.isArray(res.body.users || res.body)).toBe(true);
+  });
+
+  // Input: Search by partial name
+  // Expected status code: 200
+  // Expected behavior: Return matching users
+  // Expected output: Array of user objects
+  it('should search users by name', async () => {
+    const res = await request(app)
+      .get('/api/friends/search')
+      .set('Authorization', `Bearer ${token1}`)
+      .query({ query: 'Searchable' });
+
+    expect(res.status).toStrictEqual(200);
+    expect(Array.isArray(res.body.users || res.body)).toBe(true);
+  });
+
+  // Input: Empty search query
+  // Expected status code: 400
+  // Expected behavior: Validation error
+  // Expected output: Error message
+  it('should reject empty search query', async () => {
+    const res = await request(app)
+      .get('/api/friends/search')
+      .set('Authorization', `Bearer ${token1}`)
+      .query({ query: '' });
+
+    expect(res.status).toStrictEqual(400);
+  });
+
+  // Input: Search with no matches
+  // Expected status code: 200
+  // Expected behavior: Return empty array
+  // Expected output: Empty array
+  it('should return empty array for no matches', async () => {
+    const res = await request(app)
+      .get('/api/friends/search')
+      .set('Authorization', `Bearer ${token1}`)
+      .query({ query: 'nonexistentuser12345' });
+
+    expect(res.status).toStrictEqual(200);
+    expect(Array.isArray(res.body.users || res.body)).toBe(true);
+  });
+});

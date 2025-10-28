@@ -12,8 +12,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import express from 'express';
 import authRoutes from '../../src/routes/authRoutes';
 import User from '../../src/models/user/User';
-import { Friendship } from '../../src/models/friend/Friend';
-import FriendRequest from '../../src/models/friend/FriendRequest';
+import { Friendship, FriendRequest } from '../../src/models/friend/Friend';
 import { authenticate } from '../../src/middleware/auth';
 import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
 
@@ -83,7 +82,7 @@ describe('Unmocked: POST /auth/signin', () => {
       });
 
     expect(res.status).toStrictEqual(400);
-    expect(res.body.message).toContain('idToken' || 'required');
+    expect(res.body.message).toMatch(/idToken|required/i);
   });
 
   // Input: Email for non-existent user
@@ -101,7 +100,7 @@ describe('Unmocked: POST /auth/signin', () => {
       });
 
     expect([400, 404]).toContain(res.status);
-    expect(res.body.message).toContain('not found' || 'error');
+    expect(res.body.message).toMatch(/not found|error/i);
   });
 });
 
@@ -168,7 +167,7 @@ describe('Unmocked: POST /auth/signup', () => {
       });
 
     expect(res.status).toStrictEqual(400);
-    expect(res.body.message).toContain('idToken' || 'required');
+    expect(res.body.message).toMatch(/idToken|required/i);
   });
 
   // Input: Email that already exists in database
@@ -194,7 +193,7 @@ describe('Unmocked: POST /auth/signup', () => {
       });
 
     expect(res.status).toStrictEqual(400);
-    expect(res.body.message).toContain('already exists' || 'duplicate');
+    expect(res.body.message).toMatch(/already exists|duplicate/i);
   });
 });
 
@@ -232,7 +231,7 @@ describe('Unmocked: POST /auth/signout', () => {
       googleId: 'google-123'
     });
 
-    const token = generateTestJWT(user._id.toString());
+    const token = generateTestJWT((user as any)._id.toString());
 
     const res = await request(app)
       .post('/api/auth/signout')
@@ -240,7 +239,7 @@ describe('Unmocked: POST /auth/signout', () => {
       .send({});
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body.message).toContain('signed out' || 'success');
+    expect(res.body.message).toMatch(/signed out|success/i);
   });
 
   // Input: No authentication token in header
@@ -253,7 +252,7 @@ describe('Unmocked: POST /auth/signout', () => {
       .send({});
 
     expect(res.status).toStrictEqual(401);
-    expect(res.body.message).toContain('token' || 'authentication');
+    expect(res.body.message).toMatch(/token|authentication/i);
   });
 
   // Input: Malformed or invalid JWT token
@@ -267,7 +266,7 @@ describe('Unmocked: POST /auth/signout', () => {
       .send({});
 
     expect(res.status).toStrictEqual(401);
-    expect(res.body.message).toContain('invalid' || 'expired');
+    expect(res.body.message).toMatch(/invalid|expired/i);
   });
 });
 
@@ -321,7 +320,7 @@ describe('Unmocked: DELETE /auth/account', () => {
       status: 'pending'
     });
 
-    const token = generateTestJWT(user._id.toString());
+    const token = generateTestJWT((user as any)._id.toString());
 
     const res = await request(app)
       .delete('/api/auth/account')
