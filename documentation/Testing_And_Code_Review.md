@@ -1,9 +1,4 @@
 # Testing And Code Review Report - M4 Milestone
-## MovieTier Social Movie Companion App
-
-**Report Date:** October 28, 2025
-**Project:** MovieTier - CPEN 321 Software Engineering Course
-**Team:** Solo Development
 
 ---
 
