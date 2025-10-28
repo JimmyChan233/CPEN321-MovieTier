@@ -29,6 +29,8 @@ jest.mock('../../src/services/sse/sseService', () => ({
   }
 }));
 
+import { sseService } from '../../src/services/sse/sseService';
+
 // Mock controllers
 jest.mock('../../src/controllers/movieComparisionController', () => ({
   addMovie: jest.fn((req, res) => res.json({ success: true })),
@@ -241,6 +243,46 @@ describe('Movie Routes - Mocked Tests', () => {
       expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
     });
+
+    it('should return 500 when TMDB API key not configured', async () => {
+      const originalKey = process.env.TMDB_API_KEY;
+      delete process.env.TMDB_API_KEY;
+      delete process.env.TMDB_KEY;
+
+      const res = await request(app)
+        .get('/api/movies/search?query=Test')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('TMDB API key not configured');
+
+      process.env.TMDB_API_KEY = originalKey;
+    });
+
+    it('should handle cast enrichment API failure', async () => {
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 550,
+            title: 'Fight Club',
+            overview: 'Overview',
+            poster_path: '/poster.jpg',
+            release_date: '1999-10-15',
+            vote_average: 8.4
+          }]
+        }
+      });
+
+      // Cast fetch fails
+      mockTmdbGet.mockRejectedValueOnce(new Error('Cast API failed'));
+
+      const res = await request(app)
+        .get('/api/movies/search?query=Fight&includeCast=true')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data[0].cast).toEqual([]);
+    });
   });
 
   // ==================== GET /ranked Tests ====================
@@ -282,6 +324,21 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data).toEqual([]);
+    });
+
+    it('should handle database error gracefully', async () => {
+      // Force a database error by using an invalid query
+      jest.spyOn(RankedMovie, 'find').mockImplementationOnce(() => {
+        throw new Error('Database error');
+      });
+
+      const res = await request(app)
+        .get('/api/movies/ranked')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to load rankings');
     });
   });
 
@@ -359,6 +416,59 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+    });
+
+    it('should notify friends via SSE when ranking', async () => {
+      // Create a friendship
+      const friend = await User.create({
+        googleId: 'friend123',
+        email: 'friend@example.com',
+        displayName: 'Test Friend',
+        name: 'Test Friend'
+      });
+
+      await Friendship.create({
+        userId: (user as any)._id,
+        friendId: (friend as any)._id
+      });
+
+      const sendSpy = jest.spyOn(sseService, 'send');
+
+      await request(app)
+        .post('/api/movies/rank')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movieId: 550,
+          title: 'Fight Club',
+          posterPath: '/poster.jpg'
+        });
+
+      expect(sendSpy).toHaveBeenCalledWith(
+        String((friend as any)._id),
+        'feed_activity',
+        expect.objectContaining({
+          activityId: expect.anything()
+        })
+      );
+    });
+
+    it('should handle database error gracefully', async () => {
+      // Force a database error
+      jest.spyOn(RankedMovie.prototype, 'save').mockImplementationOnce(() => {
+        throw new Error('Database error');
+      });
+
+      const res = await request(app)
+        .post('/api/movies/rank')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movieId: 550,
+          title: 'Fight Club'
+        });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to rank movie');
     });
   });
 
@@ -438,6 +548,28 @@ describe('Movie Routes - Mocked Tests', () => {
       const activities = await FeedActivity.find({ movieId: 550 });
       expect(activities).toHaveLength(0);
     });
+
+    it('should handle database error gracefully', async () => {
+      const movie = await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 550,
+        title: 'Fight Club',
+        rank: 1
+      });
+
+      // Force a database error
+      jest.spyOn(RankedMovie, 'findOne').mockImplementationOnce(() => {
+        throw new Error('Database error');
+      });
+
+      const res = await request(app)
+        .delete(`/api/movies/ranked/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to remove from rankings');
+    });
   });
 
   // ==================== GET /:movieId/providers Tests ====================
@@ -492,6 +624,32 @@ describe('Movie Routes - Mocked Tests', () => {
       expect(res.status).toBe(400);
       expect(res.body.message).toContain('Invalid movie id');
     });
+
+    it('should return 500 when TMDB API key not configured', async () => {
+      const originalKey = process.env.TMDB_API_KEY;
+      delete process.env.TMDB_API_KEY;
+      delete process.env.TMDB_KEY;
+
+      const res = await request(app)
+        .get('/api/movies/550/providers')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('TMDB API key not configured');
+
+      process.env.TMDB_API_KEY = originalKey;
+    });
+
+    it('should handle TMDB API error gracefully', async () => {
+      mockTmdbGet.mockRejectedValueOnce(new Error('TMDB API error'));
+
+      const res = await request(app)
+        .get('/api/movies/550/providers')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('Unable to load watch providers');
+    });
   });
 
   // ==================== GET /:movieId/details Tests ====================
@@ -538,6 +696,32 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.message).toContain('Invalid movie id');
+    });
+
+    it('should return 500 when TMDB API key not configured', async () => {
+      const originalKey = process.env.TMDB_API_KEY;
+      delete process.env.TMDB_API_KEY;
+      delete process.env.TMDB_KEY;
+
+      const res = await request(app)
+        .get('/api/movies/550/details')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('TMDB API key not configured');
+
+      process.env.TMDB_API_KEY = originalKey;
+    });
+
+    it('should handle TMDB API error gracefully', async () => {
+      mockTmdbGet.mockRejectedValueOnce(new Error('TMDB API error'));
+
+      const res = await request(app)
+        .get('/api/movies/550/details')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('Unable to load movie details');
     });
   });
 
@@ -598,6 +782,24 @@ describe('Movie Routes - Mocked Tests', () => {
       expect(res.body.data.key).toBe('def456');
     });
 
+    it('should fallback to teaser when no trailer available', async () => {
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [
+            { key: 'xyz789', name: 'Teaser 1', type: 'Teaser', site: 'YouTube', official: false }
+          ]
+        }
+      });
+
+      const res = await request(app)
+        .get('/api/movies/550/videos')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.key).toBe('xyz789');
+      expect(res.body.data.type).toBe('Teaser');
+    });
+
     it('should return null when no videos available', async () => {
       mockTmdbGet.mockResolvedValueOnce({
         data: { results: [] }
@@ -618,6 +820,32 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.message).toContain('Invalid movie id');
+    });
+
+    it('should return 500 when TMDB API key not configured', async () => {
+      const originalKey = process.env.TMDB_API_KEY;
+      delete process.env.TMDB_API_KEY;
+      delete process.env.TMDB_KEY;
+
+      const res = await request(app)
+        .get('/api/movies/550/videos')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('TMDB API key not configured');
+
+      process.env.TMDB_API_KEY = originalKey;
+    });
+
+    it('should handle TMDB API error gracefully', async () => {
+      mockTmdbGet.mockRejectedValueOnce(new Error('TMDB API error'));
+
+      const res = await request(app)
+        .get('/api/movies/550/videos')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('Unable to load movie videos');
     });
   });
 });
