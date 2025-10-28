@@ -29,7 +29,7 @@ describe('Unmocked: GET /feed', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
+    app.use('/', feedRoutes);
 
     user = await User.create(mockUsers.validUser);
     friend = await User.create(mockUsers.anotherUser);
@@ -117,7 +117,7 @@ describe('Unmocked: POST /feed/:activityId/like', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
+    app.use('/', feedRoutes);
 
     user = await User.create(mockUsers.validUser);
     friend = await User.create(mockUsers.anotherUser);
@@ -206,7 +206,7 @@ describe('Unmocked: GET /feed/:activityId/comments', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
+    app.use('/', feedRoutes);
 
     user = await User.create(mockUsers.validUser);
     friend = await User.create(mockUsers.anotherUser);
@@ -277,7 +277,7 @@ describe('Unmocked: POST /feed/:activityId/comments', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
+    app.use('/', feedRoutes);
 
     user = await User.create(mockUsers.validUser);
     friend = await User.create(mockUsers.anotherUser);

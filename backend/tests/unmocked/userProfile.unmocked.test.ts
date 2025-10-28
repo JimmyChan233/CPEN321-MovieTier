@@ -23,7 +23,7 @@ describe('Unmocked: PUT /users/profile', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/users', userRoutes);
+    app.use('/', userRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -41,7 +41,7 @@ describe('Unmocked: PUT /users/profile', () => {
   it('should update user profile name', async () => {
     const newName = 'Updated Name';
     const res = await request(app)
-      .put('/api/users/profile')
+      .put('/profile')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: newName });
 
@@ -59,7 +59,7 @@ describe('Unmocked: PUT /users/profile', () => {
   it('should update user profile image', async () => {
     const newImageUrl = 'https://example.com/new-image.jpg';
     const res = await request(app)
-      .put('/api/users/profile')
+      .put('/profile')
       .set('Authorization', `Bearer ${token}`)
       .send({ profileImageUrl: newImageUrl });
 
@@ -79,7 +79,7 @@ describe('Unmocked: PUT /users/profile', () => {
     const newImageUrl = 'https://example.com/another-image.jpg';
 
     const res = await request(app)
-      .put('/api/users/profile')
+      .put('/profile')
       .set('Authorization', `Bearer ${token}`)
       .send({
         name: newName,
@@ -97,7 +97,7 @@ describe('Unmocked: PUT /users/profile', () => {
   // Expected output: Error message
   it('should reject empty name', async () => {
     const res = await request(app)
-      .put('/api/users/profile')
+      .put('/profile')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: '' });
 
@@ -111,7 +111,7 @@ describe('Unmocked: PUT /users/profile', () => {
   // Expected output: Error message
   it('should reject whitespace-only name', async () => {
     const res = await request(app)
-      .put('/api/users/profile')
+      .put('/profile')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: '   ' });
 
@@ -124,7 +124,7 @@ describe('Unmocked: PUT /users/profile', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated profile update', async () => {
     const res = await request(app)
-      .put('/api/users/profile')
+      .put('/profile')
       .send({ name: 'New Name' });
 
     expect(res.status).toStrictEqual(401);
@@ -136,7 +136,7 @@ describe('Unmocked: PUT /users/profile', () => {
   // Expected output: Unauthorized error
   it('should reject invalid token', async () => {
     const res = await request(app)
-      .put('/api/users/profile')
+      .put('/profile')
       .set('Authorization', 'Bearer invalid.token.here')
       .send({ name: 'New Name' });
 
@@ -156,7 +156,7 @@ describe('Unmocked: POST /users/fcm-token', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/users', userRoutes);
+    app.use('/', userRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -174,7 +174,7 @@ describe('Unmocked: POST /users/fcm-token', () => {
   it('should register FCM token', async () => {
     const fcmToken = 'mock-fcm-token-12345';
     const res = await request(app)
-      .post('/api/users/fcm-token')
+      .post('/fcm-token')
       .set('Authorization', `Bearer ${token}`)
       .send({ token: fcmToken });
 
@@ -195,7 +195,7 @@ describe('Unmocked: POST /users/fcm-token', () => {
 
     const newToken = 'new-fcm-token-67890';
     const res = await request(app)
-      .post('/api/users/fcm-token')
+      .post('/fcm-token')
       .set('Authorization', `Bearer ${token}`)
       .send({ token: newToken });
 
@@ -211,7 +211,7 @@ describe('Unmocked: POST /users/fcm-token', () => {
   // Expected output: Error message
   it('should reject missing FCM token', async () => {
     const res = await request(app)
-      .post('/api/users/fcm-token')
+      .post('/fcm-token')
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
@@ -224,7 +224,7 @@ describe('Unmocked: POST /users/fcm-token', () => {
   // Expected output: Error message
   it('should reject empty FCM token', async () => {
     const res = await request(app)
-      .post('/api/users/fcm-token')
+      .post('/fcm-token')
       .set('Authorization', `Bearer ${token}`)
       .send({ token: '' });
 
@@ -237,7 +237,7 @@ describe('Unmocked: POST /users/fcm-token', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated FCM token registration', async () => {
     const res = await request(app)
-      .post('/api/users/fcm-token')
+      .post('/fcm-token')
       .send({ token: 'mock-fcm-token' });
 
     expect(res.status).toStrictEqual(401);
@@ -257,7 +257,7 @@ describe('Unmocked: GET /users/profile/:userId', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/users', userRoutes);
+    app.use('/', userRoutes);
 
     user = await User.create(mockUsers.validUser);
     otherUser = await User.create({
@@ -319,7 +319,7 @@ describe('Unmocked: GET /users/profile/:userId', () => {
   // Expected output: Error message
   it('should reject invalid user ID format', async () => {
     const res = await request(app)
-      .get('/api/users/profile/invalid-id')
+      .get('/profile/invalid-id')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);

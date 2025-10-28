@@ -36,9 +36,9 @@ describe('NFR: Performance - Response Time', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/auth', authRoutes);
-    app.use('/api/movies', movieRoutes);
-    app.use('/api/feed', feedRoutes);
+    app.use('/', authRoutes);
+    app.use('/', movieRoutes);
+    app.use('/', feedRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -135,7 +135,7 @@ describe('NFR: Performance - Database Index Efficiency', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -186,8 +186,8 @@ describe('NFR: Performance - Bulk Operations', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
-    app.use('/api/feed', feedRoutes);
+    app.use('/', movieRoutes);
+    app.use('/', feedRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());

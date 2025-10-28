@@ -27,7 +27,7 @@ describe('Unmocked: POST /auth/signin', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/auth', authRoutes);
+    app.use('/', authRoutes);
   });
 
   afterAll(async () => {
@@ -53,7 +53,7 @@ describe('Unmocked: POST /auth/signin', () => {
     });
 
     const res = await request(app)
-      .post('/api/auth/signin')
+      .post('/signin')
       .send({
         idToken: 'mock-valid-token',
         email: 'test@example.com',
@@ -75,7 +75,7 @@ describe('Unmocked: POST /auth/signin', () => {
   // Expected output: Error message indicating missing idToken
   it('should reject signin without idToken', async () => {
     const res = await request(app)
-      .post('/api/auth/signin')
+      .post('/signin')
       .send({
         email: 'test@example.com',
         name: 'Test User'
@@ -91,7 +91,7 @@ describe('Unmocked: POST /auth/signin', () => {
   // Expected output: Error message "User not found"
   it('should reject signin for non-existent user', async () => {
     const res = await request(app)
-      .post('/api/auth/signin')
+      .post('/signin')
       .send({
         idToken: 'mock-valid-token',
         email: 'nonexistent@example.com',
@@ -115,7 +115,7 @@ describe('Unmocked: POST /auth/signup', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/auth', authRoutes);
+    app.use('/', authRoutes);
   });
 
   afterAll(async () => {
@@ -133,7 +133,7 @@ describe('Unmocked: POST /auth/signup', () => {
   // Expected output: Created user object with JWT token and status 201
   it('should successfully create a new user account', async () => {
     const res = await request(app)
-      .post('/api/auth/signup')
+      .post('/signup')
       .send({
         idToken: 'mock-valid-token',
         email: 'newuser@example.com',
@@ -160,7 +160,7 @@ describe('Unmocked: POST /auth/signup', () => {
   // Expected output: Error message about missing idToken
   it('should reject signup without idToken', async () => {
     const res = await request(app)
-      .post('/api/auth/signup')
+      .post('/signup')
       .send({
         email: 'newuser@example.com',
         name: 'New User'
@@ -184,7 +184,7 @@ describe('Unmocked: POST /auth/signup', () => {
     });
 
     const res = await request(app)
-      .post('/api/auth/signup')
+      .post('/signup')
       .send({
         idToken: 'mock-valid-token',
         email: 'existing@example.com',
@@ -208,7 +208,7 @@ describe('Unmocked: POST /auth/signout', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/auth', authRoutes);
+    app.use('/', authRoutes);
   });
 
   afterAll(async () => {
@@ -234,7 +234,7 @@ describe('Unmocked: POST /auth/signout', () => {
     const token = generateTestJWT((user as any)._id.toString());
 
     const res = await request(app)
-      .post('/api/auth/signout')
+      .post('/signout')
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
@@ -248,7 +248,7 @@ describe('Unmocked: POST /auth/signout', () => {
   // Expected output: Unauthorized error message
   it('should reject signout without authentication token', async () => {
     const res = await request(app)
-      .post('/api/auth/signout')
+      .post('/signout')
       .send({});
 
     expect(res.status).toStrictEqual(401);
@@ -261,7 +261,7 @@ describe('Unmocked: POST /auth/signout', () => {
   // Expected output: Invalid token error
   it('should reject signout with invalid token', async () => {
     const res = await request(app)
-      .post('/api/auth/signout')
+      .post('/signout')
       .set('Authorization', 'Bearer invalid.jwt.token')
       .send({});
 
@@ -281,7 +281,7 @@ describe('Unmocked: DELETE /auth/account', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/auth', authRoutes);
+    app.use('/', authRoutes);
   });
 
   afterAll(async () => {
@@ -323,7 +323,7 @@ describe('Unmocked: DELETE /auth/account', () => {
     const token = generateTestJWT((user as any)._id.toString());
 
     const res = await request(app)
-      .delete('/api/auth/account')
+      .delete('/account')
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
@@ -354,7 +354,7 @@ describe('Unmocked: DELETE /auth/account', () => {
     });
 
     const res = await request(app)
-      .delete('/api/auth/account')
+      .delete('/account')
       .send({});
 
     expect(res.status).toStrictEqual(401);
@@ -376,7 +376,7 @@ describe('Unmocked: DELETE /auth/account', () => {
     });
 
     const res = await request(app)
-      .delete('/api/auth/account')
+      .delete('/account')
       .set('Authorization', 'Bearer invalid.token')
       .send({});
 

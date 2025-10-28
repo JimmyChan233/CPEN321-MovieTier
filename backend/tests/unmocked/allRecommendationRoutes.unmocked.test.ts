@@ -27,7 +27,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/recommendations', recommendationRoutes);
+    app.use('/', recommendationRoutes);
 
     user1 = await User.create(mockUsers.validUser);
     user2 = await User.create({
@@ -51,7 +51,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
   // Test GET /recommendations with no ranked movies
   it('should get recommendations with no ranked movies', async () => {
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     // Execute code even if no recommendations
@@ -97,7 +97,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     // Execute recommendation logic
@@ -115,7 +115,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
     });
 
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -136,14 +136,14 @@ describe('Comprehensive Recommendation Routes Tests', () => {
     await RankedMovie.create(movies);
 
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test GET /recommendations/trending
   it('should get trending movie recommendations', async () => {
     const res = await request(app)
-      .get('/api/recommendations/trending')
+      .get('/trending')
       .set('Authorization', `Bearer ${token1}`);
 
     // Execute trending logic
@@ -152,7 +152,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
   // Test GET /recommendations/trending without auth
   it('should handle trending without auth', async () => {
     const res = await request(app)
-      .get('/api/recommendations/trending');
+      .get('/trending');
   });
 
   // Test GET /recommendations with friends
@@ -192,7 +192,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -208,7 +208,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
     });
 
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`)
       .query({ limit: 5 });
   });
@@ -216,7 +216,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
   // Test GET /recommendations unauthorized
   it('should reject unauthorized recommendation request', async () => {
     const res = await request(app)
-      .get('/api/recommendations');
+      .get('/');
   });
 
   // Test GET /recommendations with varied movie genres
@@ -243,7 +243,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -260,7 +260,7 @@ describe('Comprehensive Recommendation Routes Tests', () => {
     });
 
     const res = await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 });

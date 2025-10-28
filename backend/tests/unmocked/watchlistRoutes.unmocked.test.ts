@@ -38,7 +38,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/', watchlistRoutes);
   });
 
   afterAll(async () => {
@@ -81,7 +81,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       ]);
 
       const res = await request(app)
-        .get('/api/watchlist')
+        .get('/')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -92,7 +92,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should return empty array for empty watchlist', async () => {
       const res = await request(app)
-        .get('/api/watchlist')
+        .get('/')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -115,7 +115,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       ]);
 
       const res = await request(app)
-        .get('/api/watchlist')
+        .get('/')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -141,7 +141,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       });
 
       const res = await request(app)
-        .get('/api/watchlist')
+        .get('/')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -156,7 +156,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .get('/api/watchlist')
+        .get('/')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(500);
@@ -173,7 +173,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
   describe('POST /', () => {
     it('should add movie to watchlist successfully', async () => {
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: mockMovies.inception.id,
@@ -198,7 +198,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should add movie with minimal fields (movieId and title only)', async () => {
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 550,
@@ -222,7 +222,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       getTmdbClient.mockReturnValue({ get: mockGet });
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 550,
@@ -247,7 +247,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       getTmdbClient.mockReturnValue({ get: mockGet });
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 680,
@@ -267,7 +267,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       getTmdbClient.mockReturnValue({ get: mockGet });
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 550,
@@ -282,7 +282,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should reject missing movieId', async () => {
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Fight Club'
@@ -295,7 +295,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should reject missing title', async () => {
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 550
@@ -314,7 +314,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       });
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 550,
@@ -334,7 +334,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       });
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token2}`)
         .send({
           movieId: 550,
@@ -347,7 +347,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should handle movieId as number', async () => {
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 550,
@@ -360,7 +360,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should preserve all provided fields', async () => {
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 550,
@@ -381,7 +381,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 999,
@@ -422,7 +422,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should remove movie from watchlist successfully', async () => {
       const res = await request(app)
-        .delete('/api/watchlist/550')
+        .delete('/550')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -439,7 +439,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should only remove from current user watchlist', async () => {
       const res = await request(app)
-        .delete('/api/watchlist/550')
+        .delete('/550')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -454,7 +454,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should return 404 when movie not in watchlist', async () => {
       const res = await request(app)
-        .delete('/api/watchlist/9999')
+        .delete('/9999')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(404);
@@ -464,7 +464,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should handle movieId as number parameter', async () => {
       const res = await request(app)
-        .delete('/api/watchlist/680')
+        .delete('/680')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -473,7 +473,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should handle invalid movieId format gracefully', async () => {
       const res = await request(app)
-        .delete('/api/watchlist/invalid')
+        .delete('/invalid')
         .set('Authorization', `Bearer ${token1}`);
 
       // Invalid movieId causes internal processing error
@@ -485,7 +485,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .delete('/api/watchlist/550')
+        .delete('/550')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(500);
@@ -497,7 +497,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should not affect other watchlist items', async () => {
       await request(app)
-        .delete('/api/watchlist/550')
+        .delete('/550')
         .set('Authorization', `Bearer ${token1}`);
 
       const remaining = await WatchlistItem.find({ userId: (user1 as any)._id });
@@ -513,7 +513,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       const longTitle = 'A'.repeat(500);
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 12345,
@@ -528,7 +528,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       const specialTitle = 'Movie: Title & "Special" Characters <test>';
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 99999,
@@ -541,7 +541,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
 
     it('should handle zero as movieId', async () => {
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: 0,
@@ -557,7 +557,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       const largeId = 999999999;
 
       const res = await request(app)
-        .post('/api/watchlist')
+        .post('/')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           movieId: largeId,

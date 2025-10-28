@@ -27,7 +27,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/users', userRoutes);
+    app.use('/', userRoutes);
   });
 
   afterAll(async () => {
@@ -64,7 +64,7 @@ describe('User Routes - Unmocked Tests', () => {
     it('should search users by name', async () => {
       // user1 searches for user2 (Bob)
       const res = await request(app)
-        .get('/api/users/search?query=Bob')
+        .get('/search?query=Bob')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -76,7 +76,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should search users by email', async () => {
       const res = await request(app)
-        .get('/api/users/search?query=bob@example')
+        .get('/search?query=bob@example')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -89,7 +89,7 @@ describe('User Routes - Unmocked Tests', () => {
     it('should exclude current user from search results', async () => {
       // Search with a broad query that would match all users
       const res = await request(app)
-        .get('/api/users/search?query=example')
+        .get('/search?query=example')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -100,7 +100,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should return empty array when no users match', async () => {
       const res = await request(app)
-        .get('/api/users/search?query=NonExistentUser123')
+        .get('/search?query=NonExistentUser123')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -110,7 +110,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject query with less than 2 characters', async () => {
       const res = await request(app)
-        .get('/api/users/search?query=a')
+        .get('/search?query=a')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(400);
@@ -120,7 +120,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject empty query', async () => {
       const res = await request(app)
-        .get('/api/users/search?query=')
+        .get('/search?query=')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(400);
@@ -130,7 +130,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject missing query parameter', async () => {
       const res = await request(app)
-        .get('/api/users/search')
+        .get('/search')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(400);
@@ -140,7 +140,7 @@ describe('User Routes - Unmocked Tests', () => {
     it('should handle case-insensitive search', async () => {
       // Search for Bob in uppercase
       const res = await request(app)
-        .get('/api/users/search?query=BOB')
+        .get('/search?query=BOB')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -161,7 +161,7 @@ describe('User Routes - Unmocked Tests', () => {
       await User.insertMany(users);
 
       const res = await request(app)
-        .get('/api/users/search?query=TestUser')
+        .get('/search?query=TestUser')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -171,7 +171,7 @@ describe('User Routes - Unmocked Tests', () => {
     it('should trim whitespace from query', async () => {
       // Search for Charlie with extra whitespace
       const res = await request(app)
-        .get('/api/users/search?query=  Charlie  ')
+        .get('/search?query=  Charlie  ')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -183,7 +183,7 @@ describe('User Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .get('/api/users/search?query=Test')
+        .get('/search?query=Test')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(500);
@@ -199,7 +199,7 @@ describe('User Routes - Unmocked Tests', () => {
   describe('PUT /profile', () => {
     it('should update user profile name successfully', async () => {
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${token1}`)
         .send({ name: 'Alice Updated' });
 
@@ -215,7 +215,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should trim whitespace from name', async () => {
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${token1}`)
         .send({ name: '  Alice Trimmed  ' });
 
@@ -226,7 +226,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject missing name', async () => {
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${token1}`)
         .send({});
 
@@ -237,7 +237,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject empty name', async () => {
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${token1}`)
         .send({ name: '' });
 
@@ -248,7 +248,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject whitespace-only name', async () => {
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${token1}`)
         .send({ name: '   ' });
 
@@ -262,7 +262,7 @@ describe('User Routes - Unmocked Tests', () => {
       const fakeToken = generateTestJWT(nonExistentId.toString());
 
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${fakeToken}`)
         .send({ name: 'New Name' });
 
@@ -276,7 +276,7 @@ describe('User Routes - Unmocked Tests', () => {
       const originalGoogleId = user1.googleId;
 
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${token1}`)
         .send({ name: 'Updated Name' });
 
@@ -291,7 +291,7 @@ describe('User Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .put('/api/users/profile')
+        .put('/profile')
         .set('Authorization', `Bearer ${token1}`)
         .send({ name: 'New Name' });
 
@@ -310,7 +310,7 @@ describe('User Routes - Unmocked Tests', () => {
       const fcmToken = 'fcm-token-abc123';
 
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${token1}`)
         .send({ token: fcmToken });
 
@@ -328,7 +328,7 @@ describe('User Routes - Unmocked Tests', () => {
 
       const newToken = 'new-fcm-token-xyz789';
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${token1}`)
         .send({ token: newToken });
 
@@ -341,7 +341,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should trim whitespace from token', async () => {
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${token1}`)
         .send({ token: '  fcm-token-trimmed  ' });
 
@@ -352,7 +352,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject missing token', async () => {
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${token1}`)
         .send({});
 
@@ -363,7 +363,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject empty token', async () => {
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${token1}`)
         .send({ token: '' });
 
@@ -373,7 +373,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject whitespace-only token', async () => {
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${token1}`)
         .send({ token: '   ' });
 
@@ -386,7 +386,7 @@ describe('User Routes - Unmocked Tests', () => {
       const fakeToken = generateTestJWT(nonExistentId.toString());
 
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${fakeToken}`)
         .send({ token: 'fcm-token' });
 
@@ -399,7 +399,7 @@ describe('User Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .post('/api/users/fcm-token')
+        .post('/fcm-token')
         .set('Authorization', `Bearer ${token1}`)
         .send({ token: 'fcm-token' });
 
@@ -428,7 +428,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject invalid user ID format', async () => {
       const res = await request(app)
-        .get('/api/users/invalid-id-format')
+        .get('/invalid-id-format')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(400);
@@ -541,7 +541,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should reject invalid user ID format', async () => {
       const res = await request(app)
-        .get('/api/users/invalid-id/watchlist')
+        .get('/invalid-id/watchlist')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(400);

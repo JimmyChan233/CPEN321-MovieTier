@@ -27,7 +27,7 @@ describe('Friend Routes Detailed Endpoints', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/friends', friendRoutes);
+    app.use('/', friendRoutes);
 
     user1 = await User.create(mockUsers.validUser);
     user2 = await User.create({
@@ -63,7 +63,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .get('/api/friends/requests/detailed')
+      .get('/requests/detailed')
       .set('Authorization', `Bearer ${token1}`);
 
     // Execute code path
@@ -72,7 +72,7 @@ describe('Friend Routes Detailed Endpoints', () => {
   // Test GET /requests/detailed with no requests
   it('should get empty detailed pending requests', async () => {
     const res = await request(app)
-      .get('/api/friends/requests/detailed')
+      .get('/requests/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -92,7 +92,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests/detailed')
+      .get('/requests/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -105,14 +105,14 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .get('/api/friends/requests/outgoing')
+      .get('/requests/outgoing')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test GET /requests/outgoing with no requests
   it('should get empty outgoing requests', async () => {
     const res = await request(app)
-      .get('/api/friends/requests/outgoing')
+      .get('/requests/outgoing')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -132,7 +132,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests/outgoing')
+      .get('/requests/outgoing')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -145,14 +145,14 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .get('/api/friends/requests/outgoing/detailed')
+      .get('/requests/outgoing/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test GET /requests/outgoing/detailed with no requests
   it('should get empty detailed outgoing requests', async () => {
     const res = await request(app)
-      .get('/api/friends/requests/outgoing/detailed')
+      .get('/requests/outgoing/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -172,7 +172,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests/outgoing/detailed')
+      .get('/requests/outgoing/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -180,7 +180,7 @@ describe('Friend Routes Detailed Endpoints', () => {
   it('should handle multiple rapid friend requests', async () => {
     for (let i = 0; i < 3; i++) {
       await request(app)
-        .post('/api/friends/request')
+        .post('/request')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           email: `user${i}@example.com`
@@ -197,7 +197,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (req as any)._id.toString(),
@@ -214,7 +214,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (req as any)._id.toString(),
@@ -231,7 +231,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (req as any)._id.toString(),
@@ -248,7 +248,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (req as any)._id.toString(),
@@ -270,24 +270,24 @@ describe('Friend Routes Detailed Endpoints', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test unauthorized access to all endpoints
   it('should reject unauthorized detailed requests', async () => {
     await request(app)
-      .get('/api/friends/requests/detailed');
+      .get('/requests/detailed');
   });
 
   it('should reject unauthorized outgoing requests', async () => {
     await request(app)
-      .get('/api/friends/requests/outgoing');
+      .get('/requests/outgoing');
   });
 
   it('should reject unauthorized outgoing detailed requests', async () => {
     await request(app)
-      .get('/api/friends/requests/outgoing/detailed');
+      .get('/requests/outgoing/detailed');
   });
 
   // Test POST /request with reverse pending request
@@ -301,7 +301,7 @@ describe('Friend Routes Detailed Endpoints', () => {
 
     // User1 tries to send request to User2
     const res = await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         email: user2.email
@@ -317,7 +317,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     });
 
     const res = await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (req as any)._id.toString(),
@@ -332,14 +332,14 @@ describe('Friend Routes Detailed Endpoints', () => {
   // Test DELETE with invalid friendId format
   it('should handle delete with invalid friendId', async () => {
     const res = await request(app)
-      .delete('/api/friends/invalid-id-format')
+      .delete('/invalid-id-format')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test POST /request with email validation
   it('should validate email format in friend request', async () => {
     const res = await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         email: 'not-an-email'
@@ -351,7 +351,7 @@ describe('Friend Routes Detailed Endpoints', () => {
     // Send 6 requests rapidly (limit is 5 per minute)
     for (let i = 0; i < 6; i++) {
       await request(app)
-        .post('/api/friends/request')
+        .post('/request')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           email: user2.email

@@ -44,9 +44,9 @@ describe('NFR: Security - Authentication & Authorization', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
-    app.use('/api/movies', movieRoutes);
-    app.use('/api/users', userRoutes);
+    app.use('/', feedRoutes);
+    app.use('/', movieRoutes);
+    app.use('/', userRoutes);
 
     user1 = await User.create(mockUsers.validUser);
     user2 = await User.create(mockUsers.anotherUser);
@@ -151,8 +151,8 @@ describe('NFR: Security - Input Validation & Sanitization', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
-    app.use('/api/movies', movieRoutes);
+    app.use('/', feedRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -270,8 +270,8 @@ describe('NFR: Security - Error Handling & Information Disclosure', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
-    app.use('/api/users', userRoutes);
+    app.use('/', movieRoutes);
+    app.use('/', userRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());

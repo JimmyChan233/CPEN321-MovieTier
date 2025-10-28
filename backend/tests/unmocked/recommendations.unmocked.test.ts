@@ -24,7 +24,7 @@ describe('Unmocked: GET /recommendations', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/recommendations', recommendationRoutes);
+    app.use('/', recommendationRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -104,7 +104,7 @@ describe('Unmocked: GET /recommendations/trending', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/recommendations', recommendationRoutes);
+    app.use('/', recommendationRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());

@@ -25,7 +25,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/', watchlistRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -46,7 +46,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Success message with watchlist item
   it('should add movie to watchlist with all fields', async () => {
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -77,7 +77,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Success message
   it('should add movie with only required fields', async () => {
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -109,7 +109,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -128,7 +128,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Error message
   it('should reject missing movieId', async () => {
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         title: mockMovies.inception.title,
@@ -145,7 +145,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Error message
   it('should reject missing title', async () => {
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -162,7 +162,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Error message
   it('should reject missing year', async () => {
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -179,7 +179,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Error message
   it('should reject missing posterUrl', async () => {
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -196,7 +196,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated watchlist addition', async () => {
     const res = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .send({
         movieId: mockMovies.inception.id,
         title: mockMovies.inception.title,
@@ -213,7 +213,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected output: Success for all
   it('should add multiple movies to watchlist', async () => {
     const res1 = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -223,7 +223,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
       });
 
     const res2 = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.darkKnight.id,
@@ -233,7 +233,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
       });
 
     const res3 = await request(app)
-      .post('/api/watchlist')
+      .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.interstellar.id,
@@ -263,7 +263,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/', watchlistRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -311,7 +311,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
   // Expected output: Error message
   it('should return 404 for non-existent movie', async () => {
     const res = await request(app)
-      .delete('/api/watchlist/999999')
+      .delete('/999999')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(404);
@@ -374,7 +374,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
   // Expected output: Error message
   it('should handle invalid movieId format', async () => {
     const res = await request(app)
-      .delete('/api/watchlist/invalid-movie-id')
+      .delete('/invalid-movie-id')
       .set('Authorization', `Bearer ${token}`);
 
     expect([400, 404]).toContain(res.status);
@@ -395,7 +395,7 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/', watchlistRoutes);
 
     user1 = await User.create(mockUsers.validUser);
     user2 = await User.create({
@@ -438,7 +438,7 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .get('/api/watchlist')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);
@@ -469,7 +469,7 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .get('/api/watchlist')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);
@@ -484,7 +484,7 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
   // Expected output: Empty array
   it('should return empty array for empty watchlist', async () => {
     const res = await request(app)
-      .get('/api/watchlist')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);
@@ -499,7 +499,7 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated get watchlist request', async () => {
     const res = await request(app)
-      .get('/api/watchlist');
+      .get('/');
 
     expect(res.status).toStrictEqual(401);
   });
@@ -521,7 +521,7 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .get('/api/watchlist')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);

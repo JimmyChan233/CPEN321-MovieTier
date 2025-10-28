@@ -25,7 +25,7 @@ describe('Recommendation Controller Direct Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/recommendations', recommendationRoutes);
+    app.use('/', recommendationRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -52,7 +52,7 @@ describe('Recommendation Controller Direct Tests', () => {
     });
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -83,7 +83,7 @@ describe('Recommendation Controller Direct Tests', () => {
     ]);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -103,7 +103,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -148,7 +148,7 @@ describe('Recommendation Controller Direct Tests', () => {
     ]);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -168,7 +168,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -188,7 +188,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -212,7 +212,7 @@ describe('Recommendation Controller Direct Tests', () => {
     ]);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -232,7 +232,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -252,7 +252,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -272,7 +272,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -292,7 +292,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -312,7 +312,7 @@ describe('Recommendation Controller Direct Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -327,7 +327,7 @@ describe('Recommendation Controller Direct Tests', () => {
     });
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`)
       .query({ limit: 10 });
   });
@@ -335,14 +335,14 @@ describe('Recommendation Controller Direct Tests', () => {
   // Test trending movies
   it('should get trending movies', async () => {
     await request(app)
-      .get('/api/recommendations/trending')
+      .get('/trending')
       .set('Authorization', `Bearer ${token}`);
   });
 
   // Test trending without params
   it('should get trending movies without query params', async () => {
     await request(app)
-      .get('/api/recommendations/trending')
+      .get('/trending')
       .set('Authorization', `Bearer ${token}`);
   });
 
@@ -364,7 +364,7 @@ describe('Recommendation Controller Direct Tests', () => {
     });
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token2}`);
   });
 
@@ -380,7 +380,7 @@ describe('Recommendation Controller Direct Tests', () => {
     ]);
 
     await request(app)
-      .get('/api/recommendations')
+      .get('/')
       .set('Authorization', `Bearer ${token}`);
   });
 });

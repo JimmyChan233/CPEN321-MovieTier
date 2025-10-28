@@ -31,7 +31,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
+    app.use('/', feedRoutes);
 
     user1 = await User.create(mockUsers.validUser);
     user2 = await User.create({
@@ -78,7 +78,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     });
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -88,7 +88,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   // Test Case 2: GET /feed with no friends
   it('should return empty feed when user has no friends', async () => {
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -109,7 +109,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     });
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -132,7 +132,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     await Like.create({ userId: user3._id, activityId: activity._id });
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -158,7 +158,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     });
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -180,7 +180,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     await Like.create({ userId: user1._id, activityId: activity._id });
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -208,7 +208,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     });
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -239,7 +239,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -251,7 +251,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     await mongoose.connection.close();
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(500);
@@ -271,7 +271,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     });
 
     const res = await request(app)
-      .get('/api/feed/me')
+      .get('/me')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -280,7 +280,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   // Test Case 11: GET /me with no activities
   it('should return empty array when user has no activities', async () => {
     const res = await request(app)
-      .get('/api/feed/me')
+      .get('/me')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toBe(200);
@@ -290,7 +290,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   // Test Case 12: GET /stream (SSE)
   it('should establish SSE stream', async () => {
     const res = await request(app)
-      .get('/api/feed/stream')
+      .get('/stream')
       .set('Authorization', `Bearer ${token1}`)
       .set('Accept', 'text/event-stream');
 
@@ -563,7 +563,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   // Test Case 26: Unauthorized access to feed
   it('should reject unauthorized access to feed', async () => {
     const res = await request(app)
-      .get('/api/feed');
+      .get('/');
 
     expect(res.status).toBe(401);
   });
@@ -571,7 +571,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   // Test Case 27: Unauthorized access to /me
   it('should reject unauthorized access to /me', async () => {
     const res = await request(app)
-      .get('/api/feed/me');
+      .get('/me');
 
     expect(res.status).toBe(401);
   });
@@ -579,7 +579,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   // Test Case 28: Unauthorized access to /stream
   it('should reject unauthorized access to /stream', async () => {
     const res = await request(app)
-      .get('/api/feed/stream');
+      .get('/stream');
 
     expect(res.status).toBe(401);
   });

@@ -32,7 +32,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/feed', feedRoutes);
+    app.use('/', feedRoutes);
 
     user1 = await User.create(mockUsers.validUser);
     user2 = await User.create({
@@ -60,7 +60,7 @@ describe('Comprehensive Feed Routes Tests', () => {
   // Test GET /feed with no friends
   it('should get empty feed with no friends', async () => {
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     // Execute code
@@ -85,7 +85,7 @@ describe('Comprehensive Feed Routes Tests', () => {
     });
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     // Execute code path
@@ -343,7 +343,7 @@ describe('Comprehensive Feed Routes Tests', () => {
     }
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`)
       .query({ limit: 10, offset: 0 });
 
@@ -404,20 +404,20 @@ describe('Comprehensive Feed Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/feed')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test unauthorized access
   it('should reject unauthorized feed access', async () => {
     await request(app)
-      .get('/api/feed');
+      .get('/');
   });
 
   // Test invalid activity ID format
   it('should handle invalid activity ID format', async () => {
     await request(app)
-      .post('/api/feed/invalid-id/like')
+      .post('/invalid-id/like')
       .set('Authorization', `Bearer ${token1}`)
       .send({});
   });

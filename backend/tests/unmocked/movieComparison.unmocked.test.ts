@@ -25,7 +25,7 @@ describe('Unmocked: POST /movies/rank', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -47,7 +47,7 @@ describe('Unmocked: POST /movies/rank', () => {
   // Expected output: Success message with rank 1
   it('should add first movie without comparison', async () => {
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -59,9 +59,9 @@ describe('Unmocked: POST /movies/rank', () => {
         overview: mockMovies.inception.overview
       });
 
-    expect(res.status).toStrictEqual(201);
-    expect(res.body.rank).toStrictEqual(1);
-    expect(res.body.needsComparison).toStrictEqual(false);
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.data.rank).toStrictEqual(1);
+    expect(res.body.status).toStrictEqual('added');
 
     const rankedMovie = await RankedMovie.findOne({ userId: user._id, movieId: mockMovies.inception.id });
     expect(rankedMovie).toBeDefined();
@@ -87,7 +87,7 @@ describe('Unmocked: POST /movies/rank', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.darkKnight.id,
@@ -99,10 +99,10 @@ describe('Unmocked: POST /movies/rank', () => {
         overview: mockMovies.darkKnight.overview
       });
 
-    expect(res.status).toStrictEqual(201);
-    expect(res.body.needsComparison).toStrictEqual(true);
-    expect(res.body.comparisonMovies).toBeDefined();
-    expect(res.body.comparisonMovies.length).toStrictEqual(2);
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.status).toStrictEqual('compare');
+    expect(res.body.data.compareWith).toBeDefined();
+    expect(res.body.data.compareWith.movieId).toBeDefined();
   });
 
   // Input: Duplicate movie (already ranked)
@@ -123,7 +123,7 @@ describe('Unmocked: POST /movies/rank', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -142,7 +142,7 @@ describe('Unmocked: POST /movies/rank', () => {
   // Expected output: Error message about missing fields
   it('should reject missing required fields', async () => {
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id
@@ -158,7 +158,7 @@ describe('Unmocked: POST /movies/rank', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated rank request', async () => {
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/add')
       .send({
         movieId: mockMovies.inception.id,
         title: mockMovies.inception.title,
@@ -183,7 +183,7 @@ describe('Unmocked: POST /movies/rank', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -195,7 +195,8 @@ describe('Unmocked: POST /movies/rank', () => {
         overview: mockMovies.inception.overview
       });
 
-    expect(res.status).toStrictEqual(201);
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.status).toStrictEqual('added');
 
     const watchlistItem = await WatchlistItem.findOne({ userId: user._id, movieId: mockMovies.inception.id });
     expect(watchlistItem).toBeNull();
@@ -214,7 +215,7 @@ describe('Unmocked: POST /movies/compare', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -261,7 +262,7 @@ describe('Unmocked: POST /movies/compare', () => {
 
     // Start ranking a new movie
     const rankRes = await request(app)
-      .post('/api/movies/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.interstellar.id,
@@ -277,7 +278,7 @@ describe('Unmocked: POST /movies/compare', () => {
       const preferredMovieId = rankRes.body.comparisonMovies[0].movieId;
 
       const res = await request(app)
-        .post('/api/movies/compare')
+        .post('/compare')
         .set('Authorization', `Bearer ${token}`)
         .send({
           preferredMovieId
@@ -294,7 +295,7 @@ describe('Unmocked: POST /movies/compare', () => {
   // Expected output: Error message
   it('should reject comparison without preferredMovieId', async () => {
     const res = await request(app)
-      .post('/api/movies/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
@@ -307,7 +308,7 @@ describe('Unmocked: POST /movies/compare', () => {
   // Expected output: Error message
   it('should reject comparison without active session', async () => {
     const res = await request(app)
-      .post('/api/movies/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
         preferredMovieId: mockMovies.inception.id
@@ -322,7 +323,7 @@ describe('Unmocked: POST /movies/compare', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated compare request', async () => {
     const res = await request(app)
-      .post('/api/movies/compare')
+      .post('/compare')
       .send({
         preferredMovieId: mockMovies.inception.id
       });

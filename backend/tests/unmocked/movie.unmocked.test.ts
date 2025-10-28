@@ -24,7 +24,7 @@ describe('Unmocked: GET /movies/search', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -41,7 +41,7 @@ describe('Unmocked: GET /movies/search', () => {
   // Expected output: Array of movies with id, title, overview, posterPath, releaseDate, voteAverage
   it('should return search results for valid movie query', async () => {
     const res = await request(app)
-      .get('/api/movies/search')
+      .get('/search')
       .set('Authorization', `Bearer ${token}`)
       .query({ query: 'Inception' });
 
@@ -55,7 +55,7 @@ describe('Unmocked: GET /movies/search', () => {
   // Expected output: Validation error about minimum query length
   it('should reject search query shorter than 2 characters', async () => {
     const res = await request(app)
-      .get('/api/movies/search')
+      .get('/search')
       .set('Authorization', `Bearer ${token}`)
       .query({ query: 'a' });
 
@@ -69,7 +69,7 @@ describe('Unmocked: GET /movies/search', () => {
   // Expected output: Error message about empty query
   it('should reject empty search query', async () => {
     const res = await request(app)
-      .get('/api/movies/search')
+      .get('/search')
       .set('Authorization', `Bearer ${token}`)
       .query({ query: '' });
 
@@ -82,7 +82,7 @@ describe('Unmocked: GET /movies/search', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated search', async () => {
     const res = await request(app)
-      .get('/api/movies/search')
+      .get('/search')
       .query({ query: 'Inception' });
 
     expect(res.status).toStrictEqual(401);
@@ -101,7 +101,7 @@ describe('Unmocked: GET /movies/ranked', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -137,7 +137,7 @@ describe('Unmocked: GET /movies/ranked', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/movies/ranked')
+      .get('/ranked')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
@@ -151,7 +151,7 @@ describe('Unmocked: GET /movies/ranked', () => {
   // Expected output: Empty array
   it('should return empty array for user with no ranked movies', async () => {
     const res = await request(app)
-      .get('/api/movies/ranked')
+      .get('/ranked')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
@@ -165,7 +165,7 @@ describe('Unmocked: GET /movies/ranked', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated ranked movies request', async () => {
     const res = await request(app)
-      .get('/api/movies/ranked');
+      .get('/ranked');
 
     expect(res.status).toStrictEqual(401);
   });
@@ -183,7 +183,7 @@ describe('Unmocked: DELETE /movies/ranked/:id', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -244,7 +244,7 @@ describe('Unmocked: DELETE /movies/ranked/:id', () => {
   // Expected output: Bad request error
   it('should reject deletion with invalid ID format', async () => {
     const res = await request(app)
-      .delete('/api/movies/ranked/invalid-id')
+      .delete('/ranked/invalid-id')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);

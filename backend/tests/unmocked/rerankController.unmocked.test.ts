@@ -24,7 +24,7 @@ describe('Rerank Controller - Complete Coverage', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -43,7 +43,7 @@ describe('Rerank Controller - Complete Coverage', () => {
 
   it('should reject missing rankedId', async () => {
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
@@ -53,7 +53,7 @@ describe('Rerank Controller - Complete Coverage', () => {
 
   it('should reject invalid rankedId format', async () => {
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: 'not-a-valid-objectid' });
 
@@ -63,7 +63,7 @@ describe('Rerank Controller - Complete Coverage', () => {
 
   it('should reject empty string rankedId', async () => {
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: '' });
 
@@ -73,7 +73,7 @@ describe('Rerank Controller - Complete Coverage', () => {
 
   it('should reject null rankedId', async () => {
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: null });
 
@@ -87,7 +87,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const fakeId = new mongoose.Types.ObjectId();
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: fakeId.toString() });
 
@@ -111,7 +111,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movie as any)._id.toString() });
 
@@ -136,7 +136,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRemove = await RankedMovie.findOne({ userId: user._id, rank: 3 });
 
     await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRemove as any)._id.toString() });
 
@@ -176,7 +176,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRemove = await RankedMovie.findOne({ userId: user._id, rank: 1 });
 
     await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRemove as any)._id.toString() });
 
@@ -213,7 +213,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRemove = await RankedMovie.findOne({ userId: user._id, rank: 3 });
 
     await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRemove as any)._id.toString() });
 
@@ -234,7 +234,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movie as any)._id.toString() });
 
@@ -256,7 +256,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movie as any)._id.toString() });
 
@@ -295,7 +295,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 2 });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRerank as any)._id.toString() });
 
@@ -320,7 +320,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 5 });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRerank as any)._id.toString() });
 
@@ -356,7 +356,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 2 });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRerank as any)._id.toString() });
 
@@ -388,7 +388,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 1 });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRerank as any)._id.toString() });
 
@@ -419,7 +419,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 1 });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRerank as any)._id.toString() });
 
@@ -442,7 +442,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 10 });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movieToRerank as any)._id.toString() });
 
@@ -465,7 +465,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     await mongoose.connection.close();
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movie as any)._id.toString() });
 
@@ -501,7 +501,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     setTimeout(() => mongoose.connection.close(), 10);
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId });
 
@@ -524,7 +524,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movie as any)._id.toString() });
 
@@ -542,7 +542,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movie as any)._id.toString() });
 
@@ -560,7 +560,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rerank/start')
+      .post('/rerank/start')
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId: (movie as any)._id.toString() });
 

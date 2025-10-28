@@ -26,7 +26,7 @@ describe('Unmocked: GET /friends', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/friends', friendRoutes);
+    app.use('/', friendRoutes);
 
     user = await User.create(mockUsers.validUser);
     friend1 = await User.create({
@@ -111,7 +111,7 @@ describe('Unmocked: GET /friends/requests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/friends', friendRoutes);
+    app.use('/', friendRoutes);
 
     user = await User.create(mockUsers.validUser);
     requester = await User.create({
@@ -162,7 +162,7 @@ describe('Unmocked: POST /friends/request', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/friends', friendRoutes);
+    app.use('/', friendRoutes);
 
     user = await User.create(mockUsers.validUser);
     target = await User.create({
@@ -279,7 +279,7 @@ describe('Unmocked: POST /friends/respond', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/friends', friendRoutes);
+    app.use('/', friendRoutes);
 
     user = await User.create(mockUsers.validUser);
     sender = await User.create({
@@ -354,7 +354,7 @@ describe('Unmocked: DELETE /friends/:friendId', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/friends', friendRoutes);
+    app.use('/', friendRoutes);
 
     user = await User.create(mockUsers.validUser);
     friend = await User.create({

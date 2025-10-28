@@ -24,7 +24,7 @@ describe('Unmocked: GET /watchlist', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/', watchlistRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -106,7 +106,7 @@ describe('Unmocked: POST /watchlist', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/', watchlistRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -192,7 +192,7 @@ describe('Unmocked: DELETE /watchlist/:movieId', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/', watchlistRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());

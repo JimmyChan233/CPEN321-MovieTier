@@ -23,7 +23,7 @@ describe('Unmocked: PUT /users/profile', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/users', userRoutes);
+    app.use('/', userRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -91,7 +91,7 @@ describe('Unmocked: POST /users/fcm-token', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/users', userRoutes);
+    app.use('/', userRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());

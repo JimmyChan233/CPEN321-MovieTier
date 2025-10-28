@@ -26,7 +26,7 @@ describe('Comprehensive Movie Routes Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/movies', movieRoutes);
+    app.use('/', movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -45,7 +45,7 @@ describe('Comprehensive Movie Routes Tests', () => {
   // Test POST /movies/rank with no existing movies
   it('should rank first movie directly', async () => {
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -81,7 +81,7 @@ describe('Comprehensive Movie Routes Tests', () => {
 
     // Add second movie
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.darkKnight.id,
@@ -120,7 +120,7 @@ describe('Comprehensive Movie Routes Tests', () => {
 
     // Start comparison by ranking a new movie
     await request(app)
-      .post('/api/movies/rank')
+      .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.interstellar.id,
@@ -131,7 +131,7 @@ describe('Comprehensive Movie Routes Tests', () => {
 
     // Try to compare
     const compareRes = await request(app)
-      .post('/api/movies/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
         preferredMovieId: mockMovies.inception.id
@@ -189,7 +189,7 @@ describe('Comprehensive Movie Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/movies/ranked')
+      .get('/ranked')
       .set('Authorization', `Bearer ${token}`);
 
     // Execution matters
@@ -210,7 +210,7 @@ describe('Comprehensive Movie Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -225,7 +225,7 @@ describe('Comprehensive Movie Routes Tests', () => {
   // Test ranking with missing fields
   it('should handle ranking with missing fields', async () => {
     await request(app)
-      .post('/api/movies/rank')
+      .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id
@@ -235,7 +235,7 @@ describe('Comprehensive Movie Routes Tests', () => {
   // Test comparison without active session
   it('should handle comparison without session', async () => {
     await request(app)
-      .post('/api/movies/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
         preferredMovieId: mockMovies.inception.id
@@ -262,7 +262,7 @@ describe('Comprehensive Movie Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -278,7 +278,7 @@ describe('Comprehensive Movie Routes Tests', () => {
 
     for (const movie of movies) {
       await request(app)
-        .post('/api/movies/rank')
+        .post('/rank')
         .set('Authorization', `Bearer ${token}`)
         .send({
           movieId: movie.id,
@@ -306,7 +306,7 @@ describe('Comprehensive Movie Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.darkKnight.id,
@@ -316,7 +316,7 @@ describe('Comprehensive Movie Routes Tests', () => {
       });
 
     await request(app)
-      .post('/api/movies/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
         preferredMovieId: 'invalid-movie-id-12345'

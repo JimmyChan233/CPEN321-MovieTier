@@ -30,7 +30,7 @@ describe('Advanced Friend Routes Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/friends', friendRoutes);
+    app.use('/', friendRoutes);
 
     user1 = await User.create(mockUsers.validUser);
     user2 = await User.create({
@@ -68,7 +68,7 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 1: Send friend request with email
   it('should send friend request using email', async () => {
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
   });
@@ -82,7 +82,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
@@ -126,7 +126,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
@@ -141,7 +141,7 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 5: Cannot send friend request to self
   it('should reject friend request to self', async () => {
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user1.email });
   });
@@ -150,13 +150,13 @@ describe('Advanced Friend Routes Tests', () => {
   it('should reject duplicate friend request', async () => {
     // Send first request
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
 
     // Try to send again
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
   });
@@ -172,7 +172,7 @@ describe('Advanced Friend Routes Tests', () => {
 
     // User1 tries to send request to User2
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
   });
@@ -186,7 +186,7 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -199,7 +199,7 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests')
+      .get('/requests')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -211,7 +211,7 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests/detailed')
+      .get('/requests/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -223,7 +223,7 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests/outgoing')
+      .get('/requests/outgoing')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -235,14 +235,14 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests/outgoing/detailed')
+      .get('/requests/outgoing/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test Case 13: Send request to non-existent user
   it('should handle request to non-existent email', async () => {
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: 'nonexistent@example.com' });
   });
@@ -250,7 +250,7 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 14: Invalid email format
   it('should reject invalid email format', async () => {
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: 'not-an-email' });
   });
@@ -258,7 +258,7 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 15: Missing email field
   it('should reject request without email', async () => {
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({});
   });
@@ -268,7 +268,7 @@ describe('Advanced Friend Routes Tests', () => {
     const fakeId = new mongoose.Types.ObjectId();
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: fakeId.toString(),
@@ -285,7 +285,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
@@ -302,7 +302,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
@@ -319,7 +319,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
@@ -339,26 +339,26 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 21: Delete friendship with invalid friendId format
   it('should handle delete with invalid friendId format', async () => {
     await request(app)
-      .delete('/api/friends/invalid-id-format')
+      .delete('/invalid-id-format')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test Case 22: Unauthorized access to friends list
   it('should reject unauthorized access to friends list', async () => {
     await request(app)
-      .get('/api/friends');
+      .get('/');
   });
 
   // Test Case 23: Unauthorized access to pending requests
   it('should reject unauthorized access to pending requests', async () => {
     await request(app)
-      .get('/api/friends/requests');
+      .get('/requests');
   });
 
   // Test Case 24: Unauthorized send friend request
   it('should reject unauthorized friend request', async () => {
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .send({ email: user2.email });
   });
 
@@ -371,7 +371,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .send({
         requestId: (friendReq as any)._id.toString(),
         accept: true
@@ -388,7 +388,7 @@ describe('Advanced Friend Routes Tests', () => {
   it('should handle multiple rapid friend requests', async () => {
     for (let i = 0; i < 3; i++) {
       await request(app)
-        .post('/api/friends/request')
+        .post('/request')
         .set('Authorization', `Bearer ${token1}`)
         .send({ email: `user${i}@example.com` });
     }
@@ -404,7 +404,7 @@ describe('Advanced Friend Routes Tests', () => {
 
     // Try to send friend request
     await request(app)
-      .post('/api/friends/request')
+      .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
   });
@@ -412,35 +412,35 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 29: Get empty friends list
   it('should get empty friends list when no friends', async () => {
     const res = await request(app)
-      .get('/api/friends')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test Case 30: Get empty pending requests
   it('should get empty pending requests when none exist', async () => {
     const res = await request(app)
-      .get('/api/friends/requests')
+      .get('/requests')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test Case 31: Get empty detailed requests
   it('should get empty detailed requests when none exist', async () => {
     const res = await request(app)
-      .get('/api/friends/requests/detailed')
+      .get('/requests/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test Case 32: Get empty outgoing requests
   it('should get empty outgoing requests when none exist', async () => {
     const res = await request(app)
-      .get('/api/friends/requests/outgoing')
+      .get('/requests/outgoing')
       .set('Authorization', `Bearer ${token1}`);
   });
 
   // Test Case 33: Get empty detailed outgoing requests
   it('should get empty detailed outgoing requests when none exist', async () => {
     const res = await request(app)
-      .get('/api/friends/requests/outgoing/detailed')
+      .get('/requests/outgoing/detailed')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -453,7 +453,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
 
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString()
@@ -463,7 +463,7 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 35: Respond with missing requestId field
   it('should handle respond with missing requestId field', async () => {
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         accept: true
@@ -488,12 +488,12 @@ describe('Advanced Friend Routes Tests', () => {
 
     // Get user1's friends (should have 3)
     const res1 = await request(app)
-      .get('/api/friends')
+      .get('/')
       .set('Authorization', `Bearer ${token1}`);
 
     // Get user2's friends (should have 3)
     const res2 = await request(app)
-      .get('/api/friends')
+      .get('/')
       .set('Authorization', `Bearer ${token2}`);
   });
 
@@ -507,7 +507,7 @@ describe('Advanced Friend Routes Tests', () => {
 
     // First accept
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
@@ -516,7 +516,7 @@ describe('Advanced Friend Routes Tests', () => {
 
     // Try to accept again
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
@@ -527,7 +527,7 @@ describe('Advanced Friend Routes Tests', () => {
   // Test Case 38: Invalid request ID format
   it('should handle invalid requestId format in respond', async () => {
     await request(app)
-      .post('/api/friends/respond')
+      .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: 'not-a-valid-objectid',
@@ -544,7 +544,7 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests')
+      .get('/requests')
       .set('Authorization', `Bearer ${token1}`);
   });
 
@@ -557,7 +557,7 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     const res = await request(app)
-      .get('/api/friends/requests/outgoing')
+      .get('/requests/outgoing')
       .set('Authorization', `Bearer ${token1}`);
   });
 });
