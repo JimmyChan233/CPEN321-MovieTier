@@ -59,7 +59,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
 
   it('should add first movie with rank 1', async () => {
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -85,7 +85,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -102,7 +102,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
 
   it('should create feed activity when adding first movie', async () => {
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -131,7 +131,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -149,7 +149,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
 
   it('should enrich missing posterPath and overview from TMDB', async () => {
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -168,7 +168,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     await Friendship.create({ userId: user1._id, friendId: user2._id });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -184,7 +184,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     await Friendship.create({ userId: user1._id, friendId: user2._id });
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -207,7 +207,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -237,7 +237,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -272,7 +272,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     ]);
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -303,7 +303,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -331,7 +331,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     await RankedMovie.create(movies);
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,
@@ -386,7 +386,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
 
     // Start comparison
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,
@@ -433,7 +433,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     ]);
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,
@@ -473,7 +473,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     ]);
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,
@@ -516,7 +516,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     ]);
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,
@@ -545,7 +545,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,
@@ -579,7 +579,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,
@@ -613,7 +613,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 400000,
@@ -639,7 +639,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     await mongoose.connection.close();
 
     const res = await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 500000,
@@ -662,7 +662,7 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     });
 
     await request(app)
-      .post('/api/movies/rank')
+      .post('/api/movies/add')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         movieId: 200000,

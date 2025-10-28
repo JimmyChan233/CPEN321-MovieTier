@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.55% </span>
+                <span class="strong">2.77% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/36</span>
+                <span class='fraction'>1/36</span>
             </div>
         
             
@@ -430,39 +430,39 @@
 <a name='L365'></a><a href='#L365'>365</a>
 <a name='L366'></a><a href='#L366'>366</a>
 <a name='L367'></a><a href='#L367'>367</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -475,8 +475,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -794,7 +794,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Load config first to ensure environment variables are available
 import '../config';
 import admin from 'firebase-admin';
@@ -819,16 +819,16 @@ class NotificationService {
       // Initialize Firebase Admin with service account
       const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 &nbsp;
-      <span class="missing-if-branch" title="if path not taken" >I</span>if (serviceAccountPath) {
-        const serviceAccount = <span class="cstat-no" title="statement not covered" >require(serviceAccountPath);</span>
-<span class="cstat-no" title="statement not covered" >        admin.initializeApp({</span>
+      if (serviceAccountPath) {
+        const serviceAccount = require(serviceAccountPath);
+        admin.initializeApp({
           credential: admin.credential.cert(serviceAccount)
         });
-<span class="cstat-no" title="statement not covered" >        this.initialized = true;</span>
-<span class="cstat-no" title="statement not covered" >        logger.success('Firebase Admin initialized with service account');</span>
-      } else if (process.env.FIREBASE_PROJECT_ID) {
+        this.initialized = true;
+        logger.success('Firebase Admin initialized with service account');
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (process.env.FIREBASE_PROJECT_ID) {</span>
         // Fallback: Initialize with environment variables (for production)
-        admin.initializeApp({
+<span class="cstat-no" title="statement not covered" >        admin.initializeApp({</span>
           credential: admin.credential.cert({
             projectId: process.env.FIREBASE_PROJECT_ID,
             clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
@@ -837,12 +837,12 @@ class NotificationService {
         });
 <span class="cstat-no" title="statement not covered" >        this.initialized = true;</span>
 <span class="cstat-no" title="statement not covered" >        logger.success('Firebase Admin initialized with environment variables');</span>
-      } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+      } else {
 <span class="cstat-no" title="statement not covered" >        logger.warn('Firebase credentials not found. Push notifications will be disabled.');</span>
       }
     } catch (error) {
-      logger.error('Failed to initialize Firebase Admin:', error);
-      this.initialized = false;
+<span class="cstat-no" title="statement not covered" >      logger.error('Failed to initialize Firebase Admin:', error);</span>
+<span class="cstat-no" title="statement not covered" >      this.initialized = false;</span>
     }
   }
 &nbsp;
@@ -1168,7 +1168,7 @@ export default new NotificationService();
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-28T19:08:11.343Z
+                at 2025-10-28T23:12:27.271Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

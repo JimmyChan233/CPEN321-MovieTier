@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">47.05% </span>
+                <span class="strong">41.17% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/17</span>
+                <span class='fraction'>7/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">15.38% </span>
+                <span class="strong">7.69% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/13</span>
+                <span class='fraction'>1/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">44.44% </span>
+                <span class="strong">33.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/9</span>
+                <span class='fraction'>3/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">47.05% </span>
+                <span class="strong">41.17% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/17</span>
+                <span class='fraction'>7/17</span>
             </div>
         
             
@@ -143,7 +143,7 @@
 <a name='L78'></a><a href='#L78'>78</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -170,35 +170,35 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -252,9 +252,9 @@ function getTimestamp(): string {
 &nbsp;
 function formatMessage(level: string, color: string, message: string, ...args: any[]): void {
   const timestamp = getTimestamp();
-  const formattedArgs = args.length &gt; 0 ? ' ' + args.map(arg =&gt;
-    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : <span class="branch-1 cbranch-no" title="branch not covered" >String(arg)</span>
-  ).join(' ') : <span class="branch-1 cbranch-no" title="branch not covered" >'';</span>
+  const formattedArgs = args.length &gt; 0 ? <span class="branch-0 cbranch-no" title="branch not covered" >' ' + args.map(<span class="fstat-no" title="function not covered" >arg </span>=&gt;</span>
+<span class="cstat-no" title="statement not covered" >    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)</span>
+  ).join(' ') : '';
 &nbsp;
   console.log(
     `${colors.dim}[${timestamp}]${colors.reset} ${color}${level}${colors.reset} ${message}${formattedArgs}`
@@ -266,16 +266,16 @@ export const logger = {
 <span class="cstat-no" title="statement not covered" >    formatMessage('INFO', colors.cyan, message, ...args);</span>
   },
 &nbsp;
-  success: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
-<span class="cstat-no" title="statement not covered" >    formatMessage('SUCCESS', colors.green, message, ...args);</span>
+  success: (message: string, ...args: any[]) =&gt; {
+    formatMessage('SUCCESS', colors.green, message, ...args);
   },
 &nbsp;
   warn: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
 <span class="cstat-no" title="statement not covered" >    formatMessage('WARN', colors.yellow, message, ...args);</span>
   },
 &nbsp;
-  error: (message: string, ...args: any[]) =&gt; {
-    formatMessage('ERROR', colors.red, message, ...args);
+  error: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
+<span class="cstat-no" title="statement not covered" >    formatMessage('ERROR', colors.red, message, ...args);</span>
   },
 &nbsp;
   debug: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
@@ -301,7 +301,7 @@ export const logger = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-28T19:08:11.343Z
+                at 2025-10-28T23:12:27.271Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

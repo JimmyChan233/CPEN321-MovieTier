@@ -60,7 +60,7 @@ describe('Unmocked: GET /movies/search', () => {
       .query({ query: 'a' });
 
     expect(res.status).toStrictEqual(400);
-    expect(res.body.message).toContain('characters' || 'length');
+    expect(res.body.message).toMatch(/characters|length/);
   });
 
   // Input: Empty query string
