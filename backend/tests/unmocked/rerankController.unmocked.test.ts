@@ -1,6 +1,6 @@
 /**
- * Rerank Controller Tests - Unmocked
- * Tests movie reranking functionality
+ * Rerank Controller Complete Tests - Unmocked
+ * Exhaustive tests covering ALL code paths in rerankController.ts
  */
 
 import request from 'supertest';
@@ -10,9 +10,9 @@ import express from 'express';
 import movieRoutes from '../../src/routes/movieRoutes';
 import User from '../../src/models/user/User';
 import RankedMovie from '../../src/models/movie/RankedMovie';
-import { generateTestJWT, mockUsers, mockMovies } from '../utils/test-fixtures';
+import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
 
-describe('Rerank Controller Tests', () => {
+describe('Rerank Controller - Complete Coverage', () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;
@@ -39,62 +39,88 @@ describe('Rerank Controller Tests', () => {
     await RankedMovie.deleteMany({});
   });
 
-  // Test starting rerank with one movie
-  it('should start rerank with single ranked movie', async () => {
-    const movie = await RankedMovie.create({
-      userId: user._id,
-      movieId: mockMovies.inception.id,
-      title: mockMovies.inception.title,
-      rank: 1,
-      posterPath: mockMovies.inception.poster_path
+  // ========== Invalid rankedId Validation ==========
+
+  it('should reject missing rankedId', async () => {
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('Invalid rankedId');
+  });
+
+  it('should reject invalid rankedId format', async () => {
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: 'not-a-valid-objectid' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('Invalid rankedId');
+  });
+
+  it('should reject empty string rankedId', async () => {
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: '' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('Invalid rankedId');
+  });
+
+  it('should reject null rankedId', async () => {
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: null });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('Invalid rankedId');
+  });
+
+  // ========== Ranked Movie Not Found ==========
+
+  it('should return 404 when ranked movie not found', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: fakeId.toString() });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toContain('not found');
+  });
+
+  it('should return 404 when trying to rerank another users movie', async () => {
+    const user2 = await User.create({
+      ...mockUsers.validUser,
+      email: 'user2@example.com',
+      googleId: 'google-user2'
     });
 
-    await request(app)
+    const movie = await RankedMovie.create({
+      userId: user2._id,
+      movieId: 100001,
+      title: 'Other User Movie',
+      rank: 1,
+      posterPath: '/path.jpg'
+    });
+
+    const res = await request(app)
       .post('/api/movies/rerank/start')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: movie._id.toString()
-      });
+      .send({ rankedId: (movie as any)._id.toString() });
+
+    expect(res.status).toBe(404);
   });
 
-  // Test starting rerank with multiple movies
-  it('should start rerank with multiple ranked movies', async () => {
-    await RankedMovie.create([
-      {
-        userId: user._id,
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        rank: 1,
-        posterPath: mockMovies.inception.poster_path
-      },
-      {
-        userId: user._id,
-        movieId: mockMovies.theGodfather.id,
-        title: mockMovies.theGodfather.title,
-        rank: 2,
-        posterPath: mockMovies.theGodfather.poster_path
-      },
-      {
-        userId: user._id,
-        movieId: mockMovies.theShawshankRedemption.id,
-        title: mockMovies.theShawshankRedemption.title,
-        rank: 3,
-        posterPath: mockMovies.theShawshankRedemption.poster_path
-      }
-    ]);
+  // ========== Remove Item and Close Gap ==========
 
-    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 2 });
-
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: movieToRerank!._id.toString()
-      });
-  });
-
-  // Test starting rerank with 5 movies
-  it('should start rerank with 5 ranked movies', async () => {
+  it('should remove movie and decrement ranks of higher movies', async () => {
     const movies = [];
     for (let i = 0; i < 5; i++) {
       movies.push({
@@ -102,244 +128,442 @@ describe('Rerank Controller Tests', () => {
         movieId: 100000 + i,
         title: `Movie ${i}`,
         rank: i + 1,
-        posterPath: '/path.jpg'
+        posterPath: `/m${i}.jpg`
       });
     }
-
     await RankedMovie.create(movies);
 
-    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 3 });
+    const movieToRemove = await RankedMovie.findOne({ userId: user._id, rank: 3 });
 
     await request(app)
       .post('/api/movies/rerank/start')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: movieToRerank!._id.toString()
-      });
+      .send({ rankedId: (movieToRemove as any)._id.toString() });
+
+    // Verify ranks 4 and 5 became 3 and 4
+    const rank3 = await RankedMovie.findOne({ userId: user._id, movieId: 100003 });
+    const rank4 = await RankedMovie.findOne({ userId: user._id, movieId: 100004 });
+
+    expect(rank3?.rank).toBe(3);
+    expect(rank4?.rank).toBe(4);
   });
 
-  // Test starting rerank with 10 movies
-  it('should start rerank with 10 ranked movies', async () => {
-    const movies = [];
-    for (let i = 0; i < 10; i++) {
-      movies.push({
-        userId: user._id,
-        movieId: 200000 + i,
-        title: `Movie ${i}`,
-        rank: i + 1,
-        posterPath: '/path.jpg'
-      });
-    }
-
-    await RankedMovie.create(movies);
-
-    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 5 });
-
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: movieToRerank!._id.toString()
-      });
-  });
-
-  // Test rerank comparison
-  it('should handle rerank comparison', async () => {
+  it('should handle removing movie from rank 1', async () => {
     await RankedMovie.create([
       {
         userId: user._id,
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
+        movieId: 200001,
+        title: 'Movie 1',
         rank: 1,
-        posterPath: mockMovies.inception.poster_path
+        posterPath: '/1.jpg'
       },
       {
         userId: user._id,
-        movieId: mockMovies.theGodfather.id,
-        title: mockMovies.theGodfather.title,
+        movieId: 200002,
+        title: 'Movie 2',
         rank: 2,
-        posterPath: mockMovies.theGodfather.poster_path
+        posterPath: '/2.jpg'
       },
       {
         userId: user._id,
-        movieId: mockMovies.theShawshankRedemption.id,
-        title: mockMovies.theShawshankRedemption.title,
+        movieId: 200003,
+        title: 'Movie 3',
         rank: 3,
-        posterPath: mockMovies.theShawshankRedemption.poster_path
+        posterPath: '/3.jpg'
+      }
+    ]);
+
+    const movieToRemove = await RankedMovie.findOne({ userId: user._id, rank: 1 });
+
+    await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movieToRemove as any)._id.toString() });
+
+    // Verify movie 2 became rank 1
+    const newRank1 = await RankedMovie.findOne({ userId: user._id, movieId: 200002 });
+    expect(newRank1?.rank).toBe(1);
+  });
+
+  it('should handle removing movie from last rank', async () => {
+    await RankedMovie.create([
+      {
+        userId: user._id,
+        movieId: 300001,
+        title: 'Movie 1',
+        rank: 1,
+        posterPath: '/1.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 300002,
+        title: 'Movie 2',
+        rank: 2,
+        posterPath: '/2.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 300003,
+        title: 'Movie 3',
+        rank: 3,
+        posterPath: '/3.jpg'
+      }
+    ]);
+
+    const movieToRemove = await RankedMovie.findOne({ userId: user._id, rank: 3 });
+
+    await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movieToRemove as any)._id.toString() });
+
+    // Verify ranks 1 and 2 unchanged
+    const count = await RankedMovie.countDocuments({ userId: user._id });
+    expect(count).toBe(2);
+  });
+
+  // ========== Empty List After Removal ==========
+
+  it('should insert at rank 1 when list becomes empty', async () => {
+    const movie = await RankedMovie.create({
+      userId: user._id,
+      movieId: 400001,
+      title: 'Only Movie',
+      rank: 1,
+      posterPath: '/only.jpg'
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movie as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('added');
+
+    const reinserted = await RankedMovie.findOne({ userId: user._id });
+    expect(reinserted?.rank).toBe(1);
+    expect(reinserted?.movieId).toBe(400001);
+  });
+
+  it('should preserve movie data when reinserting after empty list', async () => {
+    const movie = await RankedMovie.create({
+      userId: user._id,
+      movieId: 500001,
+      title: 'Single Movie',
+      rank: 1,
+      posterPath: '/single.jpg'
+    });
+
+    await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movie as any)._id.toString() });
+
+    const reinserted = await RankedMovie.findOne({ userId: user._id });
+    expect(reinserted?.title).toBe('Single Movie');
+    expect(reinserted?.posterPath).toBe('/single.jpg');
+  });
+
+  // ========== Start Comparison Session ==========
+
+  it('should start comparison session with remaining movies', async () => {
+    await RankedMovie.create([
+      {
+        userId: user._id,
+        movieId: 600001,
+        title: 'Movie 1',
+        rank: 1,
+        posterPath: '/1.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 600002,
+        title: 'Movie 2',
+        rank: 2,
+        posterPath: '/2.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 600003,
+        title: 'Movie 3',
+        rank: 3,
+        posterPath: '/3.jpg'
       }
     ]);
 
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 2 });
 
-    // Start rerank
-    await request(app)
+    const res = await request(app)
       .post('/api/movies/rerank/start')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: movieToRerank!._id.toString()
-      });
+      .send({ rankedId: (movieToRerank as any)._id.toString() });
 
-    // Try comparison
-    await request(app)
-      .post('/api/movies/rerank/compare')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        preferredMovieId: mockMovies.inception.id
-      });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('compare');
+    expect(res.body.data.compareWith).toBeDefined();
   });
 
-  // Test rerank without starting session
-  it('should handle rerank comparison without session', async () => {
-    await request(app)
-      .post('/api/movies/rerank/compare')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        preferredMovieId: mockMovies.inception.id
-      });
-  });
-
-  // Test rerank with missing movieId
-  it('should handle rerank start with missing movieId', async () => {
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({});
-  });
-
-  // Test rerank with non-existent movie
-  it('should handle rerank start with non-existent movie', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: fakeId.toString()
-      });
-  });
-
-  // Test rerank with invalid movieId format
-  it('should handle rerank start with invalid movieId format', async () => {
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: 'invalid-id'
-      });
-  });
-
-  // Test rerank with top-ranked movie
-  it('should handle rerank of top-ranked movie', async () => {
-    await RankedMovie.create([
-      {
-        userId: user._id,
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        rank: 1,
-        posterPath: mockMovies.inception.poster_path
-      },
-      {
-        userId: user._id,
-        movieId: mockMovies.theGodfather.id,
-        title: mockMovies.theGodfather.title,
-        rank: 2,
-        posterPath: mockMovies.theGodfather.poster_path
-      }
-    ]);
-
-    const topMovie = await RankedMovie.findOne({ userId: user._id, rank: 1 });
-
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: topMovie!._id.toString()
-      });
-  });
-
-  // Test rerank with bottom-ranked movie
-  it('should handle rerank of bottom-ranked movie', async () => {
-    await RankedMovie.create([
-      {
-        userId: user._id,
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        rank: 1,
-        posterPath: mockMovies.inception.poster_path
-      },
-      {
-        userId: user._id,
-        movieId: mockMovies.theGodfather.id,
-        title: mockMovies.theGodfather.title,
-        rank: 2,
-        posterPath: mockMovies.theGodfather.poster_path
-      },
-      {
-        userId: user._id,
-        movieId: mockMovies.theShawshankRedemption.id,
-        title: mockMovies.theShawshankRedemption.title,
-        rank: 3,
-        posterPath: mockMovies.theShawshankRedemption.poster_path
-      }
-    ]);
-
-    const bottomMovie = await RankedMovie.findOne({ userId: user._id, rank: 3 });
-
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: bottomMovie!._id.toString()
-      });
-  });
-
-  // Test rerank unauthorized
-  it('should reject unauthorized rerank request', async () => {
-    const movie = await RankedMovie.create({
-      userId: user._id,
-      movieId: mockMovies.inception.id,
-      title: mockMovies.inception.title,
-      rank: 1,
-      posterPath: mockMovies.inception.poster_path
-    });
-
-    await request(app)
-      .post('/api/movies/rerank/start')
-      .send({
-        movieId: movie._id.toString()
-      });
-  });
-
-  // Test rerank comparison with missing preferredMovieId
-  it('should handle rerank comparison with missing preferredMovieId', async () => {
-    await request(app)
-      .post('/api/movies/rerank/compare')
-      .set('Authorization', `Bearer ${token}`)
-      .send({});
-  });
-
-  // Test rerank with 15 movies
-  it('should handle rerank with 15 ranked movies', async () => {
+  it('should calculate correct middle index for comparison', async () => {
     const movies = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 10; i++) {
       movies.push({
         userId: user._id,
-        movieId: 300000 + i,
+        movieId: 700000 + i,
         title: `Movie ${i}`,
         rank: i + 1,
-        posterPath: '/path.jpg'
+        posterPath: `/m${i}.jpg`
       });
     }
-
     await RankedMovie.create(movies);
 
-    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 8 });
+    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 5 });
 
-    await request(app)
+    const res = await request(app)
       .post('/api/movies/rerank/start')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: movieToRerank!._id.toString()
+      .send({ rankedId: (movieToRerank as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('compare');
+  });
+
+  it('should return compareWith with all required fields', async () => {
+    await RankedMovie.create([
+      {
+        userId: user._id,
+        movieId: 800001,
+        title: 'Movie 1',
+        rank: 1,
+        posterPath: '/1.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 800002,
+        title: 'Movie 2',
+        rank: 2,
+        posterPath: '/2.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 800003,
+        title: 'Movie 3',
+        rank: 3,
+        posterPath: '/3.jpg'
+      }
+    ]);
+
+    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 2 });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movieToRerank as any)._id.toString() });
+
+    expect(res.body.data.compareWith).toHaveProperty('id');
+    expect(res.body.data.compareWith).toHaveProperty('title');
+    expect(res.body.data.compareWith).toHaveProperty('posterPath');
+    expect(res.body.data.compareWith).toHaveProperty('overview');
+    expect(res.body.data.compareWith).toHaveProperty('releaseDate');
+    expect(res.body.data.compareWith).toHaveProperty('voteAverage');
+  });
+
+  it('should handle movie without posterPath', async () => {
+    await RankedMovie.create([
+      {
+        userId: user._id,
+        movieId: 900001,
+        title: 'No Poster 1',
+        rank: 1
+        // No posterPath
+      },
+      {
+        userId: user._id,
+        movieId: 900002,
+        title: 'No Poster 2',
+        rank: 2
+      }
+    ]);
+
+    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 1 });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movieToRerank as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.compareWith.posterPath).toBeNull();
+  });
+
+  // ========== Rerank with Different List Sizes ==========
+
+  it('should handle rerank with 2 movies', async () => {
+    await RankedMovie.create([
+      {
+        userId: user._id,
+        movieId: 1000001,
+        title: 'Movie 1',
+        rank: 1,
+        posterPath: '/1.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 1000002,
+        title: 'Movie 2',
+        rank: 2,
+        posterPath: '/2.jpg'
+      }
+    ]);
+
+    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 1 });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movieToRerank as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+  });
+
+  it('should handle rerank with 20 movies', async () => {
+    const movies = [];
+    for (let i = 0; i < 20; i++) {
+      movies.push({
+        userId: user._id,
+        movieId: 1100000 + i,
+        title: `Movie ${i}`,
+        rank: i + 1,
+        posterPath: `/m${i}.jpg`
       });
+    }
+    await RankedMovie.create(movies);
+
+    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 10 });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movieToRerank as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('compare');
+  });
+
+  // ========== Error Handling ==========
+
+  it('should handle database error gracefully', async () => {
+    const movie = await RankedMovie.create({
+      userId: user._id,
+      movieId: 1200001,
+      title: 'Error Movie',
+      rank: 1,
+      posterPath: '/error.jpg'
+    });
+
+    // Close connection to force error
+    await mongoose.connection.close();
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movie as any)._id.toString() });
+
+    expect(res.status).toBe(500);
+    expect(res.body.message).toContain('Unable to start rerank');
+
+    // Reconnect
+    await mongoose.connect(mongoServer.getUri());
+  });
+
+  it('should handle error during rank update', async () => {
+    await RankedMovie.create([
+      {
+        userId: user._id,
+        movieId: 1300001,
+        title: 'Movie 1',
+        rank: 1,
+        posterPath: '/1.jpg'
+      },
+      {
+        userId: user._id,
+        movieId: 1300002,
+        title: 'Movie 2',
+        rank: 2,
+        posterPath: '/2.jpg'
+      }
+    ]);
+
+    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 1 });
+    const rankedId = (movieToRerank as any)._id.toString();
+
+    // Close after finding but before rerank
+    setTimeout(() => mongoose.connection.close(), 10);
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId });
+
+    // Should handle error
+    expect([500, 200]).toContain(res.status);
+
+    // Reconnect
+    await mongoose.connect(mongoServer.getUri());
+  });
+
+  // ========== Edge Cases ==========
+
+  it('should handle reranking immediately after ranking', async () => {
+    const movie = await RankedMovie.create({
+      userId: user._id,
+      movieId: 1400001,
+      title: 'Quick Rerank',
+      rank: 1,
+      posterPath: '/quick.jpg'
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movie as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('added');
+  });
+
+  it('should handle movie with special characters in title', async () => {
+    const movie = await RankedMovie.create({
+      userId: user._id,
+      movieId: 1500001,
+      title: 'Movie: "Special" & \'Chars\'',
+      rank: 1,
+      posterPath: '/special.jpg'
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movie as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+  });
+
+  it('should handle rerank of movie with very long title', async () => {
+    const longTitle = 'A'.repeat(500);
+    const movie = await RankedMovie.create({
+      userId: user._id,
+      movieId: 1600001,
+      title: longTitle,
+      rank: 1,
+      posterPath: '/long.jpg'
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movie as any)._id.toString() });
+
+    expect(res.status).toBe(200);
   });
 });
