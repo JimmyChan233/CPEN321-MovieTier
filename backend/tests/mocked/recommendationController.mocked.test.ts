@@ -857,5 +857,47 @@ describe('Recommendation Controller - Mocked Tests', () => {
 
       expect(res.status).toBe(200);
     });
+
+    it('should handle discover recommendations failure gracefully', async () => {
+      // Create 3 ranked movies
+      await RankedMovie.create([
+        { userId: (user as any)._id, movieId: 550, title: 'Fight Club', rank: 1 },
+        { userId: (user as any)._id, movieId: 680, title: 'Pulp Fiction', rank: 2 },
+        { userId: (user as any)._id, movieId: 13, title: 'Forrest Gump', rank: 3 }
+      ]);
+
+      // Mock movie details for analysis
+      for (let i = 0; i < 3; i++) {
+        mockTmdbGet.mockResolvedValueOnce({
+          data: {
+            genres: [{ id: 18, name: 'Drama' }],
+            original_language: 'en',
+            vote_average: 8.5
+          }
+        });
+      }
+
+      // Make discover API call fail
+      mockTmdbGet.mockRejectedValueOnce(new Error('Discover API error'));
+
+      // Mock similar movies calls (should still succeed)
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [{ id: 999, title: 'Similar Movie', overview: 'Test', poster_path: '/test.jpg', release_date: '2020-01-01', vote_average: 7.5 }] }
+      });
+
+      // Mock trending fallback
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [{ id: 888, title: 'Trending Movie', overview: 'Test', poster_path: '/test2.jpg', release_date: '2021-01-01', vote_average: 7.0 }] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      // Should still return 200 with recommendations from other sources
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
+    });
   });
 });

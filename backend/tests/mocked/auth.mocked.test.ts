@@ -104,6 +104,32 @@ describe('Mocked: POST /auth/signin', () => {
 
     expect(res.status).toStrictEqual(400);
   });
+
+  it('should successfully sign in with valid credentials', async () => {
+    const mockUser = {
+      _id: 'user-123',
+      email: 'test@example.com',
+      name: 'Test User',
+      profileImageUrl: 'https://example.com/pic.jpg'
+    };
+
+    jest.spyOn(AuthService.prototype, 'signIn').mockResolvedValueOnce({
+      user: mockUser as any,
+      token: 'mock-jwt-token'
+    });
+
+    const res = await request(app)
+      .post('/api/auth/signin')
+      .send({
+        idToken: 'valid-google-token'
+      });
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user).toBeDefined();
+    expect(res.body.token).toBe('mock-jwt-token');
+    expect(res.body.user.email).toBe('test@example.com');
+  });
 });
 
 // Interface POST /auth/signup
@@ -196,6 +222,32 @@ describe('Mocked: POST /auth/signup', () => {
 
     expect(res.status).toStrictEqual(400);
     expect(res.body.message).toMatch(/Invalid Google token|Unable to sign up/i);
+  });
+
+  it('should successfully sign up with valid credentials', async () => {
+    const mockUser = {
+      _id: 'new-user-123',
+      email: 'newuser@example.com',
+      name: 'New User',
+      profileImageUrl: 'https://example.com/newpic.jpg'
+    };
+
+    jest.spyOn(AuthService.prototype, 'signUp').mockResolvedValueOnce({
+      user: mockUser as any,
+      token: 'mock-jwt-token-signup'
+    });
+
+    const res = await request(app)
+      .post('/api/auth/signup')
+      .send({
+        idToken: 'valid-google-token'
+      });
+
+    expect(res.status).toStrictEqual(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user).toBeDefined();
+    expect(res.body.token).toBe('mock-jwt-token-signup');
+    expect(res.body.user.email).toBe('newuser@example.com');
   });
 });
 
