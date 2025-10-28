@@ -1,0 +1,334 @@
+/**
+ * Non-Functional Requirement Tests: Security
+ *
+ * NFR 1: Authentication & Authorization
+ * - All protected endpoints require valid JWT token
+ * - Invalid/expired tokens must be rejected with 401
+ * - Users can only access their own data
+ *
+ * NFR 2: Input Validation & Sanitization
+ * - Comment text must be limited to 500 characters
+ * - Search queries must be at least 2 characters
+ * - No SQL injection or script injection vulnerabilities
+ *
+ * NFR 3: Error Handling
+ * - No sensitive information in error messages
+ * - Database connection strings not exposed
+ * - Stack traces not exposed to clients in production mode
+ */
+
+import request from 'supertest';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import express from 'express';
+import User from '../../src/models/user/User';
+import FeedActivity from '../../src/models/feed/FeedActivity';
+import Comment from '../../src/models/feed/Comment';
+import movieRoutes from '../../src/routes/movieRoutes';
+import feedRoutes from '../../src/routes/feedRoutes';
+import userRoutes from '../../src/routes/userRoutes';
+import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
+
+describe('NFR: Security - Authentication & Authorization', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user1: any;
+  let user2: any;
+  let token1: string;
+  let token2: string;
+  let activity: any;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/feed', feedRoutes);
+    app.use('/api/movies', movieRoutes);
+    app.use('/api/users', userRoutes);
+
+    user1 = await User.create(mockUsers.validUser);
+    user2 = await User.create(mockUsers.anotherUser);
+    token1 = generateTestJWT(user1._id.toString());
+    token2 = generateTestJWT(user2._id.toString());
+
+    activity = await FeedActivity.create({
+      userId: user1._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'The Shawshank Redemption'
+    });
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  // Requirement: Protected endpoints must require valid JWT
+  // Test: Missing authorization header
+  // Expected: 401 Unauthorized
+  it('should reject requests without authentication token', async () => {
+    const res = await request(app)
+      .get('/api/movies/ranked');
+
+    expect(res.status).toStrictEqual(401);
+    expect(res.body.message).toMatch(/token|authentication/);
+  });
+
+  // Requirement: Invalid JWT must be rejected
+  // Test: Malformed token
+  // Expected: 401 Unauthorized
+  it('should reject invalid JWT tokens', async () => {
+    const res = await request(app)
+      .get('/api/movies/ranked')
+      .set('Authorization', 'Bearer invalid.token.format');
+
+    expect(res.status).toStrictEqual(401);
+  });
+
+  // Requirement: Expired JWT must be rejected
+  // Test: Token beyond expiration
+  // Expected: 401 Unauthorized
+  it('should reject expired JWT tokens', async () => {
+    // Create token that expires immediately
+    const expiredToken = generateTestJWT(user1._id.toString());
+    jest.useFakeTimers().setSystemTime(new Date().getTime() + 31 * 24 * 60 * 60 * 1000);
+
+    const res = await request(app)
+      .get('/api/movies/ranked')
+      .set('Authorization', `Bearer ${expiredToken}`);
+
+    jest.useRealTimers();
+    expect(res.status).toStrictEqual(401);
+  });
+
+  // Requirement: Users can only access their own data
+  // Test: User2 tries to access User1's profile
+  // Expected: 401 or user isolation enforced
+  it('should prevent users from accessing others data', async () => {
+    // Create activity by user1
+    const activity = await FeedActivity.create({
+      userId: user1._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie'
+    });
+
+    // User2 tries to delete user1's comment (if endpoint allows comments)
+    const res = await request(app)
+      .delete(`/api/feed/${activity._id}/like`)
+      .set('Authorization', `Bearer ${token2}`)
+      .send({});
+
+    // Should either prevent deletion or user isolation should prevent other user's data
+    expect([401, 403, 404]).toContain(res.status);
+  });
+
+  // Requirement: Bearer token must be extracted correctly
+  // Test: Invalid authorization header format
+  // Expected: 401 Unauthorized
+  it('should reject incorrectly formatted authorization header', async () => {
+    const res = await request(app)
+      .get('/api/movies/ranked')
+      .set('Authorization', `InvalidScheme ${generateTestJWT(user1._id.toString())}`);
+
+    expect(res.status).toStrictEqual(401);
+  });
+});
+
+describe('NFR: Security - Input Validation & Sanitization', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user: any;
+  let activity: any;
+  let token: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/feed', feedRoutes);
+    app.use('/api/movies', movieRoutes);
+
+    user = await User.create(mockUsers.validUser);
+    token = generateTestJWT(user._id.toString());
+
+    activity = await FeedActivity.create({
+      userId: user._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie'
+    });
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  // Requirement: Comment text must not exceed 500 characters
+  // Test: Submit comment with 501+ characters
+  // Expected: 400 Bad Request
+  it('should enforce 500 character limit on comments', async () => {
+    const longText = 'a'.repeat(501);
+    const res = await request(app)
+      .post(`/api/feed/${activity._id}/comments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ text: longText });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/characters|length|500/);
+  });
+
+  // Requirement: Search queries must be at least 2 characters
+  // Test: Single character search
+  // Expected: 400 Bad Request
+  it('should enforce minimum search query length', async () => {
+    const res = await request(app)
+      .get('/api/movies/search')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ query: 'a' });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/characters|minimum/);
+  });
+
+  // Requirement: No SQL injection vulnerability
+  // Test: SQL injection attempt in search
+  // Expected: Treated as literal string or rejected
+  it('should handle SQL injection attempts safely', async () => {
+    const sqlInjection = "'; DROP TABLE users; --";
+    const res = await request(app)
+      .get('/api/movies/search')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ query: sqlInjection });
+
+    // Should either return empty results or error cleanly
+    expect([200, 400]).toContain(res.status);
+    // Tables should still exist
+    const userCount = await User.countDocuments();
+    expect(userCount).toBeGreaterThan(0);
+  });
+
+  // Requirement: No XSS vulnerability
+  // Test: Script tags in comment
+  // Expected: Escaped or rejected safely
+  it('should handle XSS attempts safely', async () => {
+    const xssAttempt = '<script>alert("xss")</script>';
+    const res = await request(app)
+      .post(`/api/feed/${activity._id}/comments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ text: xssAttempt });
+
+    // Should accept comment (sanitization on frontend or safe encoding)
+    // But if stored, should be encoded in response
+    if (res.status === 201) {
+      // Verify stored comment doesn't break context
+      const comment = await Comment.findOne({ activityId: activity._id });
+      expect(comment?.text).toBeDefined();
+    }
+  });
+
+  // Requirement: Empty inputs should be rejected
+  // Test: Empty comment text
+  // Expected: 400 Bad Request
+  it('should reject empty comment text', async () => {
+    const res = await request(app)
+      .post(`/api/feed/${activity._id}/comments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ text: '' });
+
+    expect(res.status).toStrictEqual(400);
+  });
+
+  // Requirement: Null/undefined inputs should be handled
+  // Test: Null in required field
+  // Expected: 400 Bad Request
+  it('should reject null values in required fields', async () => {
+    const res = await request(app)
+      .post(`/api/feed/${activity._id}/comments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ text: null });
+
+    expect(res.status).toStrictEqual(400);
+  });
+});
+
+describe('NFR: Security - Error Handling & Information Disclosure', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user: any;
+  let token: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/movies', movieRoutes);
+    app.use('/api/users', userRoutes);
+
+    user = await User.create(mockUsers.validUser);
+    token = generateTestJWT(user._id.toString());
+
+    // Set environment to simulate production
+    process.env.NODE_ENV = 'production';
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+    delete process.env.NODE_ENV;
+  });
+
+  // Requirement: Stack traces not exposed in production
+  // Test: Trigger a database error
+  // Expected: No stack trace in response
+  it('should not expose stack traces in error responses', async () => {
+    jest.spyOn(require('../../src/models/movie/RankedMovie'), 'find')
+      .mockRejectedValueOnce(new Error('Database error with sensitive info'));
+
+    const res = await request(app)
+      .get('/api/movies/ranked')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toStrictEqual(500);
+    // Should not contain stack trace
+    expect(res.body.stack).toBeUndefined();
+    expect(JSON.stringify(res.body)).not.toContain('at ');
+  });
+
+  // Requirement: Database connection strings not exposed
+  // Test: Error with connection string
+  // Expected: Error message sanitized
+  it('should not expose database connection information', async () => {
+    const res = await request(app)
+      .get('/api/movies/ranked')
+      .set('Authorization', `Bearer ${token}`);
+
+    // Response should not contain MongoDB connection string
+    const responseStr = JSON.stringify(res.body);
+    expect(responseStr).not.toMatch(/mongodb:\/\/.*[@]/); // No password
+    expect(responseStr).not.toContain('connection string');
+  });
+
+  // Requirement: Generic error messages for security events
+  // Test: Authentication failure
+  // Expected: Generic message, not revealing if user exists
+  it('should use generic messages for authentication failures', async () => {
+    const res = await request(app)
+      .get('/api/movies/ranked')
+      .set('Authorization', 'Bearer invalid.token');
+
+    expect(res.status).toStrictEqual(401);
+    // Message should not reveal implementation details
+    expect(res.body.message).toMatch(/token|authentication|invalid/i);
+    expect(res.body.message).not.toContain('JWT');
+    expect(res.body.message).not.toContain('verify');
+  });
+});

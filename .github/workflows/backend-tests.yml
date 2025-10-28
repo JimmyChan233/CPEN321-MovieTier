@@ -1,0 +1,98 @@
+name: Backend Tests CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    services:
+      mongodb:
+        image: mongo:5
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd mongosh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: 'backend/package-lock.json'
+
+    - name: Install backend dependencies
+      run: npm ci
+      working-directory: ./backend
+
+    - name: Run backend tests
+      run: npm test -- --coverage --forceExit
+      working-directory: ./backend
+      env:
+        MONGODB_URI: mongodb://localhost:27017/movietier-test
+        JWT_SECRET: test-jwt-secret-key
+        GOOGLE_CLIENT_ID: test-google-client-id
+        TMDB_API_KEY: test-tmdb-api-key
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./backend/coverage/lcov.info
+        flags: backend
+        fail_ci_if_error: false
+
+    - name: Generate coverage badge
+      run: |
+        npm install -g coverage-badge
+        coverage-badge -o coverage/badge.svg
+      working-directory: ./backend
+      continue-on-error: true
+
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: backend/coverage/
+
+    - name: Comment PR with test results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const coverage = fs.readFileSync('./backend/coverage/coverage-summary.json', 'utf8');
+          const summary = JSON.parse(coverage).total;
+
+          const comment = `## Test Results
+
+          | Metric | Coverage |
+          |--------|----------|
+          | Statements | ${summary.statements.pct}% |
+          | Branches | ${summary.branches.pct}% |
+          | Functions | ${summary.functions.pct}% |
+          | Lines | ${summary.lines.pct}% |
+
+          ✅ Tests completed successfully!`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+      continue-on-error: true
