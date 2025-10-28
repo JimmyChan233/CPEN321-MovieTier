@@ -178,6 +178,20 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.length).toBeGreaterThan(0);
     });
+
+    it('should handle database error gracefully', async () => {
+      await mongoose.disconnect();
+
+      const res = await request(app)
+        .get('/api/users/search?query=Test')
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to search users');
+
+      await mongoose.connect(mongoServer.getUri());
+    });
   });
 
   // ==================== PUT /profile Tests ====================
@@ -272,6 +286,21 @@ describe('User Routes - Unmocked Tests', () => {
       const updated = await User.findById((user1 as any)._id);
       expect(updated?.googleId).toBe(originalGoogleId);
     });
+
+    it('should handle database error gracefully', async () => {
+      await mongoose.disconnect();
+
+      const res = await request(app)
+        .put('/api/users/profile')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({ name: 'New Name' });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to update profile');
+
+      await mongoose.connect(mongoServer.getUri());
+    });
   });
 
   // ==================== POST /fcm-token Tests ====================
@@ -365,6 +394,21 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('not found');
     });
+
+    it('should handle database error gracefully', async () => {
+      await mongoose.disconnect();
+
+      const res = await request(app)
+        .post('/api/users/fcm-token')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({ token: 'fcm-token' });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to register FCM token');
+
+      await mongoose.connect(mongoServer.getUri());
+    });
   });
 
   // ==================== GET /:userId Tests ====================
@@ -415,6 +459,20 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.data).toHaveProperty('name');
       expect(res.body.data).not.toHaveProperty('googleId');
       expect(res.body.data).not.toHaveProperty('fcmToken');
+    });
+
+    it('should handle database error gracefully', async () => {
+      await mongoose.disconnect();
+
+      const res = await request(app)
+        .get(`/api/users/${(user2 as any)._id}`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to load user');
+
+      await mongoose.connect(mongoServer.getUri());
     });
   });
 
@@ -501,6 +559,20 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data).toEqual([]);
+    });
+
+    it('should handle database error gracefully', async () => {
+      await mongoose.disconnect();
+
+      const res = await request(app)
+        .get(`/api/users/${(user2 as any)._id}/watchlist`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to load user watchlist');
+
+      await mongoose.connect(mongoServer.getUri());
     });
   });
 });
