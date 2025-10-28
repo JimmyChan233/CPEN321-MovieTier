@@ -11,10 +11,17 @@
 ## Backend Test Specification: APIs
 
 ### Coverage Summary
-- **Line Coverage**: 90.34% (1085/1201 lines)
-- **Branch Coverage**: 70.32% (365/519 branches)
+- **Line Coverage**: 90.67% (1089/1201 lines) ⬆️ +0.33%
+- **Branch Coverage**: 71.48% (371/519 branches) ⬆️ +1.16%
 - **Function Coverage**: 92.61% (138/149 functions)
-- **Statement Coverage**: 89.77% (1141/1271 statements)
+- **Statement Coverage**: 90.08% (1145/1271 statements) ⬆️ +0.31%
+
+**Recent Improvements**:
+- Fixed TypeScript compilation errors in test files
+- Fixed import paths for Feed models (Like, Comment)
+- Corrected movieComparisonController tests to use proper `/add` endpoint
+- Improved test pass rate: 567 passing tests (79% pass rate)
+- Branch coverage increased from 70.32% to 71.48%
 
 ### API Test Matrix
 
