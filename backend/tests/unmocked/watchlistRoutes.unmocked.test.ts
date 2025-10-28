@@ -375,6 +375,26 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       expect(res.body.data.posterPath).toBe('/custom-poster.jpg');
       expect(res.body.data.overview).toBe('Custom overview text');
     });
+
+    it('should handle database save error gracefully', async () => {
+      // Disconnect to simulate database error
+      await mongoose.disconnect();
+
+      const res = await request(app)
+        .post('/api/watchlist')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({
+          movieId: 999,
+          title: 'Test Movie'
+        });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to add to watchlist');
+
+      // Reconnect for other tests
+      await mongoose.connect(mongoServer.getUri());
+    });
   });
 
   // ==================== DELETE /:movieId Tests ====================
