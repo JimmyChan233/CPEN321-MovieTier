@@ -64,7 +64,8 @@ describe('Unmocked: GET /recommendations', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   // Input: User with no ranked movies
@@ -77,7 +78,8 @@ describe('Unmocked: GET /recommendations', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   // Input: No authentication token
@@ -125,7 +127,8 @@ describe('Unmocked: GET /recommendations/trending', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   // Input: No authentication token

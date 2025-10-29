@@ -61,8 +61,9 @@ describe('Unmocked: GET /friends', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(2);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(2);
   });
 
   // Input: User with no friends
@@ -82,8 +83,9 @@ describe('Unmocked: GET /friends', () => {
       .set('Authorization', `Bearer ${newToken}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(0);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(0);
   });
 
   // Input: No authentication token
@@ -144,8 +146,9 @@ describe('Unmocked: GET /friends/requests', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
   });
 });
 
@@ -309,7 +312,7 @@ describe('Unmocked: POST /friends/respond', () => {
     const res = await request(app)
       .post('/respond')
       .set('Authorization', `Bearer ${token}`)
-      .send({ requestId: friendRequest._id, action: 'accept' });
+      .send({ requestId: friendRequest._id, accept: true });
 
     expect(res.status).toStrictEqual(200);
 
@@ -335,7 +338,7 @@ describe('Unmocked: POST /friends/respond', () => {
     const res = await request(app)
       .post('/respond')
       .set('Authorization', `Bearer ${token}`)
-      .send({ requestId: newRequest._id, action: 'reject' });
+      .send({ requestId: newRequest._id, accept: false });
 
     expect(res.status).toStrictEqual(200);
   });

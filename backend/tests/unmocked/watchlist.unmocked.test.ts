@@ -64,8 +64,9 @@ describe('Unmocked: GET /watchlist', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(2);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(2);
   });
 
   // Input: User with empty watchlist
@@ -78,8 +79,9 @@ describe('Unmocked: GET /watchlist', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(0);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(0);
   });
 
   // Input: No authentication token

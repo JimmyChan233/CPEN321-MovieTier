@@ -62,7 +62,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
     })
     await item.save()
 
-    return res.json({ success: true, data: item })
+    return res.status(201).json({ success: true, data: item })
   } catch (error) {
     console.error(error)
     res

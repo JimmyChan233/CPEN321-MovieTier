@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">64.7% </span>
+                <span class="strong">52.94% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/17</span>
+                <span class='fraction'>9/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">23.07% </span>
+                <span class="strong">15.38% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/13</span>
+                <span class='fraction'>2/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.77% </span>
+                <span class="strong">55.55% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/9</span>
+                <span class='fraction'>5/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">64.7% </span>
+                <span class="strong">52.94% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/17</span>
+                <span class='fraction'>9/17</span>
             </div>
         
             
@@ -170,23 +170,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -194,11 +198,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -254,7 +254,7 @@ function formatMessage(level: string, color: string, message: string, ...args: a
   const timestamp = getTimestamp();
   const formattedArgs = args.length &gt; 0 ? ' ' + args.map(arg =&gt;
     typeof arg === 'object' ? JSON.stringify(arg, null, 2) : <span class="branch-1 cbranch-no" title="branch not covered" >String(arg)</span>
-  ).join(' ') : '';
+  ).join(' ') : <span class="branch-1 cbranch-no" title="branch not covered" >'';</span>
 &nbsp;
   console.log(
     `${colors.dim}[${timestamp}]${colors.reset} ${color}${level}${colors.reset} ${message}${formattedArgs}`
@@ -262,12 +262,12 @@ function formatMessage(level: string, color: string, message: string, ...args: a
 }
 &nbsp;
 export const logger = {
-  info: (message: string, ...args: any[]) =&gt; {
-    formatMessage('INFO', colors.cyan, message, ...args);
+  info: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
+<span class="cstat-no" title="statement not covered" >    formatMessage('INFO', colors.cyan, message, ...args);</span>
   },
 &nbsp;
-  success: (message: string, ...args: any[]) =&gt; {
-    formatMessage('SUCCESS', colors.green, message, ...args);
+  success: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
+<span class="cstat-no" title="statement not covered" >    formatMessage('SUCCESS', colors.green, message, ...args);</span>
   },
 &nbsp;
   warn: (message: string, ...args: any[]) =&gt; {
@@ -301,7 +301,7 @@ export const logger = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-28T21:26:18.745Z
+                at 2025-10-29T00:09:23.334Z
             </div>
         <script src="../prettify.js"></script>
         <script>
