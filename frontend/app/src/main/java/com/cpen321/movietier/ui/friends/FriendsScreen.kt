@@ -44,74 +44,34 @@ fun FriendsScreen(
 ) {
     val uiState by friendViewModel.uiState.collectAsState()
     var showAddFriendDialog by remember { mutableStateOf(false) }
-
     val snackbarHostState = remember { SnackbarHostState() }
 
+    FriendsEventHandler(friendViewModel, snackbarHostState)
+
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("friends_screen"),
+        modifier = Modifier.fillMaxSize().testTag("friends_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.in_app_icon),
-                            contentDescription = "MovieTier",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-                },
-                windowInsets = WindowInsets(0, 0, 0, 0)
-            )
-        },
+        topBar = { FriendsTopBar() },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddFriendDialog = true },
                 modifier = Modifier.testTag("add_friend_fab")
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Friend")
-            }
+            ) { Icon(Icons.Default.Add, contentDescription = "Add Friend") }
         }
     ) { padding ->
-        Crossfade(
-            targetState = when {
-                uiState.isLoading -> FriendsState.LOADING
-                uiState.friends.isEmpty() && uiState.requests.isEmpty() && uiState.outgoingRequests.isEmpty() -> FriendsState.EMPTY
-                else -> FriendsState.CONTENT
-            },
-            label = "friends_state"
-        ) { state ->
-            when (state) {
-                FriendsState.LOADING -> {
-                    LoadingState(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        hint = "Loading friends..."
-                    )
-                }
-                FriendsState.EMPTY -> {
-                    FriendsEmptyState(
-                        padding = padding,
-                        onAddFriend = { showAddFriendDialog = true }
-                    )
-                }
-                FriendsState.CONTENT -> {
-                    FriendsContentList(
-                        padding = padding,
-                        uiState = uiState,
-                        friendViewModel = friendViewModel,
-                        navController = navController
-                    )
-                }
-            }
-        }
+        FriendsMainContent(padding, uiState, friendViewModel, navController) { showAddFriendDialog = true }
     }
 
+    if (showAddFriendDialog) {
+        AddFriendDialog(
+            onDismiss = { friendViewModel.clearSearch(); showAddFriendDialog = false },
+            onSendRequest = { email -> friendViewModel.sendFriendRequest(email); showAddFriendDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun FriendsEventHandler(friendViewModel: FriendViewModel, snackbarHostState: SnackbarHostState) {
     LaunchedEffect(Unit) {
         friendViewModel.events.collect { event ->
             when (event) {
@@ -119,18 +79,44 @@ fun FriendsScreen(
             }
         }
     }
+}
 
-    if (showAddFriendDialog) {
-        AddFriendDialog(
-            onDismiss = {
-                friendViewModel.clearSearch()
-                showAddFriendDialog = false
-            },
-            onSendRequest = { email ->
-                friendViewModel.sendFriendRequest(email)
-                showAddFriendDialog = false
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FriendsTopBar() {
+    TopAppBar(
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(painterResource(id = R.drawable.in_app_icon), "MovieTier", Modifier.size(32.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
-        )
+        },
+        windowInsets = WindowInsets(0, 0, 0, 0)
+    )
+}
+
+@Composable
+private fun FriendsMainContent(
+    padding: PaddingValues,
+    uiState: com.cpen321.movietier.ui.viewmodels.FriendUiState,
+    friendViewModel: FriendViewModel,
+    navController: NavController,
+    onShowAddDialog: () -> Unit
+) {
+    Crossfade(
+        targetState = when {
+            uiState.isLoading -> FriendsState.LOADING
+            uiState.friends.isEmpty() && uiState.requests.isEmpty() && uiState.outgoingRequests.isEmpty() -> FriendsState.EMPTY
+            else -> FriendsState.CONTENT
+        },
+        label = "friends_state"
+    ) { state ->
+        when (state) {
+            FriendsState.LOADING -> LoadingState(Modifier.fillMaxSize().padding(padding), "Loading friends...")
+            FriendsState.EMPTY -> FriendsEmptyState(padding, onShowAddDialog)
+            FriendsState.CONTENT -> FriendsContentList(padding, uiState, friendViewModel, navController)
+        }
     }
 }
 
