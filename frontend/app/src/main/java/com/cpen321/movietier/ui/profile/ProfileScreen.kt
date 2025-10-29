@@ -30,6 +30,9 @@ import com.cpen321.movietier.ui.theme.ThemeMode
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import com.cpen321.movietier.ui.common.ProfileViewModels
+import com.cpen321.movietier.ui.common.ProfileUiStates
+import com.cpen321.movietier.ui.common.DeleteDialogState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,13 +58,19 @@ fun ProfileScreen(
                     padding = padding,
                     user = user,
                     navController = navController,
-                    watchlistVm = watchlistVm,
-                    themeMode = themeMode,
-                    themeViewModel = themeViewModel,
-                    uiState = uiState,
-                    authViewModel = authViewModel,
-                    showDeleteDialog = showDeleteDialog,
-                    onShowDeleteDialog = { showDeleteDialog = it }
+                    viewModels = ProfileViewModels(
+                        watchlistVm = watchlistVm,
+                        themeViewModel = themeViewModel,
+                        authViewModel = authViewModel
+                    ),
+                    uiStates = ProfileUiStates(
+                        authUiState = uiState,
+                        themeMode = themeMode
+                    ),
+                    deleteDialogState = DeleteDialogState(
+                        showDialog = showDeleteDialog,
+                        onShowDialogChange = { showDeleteDialog = it }
+                    )
                 )
             } else {
                 LoadingState(modifier = Modifier.fillMaxSize().padding(padding), hint = "Loading profile...")
@@ -94,16 +103,12 @@ private fun ProfileContent(
     padding: PaddingValues,
     user: com.cpen321.movietier.data.model.User,
     navController: NavController,
-    watchlistVm: WatchlistViewModel,
-    themeMode: ThemeMode,
-    themeViewModel: ThemeViewModel,
-    uiState: com.cpen321.movietier.ui.viewmodels.AuthUiState,
-    authViewModel: AuthViewModel,
-    showDeleteDialog: Boolean,
-    onShowDeleteDialog: (Boolean) -> Unit
+    viewModels: ProfileViewModels,
+    uiStates: ProfileUiStates,
+    deleteDialogState: DeleteDialogState
 ) {
-    val watchUi by watchlistVm.ui.collectAsState()
-    val movieDetails by watchlistVm.details.collectAsState()
+    val watchUi by viewModels.watchlistVm.ui.collectAsState()
+    val movieDetails by viewModels.watchlistVm.details.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -116,17 +121,17 @@ private fun ProfileContent(
         Spacer(modifier = Modifier.height(24.dp))
         WatchlistPreviewSection(navController, watchUi, movieDetails)
         Spacer(modifier = Modifier.height(24.dp))
-        ThemeSelectorCard(themeMode, themeViewModel)
+        ThemeSelectorCard(uiStates.themeMode, viewModels.themeViewModel)
         Spacer(modifier = Modifier.height(24.dp))
-        ProfileActionButtons(uiState, { authViewModel.signOut() }, { onShowDeleteDialog(true) })
+        ProfileActionButtons(uiStates.authUiState, { viewModels.authViewModel.signOut() }, { deleteDialogState.onShowDialogChange(true) })
         Spacer(modifier = Modifier.height(24.dp))
     }
 
-    if (showDeleteDialog) {
+    if (deleteDialogState.showDialog) {
         DeleteAccountDialog(
-            uiState = uiState,
-            onConfirm = { onShowDeleteDialog(false); authViewModel.deleteAccount() },
-            onDismiss = { onShowDeleteDialog(false) }
+            uiState = uiStates.authUiState,
+            onConfirm = { deleteDialogState.onShowDialogChange(false); viewModels.authViewModel.deleteAccount() },
+            onDismiss = { deleteDialogState.onShowDialogChange(false) }
         )
     }
 }

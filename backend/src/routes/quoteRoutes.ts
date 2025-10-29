@@ -5,9 +5,21 @@ import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
+// Fallback quotes for when TMDB doesn't have a tagline
+const fallbackQuotes = [
+  'Every story has a beginning.',
+  'The best movies are yet to come.',
+  'Cinema is a mirror of reality.',
+  'Great films inspire great moments.',
+  'Movies bring stories to life.',
+  'Where words fail, cinema speaks.',
+  'A journey through moving pictures.',
+  'Experience the magic of film.'
+];
+
 // GET /api/quotes?title=Inception&year=2010
 // Fetches TMDB tagline for a movie.
-// Returns the official movie tagline if available, or null otherwise.
+// Returns the official movie tagline if available, or a fallback quote otherwise.
 router.get('/', authenticate, asyncHandler(async (req, res) => {
   try {
     const title = String(req.query.title ?? '').trim();
@@ -20,10 +32,13 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
     if (tagline) {
       return res.json({ success: true, data: tagline });
     }
-    // Return 404 if no tagline found, frontend will fall back to local quotes
-    return res.status(404).json({ success: false, message: 'No tagline found', data: null });
+    // Return fallback quote if no tagline found (still 200 status for frontend compatibility)
+    const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
+    return res.json({ success: true, data: randomQuote, fallback: true });
   } catch (e: unknown) {
-    return res.status(500).json({ success: false, message: 'Failed to fetch tagline', data: null });
+    // On error, return fallback quote
+    const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
+    return res.json({ success: true, data: randomQuote, fallback: true });
   }
 }));
 

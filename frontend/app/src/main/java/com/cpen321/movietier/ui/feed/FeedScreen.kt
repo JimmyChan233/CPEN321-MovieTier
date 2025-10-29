@@ -48,6 +48,8 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.cpen321.movietier.ui.common.CommonContext
+import com.cpen321.movietier.ui.common.MovieActionCallbacks
 
 
 private fun normalizeProviderName(name: String): String {
@@ -96,15 +98,18 @@ fun FeedScreen(
     val currentUserId by tokenManager.userId.collectAsState(initial = null)
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
     var showCommentsForActivity by remember { mutableStateOf<String?>(null) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val commonContext = CommonContext(
+        context = context,
+        scope = rememberCoroutineScope(),
+        snackbarHostState = remember { SnackbarHostState() }
+    )
     var country by remember { mutableStateOf("CA") }
 
-    FeedLocationHandler(context, scope, onCountryCodeChanged = { country = it })
+    FeedLocationHandler(context, commonContext.scope, onCountryCodeChanged = { country = it })
 
     Scaffold(
         modifier = Modifier.fillMaxSize().testTag("feed_screen"),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { SnackbarHost(commonContext.snackbarHostState) },
         topBar = { FeedTopBar(onRefresh = { feedViewModel.refreshFeed() }) },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = { FeedFilterBar(uiState.feedFilter, feedViewModel::setFeedFilter) }
@@ -131,9 +136,7 @@ fun FeedScreen(
         currentUserId = currentUserId,
         feedViewModel = feedViewModel,
         country = country,
-        context = context,
-        scope = scope,
-        snackbarHostState = snackbarHostState,
+        commonContext = commonContext,
         onDismissMovie = { selectedMovie = null },
         onDismissComments = { showCommentsForActivity = null }
     )
@@ -420,14 +423,22 @@ private fun FeedSideEffects(
     currentUserId: String?,
     feedViewModel: FeedViewModel,
     country: String,
-    context: android.content.Context,
-    scope: kotlinx.coroutines.CoroutineScope,
-    snackbarHostState: SnackbarHostState,
+    commonContext: CommonContext,
     onDismissMovie: () -> Unit,
     onDismissComments: () -> Unit
 ) {
     selectedMovie?.let { movie ->
-        FeedMovieDetailSheet(movie, feedViewModel, country, context, scope, snackbarHostState, feedViewModel::addToRanking, feedViewModel::addToWatchlist, onDismissMovie)
+        FeedMovieDetailSheet(
+            movie = movie,
+            feedViewModel = feedViewModel,
+            country = country,
+            commonContext = commonContext,
+            callbacks = MovieActionCallbacks(
+                onAddToRanking = feedViewModel::addToRanking,
+                onAddToWatchlist = feedViewModel::addToWatchlist,
+                onDismiss = onDismissMovie
+            )
+        )
     }
 
     compareState?.let {
@@ -445,7 +456,7 @@ private fun FeedSideEffects(
         )
     }
 
-    FeedEventHandler(feedViewModel, scope, snackbarHostState, onDismissMovie)
+    FeedEventHandler(feedViewModel, commonContext.scope, commonContext.snackbarHostState, onDismissMovie)
 }
 
 @Composable
@@ -453,12 +464,8 @@ private fun FeedMovieDetailSheet(
     movie: com.cpen321.movietier.data.model.Movie,
     feedViewModel: FeedViewModel,
     country: String,
-    context: android.content.Context,
-    scope: kotlinx.coroutines.CoroutineScope,
-    snackbarHostState: SnackbarHostState,
-    onAddToRanking: (com.cpen321.movietier.data.model.Movie) -> Unit,
-    onAddToWatchlist: (com.cpen321.movietier.data.model.Movie) -> Unit,
-    onDismiss: () -> Unit
+    commonContext: CommonContext,
+    callbacks: MovieActionCallbacks
 ) {
     var availability by remember(movie.id) { mutableStateOf<String?>(null) }
     var loadingAvail by remember(movie.id) { mutableStateOf(true) }
@@ -482,10 +489,10 @@ private fun FeedMovieDetailSheet(
     MovieDetailBottomSheet(
         movie = movie,
         actions = MovieDetailActions(
-            onOpenWhereToWatch = { scope.launch { handleWhereToWatchClick(movie, feedViewModel, country, context, snackbarHostState) } },
-            onAddToRanking = { onAddToRanking(movie) },
-            onAddToWatchlist = { onAddToWatchlist(movie); onDismiss() },
-            onDismissRequest = onDismiss
+            onOpenWhereToWatch = { commonContext.scope.launch { handleWhereToWatchClick(movie, feedViewModel, country, commonContext.context, commonContext.snackbarHostState) } },
+            onAddToRanking = { callbacks.onAddToRanking(movie) },
+            onAddToWatchlist = { callbacks.onAddToWatchlist(movie); callbacks.onDismiss() },
+            onDismissRequest = callbacks.onDismiss
         ),
         availabilityInfo = com.cpen321.movietier.ui.components.AvailabilityInfo(
             availabilityText = availability,

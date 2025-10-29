@@ -45,7 +45,9 @@ describe('Unmocked: GET /quotes', () => {
       .query({ title: 'Inception' });
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body).toHaveProperty('quote');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toBeDefined();
+    expect(typeof res.body.data).toBe('string');
   });
 
   // Input: Movie title not found in TMDB
@@ -59,7 +61,10 @@ describe('Unmocked: GET /quotes', () => {
       .query({ title: 'NonexistentMoviexyz123' });
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body).toHaveProperty('quote');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toBeDefined();
+    expect(typeof res.body.data).toBe('string');
+    expect(res.body.fallback).toBe(true);
   });
 
   // Input: No authentication token

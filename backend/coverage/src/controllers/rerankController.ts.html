@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">93.75% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>28/28</span>
+                <span class='fraction'>30/32</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">77.77% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>7/9</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">93.33% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>26/26</span>
+                <span class='fraction'>28/30</span>
             </div>
         
             
@@ -123,21 +123,30 @@
 <a name='L58'></a><a href='#L58'>58</a>
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">41x</span>
-<span class="cline-any cline-yes">41x</span>
-<span class="cline-any cline-yes">41x</span>
-<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">40x</span>
+<span class="cline-any cline-yes">40x</span>
+<span class="cline-any cline-yes">40x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">40x</span>
+<span class="cline-any cline-yes">40x</span>
 <span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -165,6 +174,9 @@
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -179,7 +191,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -190,7 +202,10 @@ import { startSession } from '../utils/comparisonSession';
 &nbsp;
 export const startRerank = async (req: Request, res: Response) =&gt; {
   try {
-    const userId = (req as { userId?: string }).userId as string;
+    const userId = (req as { userId?: string }).userId;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!userId) {
+<span class="cstat-no" title="statement not covered" >      return res.status(401).json({ success: false, message: 'Unauthorized' });</span>
+    }
     const { rankedId } = req.body as { rankedId: string };
     if (!rankedId || !mongoose.Types.ObjectId.isValid(rankedId)) {
       return res.status(400).json({ success: false, message: 'Invalid rankedId' });
@@ -202,7 +217,7 @@ export const startRerank = async (req: Request, res: Response) =&gt; {
 &nbsp;
     // Remove the item and close the gap
     const removedRank = doc.rank;
-    const newMovie = { movieId: doc.movieId, title: doc.title, posterPath: doc.posterPath as string | undefined };
+    const newMovie = { movieId: doc.movieId, title: doc.title, posterPath: doc.posterPath };
     await doc.deleteOne();
     await RankedMovieModel.updateMany({ userId: userObjectId, rank: { $gt: removedRank } }, { $inc: { rank: -1 } });
 &nbsp;
@@ -223,7 +238,10 @@ export const startRerank = async (req: Request, res: Response) =&gt; {
     // Start a compare session and return mid element as first comparator
     startSession(userId, newMovie, remaining.length - 1);
     const mid = Math.floor((0 + (remaining.length - 1)) / 2);
-    const cmp = remaining[mid];
+    const cmp = remaining.at(mid);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!cmp) {
+<span class="cstat-no" title="statement not covered" >      return res.status(500).json({ success: false, message: 'Unable to find comparison movie' });</span>
+    }
     return res.json({
       success: true,
       status: 'compare',
@@ -250,7 +268,7 @@ export const startRerank = async (req: Request, res: Response) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-29T03:43:52.384Z
+                at 2025-10-29T07:20:18.964Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

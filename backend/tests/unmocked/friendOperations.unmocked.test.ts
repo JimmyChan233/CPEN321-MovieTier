@@ -59,7 +59,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
   // Expected output: Success message
   it('should send friend request by email', async () => {
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
 
@@ -79,7 +79,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
   // Expected output: Error message
   it('should reject friend request to self', async () => {
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user1.email });
 
@@ -99,7 +99,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
 
@@ -119,7 +119,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
 
@@ -133,7 +133,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
   // Expected output: Error message
   it('should reject request without email', async () => {
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({});
 
@@ -146,7 +146,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
   // Expected output: Error message
   it('should reject invalid email format', async () => {
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: 'invalid-email' });
 
@@ -201,7 +201,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
   // Expected output: Success message
   it('should accept friend request', async () => {
     const res = await request(app)
-      .post('/respond')
+      .post('/api/friends/respond')
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: friendReq._id.toString(),
@@ -233,7 +233,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
   // Expected output: Success message
   it('should reject friend request', async () => {
     const res = await request(app)
-      .post('/respond')
+      .post('/api/friends/respond')
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: friendReq._id.toString(),
@@ -259,7 +259,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
   // Expected output: Error message
   it('should reject invalid action', async () => {
     const res = await request(app)
-      .post('/respond')
+      .post('/api/friends/respond')
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: friendReq._id.toString(),
@@ -276,7 +276,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
   it('should return 404 for non-existent request', async () => {
     const fakeId = new mongoose.Types.ObjectId();
     const res = await request(app)
-      .post('/respond')
+      .post('/api/friends/respond')
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: fakeId.toString(),
@@ -292,7 +292,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
   // Expected output: Error message
   it('should reject missing requestId', async () => {
     const res = await request(app)
-      .post('/respond')
+      .post('/api/friends/respond')
       .set('Authorization', `Bearer ${token2}`)
       .send({
         action: 'accept'
@@ -307,7 +307,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
   // Expected output: Error message
   it('should reject missing action', async () => {
     const res = await request(app)
-      .post('/respond')
+      .post('/api/friends/respond')
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: friendReq._id.toString()
@@ -403,7 +403,7 @@ describe('Unmocked: DELETE /friends/:friendId - Additional Tests', () => {
   // Expected output: Error message
   it('should reject invalid friend ID format', async () => {
     const res = await request(app)
-      .delete('/invalid-id')
+      .delete('/api/friends/invalid-id')
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(400);
@@ -458,7 +458,7 @@ describe('Unmocked: GET /friends/search - Search Users', () => {
   // Expected output: Array of user objects
   it('should search users by email', async () => {
     const res = await request(app)
-      .get('/search')
+      .get('/api/friends/search')
       .set('Authorization', `Bearer ${token1}`)
       .query({ query: 'searchable' });
 
@@ -472,7 +472,7 @@ describe('Unmocked: GET /friends/search - Search Users', () => {
   // Expected output: Array of user objects
   it('should search users by name', async () => {
     const res = await request(app)
-      .get('/search')
+      .get('/api/friends/search')
       .set('Authorization', `Bearer ${token1}`)
       .query({ query: 'Searchable' });
 
@@ -486,7 +486,7 @@ describe('Unmocked: GET /friends/search - Search Users', () => {
   // Expected output: Error message
   it('should reject empty search query', async () => {
     const res = await request(app)
-      .get('/search')
+      .get('/api/friends/search')
       .set('Authorization', `Bearer ${token1}`)
       .query({ query: '' });
 
@@ -499,7 +499,7 @@ describe('Unmocked: GET /friends/search - Search Users', () => {
   // Expected output: Empty array
   it('should return empty array for no matches', async () => {
     const res = await request(app)
-      .get('/search')
+      .get('/api/friends/search')
       .set('Authorization', `Bearer ${token1}`)
       .query({ query: 'nonexistentuser12345' });
 

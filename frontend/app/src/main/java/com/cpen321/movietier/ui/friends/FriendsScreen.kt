@@ -35,6 +35,10 @@ import com.cpen321.movietier.ui.navigation.NavRoutes
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.cpen321.movietier.R
+import com.cpen321.movietier.ui.common.AddFriendEmailState
+import com.cpen321.movietier.ui.common.AddFriendNameState
+import com.cpen321.movietier.ui.common.AddFriendData
+import com.cpen321.movietier.ui.common.AddFriendCallbacks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -371,15 +375,14 @@ fun AddFriendDialog(
             AddFriendDialogContent(
                 tabIndex = tabIndex,
                 onTabChange = { tabIndex = it },
-                email = email,
-                onEmailChange = { email = it },
-                isValidEmail = isValidEmail,
-                nameQuery = nameQuery,
-                onNameQueryChange = { nameQuery = it },
-                searchResults = searchResults,
-                friends = ui.friends,
-                outgoingRequests = ui.outgoingRequests,
-                onSendRequest = onSendRequest
+                emailState = AddFriendEmailState(email, isValidEmail),
+                nameState = AddFriendNameState(nameQuery, searchResults),
+                data = AddFriendData(ui.friends, ui.outgoingRequests),
+                callbacks = AddFriendCallbacks(
+                    onEmailChange = { email = it },
+                    onNameQueryChange = { nameQuery = it },
+                    onSendRequest = onSendRequest
+                )
             )
         },
         confirmButton = {
@@ -401,15 +404,10 @@ fun AddFriendDialog(
 private fun AddFriendDialogContent(
     tabIndex: Int,
     onTabChange: (Int) -> Unit,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    isValidEmail: Boolean,
-    nameQuery: String,
-    onNameQueryChange: (String) -> Unit,
-    searchResults: List<com.cpen321.movietier.data.model.User>,
-    friends: List<com.cpen321.movietier.data.model.Friend>,
-    outgoingRequests: List<FriendRequestUi>,
-    onSendRequest: (String) -> Unit
+    emailState: AddFriendEmailState,
+    nameState: AddFriendNameState,
+    data: AddFriendData,
+    callbacks: AddFriendCallbacks
 ) {
     Column {
         TabRow(selectedTabIndex = tabIndex) {
@@ -418,8 +416,8 @@ private fun AddFriendDialogContent(
         }
         Spacer(modifier = Modifier.height(12.dp))
         when (tabIndex) {
-            0 -> AddFriendByEmailTab(email, onEmailChange, isValidEmail)
-            1 -> AddFriendByNameTab(nameQuery, onNameQueryChange, searchResults, friends, outgoingRequests, onSendRequest)
+            0 -> AddFriendByEmailTab(emailState.email, callbacks.onEmailChange, emailState.isValidEmail)
+            1 -> AddFriendByNameTab(nameState.nameQuery, callbacks.onNameQueryChange, nameState.searchResults, data.friends, data.outgoingRequests, callbacks.onSendRequest)
         }
     }
 }
