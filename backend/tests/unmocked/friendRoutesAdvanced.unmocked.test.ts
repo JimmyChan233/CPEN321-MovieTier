@@ -105,9 +105,12 @@ describe('Advanced Friend Routes Tests', () => {
       { userId: user2._id, friendId: user1._id }
     ]);
 
-    await request(app)
-      .delete(`/api/friends/${(user2 as any)._id.toString()}`)
+    const res = await request(app)
+      .delete(`/${(user2 as any)._id.toString()}`)
       .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
 
     // Verify both removed
     const count1 = await Friendship.countDocuments({ userId: user1._id, friendId: user2._id });
