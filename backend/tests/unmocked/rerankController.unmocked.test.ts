@@ -472,8 +472,9 @@ describe('Rerank Controller - Complete Coverage', () => {
     expect(res.status).toBe(500);
     expect(res.body.message).toContain('Unable to start rerank');
 
-    // Reconnect
+    // Reconnect and wait for connection to be ready
     await mongoose.connect(mongoServer.getUri());
+    await new Promise(resolve => setTimeout(resolve, 100));
   });
 
   it('should handle error during rank update', async () => {
@@ -497,8 +498,8 @@ describe('Rerank Controller - Complete Coverage', () => {
     const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 1 });
     const rankedId = (movieToRerank as any)._id.toString();
 
-    // Close after finding but before rerank
-    setTimeout(() => mongoose.connection.close(), 10);
+    // Close connection and wait for it to close
+    await mongoose.connection.close();
 
     const res = await request(app)
       .post('/rerank/start')
@@ -508,8 +509,9 @@ describe('Rerank Controller - Complete Coverage', () => {
     // Should handle error
     expect([500, 200]).toContain(res.status);
 
-    // Reconnect
+    // Reconnect and wait for connection to be ready
     await mongoose.connect(mongoServer.getUri());
+    await new Promise(resolve => setTimeout(resolve, 100));
   });
 
   // ========== Edge Cases ==========
