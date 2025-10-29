@@ -83,60 +83,81 @@ fun EditProfileScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Profile Picture (display only)
-            Avatar(
-                imageUrl = uiState.user?.profileImageUrl,
-                name = name.ifEmpty { "User" },
-                size = 120.dp
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Name field
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                enabled = !uiState.isLoading
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Save button
-            Button(
-                onClick = {
-                    if (name.isBlank()) {
-                        snackbarMessage = "Name cannot be empty"
-                        showSnackbar = true
-                        return@Button
+            EditProfileForm(
+                name = name,
+                onNameChange = { name = it },
+                userImageUrl = uiState.user?.profileImageUrl,
+                isLoading = uiState.isLoading,
+                onSaveClick = {
+                    when {
+                        name.isBlank() -> {
+                            snackbarMessage = "Name cannot be empty"
+                            showSnackbar = true
+                        }
+                        name == uiState.user?.name -> {
+                            snackbarMessage = "No changes to save"
+                            showSnackbar = true
+                        }
+                        else -> authViewModel.updateProfile(name = name)
                     }
-                    // Only send name if changed
-                    val nameChanged = name != uiState.user?.name
-
-                    if (!nameChanged) {
-                        snackbarMessage = "No changes to save"
-                        showSnackbar = true
-                        return@Button
-                    }
-
-                    authViewModel.updateProfile(name = name)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("Save Changes")
-            }
+            )
         }
+    }
+}
+
+@Composable
+private fun EditProfileForm(
+    name: String,
+    onNameChange: (String) -> Unit,
+    userImageUrl: String?,
+    isLoading: Boolean,
+    onSaveClick: () -> Unit
+) {
+    Spacer(modifier = Modifier.height(24.dp))
+
+    Avatar(
+        imageUrl = userImageUrl,
+        name = name.ifEmpty { "User" },
+        size = 120.dp
+    )
+
+    Spacer(modifier = Modifier.height(32.dp))
+
+    OutlinedTextField(
+        value = name,
+        onValueChange = onNameChange,
+        label = { Text("Name") },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        enabled = !isLoading
+    )
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    EditProfileSaveButton(
+        isLoading = isLoading,
+        onClick = onSaveClick
+    )
+}
+
+@Composable
+private fun EditProfileSaveButton(
+    isLoading: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = !isLoading
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        Text("Save Changes")
     }
 }
