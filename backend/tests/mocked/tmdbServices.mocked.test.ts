@@ -22,16 +22,16 @@ jest.mock('../../src/utils/logger', () => ({
 }));
 
 describe('TMDB Client Tests', () => {
-  let consoleLogSpy: jest.SpyInstance;
+  let stdoutWriteSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    stdoutWriteSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
     process.env.TMDB_API_KEY = 'test-api-key';
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
+    stdoutWriteSpy.mockRestore();
   });
 
   // Test Case 1: getTmdbClient creates axios instance
@@ -139,10 +139,10 @@ describe('TMDB Client Tests', () => {
 
     getTmdbClient();
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
       expect.stringContaining('TMDB ➡️')
     );
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
       expect.stringContaining('GET')
     );
   });
@@ -166,10 +166,10 @@ describe('TMDB Client Tests', () => {
 
     getTmdbClient();
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
       expect.stringContaining('***')
     );
-    expect(consoleLogSpy).not.toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).not.toHaveBeenCalledWith(
       expect.stringContaining('secret-key')
     );
   });
@@ -200,10 +200,10 @@ describe('TMDB Client Tests', () => {
 
     responseInterceptor(mockResponse);
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
       expect.stringContaining('TMDB ⬅️')
     );
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
       expect.stringContaining('200')
     );
   });
@@ -234,7 +234,7 @@ describe('TMDB Client Tests', () => {
 
     responseInterceptor(mockResponse);
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
       expect.stringMatching(/\d+ms/)
     );
   });
@@ -265,7 +265,7 @@ describe('TMDB Client Tests', () => {
 
     expect(() => errorInterceptor(mockError)).toThrow();
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
       expect.stringContaining('ERROR')
     );
   });
@@ -291,7 +291,7 @@ describe('TMDB Client Tests', () => {
     };
 
     expect(() => errorInterceptor(mockError)).toThrow();
-    expect(consoleLogSpy).toHaveBeenCalled();
+    expect(stdoutWriteSpy).toHaveBeenCalled();
   });
 });
 

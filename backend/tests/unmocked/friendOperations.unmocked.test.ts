@@ -103,12 +103,12 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
 
-    expect(res.status).toStrictEqual(400);
+    expect(res.status).toStrictEqual(409);
     expect(res.body.message).toMatch(/already|pending/i);
   });
 
   // Input: Request to existing friend
-  // Expected status code: 400
+  // Expected status code: 409
   // Expected behavior: Request rejected
   // Expected output: Error message
   it('should reject request to existing friend', async () => {
@@ -123,7 +123,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
 
-    expect(res.status).toStrictEqual(400);
+    expect(res.status).toStrictEqual(409);
     expect(res.body.message).toMatch(/already.*friend/i);
   });
 
@@ -205,7 +205,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: friendReq._id.toString(),
-        action: 'accept'
+        accept: true
       });
 
     expect(res.status).toStrictEqual(200);
@@ -237,7 +237,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: friendReq._id.toString(),
-        action: 'reject'
+        accept: false
       });
 
     expect(res.status).toStrictEqual(200);
@@ -253,7 +253,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
     expect(deletedRequest).toBeNull();
   });
 
-  // Input: Invalid action
+  // Input: Invalid accept value (not boolean)
   // Expected status code: 400
   // Expected behavior: Validation error
   // Expected output: Error message
@@ -263,7 +263,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: friendReq._id.toString(),
-        action: 'invalid'
+        accept: 'invalid'
       });
 
     expect(res.status).toStrictEqual(400);
