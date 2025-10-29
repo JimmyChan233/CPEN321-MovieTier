@@ -262,32 +262,25 @@ private fun FriendRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            FriendInfo(friend)
+            Avatar(
+                imageUrl = friend.profileImageUrl,
+                name = friend.name,
+                size = 48.dp
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = friend.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = friend.email,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             RemoveFriendButton(friend, onRemove)
         }
-    }
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.FriendInfo(
-    friend: com.cpen321.movietier.data.model.Friend
-) {
-    Avatar(
-        imageUrl = friend.profileImageUrl,
-        name = friend.name,
-        size = 48.dp
-    )
-    Column(modifier = Modifier.weight(1f)) {
-        Text(
-            text = friend.name,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = friend.email,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
@@ -593,66 +586,51 @@ private fun RequestRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            RequestInfo(request)
-            RequestActions(onAccept, onReject)
-        }
-    }
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.RequestInfo(
-    request: FriendRequestUi
-) {
-    Avatar(
-        imageUrl = request.senderProfileImage,
-        name = request.senderName.ifBlank { request.senderId.takeLast(6) },
-        size = 48.dp
-    )
-    Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = request.senderName.ifBlank { "Incoming request" },
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        if (request.senderEmail.isNotBlank()) {
-            Text(
-                text = request.senderEmail,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+            Avatar(
+                imageUrl = request.senderProfileImage,
+                name = request.senderName.ifBlank { request.senderId.takeLast(6) },
+                size = 48.dp
             )
-        }
-    }
-}
-
-@Composable
-private fun RequestActions(
-    onAccept: () -> Unit,
-    onReject: () -> Unit
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        horizontalAlignment = Alignment.End
-    ) {
-        Button(
-            onClick = onAccept,
-            modifier = Modifier.height(32.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-        ) {
-            Text("Accept", style = MaterialTheme.typography.labelSmall)
-        }
-        OutlinedButton(
-            onClick = onReject,
-            modifier = Modifier.height(32.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-        ) {
-            Text("Reject", style = MaterialTheme.typography.labelSmall)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = request.senderName.ifBlank { "Incoming request" },
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (request.senderEmail.isNotBlank()) {
+                    Text(
+                        text = request.senderEmail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                Button(
+                    onClick = onAccept,
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Text("Accept", style = MaterialTheme.typography.labelSmall)
+                }
+                OutlinedButton(
+                    onClick = onReject,
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Text("Reject", style = MaterialTheme.typography.labelSmall)
+                }
+            }
         }
     }
 }

@@ -117,9 +117,10 @@ describe('NFR: Performance - Response Time', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
     // Feed should limit results, verify it's not unbounded
-    expect(res.body.length).toBeLessThanOrEqual(50);
+    expect(res.body.data.length).toBeLessThanOrEqual(50);
   });
 });
 
@@ -166,8 +167,9 @@ describe('NFR: Performance - Database Index Efficiency', () => {
     const queryTime = Date.now() - startTime;
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(100);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(100);
     // With proper indexing, 100 items should still be fast
     expect(queryTime).toBeLessThan(500);
   });
