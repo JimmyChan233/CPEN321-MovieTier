@@ -39,6 +39,10 @@ describe('Unmocked: POST /movies/rank', () => {
   beforeEach(async () => {
     await RankedMovie.deleteMany({});
     await WatchlistItem.deleteMany({});
+
+    // Clear any active comparison sessions
+    const { endSession } = await import('../../src/utils/comparisonSession');
+    endSession((user as any)._id.toString());
   });
 
   // Input: First movie to rank (empty ranking list)
@@ -228,6 +232,10 @@ describe('Unmocked: POST /movies/compare', () => {
 
   beforeEach(async () => {
     await RankedMovie.deleteMany({});
+
+    // Clear any active comparison sessions
+    const { endSession } = await import('../../src/utils/comparisonSession');
+    endSession((user as any)._id.toString());
   });
 
   // Input: User prefers movie 1 over movie 2
