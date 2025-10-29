@@ -98,3 +98,46 @@ data class DeleteDialogState(
     val showDialog: Boolean = false,
     val onShowDialogChange: (Boolean) -> Unit = {}
 )
+
+/**
+ * Groups ViewModels and NavController for dialog screens
+ */
+data class DialogViewModels(
+    val vm: Any,
+    val rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
+    val navController: androidx.navigation.NavController
+)
+
+/**
+ * Groups ViewModels for recommendation screen dialogs
+ */
+data class RecommendationViewModels(
+    val recommendationViewModel: com.cpen321.movietier.ui.viewmodels.RecommendationViewModel,
+    val rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel
+)
+
+/**
+ * Groups side effect callbacks
+ */
+data class SideEffectCallbacks(
+    val onCountryChanged: (String) -> Unit = {},
+    val onMovieDetailsUpdated: (Map<Int, com.cpen321.movietier.data.model.Movie>) -> Unit = {},
+    val onCloseSheet: () -> Unit = {}
+)
+
+/**
+ * Groups comments-related state
+ */
+data class CommentsState(
+    val showCommentsForActivity: String? = null,
+    val commentsData: Map<String, List<com.cpen321.movietier.data.model.FeedComment>> = emptyMap(),
+    val currentUserId: String? = null
+)
+
+/**
+ * Groups dismiss callbacks
+ */
+data class DismissCallbacks(
+    val onDismissMovie: () -> Unit = {},
+    val onDismissComments: () -> Unit = {}
+)

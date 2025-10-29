@@ -41,6 +41,8 @@ import androidx.compose.ui.draw.clip
 import com.cpen321.movietier.ui.common.CommonContext
 import com.cpen321.movietier.ui.common.MovieDialogState
 import com.cpen321.movietier.ui.common.MovieDialogCallbacks
+import com.cpen321.movietier.ui.common.DialogViewModels
+import com.cpen321.movietier.ui.common.SideEffectCallbacks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +75,19 @@ fun FriendProfileScreen(
         )
     }
 
-    FPSideEffects(userId, ui.watchlist, commonContext, vm, rankingViewModel, movieDetailsMap, { country = it }, { movieDetailsMap = it }, { selectedMovie = null })
+    FPSideEffects(
+        userId = userId,
+        watchlist = ui.watchlist,
+        commonContext = commonContext,
+        vm = vm,
+        rankingViewModel = rankingViewModel,
+        movieDetailsMap = movieDetailsMap,
+        callbacks = SideEffectCallbacks(
+            onCountryChanged = { country = it },
+            onMovieDetailsUpdated = { movieDetailsMap = it },
+            onCloseSheet = { selectedMovie = null }
+        )
+    )
 
     Scaffold(
         topBar = { FPTopBar(ui.userName, navController) },
@@ -81,7 +95,19 @@ fun FriendProfileScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize()) {
             FPContent(ui, movieDetailsMap, padding) { movie -> selectedMovie = movie }
-            FPDialogs(selectedMovie, dialogState, compareState, country, vm, rankingViewModel, navController, commonContext, dialogCallbacks)
+            FPDialogs(
+                selectedMovie = selectedMovie,
+                dialogState = dialogState,
+                compareState = compareState,
+                country = country,
+                viewModels = DialogViewModels(
+                    vm = vm,
+                    rankingViewModel = rankingViewModel,
+                    navController = navController
+                ),
+                commonContext = commonContext,
+                callbacks = dialogCallbacks
+            )
         }
     }
 }
@@ -187,9 +213,7 @@ private fun FPSideEffects(
     vm: FriendProfileViewModel,
     rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
     movieDetailsMap: Map<Int, Movie>,
-    onCountryChanged: (String) -> Unit,
-    onMovieDetailsUpdated: (Map<Int, Movie>) -> Unit,
-    onCloseSheet: () -> Unit
+    callbacks: SideEffectCallbacks
 ) {
     LaunchedEffect(userId) { vm.load(userId) }
 
@@ -198,7 +222,7 @@ private fun FPSideEffects(
             if (!movieDetailsMap.containsKey(item.movieId)) {
                 val result = vm.getMovieDetails(item.movieId)
                 if (result is com.cpen321.movietier.data.repository.Result.Success) {
-                    onMovieDetailsUpdated(movieDetailsMap + (item.movieId to result.data))
+                    callbacks.onMovieDetailsUpdated(movieDetailsMap + (item.movieId to result.data))
                 }
             }
         }
@@ -209,13 +233,13 @@ private fun FPSideEffects(
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            commonContext.scope.launch { onCountryChanged(LocationHelper.getCountryCode(commonContext.context)) }
+            commonContext.scope.launch { callbacks.onCountryChanged(LocationHelper.getCountryCode(commonContext.context)) }
         }
     }
 
     LaunchedEffect(Unit) {
         if (LocationHelper.hasLocationPermission(commonContext.context)) {
-            onCountryChanged(LocationHelper.getCountryCode(commonContext.context))
+            callbacks.onCountryChanged(LocationHelper.getCountryCode(commonContext.context))
         } else {
             locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
         }
@@ -225,11 +249,11 @@ private fun FPSideEffects(
         rankingViewModel.events.collect { event ->
             when (event) {
                 is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
-                    onCloseSheet()
+                    callbacks.onCloseSheet()
                     commonContext.snackbarHostState.showSnackbar(event.text)
                 }
                 is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> {
-                    onCloseSheet()
+                    callbacks.onCloseSheet()
                     commonContext.snackbarHostState.showSnackbar(event.text)
                 }
             }
@@ -286,12 +310,14 @@ private fun FPDialogs(
     dialogState: MovieDialogState,
     compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?,
     country: String,
-    vm: FriendProfileViewModel,
-    rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
-    navController: NavController,
+    viewModels: DialogViewModels,
     commonContext: CommonContext,
     callbacks: MovieDialogCallbacks
 ) {
+    val vm = viewModels.vm as FriendProfileViewModel
+    val rankingViewModel = viewModels.rankingViewModel
+    val navController = viewModels.navController
+
     selectedMovie?.let { movie ->
         LaunchedEffect(movie.id) {
             val result = vm.getMovieVideos(movie.id)

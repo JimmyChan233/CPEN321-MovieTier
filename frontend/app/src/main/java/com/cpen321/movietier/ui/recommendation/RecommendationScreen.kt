@@ -43,6 +43,7 @@ import java.time.LocalDate
 import com.cpen321.movietier.ui.common.CommonContext
 import com.cpen321.movietier.ui.common.MovieDialogState
 import com.cpen321.movietier.ui.common.MovieDialogCallbacks
+import com.cpen321.movietier.ui.common.RecommendationViewModels
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +82,18 @@ fun RecommendationScreen(
         topBar = { RSTopBar(recommendationViewModel) }
     ) { padding ->
         RSContent(uiState, padding, featuredMovieOffset, recommendationViewModel, { featuredMovieOffset++ }, { selectedMovie = it })
-        RSDialogs(selectedMovie, dialogState, compareState, country, recommendationViewModel, rankingViewModel, commonContext, dialogCallbacks)
+        RSDialogs(
+            selectedMovie = selectedMovie,
+            dialogState = dialogState,
+            compareState = compareState,
+            country = country,
+            viewModels = RecommendationViewModels(
+                recommendationViewModel = recommendationViewModel,
+                rankingViewModel = rankingViewModel
+            ),
+            commonContext = commonContext,
+            callbacks = dialogCallbacks
+        )
     }
 }
 
@@ -244,11 +256,13 @@ private fun RSDialogs(
     dialogState: MovieDialogState,
     compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?,
     country: String,
-    recommendationViewModel: RecommendationViewModel,
-    rankingViewModel: RankingViewModel,
+    viewModels: RecommendationViewModels,
     commonContext: CommonContext,
     callbacks: MovieDialogCallbacks
 ) {
+    val recommendationViewModel = viewModels.recommendationViewModel
+    val rankingViewModel = viewModels.rankingViewModel
+
     selectedMovie?.let { movie ->
         LaunchedEffect(movie.id) {
             val result = recommendationViewModel.getMovieVideos(movie.id)

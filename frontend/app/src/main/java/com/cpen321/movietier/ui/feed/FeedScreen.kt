@@ -50,6 +50,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.cpen321.movietier.ui.common.CommonContext
 import com.cpen321.movietier.ui.common.MovieActionCallbacks
+import com.cpen321.movietier.ui.common.CommentsState
+import com.cpen321.movietier.ui.common.DismissCallbacks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,14 +100,18 @@ fun FeedScreen(
     FeedSideEffects(
         selectedMovie = selectedMovie,
         compareState = compareState,
-        showCommentsForActivity = showCommentsForActivity,
-        commentsState = commentsState,
-        currentUserId = currentUserId,
+        commentsState = CommentsState(
+            showCommentsForActivity = showCommentsForActivity,
+            commentsData = commentsState,
+            currentUserId = currentUserId
+        ),
         feedViewModel = feedViewModel,
         country = country,
         commonContext = commonContext,
-        onDismissMovie = { selectedMovie = null },
-        onDismissComments = { showCommentsForActivity = null }
+        callbacks = DismissCallbacks(
+            onDismissMovie = { selectedMovie = null },
+            onDismissComments = { showCommentsForActivity = null }
+        )
     )
 }
 
@@ -385,14 +391,11 @@ private fun FeedActivityItem(
 private fun FeedSideEffects(
     selectedMovie: com.cpen321.movietier.data.model.Movie?,
     compareState: com.cpen321.movietier.ui.viewmodels.FeedCompareState?,
-    showCommentsForActivity: String?,
-    commentsState: Map<String, List<com.cpen321.movietier.data.model.FeedComment>>,
-    currentUserId: String?,
+    commentsState: CommentsState,
     feedViewModel: FeedViewModel,
     country: String,
     commonContext: CommonContext,
-    onDismissMovie: () -> Unit,
-    onDismissComments: () -> Unit
+    callbacks: DismissCallbacks
 ) {
     selectedMovie?.let { movie ->
         FeedMovieDetailSheet(
@@ -403,7 +406,7 @@ private fun FeedSideEffects(
             callbacks = MovieActionCallbacks(
                 onAddToRanking = feedViewModel::addToRanking,
                 onAddToWatchlist = feedViewModel::addToWatchlist,
-                onDismiss = onDismissMovie
+                onDismiss = callbacks.onDismissMovie
             )
         )
     }
@@ -412,18 +415,18 @@ private fun FeedSideEffects(
         FeedComparisonDialog(it, feedViewModel)
     }
 
-    showCommentsForActivity?.let { activityId ->
-        val comments = commentsState[activityId] ?: emptyList()
+    commentsState.showCommentsForActivity?.let { activityId ->
+        val comments = commentsState.commentsData[activityId] ?: emptyList()
         CommentBottomSheet(
             comments = comments,
-            currentUserId = currentUserId,
-            onDismiss = onDismissComments,
+            currentUserId = commentsState.currentUserId,
+            onDismiss = callbacks.onDismissComments,
             onAddComment = { text -> feedViewModel.addComment(activityId, text) },
             onDeleteComment = { commentId -> feedViewModel.deleteComment(activityId, commentId) }
         )
     }
 
-    FeedEventHandler(feedViewModel, commonContext.scope, commonContext.snackbarHostState, onDismissMovie)
+    FeedEventHandler(feedViewModel, commonContext.scope, commonContext.snackbarHostState, callbacks.onDismissMovie)
 }
 
 @Composable
