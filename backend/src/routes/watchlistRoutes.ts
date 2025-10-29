@@ -34,7 +34,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
     // Step 1: Check for duplicate
     const existing = await WatchlistItem.findOne({ userId: req.userId, movieId })
     if (existing) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
         message: 'Movie already in watchlist',
       })
