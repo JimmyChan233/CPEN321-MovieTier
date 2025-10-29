@@ -59,7 +59,7 @@ object NetworkModule {
                             .header("Authorization", "Bearer $newToken")
                             .build()
                     } else null
-                } catch (e: Exception) {
+                } catch (e: IOException) {
                     null
                 }
             } else null

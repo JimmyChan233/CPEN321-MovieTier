@@ -100,7 +100,7 @@ suspend fun compareMovies(
         } else {
             Result.Error(Exception(response.body()?.message ?: "Failed to compare movies"))
         }
-    } catch (e: Exception) {
+    } catch (e: IOException) {
         Result.Error(e, "Network error: ${e.message}")
     }
 }

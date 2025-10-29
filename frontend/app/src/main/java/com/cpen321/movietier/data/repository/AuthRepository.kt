@@ -61,7 +61,7 @@ class AuthRepository @Inject constructor(
                 }
                 Result.Error(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }

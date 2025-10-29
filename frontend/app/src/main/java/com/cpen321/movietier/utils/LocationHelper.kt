@@ -72,7 +72,7 @@ object LocationHelper {
         // Try to get last known location first (faster)
         val lastLocation = try {
             fusedLocationClient.lastLocation.await()
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
             null
         }
 
