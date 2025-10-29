@@ -52,7 +52,7 @@ class SseService {
     }
 
     // Clean up closed connections
-    toRemove.forEach(res => this.removeClient(userId, res));
+    toRemove.forEach(res => { this.removeClient(userId, res); });
   }
 
   /**

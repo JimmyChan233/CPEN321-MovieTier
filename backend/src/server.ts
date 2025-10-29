@@ -118,17 +118,17 @@ async function startServer() {
       }
 
         logger.success('Graceful shutdown completed');
-        process.exit(0);
+        process.exitCode = 0;
       })().catch((err: unknown) => {
         logger.error('Error during shutdown:', (err as Error).message);
-        process.exit(1);
+        process.exitCode = 1;
       });
     });
 
     // Force exit after 10 seconds
     setTimeout(() => {
       logger.error('Forced shutdown after timeout');
-      process.exit(1);
+      process.exitCode = 1;
     }, 10000);
   };
 
@@ -142,7 +142,7 @@ async function startServer() {
 
 startServer().catch((err: unknown) => {
   logger.error('Failed to start server:', (err as Error).message);
-  process.exit(1);
+  process.exitCode = 1;
 });
 
 export default app;

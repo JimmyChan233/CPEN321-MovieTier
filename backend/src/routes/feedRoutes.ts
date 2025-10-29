@@ -262,7 +262,7 @@ router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) =
 
     const userId = String(req.userId);
     sseService.addClient(userId, res);
-    req.on('close', () => sseService.removeClient(userId, res));
+    req.on('close', () => { sseService.removeClient(userId, res); });
   } catch {
     res.end();
   }

@@ -31,39 +31,47 @@ class AuthRepository @Inject constructor(
     suspend fun signIn(idToken: String): Result<LoginResponse> {
         return try {
             val response = apiService.signIn(LoginRequest(idToken))
-            if (response.isSuccessful && response.body() != null) {
-                val loginResponse = response.body()!!
-                if (loginResponse.success && loginResponse.token != null && loginResponse.user != null) {
-                    tokenManager.saveAuthToken(loginResponse.token)
-                    tokenManager.saveUserInfo(
-                        loginResponse.user.id,
-                        loginResponse.user.email,
-                        loginResponse.user.name,
-                        loginResponse.user.profileImageUrl
-                    )
-                    Result.Success(loginResponse)
-                } else {
-                    Result.Error(Exception(loginResponse.message))
-                }
-            } else {
-                // Parse error response body
-                val errorBody = response.errorBody()?.string()
-                val errorMessage = if (errorBody != null) {
-                    try {
-                        val gson = com.google.gson.Gson()
-                        val errorResponse = gson.fromJson(errorBody, LoginResponse::class.java)
-                        errorResponse.message
-                    } catch (e: IOException) {
-                        "Sign in failed"
-                    }
-                } else {
-                    "Sign in failed"
-                }
-                Result.Error(Exception(errorMessage))
-            }
+            handleSignInResponse(response)
         } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
+    }
+
+    private suspend fun handleSignInResponse(response: retrofit2.Response<LoginResponse>): Result<LoginResponse> {
+        if (!response.isSuccessful || response.body() == null) {
+            val errorMessage = parseErrorMessage(response.errorBody()?.string())
+            return Result.Error(Exception(errorMessage))
+        }
+
+        val loginResponse = response.body()!!
+        if (!loginResponse.success || loginResponse.token == null || loginResponse.user == null) {
+            return Result.Error(Exception(loginResponse.message))
+        }
+
+        saveUserSession(loginResponse)
+        return Result.Success(loginResponse)
+    }
+
+    private fun parseErrorMessage(errorBody: String?): String {
+        if (errorBody == null) return "Sign in failed"
+
+        return try {
+            val gson = com.google.gson.Gson()
+            val errorResponse = gson.fromJson(errorBody, LoginResponse::class.java)
+            errorResponse.message
+        } catch (e: IOException) {
+            "Sign in failed"
+        }
+    }
+
+    private suspend fun saveUserSession(loginResponse: LoginResponse) {
+        tokenManager.saveAuthToken(loginResponse.token!!)
+        tokenManager.saveUserInfo(
+            loginResponse.user!!.id,
+            loginResponse.user.email,
+            loginResponse.user.name,
+            loginResponse.user.profileImageUrl
+        )
     }
 
     suspend fun signUp(idToken: String): Result<LoginResponse> {
@@ -125,38 +133,42 @@ class AuthRepository @Inject constructor(
         return try {
             val request = UpdateProfileRequest(name = name, profilePicture = null)
             val response = apiService.updateProfile(request)
-            if (response.isSuccessful && response.body() != null) {
-                val apiResponse = response.body()!!
-                if (apiResponse.success && apiResponse.data != null) {
-                    val updatedUser = apiResponse.data
-                    // Update local storage
-                    tokenManager.saveUserInfo(
-                        updatedUser.id,
-                        updatedUser.email,
-                        updatedUser.name,
-                        updatedUser.profileImageUrl
-                    )
-                    Result.Success(updatedUser)
-                } else {
-                    Result.Error(Exception(apiResponse.message))
-                }
-            } else {
-                val errorBody = response.errorBody()?.string()
-                val errorMessage = if (errorBody != null) {
-                    try {
-                        val gson = com.google.gson.Gson()
-                        val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
-                        errorResponse.message
-                    } catch (e: IOException) {
-                        "Failed to update profile"
-                    }
-                } else {
-                    "Failed to update profile"
-                }
-                Result.Error(Exception(errorMessage))
-            }
+            handleUpdateProfileResponse(response)
         } catch (e: Exception) {
             Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
+    private suspend fun handleUpdateProfileResponse(response: retrofit2.Response<com.cpen321.movietier.data.model.ApiResponse<User>>): Result<User> {
+        if (!response.isSuccessful || response.body() == null) {
+            val errorMessage = parseUpdateProfileError(response.errorBody()?.string())
+            return Result.Error(Exception(errorMessage))
+        }
+
+        val apiResponse = response.body()!!
+        if (!apiResponse.success || apiResponse.data == null) {
+            return Result.Error(Exception(apiResponse.message))
+        }
+
+        val updatedUser = apiResponse.data
+        tokenManager.saveUserInfo(
+            updatedUser.id,
+            updatedUser.email,
+            updatedUser.name,
+            updatedUser.profileImageUrl
+        )
+        return Result.Success(updatedUser)
+    }
+
+    private fun parseUpdateProfileError(errorBody: String?): String {
+        if (errorBody == null) return "Failed to update profile"
+
+        return try {
+            val gson = com.google.gson.Gson()
+            val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
+            errorResponse.message
+        } catch (e: IOException) {
+            "Failed to update profile"
         }
     }
 }
