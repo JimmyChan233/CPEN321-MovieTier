@@ -286,8 +286,9 @@ describe('Unmocked: GET /users/profile/:userId', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body.user).toBeDefined();
-    expect(res.body.user.email).toStrictEqual(otherUser.email);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.email).toStrictEqual(otherUser.email);
   });
 
   // Input: Own user ID
@@ -300,7 +301,8 @@ describe('Unmocked: GET /users/profile/:userId', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body.user.email).toStrictEqual(user.email);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.email).toStrictEqual(user.email);
   });
 
   // Input: Non-existent user ID

@@ -232,7 +232,7 @@ describe('User Routes - Unmocked Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Name is required');
+      expect(res.body.message).toContain('At least one field');
     });
 
     it('should reject empty name', async () => {
@@ -254,7 +254,7 @@ describe('User Routes - Unmocked Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('empty');
+      expect(res.body.message).toContain('Name is required');
     });
 
     it('should handle user not found', async () => {

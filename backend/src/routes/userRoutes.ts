@@ -47,16 +47,16 @@ router.get('/search', authenticate, asyncHandler(async (req: AuthRequest, res) =
 router.put('/profile', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { name, profileImageUrl } = req.body as { name?: string; profileImageUrl?: string };
-    logger.info(`Profile update request for user ${req.userId}`, { name: name ? 'updating' : 'unchanged', profileImageUrl: profileImageUrl ? 'updating' : 'unchanged' });
+    logger.info(`Profile update request for user ${req.userId}`, { name: name !== undefined ? 'updating' : 'unchanged', profileImageUrl: profileImageUrl !== undefined ? 'updating' : 'unchanged' });
 
-    if (!name && !profileImageUrl) {
+    if (name === undefined && profileImageUrl === undefined) {
       logger.warn('Profile update failed: no fields provided');
       return res.status(400).json({ success: false, message: 'At least one field (name or profileImageUrl) is required' });
     }
 
-    if (name !== undefined && name.trim().length < 1) {
+    if (name !== undefined && (!name || name.trim().length < 1)) {
       logger.warn('Profile update failed: empty name');
-      return res.status(400).json({ success: false, message: 'Name cannot be empty' });
+      return res.status(400).json({ success: false, message: 'Name is required' });
     }
 
     const updateFields: any = {};
@@ -123,7 +123,7 @@ router.get('/:userId', authenticate, asyncHandler(async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    res.json({ user });
+    res.json({ success: true, data: user });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load user. Please try again' });
   }
