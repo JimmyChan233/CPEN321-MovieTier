@@ -53,6 +53,11 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     await WatchlistItem.deleteMany({});
     await FeedActivity.deleteMany({});
     await Friendship.deleteMany({});
+
+    // Clear any active comparison sessions
+    const { endSession } = await import('../../src/utils/comparisonSession');
+    endSession((user1 as any)._id.toString());
+    endSession((user2 as any)._id.toString());
   });
 
   // ========== addMovie: Case 1 - First Movie ==========
@@ -481,15 +486,25 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
         posterPath: '/new.jpg'
       });
 
-    // Complete comparison
-    const res = await request(app)
+    // First comparison - prefer existing movie 1
+    const res1 = await request(app)
       .post('/compare')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         preferredMovieId: 100001
       });
 
-    expect(res.body.status).toBe('added');
+    expect(res1.body.status).toBe('compare');
+
+    // Second comparison - this should finalize
+    const res2 = await request(app)
+      .post('/compare')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({
+        preferredMovieId: 100002
+      });
+
+    expect(res2.body.status).toBe('added');
     const movie = await RankedMovie.findOne({
       userId: user1._id,
       movieId: 200000
@@ -524,11 +539,20 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
         posterPath: '/new.jpg'
       });
 
+    // First comparison
     await request(app)
       .post('/compare')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         preferredMovieId: 100001
+      });
+
+    // Second comparison to finalize
+    await request(app)
+      .post('/compare')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({
+        preferredMovieId: 100002
       });
 
     const movies = await RankedMovie.find({ userId: user1._id }).sort({ rank: 1 });
