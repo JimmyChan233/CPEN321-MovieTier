@@ -292,7 +292,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .delete(`/${mockMovies.inception.id}`)
+      .delete(`/api/watchlist/${mockMovies.inception.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
@@ -339,7 +339,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
     });
 
     const res = await request(app)
-      .delete(`/${mockMovies.inception.id}`)
+      .delete(`/api/watchlist/${mockMovies.inception.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
@@ -363,7 +363,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated delete request', async () => {
     const res = await request(app)
-      .delete(`/${mockMovies.inception.id}`);
+      .delete(`/api/watchlist/${mockMovies.inception.id}`);
 
     expect(res.status).toStrictEqual(401);
   });

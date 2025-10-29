@@ -416,7 +416,7 @@ describe('User Routes - Unmocked Tests', () => {
   describe('GET /:userId', () => {
     it('should get user by ID successfully', async () => {
       const res = await request(app)
-        .get(`/${(user2 as any)._id}`)
+        .get(`/api/users/${(user2 as any)._id}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -440,7 +440,7 @@ describe('User Routes - Unmocked Tests', () => {
       const nonExistentId = new mongoose.Types.ObjectId();
 
       const res = await request(app)
-        .get(`/${nonExistentId}`)
+        .get(`/api/users/${nonExistentId}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(404);
@@ -450,7 +450,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should return selected fields only', async () => {
       const res = await request(app)
-        .get(`/${(user2 as any)._id}`)
+        .get(`/api/users/${(user2 as any)._id}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -465,7 +465,7 @@ describe('User Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .get(`/${(user2 as any)._id}`)
+        .get(`/api/users/${(user2 as any)._id}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(500);
@@ -504,7 +504,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should get user watchlist successfully', async () => {
       const res = await request(app)
-        .get(`/${(user2 as any)._id}/watchlist`)
+        .get(`/api/users/${(user2 as any)._id}/watchlist`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -516,7 +516,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should return empty array for user with no watchlist items', async () => {
       const res = await request(app)
-        .get(`/${(user3 as any)._id}/watchlist`)
+        .get(`/api/users/${(user3 as any)._id}/watchlist`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -526,7 +526,7 @@ describe('User Routes - Unmocked Tests', () => {
 
     it('should sort watchlist by createdAt descending', async () => {
       const res = await request(app)
-        .get(`/${(user2 as any)._id}/watchlist`)
+        .get(`/api/users/${(user2 as any)._id}/watchlist`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -553,7 +553,7 @@ describe('User Routes - Unmocked Tests', () => {
       const nonExistentId = new mongoose.Types.ObjectId();
 
       const res = await request(app)
-        .get(`/${nonExistentId}/watchlist`)
+        .get(`/api/users/${nonExistentId}/watchlist`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -565,7 +565,7 @@ describe('User Routes - Unmocked Tests', () => {
       await mongoose.disconnect();
 
       const res = await request(app)
-        .get(`/${(user2 as any)._id}/watchlist`)
+        .get(`/api/users/${(user2 as any)._id}/watchlist`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(500);

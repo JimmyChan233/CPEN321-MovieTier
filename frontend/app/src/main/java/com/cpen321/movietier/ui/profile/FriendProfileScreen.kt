@@ -319,7 +319,7 @@ private fun FPDialogs(
     val navController = viewModels.navController
 
     selectedMovie?.let { movie ->
-        FPMovieDetailSheet(movie, dialogState, country, vm, rankingViewModel, navController, commonContext, callbacks)
+        FPMovieDetailSheet(movie, dialogState, country, viewModels, commonContext, callbacks)
     }
     if (dialogState.showTrailerDialog && dialogState.trailerKey != null) {
         YouTubePlayerDialog(dialogState.trailerKey!!, dialogState.trailerMovieTitle) { callbacks.onDismissTrailer(false) }
@@ -334,12 +334,14 @@ private fun FPMovieDetailSheet(
     movie: Movie,
     dialogState: MovieDialogState,
     country: String,
-    vm: FriendProfileViewModel,
-    rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
-    navController: androidx.navigation.NavController,
+    viewModels: DialogViewModels,
     commonContext: CommonContext,
     callbacks: MovieDialogCallbacks
 ) {
+    val vm = viewModels.vm as FriendProfileViewModel
+    val rankingViewModel = viewModels.rankingViewModel
+    val navController = viewModels.navController
+
     LaunchedEffect(movie.id) {
         val result = vm.getMovieVideos(movie.id)
         callbacks.onTrailerKeyUpdate(when (result) {

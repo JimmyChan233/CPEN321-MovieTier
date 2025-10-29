@@ -466,7 +466,7 @@ describe('Unmocked: GET /friends/search - Search Users', () => {
       .query({ query: 'searchable' });
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(Array.isArray(res.body.users || res.body)).toBe(true);
   });
 
   // Input: Search by partial name
@@ -480,7 +480,7 @@ describe('Unmocked: GET /friends/search - Search Users', () => {
       .query({ query: 'Searchable' });
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(Array.isArray(res.body.users || res.body)).toBe(true);
   });
 
   // Input: Empty search query
@@ -507,6 +507,6 @@ describe('Unmocked: GET /friends/search - Search Users', () => {
       .query({ query: 'nonexistentuser12345' });
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(Array.isArray(res.body.users || res.body)).toBe(true);
   });
 });
