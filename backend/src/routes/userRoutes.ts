@@ -43,25 +43,33 @@ router.get('/search', authenticate, asyncHandler(async (req: AuthRequest, res) =
   }
 }));
 
-// Update current user's profile (name only)
+// Update current user's profile (name and/or profileImageUrl)
 router.put('/profile', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
-    const { name } = req.body as { name?: string };
-    logger.info(`Profile update request for user ${req.userId}`, { name: name ? 'updating' : 'unchanged' });
+    const { name, profileImageUrl } = req.body as { name?: string; profileImageUrl?: string };
+    logger.info(`Profile update request for user ${req.userId}`, { name: name ? 'updating' : 'unchanged', profileImageUrl: profileImageUrl ? 'updating' : 'unchanged' });
 
-    if (!name) {
-      logger.warn('Profile update failed: no name provided');
-      return res.status(400).json({ success: false, message: 'Name is required' });
+    if (!name && !profileImageUrl) {
+      logger.warn('Profile update failed: no fields provided');
+      return res.status(400).json({ success: false, message: 'At least one field (name or profileImageUrl) is required' });
     }
 
-    if (name.trim().length < 1) {
+    if (name !== undefined && name.trim().length < 1) {
       logger.warn('Profile update failed: empty name');
       return res.status(400).json({ success: false, message: 'Name cannot be empty' });
     }
 
+    const updateFields: any = {};
+    if (name !== undefined) {
+      updateFields.name = name.trim();
+    }
+    if (profileImageUrl !== undefined) {
+      updateFields.profileImageUrl = profileImageUrl;
+    }
+
     const user = await User.findByIdAndUpdate(
       req.userId,
-      { $set: { name: name.trim() } },
+      { $set: updateFields },
       { new: true, runValidators: true }
     ).select('_id email name profileImageUrl');
 
@@ -115,7 +123,7 @@ router.get('/:userId', authenticate, asyncHandler(async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    res.json({ success: true, data: user });
+    res.json({ user });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load user. Please try again' });
   }

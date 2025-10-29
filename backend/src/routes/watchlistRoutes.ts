@@ -77,6 +77,9 @@ router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
 router.delete('/:movieId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const movieId = Number(req.params.movieId);
+    if (isNaN(movieId) || !Number.isInteger(movieId)) {
+      return res.status(400).json({ success: false, message: 'Invalid movie id' });
+    }
     const result = await WatchlistItem.deleteOne({ userId: req.userId, movieId });
     if (result.deletedCount === 0) {
       return res.status(404).json({ success: false, message: 'Movie not found in watchlist' });
