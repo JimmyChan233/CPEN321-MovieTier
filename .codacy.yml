@@ -1,5 +1,46 @@
 ---
+# Codacy configuration file
+# Exclude test files and generated files from code quality analysis
+
 exclude_paths:
+  # Backend test files
+  - "backend/tests/**"
+  - "backend/**/*.test.ts"
+  - "backend/**/*.test.js"
+  - "backend/**/*.spec.ts"
+  - "backend/**/*.spec.js"
+
+  # Backend generated/build files
+  - "backend/coverage/**"
+  - "backend/dist/**"
+  - "backend/node_modules/**"
+  - "backend/.nyc_output/**"
+  - "backend/build/**"
+
+  # Frontend test files
   - "frontend/app/src/test/**"
   - "frontend/app/src/androidTest/**"
-  - "backend/tests/**"
+  - "frontend/app/test/**"
+  - "frontend/**/*.test.kt"
+  - "frontend/**/*.test.java"
+
+  # Frontend generated/build files
+  - "frontend/app/build/**"
+  - "frontend/.gradle/**"
+  - "frontend/gradle/**"
+  - "frontend/gradlew"
+  - "frontend/gradlew.bat"
+  - "frontend/.idea/**"
+  - "frontend/local.properties"
+
+  # Documentation and configuration
+  - "documentation/**"
+  - "**/*.md"
+  - "**/package-lock.json"
+  - "**/yarn.lock"
+
+  # Git and IDE files
+  - ".git/**"
+  - ".vscode/**"
+  - ".idea/**"
+  - "**/*.iml"
