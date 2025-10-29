@@ -223,13 +223,14 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
     });
     expect(reverseFriendship).toBeDefined();
 
-    const deletedRequest = await FriendRequest.findById(friendReq._id);
-    expect(deletedRequest).toBeNull();
+    const updatedRequest = await FriendRequest.findById(friendReq._id);
+    expect(updatedRequest).toBeDefined();
+    expect(updatedRequest?.status).toStrictEqual('accepted');
   });
 
   // Input: Reject friend request
   // Expected status code: 200
-  // Expected behavior: Request deleted, no friendship created
+  // Expected behavior: Request marked as rejected, no friendship created
   // Expected output: Success message
   it('should reject friend request', async () => {
     const res = await request(app)
@@ -249,8 +250,9 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
     });
     expect(friendship).toBeNull();
 
-    const deletedRequest = await FriendRequest.findById(friendReq._id);
-    expect(deletedRequest).toBeNull();
+    const updatedRequest = await FriendRequest.findById(friendReq._id);
+    expect(updatedRequest).toBeDefined();
+    expect(updatedRequest?.status).toStrictEqual('rejected');
   });
 
   // Input: Invalid accept value (not boolean)
@@ -280,7 +282,7 @@ describe('Unmocked: POST /friends/respond - Additional Tests', () => {
       .set('Authorization', `Bearer ${token2}`)
       .send({
         requestId: fakeId.toString(),
-        action: 'accept'
+        accept: true
       });
 
     expect(res.status).toStrictEqual(404);

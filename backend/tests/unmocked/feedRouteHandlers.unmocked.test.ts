@@ -288,14 +288,24 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   });
 
   // Test Case 12: GET /stream (SSE)
-  it('should establish SSE stream', async () => {
-    const res = await request(app)
+  it('should establish SSE stream', (done) => {
+    const req = request(app)
       .get('/api/feed/stream')
       .set('Authorization', `Bearer ${token1}`)
-      .set('Accept', 'text/event-stream');
-
-    // SSE connection should be established
-    expect(res.status).toBe(200);
+      .set('Accept', 'text/event-stream')
+      .parse((res: any) => {
+        // Check headers on initial response
+        if (res.statusCode === 200 && res.headers['content-type'] === 'text/event-stream') {
+          req.abort();
+          done();
+        }
+      })
+      .end((err: any) => {
+        // Ignore abort errors - they're expected for SSE
+        if (err && err.code !== 'ECONNRESET') {
+          done(err);
+        }
+      });
   });
 
   // Test Case 13: POST /:activityId/like

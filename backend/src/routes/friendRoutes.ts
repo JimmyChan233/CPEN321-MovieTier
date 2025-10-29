@@ -284,6 +284,11 @@ router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, 
       return res.status(400).json({ success: false, message: 'Invalid friendId format' });
     }
 
+    // Check if user is trying to remove themselves
+    if (String(req.userId) === String(friendId)) {
+      return res.status(400).json({ success: false, message: 'Cannot remove yourself' });
+    }
+
     // Convert to ObjectIds for proper matching
     const userObjectId = new mongoose.Types.ObjectId(req.userId);
     const friendObjectId = new mongoose.Types.ObjectId(friendId);
