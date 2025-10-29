@@ -476,9 +476,10 @@ describe('Watchlist Routes - Unmocked Tests', () => {
         .delete('/invalid')
         .set('Authorization', `Bearer ${token1}`);
 
-      // Invalid movieId causes internal processing error
-      expect([404, 500]).toContain(res.status);
+      // Invalid movieId format returns 400 Bad Request
+      expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid movie id');
     });
 
     it('should handle database error gracefully', async () => {
