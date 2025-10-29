@@ -67,8 +67,9 @@ describe('Unmocked: GET /feed', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
   });
 
   // Input: User with no friends
@@ -88,7 +89,9 @@ describe('Unmocked: GET /feed', () => {
       .set('Authorization', `Bearer ${newToken}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(0);
   });
 
   // Input: Unauthenticated request
@@ -245,7 +248,8 @@ describe('Unmocked: GET /feed/:activityId/comments', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   // Input: Activity with no comments
@@ -258,8 +262,9 @@ describe('Unmocked: GET /feed/:activityId/comments', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(0);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(0);
   });
 });
 

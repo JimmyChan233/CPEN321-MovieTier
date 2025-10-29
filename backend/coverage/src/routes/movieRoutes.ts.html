@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">96.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>159/159</span>
+                <span class='fraction'>153/159</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">74.4% </span>
+                <span class="strong">69.6% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>93/125</span>
+                <span class='fraction'>87/125</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">95% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>20/20</span>
+                <span class='fraction'>19/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">96.02% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>151/151</span>
+                <span class='fraction'>145/151</span>
             </div>
         
             
@@ -680,21 +680,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
@@ -716,7 +716,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -736,22 +736,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1081,7 +1081,7 @@ router.get('/:movieId/providers', authenticate, async (req, res) =&gt; {
 &nbsp;
     res.json({ success: true, data: payload });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Unable to load watch providers. Please try again' });
+<span class="cstat-no" title="statement not covered" >    res.status(500).json({ success: false, message: 'Unable to load watch providers. Please try again' });</span>
   }
 });
 &nbsp;
@@ -1101,20 +1101,20 @@ router.get('/:movieId/details', authenticate, async (req, res) =&gt; {
       tmdb.get(`/movie/${movieId}`, { params: { language: 'en-US' } }),
       tmdb.get(`/movie/${movieId}/credits`, { params: { language: 'en-US' } })
     ]);
-    const d = detailsResp.data || <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
-    const cast = Array.isArray(creditsResp.data?.cast)
-      ? creditsResp.data.cast.slice(0, 5).map((c: any) =&gt; c?.name).filter(Boolean)
-      : <span class="branch-1 cbranch-no" title="branch not covered" >[];</span>
-    const shaped = {
+    const d = <span class="cstat-no" title="statement not covered" >detailsResp.data || {};</span>
+    const cast = <span class="cstat-no" title="statement not covered" >Array.isArray(creditsResp.data?.cast)</span>
+      ? creditsResp.data.cast.slice(0, 5).map(<span class="fstat-no" title="function not covered" >(c</span>: any) =&gt; <span class="cstat-no" title="statement not covered" >c?.name)</span>.filter(Boolean)
+      : [];
+    const shaped = <span class="cstat-no" title="statement not covered" >{</span>
       id: d.id,
       title: d.title,
-      overview: d.overview || <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
-      posterPath: d.poster_path || <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
-      releaseDate: d.release_date || <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
-      voteAverage: d.vote_average ?? <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
+      overview: d.overview || null,
+      posterPath: d.poster_path || null,
+      releaseDate: d.release_date || null,
+      voteAverage: d.vote_average ?? null,
       cast
     };
-    res.json({ success: true, data: shaped });
+<span class="cstat-no" title="statement not covered" >    res.json({ success: true, data: shaped });</span>
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load movie details. Please try again' });
   }
@@ -1165,7 +1165,7 @@ export default router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-28T23:52:39.529Z
+                at 2025-10-29T00:00:41.025Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -257,7 +257,7 @@ router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => 
       }
     }
 
-    res.json({ success: true, message: 'Activity liked' });
+    res.status(201).json({ success: true, message: 'Activity liked' });
   } catch (error: any) {
     if (error.code === 11000) {
       // Duplicate key error - already liked
@@ -372,7 +372,7 @@ router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res)
       }
     }
 
-    res.json({ success: true, data: shaped });
+    res.status(201).json({ success: true, data: shaped });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to add comment' });
   }
