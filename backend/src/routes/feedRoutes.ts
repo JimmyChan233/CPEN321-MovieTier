@@ -215,7 +215,7 @@ router.get('/me', authenticate, asyncHandler(async (req: AuthRequest, res) => {
         voteAverage?: number;
         createdAt?: Date;
       };
-      const key = `${activity.userId?._id}_${activity.movieId}`;
+      const key = `${String(activity.userId?._id)}_${String(activity.movieId)}`;
       const currentRank = movieRankMap.get(key);
       const activityIdStr = String(activity._id);
 
@@ -445,7 +445,7 @@ router.delete('/:activityId/comments/:commentId', authenticate, asyncHandler(asy
     // Find comment and verify ownership
     const comment = await Comment.findOne({
       _id: commentId,
-      activityId: activityId
+      activityId
     });
 
     if (!comment) {

@@ -124,7 +124,7 @@ class AuthRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Delete account failed: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
