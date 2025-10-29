@@ -83,243 +83,42 @@ fun ProfileScreen(
                     val movieDetails by watchlistVm.details.collectAsState()
 
                     // Avatar and user info header
-                    Avatar(
-                        imageUrl = user.profileImageUrl,
-                        name = user.name,
-                        size = 80.dp
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = user.name,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = user.email,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    ProfileHeader(user)
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Edit Profile Button
-                    Button(
-                        onClick = { navController.navigate(NavRoutes.EDIT_PROFILE) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.filledTonalButtonColors()
-                    ) {
-                        Text("Edit Profile")
-                    }
+                    ProfileEditButton(navController)
 
                     Spacer(modifier = Modifier.height(24.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("My Watchlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        TextButton(onClick = { navController.navigate(NavRoutes.WATCHLIST) }) { Text("View All") }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        watchUi.items.take(3).forEach { item ->
-                            val details = movieDetails[item.movieId]
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { navController.navigate(NavRoutes.WATCHLIST) },
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.Top,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = item.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                        contentDescription = "Poster: ${item.title}",
-                                        modifier = Modifier
-                                            .width(90.dp)
-                                            .aspectRatio(2f / 3f),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    Column(
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text(
-                                            text = item.title,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Spacer(Modifier.height(6.dp))
-
-                                        // Year and rating on single line (consistent with Ranking/Watchlist format)
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            details?.releaseDate?.take(4)?.let { year ->
-                                                Text(
-                                                    text = year,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                            details?.voteAverage?.let { rating ->
-                                                StarRating(rating = rating, starSize = 14.dp)
-                                            }
-                                        }
-                                        if (details != null) {
-                                            Spacer(Modifier.height(6.dp))
-                                        }
-
-                                        item.overview?.let {
-                                            Text(
-                                                text = it,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 3,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (watchUi.items.isEmpty()) {
-                            Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
+                    WatchlistPreviewSection(navController, watchUi, movieDetails)
 
                     // Extra spacing between watchlist and theme section
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Theme toggle section
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = "Theme",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                FilterChip(
-                                    selected = themeMode == ThemeMode.System,
-                                    onClick = { themeViewModel.setThemeMode(ThemeMode.System) },
-                                    label = { Text("System") },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .testTag("theme_system")
-                                )
-                                FilterChip(
-                                    selected = themeMode == ThemeMode.Light,
-                                    onClick = { themeViewModel.setThemeMode(ThemeMode.Light) },
-                                    label = { Text("Light") },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .testTag("theme_light")
-                                )
-                                FilterChip(
-                                    selected = themeMode == ThemeMode.Dark,
-                                    onClick = { themeViewModel.setThemeMode(ThemeMode.Dark) },
-                                    label = { Text("Dark") },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .testTag("theme_dark")
-                                )
-                            }
-                        }
-                    }
+                    ThemeSelectorCard(themeMode, themeViewModel)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Action buttons
-                    Button(
-                        onClick = { if (!uiState.isLoading) authViewModel.signOut() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("sign_out_button"),
-                        colors = ButtonDefaults.filledTonalButtonColors()
-                    ) {
-                        Icon(
-                            Icons.Default.ExitToApp,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Sign Out")
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = { if (!uiState.isLoading) showDeleteDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("delete_account_button"),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Text("Delete Account")
-                    }
+                    ProfileActionButtons(
+                        uiState = uiState,
+                        onSignOut = { authViewModel.signOut() },
+                        onDeleteAccount = { showDeleteDialog = true }
+                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
                 if (showDeleteDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDeleteDialog = false },
-                        icon = {
-                            Icon(
-                                Icons.Default.ExitToApp,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                    DeleteAccountDialog(
+                        uiState = uiState,
+                        onConfirm = {
+                            showDeleteDialog = false
+                            authViewModel.deleteAccount()
                         },
-                        title = { Text("Delete Account") },
-                        text = {
-                            Text("Are you sure you want to delete your account? This action cannot be undone.")
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    showDeleteDialog = false
-                                    if (!uiState.isLoading) authViewModel.deleteAccount()
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ),
-                                modifier = Modifier.testTag("confirm_delete_button")
-                            ) {
-                                Text("Delete")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = { showDeleteDialog = false },
-                                modifier = Modifier.testTag("cancel_delete_button")
-                            ) {
-                                Text("Cancel")
-                            }
-                        }
+                        onDismiss = { showDeleteDialog = false }
                     )
                 }
             } else {
@@ -335,7 +134,274 @@ fun ProfileScreen(
     }
 }
 
-// ThemeMode is provided by ui.theme ThemeMode
+@Composable
+private fun ProfileHeader(user: com.cpen321.movietier.data.model.User) {
+    Avatar(
+        imageUrl = user.profileImageUrl,
+        name = user.name,
+        size = 80.dp
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = user.name,
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text(
+        text = user.email,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun ProfileEditButton(navController: NavController) {
+    Button(
+        onClick = { navController.navigate(NavRoutes.EDIT_PROFILE) },
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.filledTonalButtonColors()
+    ) {
+        Text("Edit Profile")
+    }
+}
+
+@Composable
+private fun WatchlistPreviewSection(
+    navController: NavController,
+    watchUi: com.cpen321.movietier.ui.viewmodels.WatchlistUiState,
+    movieDetails: Map<Int, com.cpen321.movietier.data.model.Movie>
+) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text("My Watchlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        TextButton(onClick = { navController.navigate(NavRoutes.WATCHLIST) }) { Text("View All") }
+    }
+    Spacer(Modifier.height(8.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        watchUi.items.take(3).forEach { item ->
+            val details = movieDetails[item.movieId]
+            WatchlistPreviewCard(item, details, navController)
+        }
+        if (watchUi.items.isEmpty()) {
+            Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun WatchlistPreviewCard(
+    item: com.cpen321.movietier.data.model.WatchlistItem,
+    details: com.cpen321.movietier.data.model.Movie?,
+    navController: NavController
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { navController.navigate(NavRoutes.WATCHLIST) },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            WatchlistPreviewPoster(item)
+            WatchlistPreviewInfo(item, details)
+        }
+    }
+}
+
+@Composable
+private fun WatchlistPreviewPoster(item: com.cpen321.movietier.data.model.WatchlistItem) {
+    AsyncImage(
+        model = item.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+        contentDescription = "Poster: ${item.title}",
+        modifier = Modifier
+            .width(90.dp)
+            .aspectRatio(2f / 3f),
+        contentScale = ContentScale.Crop
+    )
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.WatchlistPreviewInfo(
+    item: com.cpen321.movietier.data.model.WatchlistItem,
+    details: com.cpen321.movietier.data.model.Movie?
+) {
+    Column(modifier = Modifier.weight(1f)) {
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(Modifier.height(6.dp))
+
+        // Year and rating on single line (consistent with Ranking/Watchlist format)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            details?.releaseDate?.take(4)?.let { year ->
+                Text(
+                    text = year,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            details?.voteAverage?.let { rating ->
+                StarRating(rating = rating, starSize = 14.dp)
+            }
+        }
+        if (details != null) {
+            Spacer(Modifier.height(6.dp))
+        }
+
+        item.overview?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeSelectorCard(themeMode: ThemeMode, themeViewModel: ThemeViewModel) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Theme",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = themeMode == ThemeMode.System,
+                    onClick = { themeViewModel.setThemeMode(ThemeMode.System) },
+                    label = { Text("System") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("theme_system")
+                )
+                FilterChip(
+                    selected = themeMode == ThemeMode.Light,
+                    onClick = { themeViewModel.setThemeMode(ThemeMode.Light) },
+                    label = { Text("Light") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("theme_light")
+                )
+                FilterChip(
+                    selected = themeMode == ThemeMode.Dark,
+                    onClick = { themeViewModel.setThemeMode(ThemeMode.Dark) },
+                    label = { Text("Dark") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("theme_dark")
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileActionButtons(
+    uiState: com.cpen321.movietier.ui.viewmodels.AuthUiState,
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit
+) {
+    Button(
+        onClick = { if (!uiState.isLoading) onSignOut() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("sign_out_button"),
+        colors = ButtonDefaults.filledTonalButtonColors()
+    ) {
+        Icon(
+            Icons.Default.ExitToApp,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("Sign Out")
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Button(
+        onClick = { if (!uiState.isLoading) onDeleteAccount() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("delete_account_button"),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error
+        )
+    ) {
+        Text("Delete Account")
+    }
+}
+
+@Composable
+private fun DeleteAccountDialog(
+    uiState: com.cpen321.movietier.ui.viewmodels.AuthUiState,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.ExitToApp,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        },
+        title = { Text("Delete Account") },
+        text = {
+            Text("Are you sure you want to delete your account? This action cannot be undone.")
+        },
+        confirmButton = {
+            Button(
+                onClick = { if (!uiState.isLoading) onConfirm() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier.testTag("confirm_delete_button")
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.testTag("cancel_delete_button")
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
 
 @Preview(showBackground = true)
 @Composable
