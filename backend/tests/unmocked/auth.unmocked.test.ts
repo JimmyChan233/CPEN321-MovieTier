@@ -18,9 +18,22 @@ import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
 
 // Interface POST /auth/signin
 describe('Unmocked: POST /auth/signin', () => {
+  let mongoServer: MongoMemoryServer;
   let app: express.Application;
 
-  // DB SETUP PLACEHOLDER
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/', authRoutes);
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
 
   beforeEach(async () => {
     await User.deleteMany({});

@@ -19,7 +19,8 @@ describe('Rerank Controller - Complete Coverage', () => {
   let token: string;
 
   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGO_URI_FOR_TESTS!);
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
 
     app = express();
     app.use(express.json());
@@ -31,6 +32,7 @@ describe('Rerank Controller - Complete Coverage', () => {
 
   afterAll(async () => {
     await mongoose.disconnect();
+    await mongoServer.stop();
   });
 
   beforeEach(async () => {
