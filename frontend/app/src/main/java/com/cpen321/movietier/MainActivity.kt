@@ -72,130 +72,10 @@ fun MovieTierApp() {
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(
-                    modifier = Modifier.testTag("bottom_navigation")
-                ) {
-                    // 1. Discover
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                Icons.Default.Favorite,
-                                contentDescription = "Discover"
-                            )
-                        },
-                        label = { Text("Discover") },
-                        selected = currentRoute == NavRoutes.RECOMMENDATION,
-                        onClick = {
-                            navController.navigate(NavRoutes.RECOMMENDATION) {
-                                popUpTo(NavRoutes.RECOMMENDATION) { inclusive = true }
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.testTag("nav_recommendation")
-                    )
-                    // 2. Ranking
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = "Ranking"
-                            )
-                        },
-                        label = { Text("Ranking") },
-                        selected = currentRoute == NavRoutes.RANKING,
-                        onClick = {
-                            navController.navigate(NavRoutes.RANKING) {
-                                popUpTo(NavRoutes.RECOMMENDATION)
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.testTag("nav_ranking")
-                    )
-                    // 3. Feed
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                Icons.Default.Home,
-                                contentDescription = "Feed"
-                            )
-                        },
-                        label = { Text("Feed") },
-                        selected = currentRoute == NavRoutes.FEED,
-                        onClick = {
-                            navController.navigate(NavRoutes.FEED) {
-                                popUpTo(NavRoutes.RECOMMENDATION)
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.testTag("nav_feed")
-                    )
-                    // 4. Friends
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = "Friends"
-                            )
-                        },
-                        label = { Text("Friends") },
-                        selected = currentRoute == NavRoutes.FRIENDS,
-                        onClick = {
-                            navController.navigate(NavRoutes.FRIENDS) {
-                                popUpTo(NavRoutes.RECOMMENDATION)
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.testTag("nav_friends")
-                    )
-                    // 5. Profile
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                Icons.Default.AccountCircle,
-                                contentDescription = "Profile"
-                            )
-                        },
-                        label = { Text("Profile") },
-                        selected = currentRoute == NavRoutes.PROFILE,
-                        onClick = {
-                            navController.navigate(NavRoutes.PROFILE) {
-                                popUpTo(NavRoutes.RECOMMENDATION)
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.testTag("nav_profile")
-                    )
-                }
+                MovieTierBottomNavigation(
+                    currentRoute = currentRoute,
+                    navController = navController
+                )
             }
         }
     ) { innerPadding ->
@@ -207,4 +87,93 @@ fun MovieTierApp() {
             NavGraph(navController = navController)
         }
     }
+}
+
+@Composable
+private fun MovieTierBottomNavigation(
+    currentRoute: String?,
+    navController: androidx.navigation.NavController
+) {
+    NavigationBar(
+        modifier = Modifier.testTag("bottom_navigation")
+    ) {
+        MovieTierNavigationItem(
+            icon = Icons.Default.Favorite,
+            label = "Discover",
+            route = NavRoutes.RECOMMENDATION,
+            currentRoute = currentRoute,
+            navController = navController,
+            testTag = "nav_recommendation",
+            popUpToInclusive = true
+        )
+        MovieTierNavigationItem(
+            icon = Icons.Default.Star,
+            label = "Ranking",
+            route = NavRoutes.RANKING,
+            currentRoute = currentRoute,
+            navController = navController,
+            testTag = "nav_ranking"
+        )
+        MovieTierNavigationItem(
+            icon = Icons.Default.Home,
+            label = "Feed",
+            route = NavRoutes.FEED,
+            currentRoute = currentRoute,
+            navController = navController,
+            testTag = "nav_feed"
+        )
+        MovieTierNavigationItem(
+            icon = Icons.Default.Person,
+            label = "Friends",
+            route = NavRoutes.FRIENDS,
+            currentRoute = currentRoute,
+            navController = navController,
+            testTag = "nav_friends"
+        )
+        MovieTierNavigationItem(
+            icon = Icons.Default.AccountCircle,
+            label = "Profile",
+            route = NavRoutes.PROFILE,
+            currentRoute = currentRoute,
+            navController = navController,
+            testTag = "nav_profile"
+        )
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.MovieTierNavigationItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    route: String,
+    currentRoute: String?,
+    navController: androidx.navigation.NavController,
+    testTag: String,
+    popUpToInclusive: Boolean = false
+) {
+    NavigationBarItem(
+        icon = {
+            Icon(
+                icon,
+                contentDescription = label
+            )
+        },
+        label = { Text(label) },
+        selected = currentRoute == route,
+        onClick = {
+            navController.navigate(route) {
+                popUpTo(NavRoutes.RECOMMENDATION) {
+                    inclusive = popUpToInclusive
+                }
+            }
+        },
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        modifier = Modifier.testTag(testTag)
+    )
 }

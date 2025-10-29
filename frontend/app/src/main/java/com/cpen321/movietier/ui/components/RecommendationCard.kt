@@ -53,7 +53,7 @@ private fun RecommendationPoster(movie: Movie) {
 }
 
 @Composable
-private fun RecommendationContent(movie: Movie) {
+private fun androidx.compose.foundation.layout.RowScope.RecommendationContent(movie: Movie) {
     Column(
         modifier = Modifier
             .weight(1f)

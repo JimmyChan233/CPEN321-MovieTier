@@ -106,7 +106,7 @@ private fun MovieDetailPoster(
 }
 
 @Composable
-private fun MovieDetailInfo(
+private fun androidx.compose.foundation.layout.RowScope.MovieDetailInfo(
     movie: Movie,
     onAddToRanking: (() -> Unit)?,
     onAddToWatchlist: (() -> Unit)?,

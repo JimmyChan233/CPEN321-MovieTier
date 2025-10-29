@@ -64,7 +64,7 @@ fun CommentBottomSheet(
 }
 
 @Composable
-private fun CommentsList(
+private fun androidx.compose.foundation.layout.ColumnScope.CommentsList(
     comments: List<FeedComment>,
     currentUserId: String?,
     onDeleteComment: (String) -> Unit
