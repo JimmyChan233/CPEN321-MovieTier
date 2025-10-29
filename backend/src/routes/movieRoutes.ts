@@ -296,18 +296,30 @@ router.get('/:movieId/providers', authenticate, asyncHandler(async (req, res) =>
 
     const tmdb = getTmdbClient();
   const { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
-  const result = data?.results?.[country] ?? {};
+
+  interface WatchProvider {
+    provider_name?: string;
+  }
+
+  interface WatchProvidersResult {
+    link?: string;
+    flatrate?: unknown[];
+    rent?: unknown[];
+    buy?: unknown[];
+  }
+
+  const result = (data?.results?.[country] ?? {}) as WatchProvidersResult;
 
   let link: string | null = result.link ?? null;
   if (!link) {
     // Fallback to TMDB movie watch page for the exact movie
     link = `https://www.themoviedb.org/movie/${movieId}/watch?locale=${country}`;
   }
-    const mapProviders = (arr: unknown[] | undefined) =>
+    const mapProviders = (arr: unknown[] | undefined): string[] =>
       Array.isArray(arr) ? arr.map((p: unknown) => {
-        const provider = p as { provider_name?: string };
+        const provider = p as WatchProvider;
         return provider.provider_name;
-      }).filter(Boolean) : [];
+      }).filter((name): name is string => Boolean(name)) : [];
 
     const payload = {
       link,

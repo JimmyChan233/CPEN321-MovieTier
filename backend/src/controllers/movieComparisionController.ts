@@ -15,6 +15,7 @@ import { IRankedMovie } from '../models/movie/RankedMovie';
 import WatchlistItem from '../models/watch/WatchlistItem';
 import User from '../models/user/User';
 import notificationService from '../services/notification.service';
+import { AuthRequest } from '../middleware/auth';
 
 async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
   try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}
@@ -24,11 +25,17 @@ async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userId
 
 export const addMovie = async (req: Request, res: Response) => {
   try {
-    const userId = (req as { userId?: string }).userId;
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
-    const { movieId, title, posterPath, overview } = req.body;
+    const { movieId, title, posterPath, overview } = req.body as {
+      movieId: number;
+      title: string;
+      posterPath?: string;
+      overview?: string;
+    };
     const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const rankedMovies = await RankedMovie.find({ userId: userObjectId }).sort({ rank: 1 });
@@ -162,11 +169,15 @@ export const addMovie = async (req: Request, res: Response) => {
 
 export const compareMovies = async (req: Request, res: Response) => {
   try {
-    const userId = (req as { userId?: string }).userId;
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
-    const { comparedMovieId, preferredMovieId } = req.body;
+    const { comparedMovieId, preferredMovieId } = req.body as {
+      comparedMovieId: number;
+      preferredMovieId: number;
+    };
     const session = getSession(userId);
 
     if (!session) {

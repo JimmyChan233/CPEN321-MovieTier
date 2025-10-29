@@ -19,8 +19,9 @@ export function getTmdbClient(): AxiosInstance {
     const start = Date.now();
     (config as unknown as { __start: number }).__start = start;
     const { method, url, params } = config;
+    const typedParams = params as Record<string, unknown> | undefined;
     // eslint-disable-next-line no-console
-    console.log(`🌐 TMDB ➡️  ${method?.toUpperCase()} ${url} params=${JSON.stringify(redactParams(params))}`);
+    console.log(`🌐 TMDB ➡️  ${method?.toUpperCase()} ${url} params=${JSON.stringify(redactParams(typedParams))}`);
     return config;
   });
 
