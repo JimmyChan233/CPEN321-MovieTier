@@ -45,6 +45,7 @@ function formatMessage(level: string, color: string, message: string, ...args: u
       ).join(' ')
     : '';
 
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   console.log(
     `${colors.dim}[${timestamp}]${colors.reset} ${color}${level}${colors.reset} ${sanitizedMessage}${formattedArgs}`
   );
@@ -80,6 +81,7 @@ export const logger = {
     const sanitizedMethod = sanitizeForLog(method);
     const sanitizedUrl = sanitizeForLog(url);
 
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     console.log(
       `${colors.dim}[${getTimestamp()}]${colors.reset} ${methodColor}${sanitizedMethod}${colors.reset} ${sanitizedUrl} ${statusColor}${statusCode ?? ''}${colors.reset}${durationStr}`
     );

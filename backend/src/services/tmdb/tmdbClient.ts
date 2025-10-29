@@ -26,7 +26,7 @@ export function getTmdbClient(): AxiosInstance {
     const typedParams = params as Record<string, unknown> | undefined;
     const sanitizedMethod = sanitizeForLog(method?.toUpperCase() ?? 'GET');
     const sanitizedUrl = sanitizeForLog(url ?? '');
-    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console, security/detect-non-literal-fs-filename
     console.log(`🌐 TMDB ➡️  ${sanitizedMethod} ${sanitizedUrl} params=${JSON.stringify(redactParams(typedParams))}`);
     return config;
   });
@@ -37,7 +37,7 @@ export function getTmdbClient(): AxiosInstance {
       const ms = start ? Date.now() - start : undefined;
       const sanitizedMethod = sanitizeForLog(response.config.method?.toUpperCase() ?? 'GET');
       const sanitizedUrl = sanitizeForLog(response.config.url ?? '');
-      // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console, security/detect-non-literal-fs-filename
       console.log(`🌐 TMDB ⬅️  ${sanitizedMethod} ${sanitizedUrl} ${response.status}${ms !== undefined ? ` ${ms}ms` : ''}`);
       return response;
     },
@@ -48,7 +48,7 @@ export function getTmdbClient(): AxiosInstance {
       const sanitizedMethod = sanitizeForLog(cfg.method?.toUpperCase?.() ?? 'GET');
       const sanitizedUrl = sanitizeForLog(cfg.url ?? '');
       const sanitizedError = sanitizeForLog(error.message ?? '');
-      // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console, security/detect-non-literal-fs-filename
       console.log(`🌐 TMDB ⬅️  ${sanitizedMethod} ${sanitizedUrl} ERROR${ms !== undefined ? ` ${ms}ms` : ''}: ${sanitizedError}`);
       throw error;
     }
