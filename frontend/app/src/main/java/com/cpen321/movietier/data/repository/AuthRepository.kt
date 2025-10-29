@@ -134,7 +134,7 @@ class AuthRepository @Inject constructor(
             val request = UpdateProfileRequest(name = name, profilePicture = null)
             val response = apiService.updateProfile(request)
             handleUpdateProfileResponse(response)
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
