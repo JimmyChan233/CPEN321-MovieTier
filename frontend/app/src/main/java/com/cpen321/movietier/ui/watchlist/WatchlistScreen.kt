@@ -38,6 +38,7 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.cpen321.movietier.ui.common.CommonContext
+import com.cpen321.movietier.ui.common.WatchlistContentData
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -65,7 +66,14 @@ fun WatchlistScreen(
         topBar = { WSTopBar(navController, vm, commonContext.scope, listState) },
         snackbarHost = { SnackbarHost(commonContext.snackbarHostState) }
     ) { padding ->
-        WSContent(ui, details, padding, listState, country, vm, commonContext, { itemToDelete = it; showDeleteDialog = true })
+        WSContent(
+            contentData = WatchlistContentData(ui, details, country),
+            padding = padding,
+            listState = listState,
+            vm = vm,
+            commonContext = commonContext,
+            onLongClick = { itemToDelete = it; showDeleteDialog = true }
+        )
         WSComparisonDialog(compareState, vm)
         WSDeleteDialog(showDeleteDialog, itemToDelete, vm, commonContext, { showDeleteDialog = it }, { itemToDelete = it })
     }
@@ -153,15 +161,17 @@ private fun WSTopBarSortMenu(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WSContent(
-    ui: com.cpen321.movietier.ui.viewmodels.WatchlistUiState,
-    details: Map<Int, com.cpen321.movietier.data.model.Movie>,
+    contentData: WatchlistContentData,
     padding: PaddingValues,
     listState: LazyListState,
-    country: String,
     vm: WatchlistViewModel,
     commonContext: CommonContext,
     onLongClick: (com.cpen321.movietier.data.model.WatchlistItem) -> Unit
 ) {
+    val ui = contentData.uiState
+    val details = contentData.movieDetails
+    val country = contentData.country
+
     if (ui.isLoading) {
         Box(Modifier.fillMaxSize().padding(padding)) { CircularProgressIndicator(Modifier.padding(24.dp)) }
     } else {

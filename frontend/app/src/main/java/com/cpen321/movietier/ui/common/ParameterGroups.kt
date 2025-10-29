@@ -141,3 +141,12 @@ data class DismissCallbacks(
     val onDismissMovie: () -> Unit = {},
     val onDismissComments: () -> Unit = {}
 )
+
+/**
+ * Groups watchlist content data
+ */
+data class WatchlistContentData(
+    val uiState: com.cpen321.movietier.ui.viewmodels.WatchlistUiState,
+    val movieDetails: Map<Int, com.cpen321.movietier.data.model.Movie>,
+    val country: String
+)
