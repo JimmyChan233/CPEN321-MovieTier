@@ -27,7 +27,8 @@ describe('Comprehensive Feed Routes Tests', () => {
   let token2: string;
 
   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGO_URI_FOR_TESTS!);
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
 
     app = express();
     app.use(express.json());
@@ -45,6 +46,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
   afterAll(async () => {
     await mongoose.disconnect();
+    await mongoServer.stop();
   });
 
   beforeEach(async () => {

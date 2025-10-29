@@ -40,7 +40,7 @@ describe('Mocked: Feed API Errors', () => {
     );
 
     const res = await request(app)
-      .get('/')
+      .get('/api/feed')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(500);
@@ -57,7 +57,7 @@ describe('Mocked: Feed API Errors', () => {
     );
 
     const res = await request(app)
-      .post('/activity-id/like')
+      .post('/api/feed/activity-id/like')
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
@@ -71,7 +71,7 @@ describe('Mocked: Feed API Errors', () => {
   // Expected output: Validation error message
   it('should handle invalid comment text', async () => {
     const res = await request(app)
-      .post('/activity-id/comments')
+      .post('/api/feed/activity-id/comments')
       .set('Authorization', `Bearer ${token}`)
       .send({ text: null });
 
@@ -101,7 +101,7 @@ describe('Mocked: Friends API Errors', () => {
     );
 
     const res = await request(app)
-      .get('/')
+      .get('/api/friends')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(500);
@@ -118,7 +118,7 @@ describe('Mocked: Friends API Errors', () => {
     );
 
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token}`)
       .send({ email: 'test@example.com' });
 
@@ -136,7 +136,7 @@ describe('Mocked: Friends API Errors', () => {
     );
 
     const res = await request(app)
-      .post('/request')
+      .post('/api/friends/request')
       .set('Authorization', `Bearer ${token}`)
       .send({ email: 'nonexistent@example.com' });
 
@@ -166,7 +166,7 @@ describe('Mocked: Watchlist API Errors', () => {
     );
 
     const res = await request(app)
-      .get('/')
+      .get('/api/watchlist')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(500);
@@ -183,7 +183,7 @@ describe('Mocked: Watchlist API Errors', () => {
     );
 
     const res = await request(app)
-      .post('/')
+      .post('/api/watchlist')
       .set('Authorization', `Bearer ${token}`)
       .send({ movieId: 278, title: 'Movie' });
 
@@ -201,7 +201,7 @@ describe('Mocked: Watchlist API Errors', () => {
     );
 
     const res = await request(app)
-      .delete('/278')
+      .delete('/api/watchlist/278')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(500);
@@ -231,7 +231,7 @@ describe('Mocked: Recommendations API Errors', () => {
     );
 
     const res = await request(app)
-      .get('/trending')
+      .get('/api/recommendations/trending')
       .set('Authorization', `Bearer ${token}`);
 
     expect([500, 200]).toContain(res.status); // May cache or fail
@@ -247,7 +247,7 @@ describe('Mocked: Recommendations API Errors', () => {
       .mockRejectedValueOnce(new Error('Database error'));
 
     const res = await request(app)
-      .get('/')
+      .get('/api/recommendations')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(500);
@@ -276,7 +276,7 @@ describe('Mocked: User API Errors', () => {
     );
 
     const res = await request(app)
-      .put('/profile')
+      .put('/api/users/profile')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'New Name' });
 
@@ -294,7 +294,7 @@ describe('Mocked: User API Errors', () => {
     );
 
     const res = await request(app)
-      .post('/fcm-token')
+      .post('/api/users/fcm-token')
       .set('Authorization', `Bearer ${token}`)
       .send({ token: 'eODL6-Yk3jg:APA91bE...' });
 
