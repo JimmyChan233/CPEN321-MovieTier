@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import RankedMovieModel from '../models/movie/RankedMovie';
-const RankedMovie = mongoose.models.RankedMovie ?? RankedMovieModel;
+import RankedMovieModel, { IRankedMovie } from '../models/movie/RankedMovie';
 import FeedActivity from '../models/feed/FeedActivity';
 import { Friendship } from '../models/friend/Friend';
+import WatchlistItem from '../models/watch/WatchlistItem';
+import User from '../models/user/User';
 import { sseService } from '../services/sse/sseService';
 import {
   startSession,
@@ -11,11 +12,10 @@ import {
   updateSession,
   endSession,
 } from '../utils/comparisonSession';
-import { IRankedMovie } from '../models/movie/RankedMovie';
-import WatchlistItem from '../models/watch/WatchlistItem';
-import User from '../models/user/User';
 import notificationService from '../services/notification.service';
 import { AuthRequest } from '../middleware/auth';
+
+const RankedMovie = mongoose.models.RankedMovie ?? RankedMovieModel;
 
 async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
   try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}
