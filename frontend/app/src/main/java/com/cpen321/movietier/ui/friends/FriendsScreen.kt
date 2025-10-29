@@ -391,28 +391,19 @@ fun AddFriendDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add Friend") },
         text = {
-            Column {
-                TabRow(selectedTabIndex = tabIndex) {
-                    Tab(selected = tabIndex == 0, onClick = { tabIndex = 0 }) { Text("By Email", modifier = Modifier.padding(12.dp)) }
-                    Tab(selected = tabIndex == 1, onClick = { tabIndex = 1 }) { Text("By Name", modifier = Modifier.padding(12.dp)) }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                when (tabIndex) {
-                    0 -> AddFriendByEmailTab(
-                        email = email,
-                        onEmailChange = { email = it },
-                        isValidEmail = isValidEmail
-                    )
-                    1 -> AddFriendByNameTab(
-                        nameQuery = nameQuery,
-                        onNameQueryChange = { nameQuery = it },
-                        searchResults = searchResults,
-                        friends = ui.friends,
-                        outgoingRequests = ui.outgoingRequests,
-                        onSendRequest = onSendRequest
-                    )
-                }
-            }
+            AddFriendDialogContent(
+                tabIndex = tabIndex,
+                onTabChange = { tabIndex = it },
+                email = email,
+                onEmailChange = { email = it },
+                isValidEmail = isValidEmail,
+                nameQuery = nameQuery,
+                onNameQueryChange = { nameQuery = it },
+                searchResults = searchResults,
+                friends = ui.friends,
+                outgoingRequests = ui.outgoingRequests,
+                onSendRequest = onSendRequest
+            )
         },
         confirmButton = {
             if (tabIndex == 0) {
@@ -420,20 +411,40 @@ fun AddFriendDialog(
                     onClick = { onSendRequest(email) },
                     enabled = isValidEmail,
                     modifier = Modifier.testTag("send_request_button")
-                ) {
-                    Text("Send Request")
-                }
+                ) { Text("Send Request") }
             }
         },
         dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.testTag("cancel_button")
-            ) {
-                Text("Cancel")
-            }
+            TextButton(onClick = onDismiss, modifier = Modifier.testTag("cancel_button")) { Text("Cancel") }
         }
     )
+}
+
+@Composable
+private fun AddFriendDialogContent(
+    tabIndex: Int,
+    onTabChange: (Int) -> Unit,
+    email: String,
+    onEmailChange: (String) -> Unit,
+    isValidEmail: Boolean,
+    nameQuery: String,
+    onNameQueryChange: (String) -> Unit,
+    searchResults: List<com.cpen321.movietier.data.model.User>,
+    friends: List<com.cpen321.movietier.data.model.Friend>,
+    outgoingRequests: List<FriendRequestUi>,
+    onSendRequest: (String) -> Unit
+) {
+    Column {
+        TabRow(selectedTabIndex = tabIndex) {
+            Tab(selected = tabIndex == 0, onClick = { onTabChange(0) }) { Text("By Email", modifier = Modifier.padding(12.dp)) }
+            Tab(selected = tabIndex == 1, onClick = { onTabChange(1) }) { Text("By Name", modifier = Modifier.padding(12.dp)) }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        when (tabIndex) {
+            0 -> AddFriendByEmailTab(email, onEmailChange, isValidEmail)
+            1 -> AddFriendByNameTab(nameQuery, onNameQueryChange, searchResults, friends, outgoingRequests, onSendRequest)
+        }
+    }
 }
 
 @Composable
