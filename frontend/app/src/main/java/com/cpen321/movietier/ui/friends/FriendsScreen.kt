@@ -95,106 +95,18 @@ fun FriendsScreen(
                     )
                 }
                 FriendsState.EMPTY -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .testTag("friends_empty")
-                    ) {
-                        EmptyState(
-                            icon = Icons.Default.Person,
-                            title = "No friends yet",
-                            message = "Add friends to share rankings",
-                            primaryCta = {
-                                Button(
-                                    onClick = { showAddFriendDialog = true },
-                                    modifier = Modifier.testTag("empty_add_friend_button")
-                                ) {
-                                    Text("Add Friend")
-                                }
-                            }
-                        )
-                    }
+                    FriendsEmptyState(
+                        padding = padding,
+                        onAddFriend = { showAddFriendDialog = true }
+                    )
                 }
                 FriendsState.CONTENT -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .testTag("friends_list"),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Outgoing first (only when not empty)
-                        if (uiState.outgoingRequests.isNotEmpty()) {
-                            item(key = "outgoing_header") {
-                                Text(
-                                    text = "Outgoing Requests",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                            }
-                            items(
-                                items = uiState.outgoingRequests,
-                                key = { "out_" + it.id }
-                            ) { req ->
-                                OutgoingRequestRow(
-                                    request = req,
-                                    onCancel = { friendViewModel.cancelOutgoingRequest(req.id) },
-                                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
-                                )
-                            }
-                            item(key = "after_outgoing_spacer") { Spacer(Modifier.height(16.dp)) }
-                        }
-
-                        // Incoming requests section (shows empty state if none)
-                        item(key = "requests_header") {
-                            Text(
-                                text = "Friend Requests",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                        }
-                        if (uiState.requests.isEmpty()) {
-                            item(key = "requests_empty") {
-                                Text(
-                                    text = "No incoming requests",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        } else {
-                            items(
-                                items = uiState.requests,
-                                key = { "req_" + it.id }
-                            ) { req ->
-                                RequestRow(
-                                    request = req,
-                                    onAccept = { friendViewModel.respondToRequest(req.id, true) },
-                                    onReject = { friendViewModel.respondToRequest(req.id, false) },
-                                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
-                                )
-                            }
-                        }
-                        item(key = "friends_header_spacer") { Spacer(Modifier.height(16.dp)) }
-                        item(key = "friends_header") {
-                            Text(
-                                text = "Friends",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                        }
-                        items(
-                            items = uiState.friends,
-                            key = { it.id }
-                        ) { friend ->
-                            FriendRow(
-                                friend = friend,
-                                onRemove = { friendViewModel.removeFriend(friend.id) },
-                                navController = navController
-                            )
-                        }
-                    }
+                    FriendsContentList(
+                        padding = padding,
+                        uiState = uiState,
+                        friendViewModel = friendViewModel,
+                        navController = navController
+                    )
                 }
             }
         }
@@ -224,6 +136,118 @@ fun FriendsScreen(
 
 private enum class FriendsState {
     LOADING, EMPTY, CONTENT
+}
+
+@Composable
+private fun FriendsEmptyState(
+    padding: PaddingValues,
+    onAddFriend: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .testTag("friends_empty")
+    ) {
+        EmptyState(
+            icon = Icons.Default.Person,
+            title = "No friends yet",
+            message = "Add friends to share rankings",
+            primaryCta = {
+                Button(
+                    onClick = onAddFriend,
+                    modifier = Modifier.testTag("empty_add_friend_button")
+                ) {
+                    Text("Add Friend")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun FriendsContentList(
+    padding: PaddingValues,
+    uiState: com.cpen321.movietier.ui.viewmodels.FriendUiState,
+    friendViewModel: FriendViewModel,
+    navController: NavController
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .testTag("friends_list"),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (uiState.outgoingRequests.isNotEmpty()) {
+            item(key = "outgoing_header") {
+                Text(
+                    text = "Outgoing Requests",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+            items(
+                items = uiState.outgoingRequests,
+                key = { "out_" + it.id }
+            ) { req ->
+                OutgoingRequestRow(
+                    request = req,
+                    onCancel = { friendViewModel.cancelOutgoingRequest(req.id) },
+                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
+                )
+            }
+            item(key = "after_outgoing_spacer") { Spacer(Modifier.height(16.dp)) }
+        }
+
+        item(key = "requests_header") {
+            Text(
+                text = "Friend Requests",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+        if (uiState.requests.isEmpty()) {
+            item(key = "requests_empty") {
+                Text(
+                    text = "No incoming requests",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            items(
+                items = uiState.requests,
+                key = { "req_" + it.id }
+            ) { req ->
+                RequestRow(
+                    request = req,
+                    onAccept = { friendViewModel.respondToRequest(req.id, true) },
+                    onReject = { friendViewModel.respondToRequest(req.id, false) },
+                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
+                )
+            }
+        }
+        item(key = "friends_header_spacer") { Spacer(Modifier.height(16.dp)) }
+        item(key = "friends_header") {
+            Text(
+                text = "Friends",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+        items(
+            items = uiState.friends,
+            key = { it.id }
+        ) { friend ->
+            FriendRow(
+                friend = friend,
+                onRemove = { friendViewModel.removeFriend(friend.id) },
+                navController = navController
+            )
+        }
+    }
 }
 
 @Composable
@@ -257,60 +281,91 @@ private fun FriendRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Avatar(
-                imageUrl = friend.profileImageUrl,
-                name = friend.name,
-                size = 48.dp
-            )
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = friend.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = friend.email,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            var showConfirm by remember { mutableStateOf(false) }
-            IconButton(
-                onClick = { showConfirm = true },
-                modifier = Modifier.testTag("remove_friend_button_${friend.id}")
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Remove ${friend.name}",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-
-            if (showConfirm) {
-                AlertDialog(
-                    onDismissRequest = { showConfirm = false },
-                    title = { Text("Remove Friend?") },
-                    text = {
-                        Text(
-                            "Are you sure you want to remove ${friend.name}? You will no longer see their updates.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showConfirm = false
-                            onRemove()
-                        }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showConfirm = false }) { Text("Cancel") }
-                    }
-                )
-            }
+            FriendInfo(friend)
+            RemoveFriendButton(friend, onRemove)
         }
     }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.FriendInfo(
+    friend: com.cpen321.movietier.data.model.Friend
+) {
+    Avatar(
+        imageUrl = friend.profileImageUrl,
+        name = friend.name,
+        size = 48.dp
+    )
+    Column(modifier = Modifier.weight(1f)) {
+        Text(
+            text = friend.name,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = friend.email,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun RemoveFriendButton(
+    friend: com.cpen321.movietier.data.model.Friend,
+    onRemove: () -> Unit
+) {
+    var showConfirm by remember { mutableStateOf(false) }
+
+    IconButton(
+        onClick = { showConfirm = true },
+        modifier = Modifier.testTag("remove_friend_button_${friend.id}")
+    ) {
+        Icon(
+            Icons.Default.Delete,
+            contentDescription = "Remove ${friend.name}",
+            tint = MaterialTheme.colorScheme.error
+        )
+    }
+
+    if (showConfirm) {
+        RemoveFriendConfirmDialog(
+            friendName = friend.name,
+            onConfirm = {
+                showConfirm = false
+                onRemove()
+            },
+            onDismiss = { showConfirm = false }
+        )
+    }
+}
+
+@Composable
+private fun RemoveFriendConfirmDialog(
+    friendName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Remove Friend?") },
+        text = {
+            Text(
+                "Are you sure you want to remove $friendName? You will no longer see their updates.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Remove", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable
@@ -343,101 +398,19 @@ fun AddFriendDialog(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 when (tabIndex) {
-                    0 -> {
-                        Text(
-                            text = "Enter your friend's email address",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = { email = it },
-                            label = { Text("Email") },
-                            singleLine = true,
-                            isError = email.isNotBlank() && !isValidEmail,
-                            supportingText = {
-                                if (email.isNotBlank() && !isValidEmail) {
-                                    Text("Please enter a valid email address")
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("email_input")
-                        )
-                    }
-                    1 -> {
-                        Text(
-                            text = "Search users by name",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = nameQuery,
-                            onValueChange = { nameQuery = it },
-                            label = { Text("Name") },
-                            singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("name_input")
-                        )
-                        if (nameQuery.length >= 2 && searchResults.isEmpty()) {
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                text = "No users found",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        if (searchResults.isNotEmpty()) {
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                text = "Results",
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            LazyColumn(
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.heightIn(max = 200.dp)
-                            ) {
-                                items(searchResults) { user ->
-                                    val isFriend = ui.friends.any { it.id == user.id || it.email == user.email }
-                                    val isPending = ui.outgoingRequests.any { it.senderEmail.equals(user.email, ignoreCase = true) }
-                                    Card(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .clickable(enabled = !isFriend && !isPending) { onSendRequest(user.email) }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                                com.cpen321.movietier.ui.components.Avatar(
-                                                    imageUrl = user.profileImageUrl,
-                                                    name = user.name,
-                                                    size = 40.dp
-                                                )
-                                                Column(Modifier.weight(1f)) {
-                                                    Text(user.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                                    // Do not display email when searching by name
-                                                }
-                                            }
-                                            when {
-                                                isFriend -> Text("Friends", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                isPending -> Text("Pending", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                else -> TextButton(onClick = { onSendRequest(user.email) }) { Text("Add") }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    0 -> AddFriendByEmailTab(
+                        email = email,
+                        onEmailChange = { email = it },
+                        isValidEmail = isValidEmail
+                    )
+                    1 -> AddFriendByNameTab(
+                        nameQuery = nameQuery,
+                        onNameQueryChange = { nameQuery = it },
+                        searchResults = searchResults,
+                        friends = ui.friends,
+                        outgoingRequests = ui.outgoingRequests,
+                        onSendRequest = onSendRequest
+                    )
                 }
             }
         },
@@ -461,6 +434,145 @@ fun AddFriendDialog(
             }
         }
     )
+}
+
+@Composable
+private fun AddFriendByEmailTab(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    isValidEmail: Boolean
+) {
+    Text(
+        text = "Enter your friend's email address",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+    OutlinedTextField(
+        value = email,
+        onValueChange = onEmailChange,
+        label = { Text("Email") },
+        singleLine = true,
+        isError = email.isNotBlank() && !isValidEmail,
+        supportingText = {
+            if (email.isNotBlank() && !isValidEmail) {
+                Text("Please enter a valid email address")
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("email_input")
+    )
+}
+
+@Composable
+private fun AddFriendByNameTab(
+    nameQuery: String,
+    onNameQueryChange: (String) -> Unit,
+    searchResults: List<com.cpen321.movietier.data.model.User>,
+    friends: List<com.cpen321.movietier.data.model.Friend>,
+    outgoingRequests: List<FriendRequestUi>,
+    onSendRequest: (String) -> Unit
+) {
+    Text(
+        text = "Search users by name",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+    OutlinedTextField(
+        value = nameQuery,
+        onValueChange = onNameQueryChange,
+        label = { Text("Name") },
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("name_input")
+    )
+    if (nameQuery.length >= 2 && searchResults.isEmpty()) {
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "No users found",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+    if (searchResults.isNotEmpty()) {
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Results",
+            style = MaterialTheme.typography.titleSmall
+        )
+        Spacer(Modifier.height(8.dp))
+        UserSearchResultsList(
+            searchResults = searchResults,
+            friends = friends,
+            outgoingRequests = outgoingRequests,
+            onSendRequest = onSendRequest
+        )
+    }
+}
+
+@Composable
+private fun UserSearchResultsList(
+    searchResults: List<com.cpen321.movietier.data.model.User>,
+    friends: List<com.cpen321.movietier.data.model.Friend>,
+    outgoingRequests: List<FriendRequestUi>,
+    onSendRequest: (String) -> Unit
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.heightIn(max = 200.dp)
+    ) {
+        items(searchResults) { user ->
+            val isFriend = friends.any { it.id == user.id || it.email == user.email }
+            val isPending = outgoingRequests.any { it.senderEmail.equals(user.email, ignoreCase = true) }
+            UserSearchResultCard(
+                user = user,
+                isFriend = isFriend,
+                isPending = isPending,
+                onSendRequest = { onSendRequest(user.email) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun UserSearchResultCard(
+    user: com.cpen321.movietier.data.model.User,
+    isFriend: Boolean,
+    isPending: Boolean,
+    onSendRequest: () -> Unit
+) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isFriend && !isPending, onClick = onSendRequest)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Avatar(
+                    imageUrl = user.profileImageUrl,
+                    name = user.name,
+                    size = 40.dp
+                )
+                Column(Modifier.weight(1f)) {
+                    Text(user.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                }
+            }
+            when {
+                isFriend -> Text("Friends", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                isPending -> Text("Pending", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                else -> TextButton(onClick = onSendRequest) { Text("Add") }
+            }
+        }
+    }
 }
 
 @Composable
@@ -495,51 +607,66 @@ private fun RequestRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Avatar(
-                imageUrl = request.senderProfileImage,
-                name = request.senderName.ifBlank { request.senderId.takeLast(6) },
-                size = 48.dp
+            RequestInfo(request)
+            RequestActions(onAccept, onReject)
+        }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.RequestInfo(
+    request: FriendRequestUi
+) {
+    Avatar(
+        imageUrl = request.senderProfileImage,
+        name = request.senderName.ifBlank { request.senderId.takeLast(6) },
+        size = 48.dp
+    )
+    Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = request.senderName.ifBlank { "Incoming request" },
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (request.senderEmail.isNotBlank()) {
+            Text(
+                text = request.senderEmail,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = request.senderName.ifBlank { "Incoming request" },
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (request.senderEmail.isNotBlank()) {
-                    Text(
-                        text = request.senderEmail,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                horizontalAlignment = Alignment.End
-            ) {
-                Button(
-                    onClick = onAccept,
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    Text("Accept", style = MaterialTheme.typography.labelSmall)
-                }
-                OutlinedButton(
-                    onClick = onReject,
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    Text("Reject", style = MaterialTheme.typography.labelSmall)
-                }
-            }
+        }
+    }
+}
+
+@Composable
+private fun RequestActions(
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        Button(
+            onClick = onAccept,
+            modifier = Modifier.height(32.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text("Accept", style = MaterialTheme.typography.labelSmall)
+        }
+        OutlinedButton(
+            onClick = onReject,
+            modifier = Modifier.height(32.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text("Reject", style = MaterialTheme.typography.labelSmall)
         }
     }
 }
