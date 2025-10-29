@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomInt } from 'crypto';
 import { authenticate } from '../middleware/auth';
 import { fetchMovieTagline } from '../services/tmdb/tmdbTaglineService';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -33,11 +34,11 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
       return res.json({ success: true, data: tagline });
     }
     // Return fallback quote if no tagline found (still 200 status for frontend compatibility)
-    const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
+    const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
     return res.json({ success: true, data: randomQuote, fallback: true });
   } catch (e: unknown) {
     // On error, return fallback quote
-    const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
+    const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
     return res.json({ success: true, data: randomQuote, fallback: true });
   }
 }));

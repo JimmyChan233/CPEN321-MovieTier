@@ -566,7 +566,7 @@ private suspend fun handleWhereToWatchClick(
                 try {
                     val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(link))
                     context.startActivity(intent)
-                } catch (e: Exception) {
+                } catch (e: android.content.ActivityNotFoundException) {
                     val top = pickTopProviders(providers, 4)
                     snackbarHostState.showSnackbar("Available on: ${top.joinToString()}" + if (providers.size > top.size) " …" else "")
                 }
