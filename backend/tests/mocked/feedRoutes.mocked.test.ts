@@ -216,7 +216,7 @@ describe('Feed Routes - Mocked Error Tests', () => {
         .set('Authorization', `Bearer ${token1}`);
 
       // Should still succeed even if notification fails
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
     });
 
@@ -341,7 +341,7 @@ describe('Feed Routes - Mocked Error Tests', () => {
         .send({ text: 'Great movie!' });
 
       // Should still succeed even if notification fails
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
     });
 

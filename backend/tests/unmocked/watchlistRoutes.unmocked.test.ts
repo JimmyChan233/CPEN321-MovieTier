@@ -182,7 +182,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           overview: mockMovies.inception.overview
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.movieId).toBe(mockMovies.inception.id);
       expect(res.body.data.title).toBe(mockMovies.inception.title);
@@ -205,7 +205,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Fight Club'
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.movieId).toBe(550);
       expect(res.body.data.title).toBe('Fight Club');
@@ -230,7 +230,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           // No posterPath or overview
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.posterPath).toBe('/enriched-poster.jpg');
       expect(res.body.data.overview).toBe('Enriched overview');
       expect(mockGet).toHaveBeenCalledWith('/movie/550', { params: { language: 'en-US' } });
@@ -256,7 +256,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           // No overview
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.overview).toBe('Enriched overview text');
       expect(res.body.data.posterPath).toBe('/existing-poster.jpg'); // Existing poster preserved
     });
@@ -275,7 +275,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
         });
 
       // Should still succeed even if TMDB fails
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.movieId).toBe(550);
     });
@@ -321,7 +321,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Fight Club'
         });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('already in watchlist');
     });
@@ -341,7 +341,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Fight Club'
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
     });
 
@@ -354,7 +354,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Fight Club'
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.movieId).toBe(550);
     });
 
@@ -369,7 +369,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           overview: 'Custom overview text'
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.movieId).toBe(550);
       expect(res.body.data.title).toBe('Fight Club');
       expect(res.body.data.posterPath).toBe('/custom-poster.jpg');
