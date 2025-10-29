@@ -43,7 +43,39 @@ fun ProfileScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     val themeMode by themeViewModel.themeMode.collectAsState()
 
-    // Navigate to auth only after sign out or account deletion
+    ProfileNavigationEffect(uiState, authViewModel, navController)
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize().testTag("profile_screen"),
+        // Top app bar intentionally removed per design request
+    ) { padding ->
+        Crossfade(targetState = uiState.user, label = "profile_state") { user ->
+            if (user != null) {
+                ProfileContent(
+                    padding = padding,
+                    user = user,
+                    navController = navController,
+                    watchlistVm = watchlistVm,
+                    themeMode = themeMode,
+                    themeViewModel = themeViewModel,
+                    uiState = uiState,
+                    authViewModel = authViewModel,
+                    showDeleteDialog = showDeleteDialog,
+                    onShowDeleteDialog = { showDeleteDialog = it }
+                )
+            } else {
+                LoadingState(modifier = Modifier.fillMaxSize().padding(padding), hint = "Loading profile...")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileNavigationEffect(
+    uiState: com.cpen321.movietier.ui.viewmodels.AuthUiState,
+    authViewModel: AuthViewModel,
+    navController: NavController
+) {
     LaunchedEffect(uiState.isAuthenticated, uiState.successMessage) {
         if (!uiState.isAuthenticated &&
             (uiState.successMessage == "Signed out successfully" ||
@@ -52,85 +84,50 @@ fun ProfileScreen(
                 popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 launchSingleTop = true
             }
-            // Prevent repeated navigations on recomposition
             authViewModel.clearMessages()
         }
     }
+}
 
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("profile_screen"),
-        // Top app bar intentionally removed per design request
-    ) { padding ->
-        Crossfade(
-            targetState = uiState.user,
-            label = "profile_state"
-        ) { user ->
-            if (user != null) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.height(24.dp))
+@Composable
+private fun ProfileContent(
+    padding: PaddingValues,
+    user: com.cpen321.movietier.data.model.User,
+    navController: NavController,
+    watchlistVm: WatchlistViewModel,
+    themeMode: ThemeMode,
+    themeViewModel: ThemeViewModel,
+    uiState: com.cpen321.movietier.ui.viewmodels.AuthUiState,
+    authViewModel: AuthViewModel,
+    showDeleteDialog: Boolean,
+    onShowDeleteDialog: (Boolean) -> Unit
+) {
+    val watchUi by watchlistVm.ui.collectAsState()
+    val movieDetails by watchlistVm.details.collectAsState()
 
-                    // Watchlist section
-                    val watchUi by watchlistVm.ui.collectAsState()
-                    val movieDetails by watchlistVm.details.collectAsState()
+    Column(
+        modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(24.dp))
+        ProfileHeader(user)
+        Spacer(modifier = Modifier.height(16.dp))
+        ProfileEditButton(navController)
+        Spacer(modifier = Modifier.height(24.dp))
+        WatchlistPreviewSection(navController, watchUi, movieDetails)
+        Spacer(modifier = Modifier.height(24.dp))
+        ThemeSelectorCard(themeMode, themeViewModel)
+        Spacer(modifier = Modifier.height(24.dp))
+        ProfileActionButtons(uiState, { authViewModel.signOut() }, { onShowDeleteDialog(true) })
+        Spacer(modifier = Modifier.height(24.dp))
+    }
 
-                    // Avatar and user info header
-                    ProfileHeader(user)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Edit Profile Button
-                    ProfileEditButton(navController)
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    WatchlistPreviewSection(navController, watchUi, movieDetails)
-
-                    // Extra spacing between watchlist and theme section
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Theme toggle section
-                    ThemeSelectorCard(themeMode, themeViewModel)
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Action buttons
-                    ProfileActionButtons(
-                        uiState = uiState,
-                        onSignOut = { authViewModel.signOut() },
-                        onDeleteAccount = { showDeleteDialog = true }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-
-                if (showDeleteDialog) {
-                    DeleteAccountDialog(
-                        uiState = uiState,
-                        onConfirm = {
-                            showDeleteDialog = false
-                            authViewModel.deleteAccount()
-                        },
-                        onDismiss = { showDeleteDialog = false }
-                    )
-                }
-            } else {
-                // Loading state
-                LoadingState(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    hint = "Loading profile..."
-                )
-            }
-        }
+    if (showDeleteDialog) {
+        DeleteAccountDialog(
+            uiState = uiState,
+            onConfirm = { onShowDeleteDialog(false); authViewModel.deleteAccount() },
+            onDismiss = { onShowDeleteDialog(false) }
+        )
     }
 }
 
