@@ -173,80 +173,71 @@ private fun FriendsContentList(
     navController: NavController
 ) {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .testTag("friends_list"),
+        modifier = Modifier.fillMaxSize().padding(padding).testTag("friends_list"),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        if (uiState.outgoingRequests.isNotEmpty()) {
-            item(key = "outgoing_header") {
-                Text(
-                    text = "Outgoing Requests",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-            items(
-                items = uiState.outgoingRequests,
-                key = { "out_" + it.id }
-            ) { req ->
-                OutgoingRequestRow(
-                    request = req,
-                    onCancel = { friendViewModel.cancelOutgoingRequest(req.id) },
-                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
-                )
-            }
-            item(key = "after_outgoing_spacer") { Spacer(Modifier.height(16.dp)) }
-        }
+        OutgoingRequestsSection(uiState.outgoingRequests, friendViewModel, navController)
+        IncomingRequestsSection(uiState.requests, friendViewModel, navController)
+        FriendsListSection(uiState.friends, friendViewModel, navController)
+    }
+}
 
-        item(key = "requests_header") {
-            Text(
-                text = "Friend Requests",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
+private fun androidx.compose.foundation.lazy.LazyListScope.OutgoingRequestsSection(
+    outgoingRequests: List<FriendRequestUi>,
+    friendViewModel: FriendViewModel,
+    navController: NavController
+) {
+    if (outgoingRequests.isNotEmpty()) {
+        item(key = "outgoing_header") {
+            Text("Outgoing Requests", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+        }
+        items(items = outgoingRequests, key = { "out_" + it.id }) { req ->
+            OutgoingRequestRow(
+                request = req,
+                onCancel = { friendViewModel.cancelOutgoingRequest(req.id) },
+                onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
             )
         }
-        if (uiState.requests.isEmpty()) {
-            item(key = "requests_empty") {
-                Text(
-                    text = "No incoming requests",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            items(
-                items = uiState.requests,
-                key = { "req_" + it.id }
-            ) { req ->
-                RequestRow(
-                    request = req,
-                    onAccept = { friendViewModel.respondToRequest(req.id, true) },
-                    onReject = { friendViewModel.respondToRequest(req.id, false) },
-                    onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
-                )
-            }
+        item(key = "after_outgoing_spacer") { Spacer(Modifier.height(16.dp)) }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.IncomingRequestsSection(
+    requests: List<FriendRequestUi>,
+    friendViewModel: FriendViewModel,
+    navController: NavController
+) {
+    item(key = "requests_header") {
+        Text("Friend Requests", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+    }
+    if (requests.isEmpty()) {
+        item(key = "requests_empty") {
+            Text("No incoming requests", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        item(key = "friends_header_spacer") { Spacer(Modifier.height(16.dp)) }
-        item(key = "friends_header") {
-            Text(
-                text = "Friends",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
+    } else {
+        items(items = requests, key = { "req_" + it.id }) { req ->
+            RequestRow(
+                request = req,
+                onAccept = { friendViewModel.respondToRequest(req.id, true) },
+                onReject = { friendViewModel.respondToRequest(req.id, false) },
+                onViewProfile = { navController.navigate(NavRoutes.PROFILE_USER.replace("{userId}", req.senderId)) }
             )
         }
-        items(
-            items = uiState.friends,
-            key = { it.id }
-        ) { friend ->
-            FriendRow(
-                friend = friend,
-                onRemove = { friendViewModel.removeFriend(friend.id) },
-                navController = navController
-            )
-        }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.FriendsListSection(
+    friends: List<com.cpen321.movietier.data.model.Friend>,
+    friendViewModel: FriendViewModel,
+    navController: NavController
+) {
+    item(key = "friends_header_spacer") { Spacer(Modifier.height(16.dp)) }
+    item(key = "friends_header") {
+        Text("Friends", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+    }
+    items(items = friends, key = { it.id }) { friend ->
+        FriendRow(friend, { friendViewModel.removeFriend(friend.id) }, navController)
     }
 }
 
