@@ -156,7 +156,7 @@ export const mockComments = {
 export function generateTestJWT(userId: string): string {
   return jwt.sign(
     { userId },
-    process.env.JWT_SECRET || 'test-jwt-secret-key',
+    process.env.JWT_SECRET || 'default_secret',
     { expiresIn: '30d' }
   );
 }

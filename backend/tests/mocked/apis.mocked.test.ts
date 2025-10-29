@@ -10,6 +10,7 @@ import Like from '../../src/models/feed/Like';
 import Comment from '../../src/models/feed/Comment';
 import { Friendship, FriendRequest } from '../../src/models/friend/Friend';
 import WatchlistItem from '../../src/models/watch/WatchlistItem';
+import RankedMovie from '../../src/models/movie/RankedMovie';
 import User from '../../src/models/user/User';
 import feedRoutes from '../../src/routes/feedRoutes';
 import friendRoutes from '../../src/routes/friendRoutes';
@@ -27,6 +28,10 @@ describe('Mocked: Feed API Errors', () => {
     app = express();
     app.use(express.json());
     app.use('/api/feed', feedRoutes);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   // Mocked behavior: Database query fails
@@ -90,15 +95,19 @@ describe('Mocked: Friends API Errors', () => {
     app.use('/api/friends', friendRoutes);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   // Mocked behavior: Database query fails when fetching friends
   // Input: Authenticated request
   // Expected status code: 500
   // Expected behavior: Error is caught
   // Expected output: Error message
   it('should handle friends list fetch failure', async () => {
-    jest.spyOn(Friendship, 'find').mockRejectedValueOnce(
-      new Error('Database connection failed')
-    );
+    jest.spyOn(Friendship, 'find').mockReturnValueOnce({
+      populate: jest.fn().mockRejectedValueOnce(new Error('Database connection failed'))
+    } as any);
 
     const res = await request(app)
       .get('/api/friends')
@@ -155,15 +164,19 @@ describe('Mocked: Watchlist API Errors', () => {
     app.use('/api/watchlist', watchlistRoutes);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   // Mocked behavior: Database query fails
   // Input: Authenticated request
   // Expected status code: 500
   // Expected behavior: Error is caught
   // Expected output: Error message
   it('should handle watchlist fetch failure', async () => {
-    jest.spyOn(WatchlistItem, 'find').mockRejectedValueOnce(
-      new Error('Database connection lost')
-    );
+    jest.spyOn(WatchlistItem, 'find').mockReturnValueOnce({
+      sort: jest.fn().mockRejectedValueOnce(new Error('Database connection lost'))
+    } as any);
 
     const res = await request(app)
       .get('/api/watchlist')
@@ -219,6 +232,10 @@ describe('Mocked: Recommendations API Errors', () => {
     app.use('/api/recommendations', recommendationRoutes);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   // Mocked behavior: TMDB API fails for trending
   // Input: Authenticated request
   // Expected status code: 500
@@ -243,8 +260,7 @@ describe('Mocked: Recommendations API Errors', () => {
   // Expected behavior: Error is caught
   // Expected output: Error message
   it('should handle recommendations generation failure', async () => {
-    jest.spyOn(require('../../src/models/movie/RankedMovie'), 'find')
-      .mockRejectedValueOnce(new Error('Database error'));
+    jest.spyOn(RankedMovie, 'find').mockRejectedValueOnce(new Error('Database error'));
 
     const res = await request(app)
       .get('/api/recommendations')
@@ -265,15 +281,19 @@ describe('Mocked: User API Errors', () => {
     app.use('/api/users', userRoutes);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   // Mocked behavior: Profile update fails
   // Input: Valid new name
   // Expected status code: 500
   // Expected behavior: Error is caught
   // Expected output: Database error message
   it('should handle profile update failure', async () => {
-    jest.spyOn(User, 'findByIdAndUpdate').mockRejectedValueOnce(
-      new Error('Database write failed')
-    );
+    jest.spyOn(User, 'findByIdAndUpdate').mockReturnValueOnce({
+      select: jest.fn().mockRejectedValueOnce(new Error('Database write failed'))
+    } as any);
 
     const res = await request(app)
       .put('/api/users/profile')
@@ -289,9 +309,9 @@ describe('Mocked: User API Errors', () => {
   // Expected behavior: Error is caught
   // Expected output: Error message
   it('should handle FCM token registration failure', async () => {
-    jest.spyOn(User, 'findByIdAndUpdate').mockRejectedValueOnce(
-      new Error('Database write failed')
-    );
+    jest.spyOn(User, 'findByIdAndUpdate').mockReturnValueOnce({
+      select: jest.fn().mockRejectedValueOnce(new Error('Database write failed'))
+    } as any);
 
     const res = await request(app)
       .post('/api/users/fcm-token')
