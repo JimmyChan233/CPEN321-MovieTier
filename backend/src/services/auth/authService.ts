@@ -14,7 +14,7 @@ export class AuthService {
       });
 
       const payload = ticket.getPayload();
-      if (!payload || !payload.email || !payload.sub) {
+      if (!payload?.email || !payload.sub) {
         throw new Error('Invalid token payload');
       }
 

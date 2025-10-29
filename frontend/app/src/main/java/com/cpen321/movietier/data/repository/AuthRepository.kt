@@ -100,7 +100,7 @@ class AuthRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Sign out failed: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             tokenManager.clearAll() // Clear locally even if API call fails
             Result.Success(Unit)
         }

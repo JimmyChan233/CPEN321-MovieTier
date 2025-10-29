@@ -11,9 +11,9 @@ import { Request, Response, NextFunction, RequestHandler } from 'express';
  * @returns Express RequestHandler that properly handles promise rejections
  */
 export const asyncHandler = (
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void | Response>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ): RequestHandler => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req, res, next)).catch((err: unknown) => next(err));
   };
 };

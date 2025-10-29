@@ -169,7 +169,7 @@ router.get('/me', authenticate, asyncHandler(async (req: AuthRequest, res) => {
           movieId: activity.movieId
         });
         if (rankedMovie) {
-          const key = `${activity.userId?._id}_${activity.movieId}`;
+          const key = `${String(activity.userId?._id)}_${String(activity.movieId)}`;
           movieRankMap.set(key, rankedMovie.rank);
         }
       } catch {}
@@ -324,7 +324,7 @@ router.delete('/:activityId/like', authenticate, asyncHandler(async (req: AuthRe
 
     const result = await Like.findOneAndDelete({
       userId: req.userId,
-      activityId: activityId
+      activityId
     });
 
     if (!result) {
