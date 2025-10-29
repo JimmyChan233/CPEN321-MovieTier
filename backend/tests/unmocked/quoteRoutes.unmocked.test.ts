@@ -96,30 +96,32 @@ describe('Quote Routes - Unmocked Tests', () => {
       expect(mockFetchMovieTagline).not.toHaveBeenCalled();
     });
 
-    it('should return 404 when no tagline found', async () => {
+    it('should return fallback quote when no tagline found', async () => {
       mockFetchMovieTagline.mockResolvedValueOnce(null);
 
       const res = await request(app)
         .get('/api/quotes?title=Unknown Movie')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(res.status).toBe(404);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('No tagline found');
-      expect(res.body.data).toBeNull();
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
+      expect(typeof res.body.data).toBe('string');
+      expect(res.body.fallback).toBe(true);
     });
 
-    it('should handle service errors gracefully', async () => {
+    it('should return fallback quote on service errors', async () => {
       mockFetchMovieTagline.mockRejectedValueOnce(new Error('TMDB API error'));
 
       const res = await request(app)
         .get('/api/quotes?title=Test Movie')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Failed to fetch tagline');
-      expect(res.body.data).toBeNull();
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
+      expect(typeof res.body.data).toBe('string');
+      expect(res.body.fallback).toBe(true);
     });
 
     it('should trim title whitespace', async () => {
