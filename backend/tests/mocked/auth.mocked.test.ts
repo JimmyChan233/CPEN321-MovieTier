@@ -344,4 +344,25 @@ describe('Mocked: DELETE /auth/account', () => {
     expect(res.status).toStrictEqual(401);
     expect(res.body.message).toMatch(/invalid|token|Unauthorized/i);
   });
+  it('should reject deletion when userId is not set on request', async () => {
+  // Import the controller directly
+  const { deleteAccount } = require('../../src/controllers/auth/authController');
+  
+  const mockReq = {
+    userId: undefined // Explicitly undefined
+  } as any;
+
+  const mockRes = {
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn().mockReturnThis()
+  } as any;
+
+  await deleteAccount(mockReq, mockRes);
+
+  expect(mockRes.status).toHaveBeenCalledWith(401);
+  expect(mockRes.json).toHaveBeenCalledWith({
+    success: false,
+    message: 'Unauthorized'
+  });
+});
 });
