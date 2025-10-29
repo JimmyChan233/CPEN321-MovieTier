@@ -360,9 +360,11 @@ describe('Advanced Friend Routes Tests', () => {
 
   // Test Case 24: Unauthorized send friend request
   it('should reject unauthorized friend request', async () => {
-    await request(app)
+    const res = await request(app)
       .post('/request')
       .send({ email: user2.email });
+
+    expect(res.status).toStrictEqual(401);
   });
 
   // Test Case 25: Unauthorized respond to friend request
@@ -373,27 +375,33 @@ describe('Advanced Friend Routes Tests', () => {
       status: 'pending'
     });
 
-    await request(app)
+    const res = await request(app)
       .post('/respond')
       .send({
         requestId: (friendReq as any)._id.toString(),
         accept: true
       });
+
+    expect(res.status).toStrictEqual(401);
   });
 
   // Test Case 26: Unauthorized delete friendship
   it('should reject unauthorized delete friendship', async () => {
-    await request(app)
-      .delete(`/api/friends/${(user2 as any)._id.toString()}`);
+    const res = await request(app)
+      .delete(`/${(user2 as any)._id.toString()}`);
+
+    expect(res.status).toStrictEqual(401);
   });
 
   // Test Case 27: Multiple rapid friend requests (rate limiting test)
   it('should handle multiple rapid friend requests', async () => {
     for (let i = 0; i < 3; i++) {
-      await request(app)
+      const res = await request(app)
         .post('/request')
         .set('Authorization', `Bearer ${token1}`)
         .send({ email: `user${i}@example.com` });
+
+      expect([400, 404, 429]).toContain(res.status); // User doesn't exist or rate limited
     }
   });
 
@@ -406,10 +414,12 @@ describe('Advanced Friend Routes Tests', () => {
     ]);
 
     // Try to send friend request
-    await request(app)
+    const res = await request(app)
       .post('/request')
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
+
+    expect([409, 429]).toContain(res.status); // Conflict or rate limited
   });
 
   // Test Case 29: Get empty friends list
@@ -417,6 +427,8 @@ describe('Advanced Friend Routes Tests', () => {
     const res = await request(app)
       .get('/')
       .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(200);
   });
 
   // Test Case 30: Get empty pending requests
@@ -424,6 +436,8 @@ describe('Advanced Friend Routes Tests', () => {
     const res = await request(app)
       .get('/requests')
       .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(200);
   });
 
   // Test Case 31: Get empty detailed requests
@@ -431,6 +445,8 @@ describe('Advanced Friend Routes Tests', () => {
     const res = await request(app)
       .get('/requests/detailed')
       .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(200);
   });
 
   // Test Case 32: Get empty outgoing requests
@@ -438,6 +454,8 @@ describe('Advanced Friend Routes Tests', () => {
     const res = await request(app)
       .get('/requests/outgoing')
       .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(200);
   });
 
   // Test Case 33: Get empty detailed outgoing requests
@@ -445,6 +463,8 @@ describe('Advanced Friend Routes Tests', () => {
     const res = await request(app)
       .get('/requests/outgoing/detailed')
       .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(200);
   });
 
   // Test Case 34: Respond with missing accept field
@@ -455,22 +475,26 @@ describe('Advanced Friend Routes Tests', () => {
       status: 'pending'
     });
 
-    await request(app)
+    const res = await request(app)
       .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString()
       });
+
+    expect(res.status).toStrictEqual(400);
   });
 
   // Test Case 35: Respond with missing requestId field
   it('should handle respond with missing requestId field', async () => {
-    await request(app)
+    const res = await request(app)
       .post('/respond')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         accept: true
       });
+
+    expect(res.status).toStrictEqual(400);
   });
 
   // Test Case 36: Complex friendship network
