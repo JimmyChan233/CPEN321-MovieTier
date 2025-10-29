@@ -116,7 +116,7 @@ object LocationHelper {
                 val countryCode = addresses?.firstOrNull()?.countryCode
                 continuation.resume(countryCode)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             continuation.resume(null)
         }
     }

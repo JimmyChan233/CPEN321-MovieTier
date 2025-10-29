@@ -14,12 +14,17 @@ import {
 } from '../utils/comparisonSession';
 import notificationService from '../services/notification.service';
 import { AuthRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 const RankedMovie = RankedMovieModel;
 
 async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
-  try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}
-  try { await WatchlistItem.deleteOne({ userId: userIdStr as unknown as mongoose.Types.ObjectId, movieId }); } catch {}
+  try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch (err) {
+    logger.warn('Failed to remove watchlist item (ObjectId)', { error: (err as Error).message });
+  }
+  try { await WatchlistItem.deleteOne({ userId: userIdStr as unknown as mongoose.Types.ObjectId, movieId }); } catch (err) {
+    logger.warn('Failed to remove watchlist item (string)', { error: (err as Error).message });
+  }
 }
 
 

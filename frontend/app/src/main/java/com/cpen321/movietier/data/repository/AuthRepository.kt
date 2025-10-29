@@ -86,7 +86,7 @@ class AuthRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Sign up failed: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }

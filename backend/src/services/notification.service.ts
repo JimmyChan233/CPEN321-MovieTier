@@ -29,6 +29,7 @@ class NotificationService {
         const resolvedPath = path.resolve(serviceAccountPath);
 
         // Ensure the file exists and is a .json file
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         if (!fs.existsSync(resolvedPath)) {
           throw new Error(`Service account file not found: ${resolvedPath}`);
         }
@@ -38,6 +39,7 @@ class NotificationService {
         }
 
         // Read and parse the service account file securely
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const serviceAccountContent = fs.readFileSync(resolvedPath, 'utf8');
         const serviceAccount = JSON.parse(serviceAccountContent);
 

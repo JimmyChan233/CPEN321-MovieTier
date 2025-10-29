@@ -73,7 +73,7 @@ logger.success('API routes registered');
 
 // Health check
 app.get('/health', (req, res) => {
-  const dbConnected = mongoose.connection.readyState === 1;
+  const dbConnected = mongoose.connection.readyState === mongoose.ConnectionStates.connected;
   res.json({
     status: dbConnected ? 'ok' : 'database_disconnected',
     timestamp: new Date().toISOString(),
@@ -103,7 +103,7 @@ async function startServer() {
     logger.info(`${signal} received. Starting graceful shutdown...`);
 
     // Close all SSE connections
-    await sseService.clear();
+    sseService.clear();
 
     // Close the server
     server.close(() => {
