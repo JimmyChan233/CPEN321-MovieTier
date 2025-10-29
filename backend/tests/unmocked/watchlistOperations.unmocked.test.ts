@@ -156,38 +156,21 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
     expect(res.status).toStrictEqual(400);
   });
 
-  // Input: Missing year
-  // Expected status code: 400
-  // Expected behavior: Validation error
-  // Expected output: Error message
-  it('should reject missing year', async () => {
+  // Input: Only required fields (movieId, title) - posterPath is optional
+  // Expected status code: 201
+  // Expected behavior: Movie added to watchlist, posterPath enriched from TMDB
+  // Expected output: Success message
+  it('should add movie with only required fields', async () => {
     const res = await request(app)
       .post('/')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        posterUrl: mockMovies.inception.posterUrl
+        title: mockMovies.inception.title
       });
 
-    expect(res.status).toStrictEqual(400);
-  });
-
-  // Input: Missing posterUrl
-  // Expected status code: 400
-  // Expected behavior: Validation error
-  // Expected output: Error message
-  it('should reject missing posterUrl', async () => {
-    const res = await request(app)
-      .post('/')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        year: mockMovies.inception.year
-      });
-
-    expect(res.status).toStrictEqual(400);
+    expect(res.status).toStrictEqual(201);
+    expect(res.body.success).toStrictEqual(true);
   });
 
   // Input: No authentication

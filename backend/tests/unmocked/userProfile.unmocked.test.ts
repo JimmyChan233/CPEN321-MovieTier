@@ -282,7 +282,7 @@ describe('Unmocked: GET /users/profile/:userId', () => {
   // Expected output: User profile object
   it('should get user profile by ID', async () => {
     const res = await request(app)
-      .get(`/api/users/profile/${otherUser._id}`)
+      .get(`/${otherUser._id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
@@ -296,7 +296,7 @@ describe('Unmocked: GET /users/profile/:userId', () => {
   // Expected output: Own user profile
   it('should get own profile', async () => {
     const res = await request(app)
-      .get(`/api/users/profile/${user._id}`)
+      .get(`/${user._id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(200);
@@ -310,7 +310,7 @@ describe('Unmocked: GET /users/profile/:userId', () => {
   it('should return 404 for non-existent user', async () => {
     const fakeId = new mongoose.Types.ObjectId();
     const res = await request(app)
-      .get(`/api/users/profile/${fakeId}`)
+      .get(`/${fakeId}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(404);
@@ -322,7 +322,7 @@ describe('Unmocked: GET /users/profile/:userId', () => {
   // Expected output: Error message
   it('should reject invalid user ID format', async () => {
     const res = await request(app)
-      .get('/profile/invalid-id')
+      .get('/invalid-id')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);
@@ -334,7 +334,7 @@ describe('Unmocked: GET /users/profile/:userId', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated profile request', async () => {
     const res = await request(app)
-      .get(`/api/users/profile/${otherUser._id}`);
+      .get(`/${otherUser._id}`);
 
     expect(res.status).toStrictEqual(401);
   });
