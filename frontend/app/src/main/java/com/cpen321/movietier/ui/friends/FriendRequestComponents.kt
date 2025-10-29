@@ -63,9 +63,6 @@ internal fun RequestRow(
     }
 }
 
-/**
- * Displays sender information (name and email) for a friend request
- */
 @Composable
 private fun RequestSenderInfo(request: FriendRequestUi, modifier: Modifier = Modifier) {
     Column(
@@ -91,9 +88,6 @@ private fun RequestSenderInfo(request: FriendRequestUi, modifier: Modifier = Mod
     }
 }
 
-/**
- * Displays Accept and Reject action buttons for friend requests
- */
 @Composable
 private fun RequestActionButtons(onAccept: () -> Unit, onReject: () -> Unit) {
     Column(

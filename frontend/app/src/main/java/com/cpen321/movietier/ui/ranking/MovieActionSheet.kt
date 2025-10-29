@@ -64,9 +64,6 @@ internal fun MovieActionSheet(
     }
 }
 
-/**
- * Displays the rerank action option in the movie action sheet
- */
 @Composable
 private fun MovieActionRerankOption(onRerank: () -> Unit) {
     Row(
@@ -97,9 +94,6 @@ private fun MovieActionRerankOption(onRerank: () -> Unit) {
     }
 }
 
-/**
- * Displays the delete action option in the movie action sheet
- */
 @Composable
 private fun MovieActionDeleteOption(onShowDeleteConfirm: () -> Unit) {
     Row(
@@ -131,9 +125,6 @@ private fun MovieActionDeleteOption(onShowDeleteConfirm: () -> Unit) {
     }
 }
 
-/**
- * Confirmation dialog for deleting a movie from rankings
- */
 @Composable
 private fun MovieActionDeleteConfirmDialog(
     movieTitle: String,
