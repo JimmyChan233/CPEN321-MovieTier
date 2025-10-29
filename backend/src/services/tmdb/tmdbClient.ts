@@ -14,27 +14,30 @@ export function getTmdbClient(): AxiosInstance {
   });
 
   client.interceptors.request.use((config) => {
-    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
-    config.params = { ...(config.params || {}), api_key: apiKey };
+    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
+    config.params = { ...(config.params ?? {}), api_key: apiKey };
     const start = Date.now();
-    (config as any).__start = start;
+    (config as unknown as { __start: number }).__start = start;
     const { method, url, params } = config;
+    // eslint-disable-next-line no-console
     console.log(`🌐 TMDB ➡️  ${method?.toUpperCase()} ${url} params=${JSON.stringify(redactParams(params))}`);
     return config;
   });
 
   client.interceptors.response.use(
     (response) => {
-      const start = (response.config as any).__start as number | undefined;
+      const start = (response.config as unknown as { __start?: number }).__start;
       const ms = start ? Date.now() - start : undefined;
+      // eslint-disable-next-line no-console
       console.log(`🌐 TMDB ⬅️  ${response.config.method?.toUpperCase()} ${response.config.url} ${response.status}${ms !== undefined ? ` ${ms}ms` : ''}`);
       return response;
     },
     (error) => {
-      const cfg = error.config || {};
-      const start = (cfg as any).__start as number | undefined;
+      const cfg = error.config ?? {};
+      const start = (cfg as { __start?: number }).__start;
       const ms = start ? Date.now() - start : undefined;
-      console.log(`🌐 TMDB ⬅️  ${cfg.method?.toUpperCase?.() || 'GET'} ${cfg.url} ERROR${ms !== undefined ? ` ${ms}ms` : ''}: ${error.message}`);
+      // eslint-disable-next-line no-console
+      console.log(`🌐 TMDB ⬅️  ${cfg.method?.toUpperCase?.() ?? 'GET'} ${cfg.url} ERROR${ms !== undefined ? ` ${ms}ms` : ''}: ${error.message}`);
       throw error;
     }
   );

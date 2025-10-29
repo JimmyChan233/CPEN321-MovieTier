@@ -1,6 +1,6 @@
 // Load environment variables first
 import config from './config';
-import express, { Application } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes';
@@ -12,7 +12,6 @@ import recommendationRoutes from './routes/recommendationRoutes';
 import watchlistRoutes from './routes/watchlistRoutes';
 import quoteRoutes from './routes/quoteRoutes';
 import { errorHandler } from './middleware/errorHandler';
-import { Request, Response, NextFunction } from 'express';
 import { logger } from './utils/logger';
 import { sseService } from './services/sse/sseService';
 
@@ -48,9 +47,9 @@ async function connectToDatabase(maxRetries = 5, retryDelay = 2000) {
       await mongoose.connect(mongoUri);
       logger.success('Connected to MongoDB');
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (attempt === maxRetries) {
-        logger.error(`MongoDB connection failed after ${maxRetries} attempts:`, err.message);
+        logger.error(`MongoDB connection failed after ${maxRetries} attempts:`, (err as Error).message);
         return false;
       }
       logger.warn(`MongoDB connection attempt ${attempt}/${maxRetries} failed. Retrying in ${retryDelay}ms...`);
@@ -90,12 +89,12 @@ async function startServer() {
   const connected = await connectToDatabase();
   if (!connected) {
     logger.error('Failed to connect to MongoDB. Exiting.');
-    process.exit(1);
+    throw new Error('MongoDB connection failed');
   }
 
   const server = app.listen(PORT, () => {
     logger.success(`Server running on port ${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Environment: ${process.env.NODE_ENV ?? 'development'}`);
     logger.info(`API endpoints available at: http://localhost:${PORT}/api`);
   });
 
@@ -104,7 +103,7 @@ async function startServer() {
     logger.info(`${signal} received. Starting graceful shutdown...`);
 
     // Close all SSE connections
-    sseService.clear();
+    await sseService.clear();
 
     // Close the server
     server.close(async () => {
@@ -128,12 +127,16 @@ async function startServer() {
     }, 10000);
   };
 
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => {
+    void gracefulShutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void gracefulShutdown('SIGINT');
+  });
 }
 
-startServer().catch((err) => {
-  logger.error('Failed to start server:', err.message);
+startServer().catch((err: unknown) => {
+  logger.error('Failed to start server:', (err as Error).message);
   process.exit(1);
 });
 

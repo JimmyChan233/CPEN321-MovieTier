@@ -21,8 +21,11 @@ function validateSecrets() {
 
   if (errors.length > 0) {
     console.error('Critical configuration missing:');
-    errors.forEach(err => console.error(`  - ${err}`));
-    process.exit(1);
+    errors.forEach(err => {
+      console.error(`  - ${err}`);
+    });
+    // In production, critical config errors should halt startup
+    throw new Error(`Configuration validation failed: ${errors.join(', ')}`);
   }
 }
 
@@ -34,13 +37,13 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export default {
-  port: process.env.PORT || 3000,
-  nodeEnv: process.env.NODE_ENV || 'development',
-  mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/movietier',
+  port: process.env.PORT ?? 3000,
+  nodeEnv: process.env.NODE_ENV ?? 'development',
+  mongodbUri: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/movietier',
   googleClientId: process.env.GOOGLE_CLIENT_ID,
-  jwtSecret: process.env.JWT_SECRET || 'dev-secret-key-change-in-production',
+  jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-key-change-in-production',
   tmdbApiKey: process.env.TMDB_API_KEY,
-  tmdbBaseUrl: process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3',
+  tmdbBaseUrl: process.env.TMDB_BASE_URL ?? 'https://api.themoviedb.org/3',
   firebaseServiceAccountPath: process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
   firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,

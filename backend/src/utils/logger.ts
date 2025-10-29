@@ -31,11 +31,13 @@ function getTimestamp(): string {
   return new Date().toISOString();
 }
 
-function formatMessage(level: string, color: string, message: string, ...args: any[]): void {
+function formatMessage(level: string, color: string, message: string, ...args: unknown[]): void {
   const timestamp = getTimestamp();
-  const formattedArgs = args.length > 0 ? ' ' + args.map(arg =>
-    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-  ).join(' ') : '';
+  const formattedArgs = args.length > 0
+    ? ' ' + args.map(arg =>
+        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+      ).join(' ')
+    : '';
 
   console.log(
     `${colors.dim}[${timestamp}]${colors.reset} ${color}${level}${colors.reset} ${message}${formattedArgs}`
@@ -43,23 +45,23 @@ function formatMessage(level: string, color: string, message: string, ...args: a
 }
 
 export const logger = {
-  info: (message: string, ...args: any[]) => {
+  info: (message: string, ...args: unknown[]) => {
     formatMessage('INFO', colors.cyan, message, ...args);
   },
 
-  success: (message: string, ...args: any[]) => {
+  success: (message: string, ...args: unknown[]) => {
     formatMessage('SUCCESS', colors.green, message, ...args);
   },
 
-  warn: (message: string, ...args: any[]) => {
+  warn: (message: string, ...args: unknown[]) => {
     formatMessage('WARN', colors.yellow, message, ...args);
   },
 
-  error: (message: string, ...args: any[]) => {
+  error: (message: string, ...args: unknown[]) => {
     formatMessage('ERROR', colors.red, message, ...args);
   },
 
-  debug: (message: string, ...args: any[]) => {
+  debug: (message: string, ...args: unknown[]) => {
     if (process.env.NODE_ENV === 'development') {
       formatMessage('DEBUG', colors.magenta, message, ...args);
     }
@@ -71,7 +73,7 @@ export const logger = {
     const durationStr = duration ? ` ${colors.dim}(${duration}ms)${colors.reset}` : '';
 
     console.log(
-      `${colors.dim}[${getTimestamp()}]${colors.reset} ${methodColor}${method}${colors.reset} ${url} ${statusColor}${statusCode || ''}${colors.reset}${durationStr}`
+      `${colors.dim}[${getTimestamp()}]${colors.reset} ${methodColor}${method}${colors.reset} ${url} ${statusColor}${statusCode ?? ''}${colors.reset}${durationStr}`
     );
   },
 };
