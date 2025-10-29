@@ -43,6 +43,7 @@ import com.cpen321.movietier.ui.viewmodels.FeedViewModel
 import kotlinx.coroutines.launch
 import com.cpen321.movietier.utils.LocationHelper
 import android.Manifest
+import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 
@@ -332,7 +333,7 @@ fun FeedScreen(
                                                     try {
                                                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(link))
                                                         context.startActivity(intent)
-                                                    } catch (e: Exception) {
+                                                    } catch (e: ActivityNotFoundException) {
                                                         val top = pickTopProviders(providers, 4)
                                                         val more = providers.size > top.size
                                                         snackbarHostState.showSnackbar("Available on: ${top.joinToString()}" + if (more) " …" else "")

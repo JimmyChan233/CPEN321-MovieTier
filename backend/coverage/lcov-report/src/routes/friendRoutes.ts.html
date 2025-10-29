@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80.48% </span>
+                <span class="strong">80.83% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>132/164</span>
+                <span class='fraction'>135/167</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">79.61% </span>
+                <span class="strong">80.24% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>125/157</span>
+                <span class='fraction'>130/162</span>
             </div>
         
             
@@ -414,7 +414,15 @@
 <a name='L349'></a><a href='#L349'>349</a>
 <a name='L350'></a><a href='#L350'>350</a>
 <a name='L351'></a><a href='#L351'>351</a>
-<a name='L352'></a><a href='#L352'>352</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">6x</span>
+<a name='L352'></a><a href='#L352'>352</a>
+<a name='L353'></a><a href='#L353'>353</a>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
@@ -467,6 +475,9 @@
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -495,6 +506,9 @@
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -771,6 +785,7 @@ import { Friendship, FriendRequest } from '../models/friend/Friend';
 import User from '../models/user/User';
 import { sseService } from '../services/sse/sseService';
 import notificationService from '../services/notification.service';
+import { asyncHandler } from '../utils/asyncHandler';
 &nbsp;
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -779,7 +794,7 @@ const requestTimestamps: Map&lt;string, number[]&gt; = new Map();
 &nbsp;
 export function checkRateLimit(userId: string): boolean {
   const now = Date.now();
-  const arr = requestTimestamps.get(userId) || [];
+  const arr = requestTimestamps.get(userId) ?? [];
   const recent = arr.filter((t) =&gt; now - t &lt; RATE_LIMIT_WINDOW_MS);
   if (recent.length &gt;= RATE_LIMIT_MAX) return false;
   recent.push(now);
@@ -789,17 +804,17 @@ export function checkRateLimit(userId: string): boolean {
 &nbsp;
 const router = Router();
 &nbsp;
-router.get('/', authenticate, async (req: AuthRequest, res) =&gt; {
+router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const friendships = await Friendship.find({ userId: req.userId }).populate('friendId');
-    const friends = friendships.map(f =&gt; (f as any).friendId);
+    const friends = friendships.map(f =&gt; (f as unknown as { friendId: unknown }).friendId);
     res.json({ success: true, data: friends });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get friends' });
   }
-});
+}));
 &nbsp;
-router.get('/requests', authenticate, async (req: AuthRequest, res) =&gt; {
+router.get('/requests', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     // Return pending requests directed to the current user (no populate to match frontend model)
     const requests = await FriendRequest.find({
@@ -810,55 +825,61 @@ router.get('/requests', authenticate, async (req: AuthRequest, res) =&gt; {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get requests' });
   }
-});
+}));
 &nbsp;
 // Incoming requests with sender details
-router.get('/requests/detailed', authenticate, async (req: AuthRequest, res) =&gt; {
+router.get('/requests/detailed', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const requests = await FriendRequest.find({ receiverId: req.userId, status: 'pending' })
       .populate('senderId', '_id email name profileImageUrl');
-    const data = requests.map((r: any) =&gt; ({
-      _id: r._id,
-      sender: r.senderId,
-      receiverId: r.receiverId,
-      status: r.status,
-      createdAt: r.createdAt
-    }));
+    const data = requests.map((r: unknown) =&gt; {
+      const request = r as { _id: unknown; senderId: unknown; receiverId: unknown; status: unknown; createdAt: unknown };
+      return {
+        _id: request._id,
+        sender: request.senderId,
+        receiverId: request.receiverId,
+        status: request.status,
+        createdAt: request.createdAt
+      };
+    });
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get requests' });
   }
-});
+}));
 &nbsp;
 // Outgoing requests (pending) basic
-router.get('/requests/outgoing', authenticate, async (req: AuthRequest, res) =&gt; {
+router.get('/requests/outgoing', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const requests = await FriendRequest.find({ senderId: req.userId, status: 'pending' });
     res.json({ success: true, data: requests });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get outgoing requests' });
   }
-});
+}));
 &nbsp;
 // Outgoing requests detailed with receiver profile
-router.get('/requests/outgoing/detailed', authenticate, async (req: AuthRequest, res) =&gt; {
+router.get('/requests/outgoing/detailed', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const requests = await FriendRequest.find({ senderId: req.userId, status: 'pending' })
       .populate('receiverId', '_id email name profileImageUrl');
-    const data = requests.map((r: any) =&gt; ({
-      _id: r._id,
-      receiver: r.receiverId,
-      senderId: r.senderId,
-      status: r.status,
-      createdAt: r.createdAt
-    }));
+    const data = requests.map((r: unknown) =&gt; {
+      const request = r as { _id: unknown; receiverId: unknown; senderId: unknown; status: unknown; createdAt: unknown };
+      return {
+        _id: request._id,
+        receiver: request.receiverId,
+        senderId: request.senderId,
+        status: request.status,
+        createdAt: request.createdAt
+      };
+    });
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get outgoing requests' });
   }
-});
+}));
 &nbsp;
-router.post('/request', authenticate, async (req: AuthRequest, res) =&gt; {
+router.post('/request', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const { email } = req.body as { email?: string };
 &nbsp;
@@ -945,9 +966,9 @@ router.post('/request', authenticate, async (req: AuthRequest, res) =&gt; {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to send friend request. Please try again' });
   }
-});
+}));
 &nbsp;
-router.post('/respond', authenticate, async (req: AuthRequest, res) =&gt; {
+router.post('/respond', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const { requestId, accept } = req.body as { requestId?: string; accept?: boolean };
 &nbsp;
@@ -1029,9 +1050,9 @@ router.post('/respond', authenticate, async (req: AuthRequest, res) =&gt; {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to respond to request' });
   }
-});
+}));
 &nbsp;
-router.delete('/:friendId', authenticate, async (req: AuthRequest, res) =&gt; {
+router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const { friendId } = req.params;
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!friendId) {
@@ -1057,10 +1078,10 @@ router.delete('/:friendId', authenticate, async (req: AuthRequest, res) =&gt; {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to remove friend' });
   }
-});
+}));
 &nbsp;
 // SSE stream for friend events
-router.get('/stream', authenticate, <span class="fstat-no" title="function not covered" >async </span>(req: AuthRequest, res) =&gt; {
+router.get('/stream', authenticate, asyncHandler(<span class="fstat-no" title="function not covered" >async </span>(req: AuthRequest, res) =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!req.userId) {</span>
 <span class="cstat-no" title="statement not covered" >      return res.status(401).json({ success: false, message: 'Unauthorized' });</span>
@@ -1079,10 +1100,10 @@ router.get('/stream', authenticate, <span class="fstat-no" title="function not c
   } catch {
 <span class="cstat-no" title="statement not covered" >    res.end();</span>
   }
-});
+}));
 &nbsp;
 // Cancel a pending outgoing friend request
-router.delete('/requests/:requestId', authenticate, <span class="fstat-no" title="function not covered" >async </span>(req: AuthRequest, res) =&gt; {
+router.delete('/requests/:requestId', authenticate, asyncHandler(<span class="fstat-no" title="function not covered" >async </span>(req: AuthRequest, res) =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const { requestId } = <span class="cstat-no" title="statement not covered" >req.params;</span>
     const request = <span class="cstat-no" title="statement not covered" >await FriendRequest.findById(requestId);</span>
@@ -1105,7 +1126,7 @@ router.delete('/requests/:requestId', authenticate, <span class="fstat-no" title
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    res.status(500).json({ success: false, message: 'Failed to cancel friend request' });</span>
   }
-});
+}));
 &nbsp;
 export default router;
 &nbsp;
@@ -1123,7 +1144,7 @@ export const __test__ = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-29T00:42:10.535Z
+                at 2025-10-29T03:37:08.785Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

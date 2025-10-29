@@ -11,6 +11,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -161,7 +162,7 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                 )
             }
         }
-    } catch (e: Exception) {
+    } catch (e: GetCredentialException) {
         Log.e(TAG, "Sign in error", e)
         _uiState.value = _uiState.value.copy(
             isLoading = false,

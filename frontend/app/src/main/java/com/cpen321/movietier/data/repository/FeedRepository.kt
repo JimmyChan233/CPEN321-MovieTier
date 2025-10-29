@@ -3,6 +3,7 @@ package com.cpen321.movietier.data.repository
 import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.model.FeedActivity
 import com.cpen321.movietier.data.model.FeedComment
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,7 +21,7 @@ class FeedRepository @Inject constructor(
                 val message = body?.message ?: response.message()
                 Result.Error(Exception("Failed to get feed: $message"), message)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -35,7 +36,7 @@ class FeedRepository @Inject constructor(
                 val message = body?.message ?: response.message()
                 Result.Error(Exception("Failed to get my feed: $message"), message)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -50,7 +51,7 @@ class FeedRepository @Inject constructor(
                 val message = body?.message ?: response.message()
                 Result.Error(Exception("Failed to like activity: $message"), message)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -65,7 +66,7 @@ class FeedRepository @Inject constructor(
                 val message = body?.message ?: response.message()
                 Result.Error(Exception("Failed to unlike activity: $message"), message)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -80,7 +81,7 @@ class FeedRepository @Inject constructor(
                 val message = body?.message ?: response.message()
                 Result.Error(Exception("Failed to get comments: $message"), message)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -95,7 +96,7 @@ class FeedRepository @Inject constructor(
                 val message = body?.message ?: response.message()
                 Result.Error(Exception("Failed to add comment: $message"), message)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -110,7 +111,7 @@ class FeedRepository @Inject constructor(
                 val message = body?.message ?: response.message()
                 Result.Error(Exception("Failed to delete comment: $message"), message)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }

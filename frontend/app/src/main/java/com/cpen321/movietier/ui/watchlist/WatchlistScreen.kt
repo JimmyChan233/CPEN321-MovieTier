@@ -27,6 +27,7 @@ import com.cpen321.movietier.ui.components.StarRating
 import com.cpen321.movietier.ui.viewmodels.WatchlistViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.Lifecycle
@@ -193,7 +194,7 @@ fun WatchlistScreen(
                                                     try {
                                                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
                                                         context.startActivity(intent)
-                                                    } catch (e: Exception) {
+                                                    } catch (e: ActivityNotFoundException) {
                                                         snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
                                                     }
                                                 } else if (providers.isNotEmpty()) {

@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.53% </span>
+                <span class="strong">82.08% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>53/65</span>
+                <span class='fraction'>55/67</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/5</span>
+                <span class='fraction'>5/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.53% </span>
+                <span class="strong">82.08% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>53/65</span>
+                <span class='fraction'>55/67</span>
             </div>
         
             
@@ -187,7 +187,22 @@
 <a name='L122'></a><a href='#L122'>122</a>
 <a name='L123'></a><a href='#L123'>123</a>
 <a name='L124'></a><a href='#L124'>124</a>
-<a name='L125'></a><a href='#L125'>125</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
@@ -195,6 +210,14 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
@@ -204,8 +227,13 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -317,21 +345,35 @@ import User from '../models/user/User';
 import mongoose from 'mongoose';
 import WatchlistItem from '../models/watch/WatchlistItem';
 import { logger } from '../utils/logger';
+import { asyncHandler } from '../utils/asyncHandler';
 &nbsp;
 const router = Router();
 &nbsp;
+/**
+ * Escape special regex characters for MongoDB $regex operator
+ * This prevents ReDoS attacks by sanitizing user input before using it in a regex pattern
+ */
+function escapeRegexForMongo(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&amp;');
+}
+&nbsp;
 // Search users by name or email (must be defined before '/:userId')
-router.get('/search', authenticate, async (req: AuthRequest, res) =&gt; {
+router.get('/search', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
-    const query = (req.query.query as string) || '';
+    const query = (req.query.query as string) ?? '';
     if (!query || query.trim().length &lt; 2) {
       return res.status(400).json({ success: false, message: 'Query must be at least 2 characters' });
     }
 &nbsp;
-    const regex = new RegExp(query.trim(), 'i');
+    // Escape special regex characters to prevent ReDoS attacks
+    // Use MongoDB's $regex operator with a string pattern instead of RegExp object
+    const escapedQuery = escapeRegexForMongo(query.trim());
     const users = await User.find({
       _id: { $ne: req.userId },
-      $or: [{ name: regex }, { email: regex }]
+      $or: [
+        { name: { $regex: escapedQuery, $options: 'i' } },
+        { email: { $regex: escapedQuery, $options: 'i' } }
+      ]
     })
       .select('_id email name profileImageUrl')
       .limit(20);
@@ -340,10 +382,10 @@ router.get('/search', authenticate, async (req: AuthRequest, res) =&gt; {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to search users. Please try again' });
   }
-});
+}));
 &nbsp;
 // Update current user's profile (name only)
-router.put('/profile', authenticate, async (req: AuthRequest, res) =&gt; {
+router.put('/profile', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const { name } = req.body as { name?: string };
     logger.info(`Profile update request for user ${req.userId}`, { name: name ? 'updating' : 'unchanged' });
@@ -375,10 +417,10 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) =&gt; {
     logger.error('Profile update error:', error);
     res.status(500).json({ success: false, message: 'Unable to update profile. Please try again' });
   }
-});
+}));
 &nbsp;
 // Register/update FCM token for push notifications
-router.post('/fcm-token', authenticate, async (req: AuthRequest, res) =&gt; {
+router.post('/fcm-token', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
   try {
     const { token } = req.body as { token?: string };
 &nbsp;
@@ -402,9 +444,9 @@ router.post('/fcm-token', authenticate, async (req: AuthRequest, res) =&gt; {
     logger.error('FCM token registration error:', error);
     res.status(500).json({ success: false, message: 'Unable to register FCM token. Please try again' });
   }
-});
+}));
 &nbsp;
-router.get('/:userId', authenticate, async (req, res) =&gt; {
+router.get('/:userId', authenticate, asyncHandler(async (req, res) =&gt; {
   try {
     const { userId } = req.params as { userId: string };
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -418,10 +460,10 @@ router.get('/:userId', authenticate, async (req, res) =&gt; {
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    res.status(500).json({ success: false, message: 'Unable to load user. Please try again' });</span>
   }
-});
+}));
 &nbsp;
 // Public watchlist of a user (friend view)
-router.get('/:userId/watchlist', authenticate, <span class="fstat-no" title="function not covered" >async </span>(req, res) =&gt; {
+router.get('/:userId/watchlist', authenticate, asyncHandler(<span class="fstat-no" title="function not covered" >async </span>(req, res) =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const { userId } = <span class="cstat-no" title="statement not covered" >req.params as { userId: string };</span>
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!mongoose.Types.ObjectId.isValid(userId)) {</span>
@@ -432,7 +474,7 @@ router.get('/:userId/watchlist', authenticate, <span class="fstat-no" title="fun
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    res.status(500).json({ success: false, message: 'Unable to load user watchlist. Please try again' });</span>
   }
-});
+}));
 &nbsp;
 export default router;
 &nbsp;</pre></td></tr></table></pre>
@@ -442,7 +484,7 @@ export default router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-29T00:42:10.535Z
+                at 2025-10-29T03:37:08.785Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -16,6 +16,7 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -36,7 +37,7 @@ object NetworkModule {
                     request.addHeader("Authorization", "Bearer $token")
                 }
                 chain.proceed(request.build())
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 // If we can't get the token, proceed without it
                 // The Authenticator will handle 401 responses
                 chain.proceed(chain.request())

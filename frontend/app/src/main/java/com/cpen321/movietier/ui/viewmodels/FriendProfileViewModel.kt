@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 data class FriendProfileUi(
@@ -38,7 +39,7 @@ class FriendProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             // Load user basic info
-            val userRes = try { apiService.getUser(userId) } catch (e: Exception) { null }
+            val userRes = try { apiService.getUser(userId) } catch (e: IOException) { null }
             val user = if (userRes != null && userRes.isSuccessful && userRes.body()?.success == true) userRes.body()!!.data else null
             // Load watchlist
             val wl = when (val res = watchlistRepository.getUserWatchlist(userId)) {

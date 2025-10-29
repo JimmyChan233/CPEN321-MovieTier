@@ -30,6 +30,7 @@ import com.cpen321.movietier.ui.viewmodels.RecommendationViewModel
 import com.cpen321.movietier.ui.viewmodels.RankingViewModel
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import com.cpen321.movietier.utils.LocationHelper
@@ -280,7 +281,7 @@ fun RecommendationScreen(
                                                     try {
                                                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
                                                         context.startActivity(intent)
-                                                    } catch (e: Exception) {
+                                                    } catch (e: ActivityNotFoundException) {
                                                         snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
                                                     }
                                                 } else if (providers.isNotEmpty()) {

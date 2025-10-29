@@ -6,6 +6,7 @@ import com.cpen321.movietier.data.model.LoginRequest
 import com.cpen321.movietier.data.model.LoginResponse
 import com.cpen321.movietier.data.model.UpdateProfileRequest
 import com.cpen321.movietier.data.model.User
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -52,7 +53,7 @@ class AuthRepository @Inject constructor(
                         val gson = com.google.gson.Gson()
                         val errorResponse = gson.fromJson(errorBody, LoginResponse::class.java)
                         errorResponse.message
-                    } catch (e: Exception) {
+                    } catch (e: IOException) {
                         "Sign in failed"
                     }
                 } else {
@@ -146,7 +147,7 @@ class AuthRepository @Inject constructor(
                         val gson = com.google.gson.Gson()
                         val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
                         errorResponse.message
-                    } catch (e: Exception) {
+                    } catch (e: IOException) {
                         "Failed to update profile"
                     }
                 } else {

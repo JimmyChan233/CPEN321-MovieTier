@@ -10,6 +10,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.cpen321.movietier.data.api.ApiService
 import com.google.firebase.messaging.FirebaseMessaging
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +37,7 @@ object FcmHelper {
                 } else {
                     Log.e(TAG, "Failed to register FCM token: ${response.message()}")
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Log.e(TAG, "Error initializing FCM", e)
             }
         }

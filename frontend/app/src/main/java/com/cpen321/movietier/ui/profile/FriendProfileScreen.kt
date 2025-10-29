@@ -19,6 +19,7 @@ import com.cpen321.movietier.ui.viewmodels.FriendProfileViewModel
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.material3.SnackbarResult
@@ -234,7 +235,7 @@ fun FriendProfileScreen(
                                     try {
                                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
                                         context.startActivity(intent)
-                                    } catch (e: Exception) {
+                                    } catch (e: ActivityNotFoundException) {
                                         snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
                                     }
                                 } else if (providers.isNotEmpty()) {

@@ -2,6 +2,7 @@ package com.cpen321.movietier.data.repository
 
 import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.local.MovieQuoteProvider
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,7 +46,7 @@ class QuoteRepository @Inject constructor(
                 val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
                 Result.Success(localQuote)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             // Network error, fall back to local quote
             val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
             Result.Success(localQuote)
