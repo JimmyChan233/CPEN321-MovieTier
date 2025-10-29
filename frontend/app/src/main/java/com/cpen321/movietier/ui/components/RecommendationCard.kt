@@ -34,61 +34,73 @@ fun RecommendationCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Poster image
-            AsyncImage(
-                model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                contentDescription = "Poster: ${movie.title}",
-                modifier = Modifier
-                    .width(90.dp)
-                    .aspectRatio(2f / 3f),
-                contentScale = ContentScale.Crop
+            RecommendationPoster(movie)
+            RecommendationContent(movie)
+        }
+    }
+}
+
+@Composable
+private fun RecommendationPoster(movie: Movie) {
+    AsyncImage(
+        model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+        contentDescription = "Poster: ${movie.title}",
+        modifier = Modifier
+            .width(90.dp)
+            .aspectRatio(2f / 3f),
+        contentScale = ContentScale.Crop
+    )
+}
+
+@Composable
+private fun RecommendationContent(movie: Movie) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight(),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = movie.title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        movie.overview?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
+        }
 
-            // Title + overview
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = movie.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+        Spacer(Modifier.height(8.dp))
 
-                Spacer(Modifier.height(6.dp))
+        RecommendationMetadata(movie)
+    }
+}
 
-                movie.overview?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    movie.releaseDate?.take(4)?.let { year ->
-                        Text(
-                            text = year,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    movie.voteAverage?.let { rating ->
-                        StarRating(rating = rating, starSize = 14.dp)
-                    }
-                }
-            }
+@Composable
+private fun RecommendationMetadata(movie: Movie) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        movie.releaseDate?.take(4)?.let { year ->
+            Text(
+                text = year,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        movie.voteAverage?.let { rating ->
+            StarRating(rating = rating, starSize = 14.dp)
         }
     }
 }

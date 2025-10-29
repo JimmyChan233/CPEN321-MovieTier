@@ -58,69 +58,81 @@ fun AuthScreen(
                     .padding(32.dp)
                     .testTag("auth_content")
             ) {
-                // Branded header
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "MovieTier",
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Rank movies. Share with friends. Discover together.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
+                AuthHeader()
                 Spacer(modifier = Modifier.height(48.dp))
-
-                // Crossfade between loading and button
-                Crossfade(
-                    targetState = uiState.isLoading,
-                    label = "auth_state"
-                ) { isLoading ->
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.testTag("auth_loading")
-                        )
-                    } else {
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    authViewModel.signInWithGoogle(context, BuildConfig.GOOGLE_CLIENT_ID)
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .testTag("google_sign_in_button"),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = "Sign in with Google",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                AuthActionSection(
+                    isLoading = uiState.isLoading,
+                    onSignInClick = {
+                        scope.launch {
+                            authViewModel.signInWithGoogle(context, BuildConfig.GOOGLE_CLIENT_ID)
                         }
                     }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AuthHeader() {
+    Icon(
+        imageVector = Icons.Default.Star,
+        contentDescription = null,
+        modifier = Modifier.size(80.dp),
+        tint = MaterialTheme.colorScheme.primary
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = "MovieTier",
+        style = MaterialTheme.typography.displayMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text(
+        text = "Rank movies. Share with friends. Discover together.",
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun AuthActionSection(
+    isLoading: Boolean,
+    onSignInClick: () -> Unit
+) {
+    Crossfade(
+        targetState = isLoading,
+        label = "auth_state"
+    ) { loading ->
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.testTag("auth_loading")
+            )
+        } else {
+            Button(
+                onClick = onSignInClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .testTag("google_sign_in_button"),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Sign in with Google",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
