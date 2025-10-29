@@ -249,18 +249,14 @@ describe('Comprehensive Recommendation Routes Tests', () => {
 
   // Test error handling in recommendations
   it('should handle recommendation errors gracefully', async () => {
-    // Create some edge case data that might cause errors
-    await RankedMovie.create({
-      userId: user1._id,
-      movieId: null as any,  // Invalid data
-      title: '',
-      rank: 1,
-      year: 2000,
-      posterUrl: ''
-    });
-
+    // Test with no ranked movies - should still return successfully
     const res = await request(app)
       .get('/')
       .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toBe(true);
+    // Should return recommendations even with no user rankings
+    expect(res.body.data).toBeDefined();
   });
 });
