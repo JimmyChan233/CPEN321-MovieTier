@@ -172,6 +172,20 @@ router.post('/rank', authenticate, asyncHandler(async (req: AuthRequest, res) =>
 
     await rankedMovie.save();
 
+    // Remove from watchlist if present
+    const WatchlistItem = (await import('../models/watch/WatchlistItem')).default;
+    const userObjectId = new mongoose.Types.ObjectId(req.userId);
+    try {
+      await WatchlistItem.deleteOne({ userId: userObjectId, movieId });
+    } catch (err) {
+      // Silently continue if watchlist removal fails
+    }
+    try {
+      await WatchlistItem.deleteOne({ userId: req.userId as unknown as mongoose.Types.ObjectId, movieId });
+    } catch (err) {
+      // Silently continue if watchlist removal fails
+    }
+
     // Determine overview/poster via TMDB if not provided
     let finalOverview = overview;
     let finalPoster = posterPath;

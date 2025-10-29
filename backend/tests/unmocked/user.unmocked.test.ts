@@ -46,7 +46,8 @@ describe('Unmocked: PUT /users/profile', () => {
       .send({ name: newName });
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body.name).toStrictEqual(newName);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.name).toStrictEqual(newName);
 
     // Verify update in database
     const updatedUser = await User.findById(user._id);
