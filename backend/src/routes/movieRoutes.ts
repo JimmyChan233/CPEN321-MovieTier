@@ -16,12 +16,12 @@ const router = Router();
 
 router.get('/search', authenticate, async (req, res) => {
   try {
-    const query = String(req.query.query || '').trim();
+    const query = String(req.query.query ?? '').trim();
     if (!query || query.length < 2) {
       return res.status(400).json({ success: false, message: 'Query must be at least 2 characters' });
     }
 
-    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
       return res.status(500).json({ success: false, message: 'TMDB API key not configured' });
     }
@@ -36,16 +36,29 @@ router.get('/search', authenticate, async (req, res) => {
       }
     });
 
-    const includeCast = String(req.query.includeCast || 'false').toLowerCase() === 'true';
+    const includeCast = String(req.query.includeCast ?? 'false').toLowerCase() === 'true';
 
-    let baseResults: any[] = (data.results || []).map((m: any) => ({
-      id: m.id,
-      title: m.title,
-      overview: m.overview || null,
-      posterPath: m.poster_path || null,
-      releaseDate: m.release_date || null,
-      voteAverage: m.vote_average ?? null
-    }));
+    interface MovieResult {
+      id: number;
+      title: string;
+      overview: string | null;
+      posterPath: string | null;
+      releaseDate: string | null;
+      voteAverage: number | null;
+      cast?: string[];
+    }
+
+    let baseResults: MovieResult[] = (data.results ?? []).map((m: unknown) => {
+      const movie = m as { id: number; title: string; overview?: string; poster_path?: string; release_date?: string; vote_average?: number };
+      return {
+        id: movie.id,
+        title: movie.title,
+        overview: movie.overview ?? null,
+        posterPath: movie.poster_path ?? null,
+        releaseDate: movie.release_date ?? null,
+        voteAverage: movie.vote_average ?? null
+      };
+    });
 
     // If no results and query likely Chinese, search zh-CN and return English titles via detail fetch
     const hasCjk = /[\u3400-\u9FBF\uF900-\uFAFF]/.test(query);
@@ -54,28 +67,29 @@ router.get('/search', authenticate, async (req, res) => {
         const { data: zh } = await tmdb.get('/search/movie', {
           params: { query, include_adult: false, language: 'zh-CN', page: 1 }
         });
-        const zhResults: any[] = Array.isArray(zh?.results) ? zh.results : [];
+        const zhResults: unknown[] = Array.isArray(zh?.results) ? zh.results : [];
         const limit = Math.min(zhResults.length, 10);
         const detailed = await Promise.all(
-          zhResults.slice(0, limit).map(async (m: any) => {
+          zhResults.slice(0, limit).map(async (m: unknown) => {
+            const movie = m as { id: number; title: string; overview?: string; poster_path?: string; release_date?: string; vote_average?: number };
             try {
-              const { data: det } = await tmdb.get(`/movie/${m.id}`, { params: { language: 'en-US' } });
+              const { data: det } = await tmdb.get(`/movie/${movie.id}`, { params: { language: 'en-US' } });
               return {
-                id: det.id ?? m.id,
-                title: det.title ?? m.title,
-                overview: det.overview || m.overview || null,
-                posterPath: det.poster_path || m.poster_path || null,
-                releaseDate: det.release_date || m.release_date || null,
-                voteAverage: det.vote_average ?? m.vote_average ?? null
+                id: det.id ?? movie.id,
+                title: det.title ?? movie.title,
+                overview: det.overview ?? movie.overview ?? null,
+                posterPath: det.poster_path ?? movie.poster_path ?? null,
+                releaseDate: det.release_date ?? movie.release_date ?? null,
+                voteAverage: det.vote_average ?? movie.vote_average ?? null
               };
             } catch {
               return {
-                id: m.id,
-                title: m.title,
-                overview: m.overview || null,
-                posterPath: m.poster_path || null,
-                releaseDate: m.release_date || null,
-                voteAverage: m.vote_average ?? null
+                id: movie.id,
+                title: movie.title,
+                overview: movie.overview ?? null,
+                posterPath: movie.poster_path ?? null,
+                releaseDate: movie.release_date ?? null,
+                voteAverage: movie.vote_average ?? null
               };
             }
           })
@@ -96,14 +110,18 @@ router.get('/search', authenticate, async (req, res) => {
       baseResults.slice(0, limit).map(async (r) => {
         try {
           const { data: credits } = await tmdb.get(`/movie/${r.id}/credits`, { params: { language: 'en-US' } });
-          const cast = Array.isArray(credits?.cast) ? credits.cast.slice(0, 3).map((c: any) => c.name).filter(Boolean) : [];
+          const cast = Array.isArray(credits?.cast) ? credits.cast.slice(0, 3).map((c: unknown) => {
+            const castMember = c as { name?: string };
+            return castMember.name;
+          }).filter(Boolean) : [];
           return { ...r, cast };
         } catch {
           return { ...r, cast: [] };
         }
       })
     );
-    const combined = enriched.concat(baseResults.slice(limit));
+    const remaining = baseResults.slice(limit).map(r => ({ ...r, cast: [] }));
+    const combined = enriched.concat(remaining);
     res.json({ success: true, data: combined });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to search movies. Please try again' });
@@ -113,20 +131,23 @@ router.get('/search', authenticate, async (req, res) => {
 router.get('/ranked', authenticate, async (req: AuthRequest, res) => {
   try {
     const movies = await RankedMovie.find({ userId: req.userId }).sort({ rank: 1 });
-    const shaped = movies.map((m) => ({
-      _id: m._id,
-      userId: m.userId,
-      movie: {
-        id: m.movieId,
-        title: m.title,
-        overview: null,
-        posterPath: m.posterPath ?? null,
-        releaseDate: null,
-        voteAverage: null
-      },
-      rank: m.rank,
-      createdAt: (m as any).createdAt
-    }));
+    const shaped = movies.map((m) => {
+      const movieDoc = m as unknown as { _id: unknown; userId: unknown; movieId: number; title: string; posterPath?: string; rank: number; createdAt?: Date };
+      return {
+        _id: movieDoc._id,
+        userId: movieDoc.userId,
+        movie: {
+          id: movieDoc.movieId,
+          title: movieDoc.title,
+          overview: null,
+          posterPath: movieDoc.posterPath ?? null,
+          releaseDate: null,
+          voteAverage: null
+        },
+        rank: movieDoc.rank,
+        createdAt: movieDoc.createdAt
+      };
+    });
     res.json({ success: true, data: shaped });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load rankings. Please try again' });
@@ -153,14 +174,14 @@ router.post('/rank', authenticate, async (req: AuthRequest, res) => {
     let finalPoster = posterPath;
     try {
       if ((!finalOverview || !finalPoster) && movieId) {
-        const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+        const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
         if (apiKey) {
           const tmdb = getTmdbClient();
           const { data } = await tmdb.get(`/movie/${movieId}`, {
             params: { language: 'en-US' }
           });
-          if (!finalOverview) finalOverview = data.overview || undefined;
-          if (!finalPoster) finalPoster = data.poster_path || undefined;
+          if (!finalOverview) finalOverview = data.overview ?? undefined;
+          if (!finalPoster) finalPoster = data.poster_path ?? undefined;
         }
       }
     } catch {
@@ -188,19 +209,28 @@ router.post('/rank', authenticate, async (req: AuthRequest, res) => {
     });
 
     // Shape response to match frontend model (movie nested)
+    const rankedMovieDoc = rankedMovie as unknown as {
+      _id: unknown;
+      userId: unknown;
+      movieId: number;
+      title: string;
+      posterPath?: string;
+      rank: number;
+      createdAt?: Date;
+    };
     const shaped = {
-      _id: rankedMovie._id,
-      userId: rankedMovie.userId,
+      _id: rankedMovieDoc._id,
+      userId: rankedMovieDoc.userId,
       movie: {
-        id: rankedMovie.movieId,
-        title: rankedMovie.title,
+        id: rankedMovieDoc.movieId,
+        title: rankedMovieDoc.title,
         overview: finalOverview ?? null,
-        posterPath: finalPoster ?? rankedMovie.posterPath ?? null,
+        posterPath: finalPoster ?? rankedMovieDoc.posterPath ?? null,
         releaseDate: null,
         voteAverage: null
       },
-      rank: rankedMovie.rank,
-      createdAt: (rankedMovie as any).createdAt
+      rank: rankedMovieDoc.rank,
+      createdAt: rankedMovieDoc.createdAt
     };
     res.json({ success: true, data: shaped });
   } catch (error) {
@@ -256,24 +286,27 @@ router.get('/:movieId/providers', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid movie id' });
     }
 
-    const country = (req.query.country as string)?.toUpperCase?.() || 'CA';
+    const country = (req.query.country as string)?.toUpperCase?.() ?? 'CA';
 
-    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
       return res.status(500).json({ success: false, message: 'TMDB API key not configured' });
     }
 
     const tmdb = getTmdbClient();
   const { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
-  const result = data?.results?.[country] || {};
+  const result = data?.results?.[country] ?? {};
 
-  let link: string | null = result.link || null;
+  let link: string | null = result.link ?? null;
   if (!link) {
     // Fallback to TMDB movie watch page for the exact movie
     link = `https://www.themoviedb.org/movie/${movieId}/watch?locale=${country}`;
   }
-    const mapProviders = (arr: any[] | undefined) =>
-      Array.isArray(arr) ? arr.map((p: any) => p.provider_name).filter(Boolean) : [];
+    const mapProviders = (arr: unknown[] | undefined) =>
+      Array.isArray(arr) ? arr.map((p: unknown) => {
+        const provider = p as { provider_name?: string };
+        return provider.provider_name;
+      }).filter(Boolean) : [];
 
     const payload = {
       link,
@@ -297,7 +330,7 @@ router.get('/:movieId/details', authenticate, async (req, res) => {
     if (!movieId || Number.isNaN(movieId)) {
       return res.status(400).json({ success: false, message: 'Invalid movie id' });
     }
-    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
       return res.status(500).json({ success: false, message: 'TMDB API key not configured' });
     }
@@ -306,16 +339,19 @@ router.get('/:movieId/details', authenticate, async (req, res) => {
       tmdb.get(`/movie/${movieId}`, { params: { language: 'en-US' } }),
       tmdb.get(`/movie/${movieId}/credits`, { params: { language: 'en-US' } })
     ]);
-    const d = detailsResp.data || {};
+    const d = detailsResp.data ?? {};
     const cast = Array.isArray(creditsResp.data?.cast)
-      ? creditsResp.data.cast.slice(0, 5).map((c: any) => c?.name).filter(Boolean)
+      ? creditsResp.data.cast.slice(0, 5).map((c: unknown) => {
+          const castMember = c as { name?: string };
+          return castMember.name;
+        }).filter(Boolean)
       : [];
     const shaped = {
       id: d.id,
       title: d.title,
-      overview: d.overview || null,
-      posterPath: d.poster_path || null,
-      releaseDate: d.release_date || null,
+      overview: d.overview ?? null,
+      posterPath: d.poster_path ?? null,
+      releaseDate: d.release_date ?? null,
       voteAverage: d.vote_average ?? null,
       cast
     };
@@ -332,7 +368,7 @@ router.get('/:movieId/videos', authenticate, async (req, res) => {
     if (!movieId || Number.isNaN(movieId)) {
       return res.status(400).json({ success: false, message: 'Invalid movie id' });
     }
-    const apiKey = process.env.TMDB_API_KEY || process.env.TMDB_KEY;
+    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
       return res.status(500).json({ success: false, message: 'TMDB API key not configured' });
     }
@@ -341,13 +377,25 @@ router.get('/:movieId/videos', authenticate, async (req, res) => {
 
     // Filter for YouTube trailers, prioritize official trailers
     const videos = Array.isArray(data?.results) ? data.results : [];
-    const youtubeVideos = videos.filter((v: any) => v.site === 'YouTube');
+    const youtubeVideos = videos.filter((v: unknown) => {
+      const video = v as { site?: string };
+      return video.site === 'YouTube';
+    });
 
     // Prioritize: Official Trailer > Trailer > Teaser
-    const trailer = youtubeVideos.find((v: any) => v.type === 'Trailer' && v.official)
-      || youtubeVideos.find((v: any) => v.type === 'Trailer')
-      || youtubeVideos.find((v: any) => v.type === 'Teaser')
-      || youtubeVideos[0];
+    const trailer = youtubeVideos.find((v: unknown) => {
+      const video = v as { type?: string; official?: boolean };
+      return video.type === 'Trailer' && video.official;
+    })
+      ?? youtubeVideos.find((v: unknown) => {
+        const video = v as { type?: string };
+        return video.type === 'Trailer';
+      })
+      ?? youtubeVideos.find((v: unknown) => {
+        const video = v as { type?: string };
+        return video.type === 'Teaser';
+      })
+      ?? youtubeVideos[0];
 
     const shaped = trailer ? {
       key: trailer.key,

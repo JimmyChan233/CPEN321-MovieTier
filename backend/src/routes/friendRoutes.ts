@@ -12,7 +12,7 @@ const requestTimestamps: Map<string, number[]> = new Map();
 
 export function checkRateLimit(userId: string): boolean {
   const now = Date.now();
-  const arr = requestTimestamps.get(userId) || [];
+  const arr = requestTimestamps.get(userId) ?? [];
   const recent = arr.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
   if (recent.length >= RATE_LIMIT_MAX) return false;
   recent.push(now);
@@ -25,7 +25,7 @@ const router = Router();
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const friendships = await Friendship.find({ userId: req.userId }).populate('friendId');
-    const friends = friendships.map(f => (f as any).friendId);
+    const friends = friendships.map(f => (f as unknown as { friendId: unknown }).friendId);
     res.json({ success: true, data: friends });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get friends' });
@@ -50,13 +50,16 @@ router.get('/requests/detailed', authenticate, async (req: AuthRequest, res) => 
   try {
     const requests = await FriendRequest.find({ receiverId: req.userId, status: 'pending' })
       .populate('senderId', '_id email name profileImageUrl');
-    const data = requests.map((r: any) => ({
-      _id: r._id,
-      sender: r.senderId,
-      receiverId: r.receiverId,
-      status: r.status,
-      createdAt: r.createdAt
-    }));
+    const data = requests.map((r: unknown) => {
+      const request = r as { _id: unknown; senderId: unknown; receiverId: unknown; status: unknown; createdAt: unknown };
+      return {
+        _id: request._id,
+        sender: request.senderId,
+        receiverId: request.receiverId,
+        status: request.status,
+        createdAt: request.createdAt
+      };
+    });
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get requests' });
@@ -78,13 +81,16 @@ router.get('/requests/outgoing/detailed', authenticate, async (req: AuthRequest,
   try {
     const requests = await FriendRequest.find({ senderId: req.userId, status: 'pending' })
       .populate('receiverId', '_id email name profileImageUrl');
-    const data = requests.map((r: any) => ({
-      _id: r._id,
-      receiver: r.receiverId,
-      senderId: r.senderId,
-      status: r.status,
-      createdAt: r.createdAt
-    }));
+    const data = requests.map((r: unknown) => {
+      const request = r as { _id: unknown; receiverId: unknown; senderId: unknown; status: unknown; createdAt: unknown };
+      return {
+        _id: request._id,
+        receiver: request.receiverId,
+        senderId: request.senderId,
+        status: request.status,
+        createdAt: request.createdAt
+      };
+    });
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get outgoing requests' });

@@ -26,28 +26,33 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 
     // Enrich missing overview/poster for first few items to avoid burst calls
     const tmdb = getTmdbClient();
-    const toEnrich = activities.filter((a: any) => (!a.overview || !a.posterPath) && a.movieId).slice(0, 8);
-    await Promise.all(toEnrich.map(async (a: any) => {
+    const toEnrich = activities.filter((a: unknown) => {
+      const activity = a as { overview?: string; posterPath?: string; movieId?: unknown };
+      return (!activity.overview || !activity.posterPath) && activity.movieId;
+    }).slice(0, 8);
+    await Promise.all(toEnrich.map(async (a: unknown) => {
       try {
-        const { data } = await tmdb.get(`/movie/${a.movieId}`, { params: { language: 'en-US' } });
-        if (!a.overview && data?.overview) a.overview = data.overview;
-        if (!a.posterPath && data?.poster_path) a.posterPath = data.poster_path;
-        if (!a.releaseDate && data?.release_date) a.releaseDate = data.release_date;
-        if (!a.voteAverage && data?.vote_average) a.voteAverage = data.vote_average;
-        await a.save();
+        const activity = a as { movieId: number; overview?: string; posterPath?: string; releaseDate?: string; voteAverage?: number; save: () => Promise<void> };
+        const { data } = await tmdb.get(`/movie/${activity.movieId}`, { params: { language: 'en-US' } });
+        if (!activity.overview && data?.overview) activity.overview = data.overview;
+        if (!activity.posterPath && data?.poster_path) activity.posterPath = data.poster_path;
+        if (!activity.releaseDate && data?.release_date) activity.releaseDate = data.release_date;
+        if (!activity.voteAverage && data?.vote_average) activity.voteAverage = data.vote_average;
+        await activity.save();
       } catch {}
     }));
 
     // Fetch current ranks from RankedMovie to ensure accuracy
     const movieRankMap = new Map<string, number>();
-    await Promise.all(activities.map(async (a: any) => {
+    await Promise.all(activities.map(async (a: unknown) => {
       try {
+        const activity = a as { userId?: { _id: unknown }; movieId?: unknown };
         const rankedMovie = await RankedMovie.findOne({
-          userId: a.userId?._id,
-          movieId: a.movieId
+          userId: activity.userId?._id,
+          movieId: activity.movieId
         });
         if (rankedMovie) {
-          const key = `${a.userId?._id}_${a.movieId}`;
+          const key = `${activity.userId?._id}_${activity.movieId}`;
           movieRankMap.set(key, rankedMovie.rank);
         }
       } catch {}
@@ -59,7 +64,10 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
       { $match: { activityId: { $in: activityIds } } },
       { $group: { _id: '$activityId', count: { $sum: 1 } } }
     ]);
-    const likeCountMap = new Map(likeCounts.map((lc: any) => [String(lc._id), lc.count]));
+    const likeCountMap = new Map(likeCounts.map((lc: unknown) => {
+      const likeCount = lc as { _id: unknown; count: number };
+      return [String(likeCount._id), likeCount.count];
+    }));
 
     const userLikes = await Like.find({
       userId: req.userId,
@@ -72,32 +80,47 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
       { $match: { activityId: { $in: activityIds } } },
       { $group: { _id: '$activityId', count: { $sum: 1 } } }
     ]);
-    const commentCountMap = new Map(commentCounts.map((cc: any) => [String(cc._id), cc.count]));
+    const commentCountMap = new Map(commentCounts.map((cc: unknown) => {
+      const commentCount = cc as { _id: unknown; count: number };
+      return [String(commentCount._id), commentCount.count];
+    }));
 
-    const shaped = activities.map((a: any) => {
-      const key = `${a.userId?._id}_${a.movieId}`;
+    const shaped = activities.map((a: unknown) => {
+      const activity = a as {
+        _id: unknown;
+        userId?: { _id: unknown; name?: string; profileImageUrl?: string };
+        movieId?: unknown;
+        movieTitle?: string;
+        activityType?: string;
+        posterPath?: string;
+        overview?: string;
+        releaseDate?: string;
+        voteAverage?: number;
+        createdAt?: Date;
+      };
+      const key = `${activity.userId?._id}_${activity.movieId}`;
       const currentRank = movieRankMap.get(key);
-      const activityIdStr = String(a._id);
+      const activityIdStr = String(activity._id);
 
       return {
-        _id: a._id,
-        userId: a.userId?._id,
-        userName: a.userId?.name,
-        userProfileImage: a.userId?.profileImageUrl,
-        activityType: a.activityType,
+        _id: activity._id,
+        userId: activity.userId?._id,
+        userName: activity.userId?.name,
+        userProfileImage: activity.userId?.profileImageUrl,
+        activityType: activity.activityType,
         movie: {
-          id: a.movieId,
-          title: a.movieTitle,
-          posterPath: a.posterPath || null,
-          overview: a.overview || null,
-          releaseDate: a.releaseDate || null,
-          voteAverage: a.voteAverage || null
+          id: activity.movieId,
+          title: activity.movieTitle,
+          posterPath: activity.posterPath ?? null,
+          overview: activity.overview ?? null,
+          releaseDate: activity.releaseDate ?? null,
+          voteAverage: activity.voteAverage ?? null
         },
         rank: currentRank ?? null,
-        likeCount: likeCountMap.get(activityIdStr) || 0,
-        commentCount: commentCountMap.get(activityIdStr) || 0,
+        likeCount: likeCountMap.get(activityIdStr) ?? 0,
+        commentCount: commentCountMap.get(activityIdStr) ?? 0,
         isLikedByUser: userLikeSet.has(activityIdStr),
-        createdAt: a.createdAt
+        createdAt: activity.createdAt
       };
     });
 
@@ -119,28 +142,33 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
 
     // Enrich missing overview/poster for first few items
     const tmdb = getTmdbClient();
-    const toEnrich = activities.filter((a: any) => (!a.overview || !a.posterPath) && a.movieId).slice(0, 8);
-    await Promise.all(toEnrich.map(async (a: any) => {
+    const toEnrich = activities.filter((a: unknown) => {
+      const activity = a as { overview?: string; posterPath?: string; movieId?: unknown };
+      return (!activity.overview || !activity.posterPath) && activity.movieId;
+    }).slice(0, 8);
+    await Promise.all(toEnrich.map(async (a: unknown) => {
       try {
-        const { data } = await tmdb.get(`/movie/${a.movieId}`, { params: { language: 'en-US' } });
-        if (!a.overview && data?.overview) a.overview = data.overview;
-        if (!a.posterPath && data?.poster_path) a.posterPath = data.poster_path;
-        if (!a.releaseDate && data?.release_date) a.releaseDate = data.release_date;
-        if (!a.voteAverage && data?.vote_average) a.voteAverage = data.vote_average;
-        await a.save();
+        const activity = a as { movieId: number; overview?: string; posterPath?: string; releaseDate?: string; voteAverage?: number; save: () => Promise<void> };
+        const { data } = await tmdb.get(`/movie/${activity.movieId}`, { params: { language: 'en-US' } });
+        if (!activity.overview && data?.overview) activity.overview = data.overview;
+        if (!activity.posterPath && data?.poster_path) activity.posterPath = data.poster_path;
+        if (!activity.releaseDate && data?.release_date) activity.releaseDate = data.release_date;
+        if (!activity.voteAverage && data?.vote_average) activity.voteAverage = data.vote_average;
+        await activity.save();
       } catch {}
     }));
 
     // Fetch current ranks
     const movieRankMap = new Map<string, number>();
-    await Promise.all(activities.map(async (a: any) => {
+    await Promise.all(activities.map(async (a: unknown) => {
       try {
+        const activity = a as { userId?: { _id: unknown }; movieId?: unknown };
         const rankedMovie = await RankedMovie.findOne({
-          userId: a.userId?._id,
-          movieId: a.movieId
+          userId: activity.userId?._id,
+          movieId: activity.movieId
         });
         if (rankedMovie) {
-          const key = `${a.userId?._id}_${a.movieId}`;
+          const key = `${activity.userId?._id}_${activity.movieId}`;
           movieRankMap.set(key, rankedMovie.rank);
         }
       } catch {}
@@ -152,7 +180,10 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
       { $match: { activityId: { $in: activityIds } } },
       { $group: { _id: '$activityId', count: { $sum: 1 } } }
     ]);
-    const likeCountMap = new Map(likeCounts.map((lc: any) => [String(lc._id), lc.count]));
+    const likeCountMap = new Map(likeCounts.map((lc: unknown) => {
+      const likeCount = lc as { _id: unknown; count: number };
+      return [String(likeCount._id), likeCount.count];
+    }));
 
     const userLikes = await Like.find({
       userId: req.userId,
@@ -165,32 +196,47 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
       { $match: { activityId: { $in: activityIds } } },
       { $group: { _id: '$activityId', count: { $sum: 1 } } }
     ]);
-    const commentCountMap = new Map(commentCounts.map((cc: any) => [String(cc._id), cc.count]));
+    const commentCountMap = new Map(commentCounts.map((cc: unknown) => {
+      const commentCount = cc as { _id: unknown; count: number };
+      return [String(commentCount._id), commentCount.count];
+    }));
 
-    const shaped = activities.map((a: any) => {
-      const key = `${a.userId?._id}_${a.movieId}`;
+    const shaped = activities.map((a: unknown) => {
+      const activity = a as {
+        _id: unknown;
+        userId?: { _id: unknown; name?: string; profileImageUrl?: string };
+        movieId?: unknown;
+        movieTitle?: string;
+        activityType?: string;
+        posterPath?: string;
+        overview?: string;
+        releaseDate?: string;
+        voteAverage?: number;
+        createdAt?: Date;
+      };
+      const key = `${activity.userId?._id}_${activity.movieId}`;
       const currentRank = movieRankMap.get(key);
-      const activityIdStr = String(a._id);
+      const activityIdStr = String(activity._id);
 
       return {
-        _id: a._id,
-        userId: a.userId?._id,
-        userName: a.userId?.name,
-        userProfileImage: a.userId?.profileImageUrl,
-        activityType: a.activityType,
+        _id: activity._id,
+        userId: activity.userId?._id,
+        userName: activity.userId?.name,
+        userProfileImage: activity.userId?.profileImageUrl,
+        activityType: activity.activityType,
         movie: {
-          id: a.movieId,
-          title: a.movieTitle,
-          posterPath: a.posterPath || null,
-          overview: a.overview || null,
-          releaseDate: a.releaseDate || null,
-          voteAverage: a.voteAverage || null
+          id: activity.movieId,
+          title: activity.movieTitle,
+          posterPath: activity.posterPath ?? null,
+          overview: activity.overview ?? null,
+          releaseDate: activity.releaseDate ?? null,
+          voteAverage: activity.voteAverage ?? null
         },
         rank: currentRank ?? null,
-        likeCount: likeCountMap.get(activityIdStr) || 0,
-        commentCount: commentCountMap.get(activityIdStr) || 0,
+        likeCount: likeCountMap.get(activityIdStr) ?? 0,
+        commentCount: commentCountMap.get(activityIdStr) ?? 0,
         isLikedByUser: userLikeSet.has(activityIdStr),
-        createdAt: a.createdAt
+        createdAt: activity.createdAt
       };
     });
 
@@ -241,7 +287,7 @@ router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => 
     if (String(activity.userId._id) !== String(req.userId)) {
       try {
         const liker = await User.findById(req.userId);
-        const activityOwner: any = activity.userId;
+        const activityOwner = activity.userId as unknown as { fcmToken?: string };
 
         if (activityOwner.fcmToken && liker) {
           await notificationService.sendLikeNotification(
@@ -258,8 +304,9 @@ router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => 
     }
 
     res.status(201).json({ success: true, message: 'Activity liked' });
-  } catch (error: any) {
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    const err = error as { code?: number };
+    if (err.code === 11000) {
       // Duplicate key error - already liked
       return res.status(400).json({ success: false, message: 'Already liked' });
     }
@@ -297,14 +344,22 @@ router.get('/:activityId/comments', authenticate, async (req: AuthRequest, res) 
       .populate('userId', 'name profileImageUrl')
       .limit(100);
 
-    const shaped = comments.map((c: any) => ({
-      _id: c._id,
-      userId: c.userId?._id,
-      userName: c.userId?.name,
-      userProfileImage: c.userId?.profileImageUrl,
-      text: c.text,
-      createdAt: c.createdAt
-    }));
+    const shaped = comments.map((c: unknown) => {
+      const comment = c as {
+        _id: unknown;
+        userId?: { _id: unknown; name?: string; profileImageUrl?: string };
+        text?: string;
+        createdAt?: Date;
+      };
+      return {
+        _id: comment._id,
+        userId: comment.userId?._id,
+        userName: comment.userId?.name,
+        userProfileImage: comment.userId?.profileImageUrl,
+        text: comment.text,
+        createdAt: comment.createdAt
+      };
+    });
 
     res.json({ success: true, data: shaped });
   } catch (error) {
@@ -342,11 +397,12 @@ router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res)
     // Populate user info for response
     await comment.populate('userId', 'name profileImageUrl');
 
+    const populatedUser = comment.userId as unknown as { _id: unknown; name?: string; profileImageUrl?: string };
     const shaped = {
       _id: comment._id,
-      userId: (comment.userId as any)?._id,
-      userName: (comment.userId as any)?.name,
-      userProfileImage: (comment.userId as any)?.profileImageUrl,
+      userId: populatedUser._id,
+      userName: populatedUser.name,
+      userProfileImage: populatedUser.profileImageUrl,
       text: comment.text,
       createdAt: comment.createdAt
     };
@@ -355,7 +411,7 @@ router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res)
     if (String(activity.userId._id) !== String(req.userId)) {
       try {
         const commenter = await User.findById(req.userId);
-        const activityOwner: any = activity.userId;
+        const activityOwner = activity.userId as unknown as { fcmToken?: string };
 
         if (activityOwner.fcmToken && commenter) {
           await notificationService.sendCommentNotification(

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-const RankedMovie = (mongoose.models.RankedMovie || mongoose.model('RankedMovie')) as any;
+import RankedMovieModel from '../models/movie/RankedMovie';
+const RankedMovie = mongoose.models.RankedMovie ?? RankedMovieModel;
 import FeedActivity from '../models/feed/FeedActivity';
 import { Friendship } from '../models/friend/Friend';
 import { sseService } from '../services/sse/sseService';
@@ -17,13 +18,16 @@ import notificationService from '../services/notification.service';
 
 async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
   try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}
-  try { await WatchlistItem.deleteOne({ userId: userIdStr as any, movieId }); } catch {}
+  try { await WatchlistItem.deleteOne({ userId: userIdStr as unknown as mongoose.Types.ObjectId, movieId }); } catch {}
 }
 
 
 export const addMovie = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = (req as { userId?: string }).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
     const { movieId, title, posterPath, overview } = req.body;
     const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -69,8 +73,8 @@ export const addMovie = async (req: Request, res: Response) => {
         const { getTmdbClient } = await import('../services/tmdb/tmdbClient')
         const tmdb = getTmdbClient()
         const { data } = await tmdb.get(`/movie/${movieId}`, { params: { language: 'en-US' } })
-        if (!finalPosterPath) finalPosterPath = data?.poster_path || undefined
-        if (!finalOverview) finalOverview = data?.overview || undefined
+        if (!finalPosterPath) finalPosterPath = data?.poster_path ?? undefined
+        if (!finalOverview) finalOverview = data?.overview ?? undefined
       }
     } catch {}
 
@@ -87,7 +91,7 @@ export const addMovie = async (req: Request, res: Response) => {
 
     // Get user info for notifications
     const user = await User.findById(userId).select('name');
-    const userName = user?.name || 'A friend';
+    const userName = user?.name ?? 'A friend';
 
     // Notify friends via SSE and FCM
     const friendships = await Friendship.find({ userId });
@@ -158,7 +162,10 @@ export const addMovie = async (req: Request, res: Response) => {
 
 export const compareMovies = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = (req as { userId?: string }).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
     const { comparedMovieId, preferredMovieId } = req.body;
     const session = getSession(userId);
 
@@ -234,8 +241,8 @@ export const compareMovies = async (req: Request, res: Response) => {
         const { getTmdbClient } = await import('../services/tmdb/tmdbClient')
         const tmdb = getTmdbClient()
         const { data } = await tmdb.get(`/movie/${movie.movieId}`, { params: { language: 'en-US' } })
-        if (!finalPosterPath) finalPosterPath = data?.poster_path || undefined
-        finalOverview = data?.overview || undefined
+        if (!finalPosterPath) finalPosterPath = data?.poster_path ?? undefined
+        finalOverview = data?.overview ?? undefined
       } catch {}
 
       const activity = new FeedActivity({
@@ -251,7 +258,7 @@ export const compareMovies = async (req: Request, res: Response) => {
 
       // Get user info for notifications
       const user = await User.findById(userId).select('name');
-      const userName = user?.name || 'A friend';
+      const userName = user?.name ?? 'A friend';
 
       // Notify friends via SSE and FCM
       const friendships = await Friendship.find({ userId });

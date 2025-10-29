@@ -9,8 +9,8 @@ const router = Router();
 // Returns the official movie tagline if available, or null otherwise.
 router.get('/', authenticate, async (req, res) => {
   try {
-    const title = String(req.query.title || '').trim();
-    const year = String(req.query.year || '').trim() || undefined;
+    const title = String(req.query.title ?? '').trim();
+    const year = String(req.query.year ?? '').trim() || undefined;
     if (!title) {
       return res.status(400).json({ success: false, message: 'Missing title', data: null });
     }
@@ -21,7 +21,7 @@ router.get('/', authenticate, async (req, res) => {
     }
     // Return 404 if no tagline found, frontend will fall back to local quotes
     return res.status(404).json({ success: false, message: 'No tagline found', data: null });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return res.status(500).json({ success: false, message: 'Failed to fetch tagline', data: null });
   }
 });
