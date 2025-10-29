@@ -20,67 +20,18 @@ fun EditProfileScreen(
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsState()
-
     var name by remember { mutableStateOf(uiState.user?.name ?: "") }
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
 
-    // Update local state when user data changes
-    LaunchedEffect(uiState.user) {
-        uiState.user?.let { user ->
-            name = user.name
-        }
-    }
-
-    // Handle success/error messages
-    LaunchedEffect(uiState.successMessage, uiState.errorMessage) {
-        when {
-            uiState.successMessage != null -> {
-                snackbarMessage = uiState.successMessage ?: ""
-                showSnackbar = true
-                authViewModel.clearMessages()
-                // Navigate back on success
-                navController.popBackStack()
-            }
-            uiState.errorMessage != null -> {
-                snackbarMessage = uiState.errorMessage ?: ""
-                showSnackbar = true
-                authViewModel.clearMessages()
-            }
-        }
-    }
+    EditProfileSideEffects(uiState, authViewModel, navController, { name = it }, { msg -> snackbarMessage = msg; showSnackbar = true })
 
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Edit Profile") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                }
-            )
-        },
-        snackbarHost = {
-            if (showSnackbar) {
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    action = {
-                        TextButton(onClick = { showSnackbar = false }) {
-                            Text("Dismiss")
-                        }
-                    }
-                ) {
-                    Text(snackbarMessage)
-                }
-            }
-        }
+        topBar = { EditProfileTopBar(navController) },
+        snackbarHost = { if (showSnackbar) EditProfileSnackbar(snackbarMessage) { showSnackbar = false } }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             EditProfileForm(
@@ -89,20 +40,68 @@ fun EditProfileScreen(
                 userImageUrl = uiState.user?.profileImageUrl,
                 isLoading = uiState.isLoading,
                 onSaveClick = {
-                    when {
-                        name.isBlank() -> {
-                            snackbarMessage = "Name cannot be empty"
-                            showSnackbar = true
-                        }
-                        name == uiState.user?.name -> {
-                            snackbarMessage = "No changes to save"
-                            showSnackbar = true
-                        }
-                        else -> authViewModel.updateProfile(name = name)
-                    }
+                    handleEditProfileSave(name, uiState.user?.name, authViewModel) { msg -> snackbarMessage = msg; showSnackbar = true }
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun EditProfileSideEffects(
+    uiState: com.cpen321.movietier.ui.viewmodels.AuthUiState,
+    authViewModel: AuthViewModel,
+    navController: NavController,
+    onNameUpdate: (String) -> Unit,
+    onShowMessage: (String) -> Unit
+) {
+    LaunchedEffect(uiState.user) { uiState.user?.let { onNameUpdate(it.name) } }
+    LaunchedEffect(uiState.successMessage, uiState.errorMessage) {
+        when {
+            uiState.successMessage != null -> {
+                onShowMessage(uiState.successMessage ?: "")
+                authViewModel.clearMessages()
+                navController.popBackStack()
+            }
+            uiState.errorMessage != null -> {
+                onShowMessage(uiState.errorMessage ?: "")
+                authViewModel.clearMessages()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditProfileTopBar(navController: NavController) {
+    CenterAlignedTopAppBar(
+        title = { Text("Edit Profile") },
+        navigationIcon = {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+            }
+        }
+    )
+}
+
+@Composable
+private fun EditProfileSnackbar(message: String, onDismiss: () -> Unit) {
+    Snackbar(
+        modifier = Modifier.padding(16.dp),
+        action = { TextButton(onClick = onDismiss) { Text("Dismiss") } }
+    ) { Text(message) }
+}
+
+private fun handleEditProfileSave(
+    name: String,
+    currentName: String?,
+    authViewModel: AuthViewModel,
+    onShowMessage: (String) -> Unit
+) {
+    when {
+        name.isBlank() -> onShowMessage("Name cannot be empty")
+        name == currentName -> onShowMessage("No changes to save")
+        else -> authViewModel.updateProfile(name = name)
     }
 }
 
