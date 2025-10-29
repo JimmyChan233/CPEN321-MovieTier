@@ -45,10 +45,22 @@ function formatMessage(level: string, color: string, message: string, ...args: u
       ).join(' ')
     : '';
 
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  console.log(
-    `${colors.dim}[${timestamp}]${colors.reset} ${color}${level}${colors.reset} ${sanitizedMessage}${formattedArgs}`
-  );
+  const parts = [
+    colors.dim,
+    '[',
+    timestamp,
+    ']',
+    colors.reset,
+    ' ',
+    color,
+    level,
+    colors.reset,
+    ' ',
+    sanitizedMessage,
+    formattedArgs,
+    '\n'
+  ];
+  process.stdout.write(parts.join(''));
 }
 
 export const logger = {
@@ -77,13 +89,30 @@ export const logger = {
   http: (method: string, url: string, statusCode?: number, duration?: number) => {
     const methodColor = colors.bright + colors.blue;
     const statusColor = statusCode && statusCode >= 400 ? colors.red : colors.green;
-    const durationStr = duration ? ` ${colors.dim}(${duration}ms)${colors.reset}` : '';
+    const durationStr = duration ? ' ' + colors.dim + '(' + String(duration) + 'ms)' + colors.reset : '';
     const sanitizedMethod = sanitizeForLog(method);
     const sanitizedUrl = sanitizeForLog(url);
+    const statusStr = statusCode !== undefined ? String(statusCode) : '';
 
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    console.log(
-      `${colors.dim}[${getTimestamp()}]${colors.reset} ${methodColor}${sanitizedMethod}${colors.reset} ${sanitizedUrl} ${statusColor}${statusCode ?? ''}${colors.reset}${durationStr}`
-    );
+    const parts = [
+      colors.dim,
+      '[',
+      getTimestamp(),
+      ']',
+      colors.reset,
+      ' ',
+      methodColor,
+      sanitizedMethod,
+      colors.reset,
+      ' ',
+      sanitizedUrl,
+      ' ',
+      statusColor,
+      statusStr,
+      colors.reset,
+      durationStr,
+      '\n'
+    ];
+    process.stdout.write(parts.join(''));
   },
 };
