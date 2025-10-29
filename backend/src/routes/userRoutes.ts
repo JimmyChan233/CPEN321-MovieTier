@@ -59,7 +59,7 @@ router.put('/profile', authenticate, asyncHandler(async (req: AuthRequest, res) 
       return res.status(400).json({ success: false, message: 'Name is required' });
     }
 
-    const updateFields: any = {};
+    const updateFields: { name?: string; profileImageUrl?: string } = {};
     if (name !== undefined) {
       updateFields.name = name.trim();
     }
