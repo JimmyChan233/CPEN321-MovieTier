@@ -15,6 +15,43 @@ import User from '../../src/models/user/User';
 import { Friendship, FriendRequest } from '../../src/models/friend/Friend';
 import { authenticate } from '../../src/middleware/auth';
 import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
+import { AuthService } from '../../src/services/auth/authService';
+
+// Mock the Google OAuth verification with different tokens for different scenarios
+const mockTokenMap: Record<string, { email: string; name: string; googleId: string; picture?: string }> = {
+  'mock-valid-token': {
+    email: 'test@example.com',
+    name: 'Test User',
+    googleId: 'google-123',
+    picture: 'https://example.com/image.jpg'
+  },
+  'mock-nonexistent-token': {
+    email: 'nonexistent@example.com',
+    name: 'New User',
+    googleId: 'google-999',
+    picture: undefined
+  },
+  'mock-new-user-token': {
+    email: 'newuser@example.com',
+    name: 'New User',
+    googleId: 'google-new-123',
+    picture: 'https://example.com/new.jpg'
+  },
+  'mock-existing-user-token': {
+    email: 'existing@example.com',
+    name: 'Different User',
+    googleId: 'google-different',
+    picture: undefined
+  }
+};
+
+jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockImplementation(async (idToken: string) => {
+  const mockData = mockTokenMap[idToken];
+  if (mockData) {
+    return mockData;
+  }
+  throw new Error('Invalid Google token');
+});
 
 // Interface POST /auth/signin
 describe('Unmocked: POST /auth/signin', () => {
@@ -93,7 +130,7 @@ describe('Unmocked: POST /auth/signin', () => {
     const res = await request(app)
       .post('/signin')
       .send({
-        idToken: 'mock-valid-token',
+        idToken: 'mock-nonexistent-token',
         email: 'nonexistent@example.com',
         name: 'New User',
         googleId: 'google-999'
@@ -135,7 +172,7 @@ describe('Unmocked: POST /auth/signup', () => {
     const res = await request(app)
       .post('/signup')
       .send({
-        idToken: 'mock-valid-token',
+        idToken: 'mock-new-user-token',
         email: 'newuser@example.com',
         name: 'New User',
         googleId: 'google-new-123',
@@ -146,12 +183,13 @@ describe('Unmocked: POST /auth/signup', () => {
     expect(res.body).toHaveProperty('user');
     expect(res.body).toHaveProperty('token');
     expect(res.body.user.email).toStrictEqual('newuser@example.com');
-    expect(res.body.user.googleId).toStrictEqual('google-new-123');
+    expect(res.body.user.name).toStrictEqual('New User');
 
     // Verify user was actually created in database
     const createdUser = await User.findOne({ email: 'newuser@example.com' });
     expect(createdUser).toBeDefined();
     expect(createdUser?.name).toStrictEqual('New User');
+    expect(createdUser?.googleId).toStrictEqual('google-new-123');
   });
 
   // Input: No idToken in request
@@ -186,7 +224,7 @@ describe('Unmocked: POST /auth/signup', () => {
     const res = await request(app)
       .post('/signup')
       .send({
-        idToken: 'mock-valid-token',
+        idToken: 'mock-existing-user-token',
         email: 'existing@example.com',
         name: 'Different User',
         googleId: 'google-different'
