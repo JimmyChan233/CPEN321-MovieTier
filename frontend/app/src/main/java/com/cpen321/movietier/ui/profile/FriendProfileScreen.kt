@@ -393,59 +393,75 @@ private fun WatchItemCard(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Poster image
-            AsyncImage(
-                model = item.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                contentDescription = "Poster: ${item.title}",
-                modifier = Modifier
-                    .width(90.dp)
-                    .aspectRatio(2f / 3f),
-                contentScale = ContentScale.Crop
+            WatchItemPoster(item)
+            WatchItemInfo(item, releaseDate, voteAverage)
+        }
+    }
+}
+
+@Composable
+private fun WatchItemPoster(item: WatchlistItem) {
+    AsyncImage(
+        model = item.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+        contentDescription = "Poster: ${item.title}",
+        modifier = Modifier
+            .width(90.dp)
+            .aspectRatio(2f / 3f),
+        contentScale = ContentScale.Crop
+    )
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.WatchItemInfo(
+    item: WatchlistItem,
+    releaseDate: String?,
+    voteAverage: Double?
+) {
+    Column(modifier = Modifier.weight(1f)) {
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        item.overview?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
+        }
 
-            // Title + overview + year/rating
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+        Spacer(Modifier.height(8.dp))
 
-                Spacer(Modifier.height(6.dp))
+        WatchItemMetadata(releaseDate, voteAverage)
+    }
+}
 
-                item.overview?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                // Year and rating on single line (consistent with Ranking/Watchlist format)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    releaseDate?.take(4)?.let { year ->
-                        Text(
-                            text = year,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    voteAverage?.let { rating ->
-                        StarRating(rating = rating, starSize = 14.dp)
-                    }
-                }
-            }
+@Composable
+private fun WatchItemMetadata(
+    releaseDate: String?,
+    voteAverage: Double?
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        releaseDate?.take(4)?.let { year ->
+            Text(
+                text = year,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        voteAverage?.let { rating ->
+            StarRating(rating = rating, starSize = 14.dp)
         }
     }
 }
