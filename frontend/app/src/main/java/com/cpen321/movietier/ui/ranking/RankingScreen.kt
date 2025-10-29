@@ -48,72 +48,26 @@ fun RankingScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     val searchResults by rankingViewModel.searchResults.collectAsState()
-
     val compareState by rankingViewModel.compareState.collectAsState()
 
+    RankingEventHandler(rankingViewModel, snackbarHostState)
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("ranking_screen"),
+        modifier = Modifier.fillMaxSize().testTag("ranking_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.in_app_icon),
-                            contentDescription = "MovieTier",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-                },
-                windowInsets = WindowInsets(0, 0, 0, 0)
-            )
-        },
+        topBar = { RankingTopBar() },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                modifier = Modifier.testTag("add_movie_fab")
-            ) { Text("+") }
+            FloatingActionButton(onClick = { showAddDialog = true }, modifier = Modifier.testTag("add_movie_fab")) { Text("+") }
         }
     ) { padding ->
-        Crossfade(
-            targetState = when {
-                uiState.isLoading -> RankingState.LOADING
-                uiState.rankedMovies.isEmpty() -> RankingState.EMPTY
-                else -> RankingState.CONTENT
-            },
-            label = "ranking_state"
-        ) { state ->
-            when (state) {
-                RankingState.LOADING -> {
-                    LoadingState(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        hint = "Loading rankings..."
-                    )
-                }
-                RankingState.EMPTY -> {
-                    RankingEmptyState(
-                        padding = padding,
-                        onAddMovie = { showAddDialog = true }
-                    )
-                }
-                RankingState.CONTENT -> {
-                    RankingContentList(
-                        padding = padding,
-                        rankedMovies = uiState.rankedMovies,
-                        rankingViewModel = rankingViewModel
-                    )
-                }
-            }
-        }
+        RankingMainContent(padding, uiState, rankingViewModel) { showAddDialog = true }
     }
 
+    RankingDialogs(showAddDialog, { showAddDialog = false }, query, { query = it }, searchResults, rankingViewModel, compareState)
+}
+
+@Composable
+private fun RankingEventHandler(rankingViewModel: RankingViewModel, snackbarHostState: SnackbarHostState) {
     LaunchedEffect(Unit) {
         rankingViewModel.events.collect { ev ->
             when (ev) {
@@ -122,32 +76,71 @@ fun RankingScreen(
             }
         }
     }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RankingTopBar() {
+    TopAppBar(
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(painterResource(id = R.drawable.in_app_icon), "MovieTier", Modifier.size(32.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+        },
+        windowInsets = WindowInsets(0, 0, 0, 0)
+    )
+}
+
+@Composable
+private fun RankingMainContent(
+    padding: PaddingValues,
+    uiState: com.cpen321.movietier.ui.viewmodels.RankingUiState,
+    rankingViewModel: RankingViewModel,
+    onShowAddDialog: () -> Unit
+) {
+    Crossfade(
+        targetState = when {
+            uiState.isLoading -> RankingState.LOADING
+            uiState.rankedMovies.isEmpty() -> RankingState.EMPTY
+            else -> RankingState.CONTENT
+        },
+        label = "ranking_state"
+    ) { state ->
+        when (state) {
+            RankingState.LOADING -> LoadingState(Modifier.fillMaxSize().padding(padding), "Loading rankings...")
+            RankingState.EMPTY -> RankingEmptyState(padding, onShowAddDialog)
+            RankingState.CONTENT -> RankingContentList(padding, uiState.rankedMovies, rankingViewModel)
+        }
+    }
+}
+
+@Composable
+private fun RankingDialogs(
+    showAddDialog: Boolean,
+    onDismissAdd: () -> Unit,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    searchResults: List<com.cpen321.movietier.data.model.Movie>,
+    rankingViewModel: RankingViewModel,
+    compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?
+) {
     if (showAddDialog) {
         AddWatchedMovieDialog(
             query = query,
-            onQueryChange = {
-                query = it
-                rankingViewModel.searchMovies(it)
-            },
+            onQueryChange = { onQueryChange(it); rankingViewModel.searchMovies(it) },
             searchResults = searchResults,
-            onAddMovie = { movie ->
-                rankingViewModel.addMovieFromSearch(movie)
-                showAddDialog = false
-            },
-            onDismiss = { showAddDialog = false }
+            onAddMovie = { movie -> rankingViewModel.addMovieFromSearch(movie); onDismissAdd() },
+            onDismiss = onDismissAdd
         )
     }
-
     if (compareState != null) {
         MovieComparisonDialog(
             compareState = compareState as Any,
-            onCompare = { newMovie, compareWith, preferred ->
-                rankingViewModel.compareMovies(newMovie, compareWith, preferred)
-            }
+            onCompare = { newMovie, compareWith, preferred -> rankingViewModel.compareMovies(newMovie, compareWith, preferred) }
         )
     }
-
 }
 
 private enum class RankingState {
