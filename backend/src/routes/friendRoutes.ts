@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { Friendship, FriendRequest } from '../models/friend/Friend';
 import User from '../models/user/User';
@@ -278,10 +279,19 @@ router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, 
       return res.status(400).json({ success: false, message: 'friendId is required' });
     }
 
+    // Validate friendId format
+    if (!mongoose.Types.ObjectId.isValid(friendId)) {
+      return res.status(400).json({ success: false, message: 'Invalid friendId format' });
+    }
+
+    // Convert to ObjectIds for proper matching
+    const userObjectId = new mongoose.Types.ObjectId(req.userId);
+    const friendObjectId = new mongoose.Types.ObjectId(friendId);
+
     const result = await Friendship.deleteMany({
       $or: [
-        { userId: req.userId, friendId },
-        { userId: friendId, friendId: req.userId }
+        { userId: userObjectId, friendId: friendObjectId },
+        { userId: friendObjectId, friendId: userObjectId }
       ]
     });
 
