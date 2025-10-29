@@ -217,37 +217,40 @@ fun FriendProfileScreen(
                     scope.launch {
                         // Prefer exact TMDB watch page for the movie
                         val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+                        var tmdbOpened = false
                         try {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
                             context.startActivity(intent)
-                            return@launch
+                            tmdbOpened = true
                         } catch (_: Exception) {}
 
-                        when (val res = vm.getWatchProviders(movie.id, country)) {
-                            is com.cpen321.movietier.data.repository.Result.Success -> {
-                                val link = res.data.link
-                                val providers = buildList {
-                                    addAll(res.data.providers.flatrate)
-                                    addAll(res.data.providers.rent)
-                                    addAll(res.data.providers.buy)
-                                }.distinct()
-                                if (!link.isNullOrBlank()) {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                                        context.startActivity(intent)
-                                    } catch (e: ActivityNotFoundException) {
-                                        snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
+                        if (!tmdbOpened) {
+                            when (val res = vm.getWatchProviders(movie.id, country)) {
+                                is com.cpen321.movietier.data.repository.Result.Success -> {
+                                    val link = res.data.link
+                                    val providers = buildList {
+                                        addAll(res.data.providers.flatrate)
+                                        addAll(res.data.providers.rent)
+                                        addAll(res.data.providers.buy)
+                                    }.distinct()
+                                    if (!link.isNullOrBlank()) {
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                            context.startActivity(intent)
+                                        } catch (e: ActivityNotFoundException) {
+                                            snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
+                                        }
+                                    } else if (providers.isNotEmpty()) {
+                                        snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                    } else {
+                                        snackbarHostState.showSnackbar("No streaming info found")
                                     }
-                                } else if (providers.isNotEmpty()) {
-                                    snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                } else {
-                                    snackbarHostState.showSnackbar("No streaming info found")
                                 }
+                                is com.cpen321.movietier.data.repository.Result.Error -> {
+                                    snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                }
+                                else -> {}
                             }
-                            is com.cpen321.movietier.data.repository.Result.Error -> {
-                                snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
-                            }
-                            else -> {}
                         }
                     }
                 },

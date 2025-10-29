@@ -190,43 +190,44 @@ class FeedViewModel @Inject constructor(
     fun toggleLike(activityId: String) {
         viewModelScope.launch {
             // Find the activity
-            val activity = _uiState.value.feedActivities.find { it.id == activityId } ?: return@launch
-
-            // Optimistically update UI
-            val updatedActivities = _uiState.value.feedActivities.map { act ->
-                if (act.id == activityId) {
-                    act.copy(
-                        isLikedByUser = !act.isLikedByUser,
-                        likeCount = if (act.isLikedByUser) {
-                            maxOf(act.likeCount - 1, 0)
-                        } else {
-                            act.likeCount + 1
-                        }
-                    )
-                } else {
-                    act
-                }
-            }
-            _uiState.value = _uiState.value.copy(feedActivities = updatedActivities)
-
-            // Make API call
-            val result = if (activity.isLikedByUser) {
-                feedRepository.unlikeActivity(activityId)
-            } else {
-                feedRepository.likeActivity(activityId)
-            }
-
-            // Revert on error
-            if (result is Result.Error) {
-                val revertedActivities = _uiState.value.feedActivities.map { act ->
+            val activity = _uiState.value.feedActivities.find { it.id == activityId }
+            if (activity != null) {
+                // Optimistically update UI
+                val updatedActivities = _uiState.value.feedActivities.map { act ->
                     if (act.id == activityId) {
-                        activity
+                        act.copy(
+                            isLikedByUser = !act.isLikedByUser,
+                            likeCount = if (act.isLikedByUser) {
+                                maxOf(act.likeCount - 1, 0)
+                            } else {
+                                act.likeCount + 1
+                            }
+                        )
                     } else {
                         act
                     }
                 }
-                _uiState.value = _uiState.value.copy(feedActivities = revertedActivities)
-                _events.emit(FeedEvent.Error(result.message ?: "Failed to toggle like"))
+                _uiState.value = _uiState.value.copy(feedActivities = updatedActivities)
+
+                // Make API call
+                val result = if (activity.isLikedByUser) {
+                    feedRepository.unlikeActivity(activityId)
+                } else {
+                    feedRepository.likeActivity(activityId)
+                }
+
+                // Revert on error
+                if (result is Result.Error) {
+                    val revertedActivities = _uiState.value.feedActivities.map { act ->
+                        if (act.id == activityId) {
+                            activity
+                        } else {
+                            act
+                        }
+                    }
+                    _uiState.value = _uiState.value.copy(feedActivities = revertedActivities)
+                    _events.emit(FeedEvent.Error(result.message ?: "Failed to toggle like"))
+                }
             }
         }
     }

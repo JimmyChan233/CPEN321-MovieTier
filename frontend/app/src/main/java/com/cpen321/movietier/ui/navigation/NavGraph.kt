@@ -69,8 +69,10 @@ fun NavGraph(
         }
 
         composable(NavRoutes.PROFILE_USER) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
-            FriendProfileScreen(navController = navController, userId = userId)
+            val userId = backStackEntry.arguments?.getString("userId")
+            if (userId != null) {
+                FriendProfileScreen(navController = navController, userId = userId)
+            }
         }
 
         composable(NavRoutes.WATCHLIST) {
