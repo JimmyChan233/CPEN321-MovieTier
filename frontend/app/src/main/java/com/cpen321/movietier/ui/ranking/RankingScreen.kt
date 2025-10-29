@@ -98,60 +98,17 @@ fun RankingScreen(
                     )
                 }
                 RankingState.EMPTY -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .testTag("ranking_empty")
-                    ) {
-                        EmptyState(
-                            icon = Icons.Default.Star,
-                            title = "No movies ranked yet",
-                            message = "Start adding and ranking movies to build your list",
-                            primaryCta = {
-                                Button(onClick = { showAddDialog = true }, modifier = Modifier.testTag("empty_add_movie_button")) {
-                                    Text("Add Watched Movie")
-                                }
-                            }
-                        )
-                    }
+                    RankingEmptyState(
+                        padding = padding,
+                        onAddMovie = { showAddDialog = true }
+                    )
                 }
                 RankingState.CONTENT -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .testTag("ranking_list"),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(
-                            items = uiState.rankedMovies,
-                            key = { it.id }
-                        ) { rankedMovie ->
-                            var showActions by remember { mutableStateOf(false) }
-
-                            RankedMovieRow(
-                                rankedMovie = rankedMovie,
-                                onClick = { showActions = true }
-                            )
-
-                            if (showActions) {
-                                MovieActionSheet(
-                                    movieTitle = rankedMovie.movie.title,
-                                    onDismiss = { showActions = false },
-                                    onRerank = {
-                                        showActions = false
-                                        rankingViewModel.startRerank(rankedMovie)
-                                    },
-                                    onDelete = {
-                                        showActions = false
-                                        rankingViewModel.deleteRank(rankedMovie.id)
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    RankingContentList(
+                        padding = padding,
+                        rankedMovies = uiState.rankedMovies,
+                        rankingViewModel = rankingViewModel
+                    )
                 }
             }
         }
@@ -167,178 +124,27 @@ fun RankingScreen(
     }
 
     if (showAddDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddDialog = false },
-            title = { Text("Add Watched Movie") },
-            text = {
-                Column(Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = {
-                            query = it
-                            rankingViewModel.searchMovies(it)
-                        },
-                        label = { Text("Search title") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().testTag("search_movie_input")
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    if (query.length >= 2 && searchResults.isEmpty()) {
-                        Text("No results", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.heightIn(max = 520.dp)
-                    ) {
-                        items(searchResults, key = { it.id }) { movie ->
-                            Card(Modifier.fillMaxWidth().testTag("search_result_${movie.id}")) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w154$it" },
-                                        contentDescription = movie.title,
-                                        modifier = Modifier
-                                            .height(96.dp)
-                                            .aspectRatio(2f / 3f)
-                                            .clip(MaterialTheme.shapes.small),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    Column(Modifier.weight(1f)) {
-                                        Text(
-                                            movie.title,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                        val subtitle = buildString {
-                                            movie.releaseDate?.take(4)?.let { append(it) }
-                                            val castStr = movie.cast?.take(3)?.joinToString()
-                                            if (!castStr.isNullOrBlank()) {
-                                                if (isNotEmpty()) append(" • ")
-                                                append(castStr)
-                                            }
-                                        }
-                                        if (subtitle.isNotBlank()) {
-                                            Text(
-                                                subtitle,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 3
-                                            )
-                                        }
-                                    }
-                                    TextButton(onClick = {
-                                        rankingViewModel.addMovieFromSearch(movie)
-                                        showAddDialog = false
-                                    }) { Text("Add") }
-                                }
-                            }
-                        }
-                    }
-                }
+        AddWatchedMovieDialog(
+            query = query,
+            onQueryChange = {
+                query = it
+                rankingViewModel.searchMovies(it)
             },
-            confirmButton = {
-                TextButton(onClick = { showAddDialog = false }) { Text("Close") }
-            }
+            searchResults = searchResults,
+            onAddMovie = { movie ->
+                rankingViewModel.addMovieFromSearch(movie)
+                showAddDialog = false
+            },
+            onDismiss = { showAddDialog = false }
         )
     }
-    // 🔹 Comparison Dialog
+
     if (compareState != null) {
-        val state = compareState!!
-        AlertDialog(
-            onDismissRequest = { /* Disabled during ranking */ },
-            title = { Text("Which movie do you prefer?") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        "Help us place '${state.newMovie.title}' in your rankings:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    // Side-by-side posters with clickable movie names
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // First movie
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AsyncImage(
-                                model = state.newMovie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                contentDescription = state.newMovie.title,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(2f / 3f)
-                                    .clip(MaterialTheme.shapes.medium),
-                                contentScale = ContentScale.Crop
-                            )
-                            Button(
-                                onClick = {
-                                    rankingViewModel.compareMovies(
-                                        newMovie = state.newMovie,
-                                        compareWith = state.compareWith,
-                                        preferredMovie = state.newMovie
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    state.newMovie.title,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-
-                        // Second movie
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AsyncImage(
-                                model = state.compareWith.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                contentDescription = state.compareWith.title,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(2f / 3f)
-                                    .clip(MaterialTheme.shapes.medium),
-                                contentScale = ContentScale.Crop
-                            )
-                            Button(
-                                onClick = {
-                                    rankingViewModel.compareMovies(
-                                        newMovie = state.newMovie,
-                                        compareWith = state.compareWith,
-                                        preferredMovie = state.compareWith
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    state.compareWith.title,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {}
+        MovieComparisonDialog(
+            compareState = compareState as Any,
+            onCompare = { newMovie, compareWith, preferred ->
+                rankingViewModel.compareMovies(newMovie, compareWith, preferred)
+            }
         )
     }
 
@@ -346,6 +152,244 @@ fun RankingScreen(
 
 private enum class RankingState {
     LOADING, EMPTY, CONTENT
+}
+
+@Composable
+private fun RankingEmptyState(
+    padding: PaddingValues,
+    onAddMovie: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .testTag("ranking_empty")
+    ) {
+        EmptyState(
+            icon = Icons.Default.Star,
+            title = "No movies ranked yet",
+            message = "Start adding and ranking movies to build your list",
+            primaryCta = {
+                Button(onClick = onAddMovie, modifier = Modifier.testTag("empty_add_movie_button")) {
+                    Text("Add Watched Movie")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun RankingContentList(
+    padding: PaddingValues,
+    rankedMovies: List<com.cpen321.movietier.data.model.RankedMovie>,
+    rankingViewModel: RankingViewModel
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .testTag("ranking_list"),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(
+            items = rankedMovies,
+            key = { it.id }
+        ) { rankedMovie ->
+            var showActions by remember { mutableStateOf(false) }
+
+            RankedMovieRow(
+                rankedMovie = rankedMovie,
+                onClick = { showActions = true }
+            )
+
+            if (showActions) {
+                MovieActionSheet(
+                    movieTitle = rankedMovie.movie.title,
+                    onDismiss = { showActions = false },
+                    onRerank = {
+                        showActions = false
+                        rankingViewModel.startRerank(rankedMovie)
+                    },
+                    onDelete = {
+                        showActions = false
+                        rankingViewModel.deleteRank(rankedMovie.id)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddWatchedMovieDialog(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    searchResults: List<com.cpen321.movietier.data.model.Movie>,
+    onAddMovie: (com.cpen321.movietier.data.model.Movie) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Watched Movie") },
+        text = {
+            Column(Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    label = { Text("Search title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("search_movie_input")
+                )
+                Spacer(Modifier.height(12.dp))
+                if (query.length >= 2 && searchResults.isEmpty()) {
+                    Text("No results", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                MovieSearchResultsList(searchResults, onAddMovie)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        }
+    )
+}
+
+@Composable
+private fun MovieSearchResultsList(
+    searchResults: List<com.cpen321.movietier.data.model.Movie>,
+    onAddMovie: (com.cpen321.movietier.data.model.Movie) -> Unit
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.heightIn(max = 520.dp)
+    ) {
+        items(searchResults, key = { it.id }) { movie ->
+            MovieSearchResultCard(movie, onAddMovie)
+        }
+    }
+}
+
+@Composable
+private fun MovieSearchResultCard(
+    movie: com.cpen321.movietier.data.model.Movie,
+    onAddMovie: (com.cpen321.movietier.data.model.Movie) -> Unit
+) {
+    Card(Modifier.fillMaxWidth().testTag("search_result_${movie.id}")) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            AsyncImage(
+                model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w154$it" },
+                contentDescription = movie.title,
+                modifier = Modifier
+                    .height(96.dp)
+                    .aspectRatio(2f / 3f)
+                    .clip(MaterialTheme.shapes.small),
+                contentScale = ContentScale.Crop
+            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    movie.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                val subtitle = buildString {
+                    movie.releaseDate?.take(4)?.let { append(it) }
+                    val castStr = movie.cast?.take(3)?.joinToString()
+                    if (!castStr.isNullOrBlank()) {
+                        if (isNotEmpty()) append(" • ")
+                        append(castStr)
+                    }
+                }
+                if (subtitle.isNotBlank()) {
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 3
+                    )
+                }
+            }
+            TextButton(onClick = { onAddMovie(movie) }) { Text("Add") }
+        }
+    }
+}
+
+@Composable
+private fun MovieComparisonDialog(
+    compareState: Any,
+    onCompare: (com.cpen321.movietier.data.model.Movie, com.cpen321.movietier.data.model.Movie, com.cpen321.movietier.data.model.Movie) -> Unit
+) {
+    val state = compareState as? com.cpen321.movietier.ui.viewmodels.CompareUiState ?: return
+
+    AlertDialog(
+        onDismissRequest = { /* Disabled during ranking */ },
+        title = { Text("Which movie do you prefer?") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    "Help us place '${state.newMovie.title}' in your rankings:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ComparisonMovieOption(
+                        movie = state.newMovie,
+                        onSelect = { onCompare(state.newMovie, state.compareWith, state.newMovie) }
+                    )
+                    ComparisonMovieOption(
+                        movie = state.compareWith,
+                        onSelect = { onCompare(state.newMovie, state.compareWith, state.compareWith) }
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {}
+    )
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.ComparisonMovieOption(
+    movie: com.cpen321.movietier.data.model.Movie,
+    onSelect: () -> Unit
+) {
+    Column(
+        modifier = Modifier.weight(1f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AsyncImage(
+            model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+            contentDescription = movie.title,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(2f / 3f)
+                .clip(MaterialTheme.shapes.medium),
+            contentScale = ContentScale.Crop
+        )
+        Button(
+            onClick = onSelect,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                movie.title,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
 }
 
 @Composable
