@@ -280,7 +280,7 @@ router.post('/:activityId/like', authenticate, asyncHandler(async (req: AuthRequ
     // Create like (unique index prevents duplicates)
     const like = new Like({
       userId: req.userId,
-      activityId: activityId
+      activityId
     });
     await like.save();
 
@@ -390,7 +390,7 @@ router.post('/:activityId/comments', authenticate, asyncHandler(async (req: Auth
 
     const comment = new Comment({
       userId: req.userId,
-      activityId: activityId,
+      activityId,
       text: text.trim()
     });
     await comment.save();

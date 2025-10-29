@@ -53,13 +53,15 @@ class AuthViewModel @Inject constructor(
                 authRepository.userName,
                 authRepository.userProfileImageUrl
             ) { token, userId, userEmail, userName, profileImageUrl ->
-                if (token != null && userId != null && userEmail != null && userName != null) {
+                val hasCompleteUserData = token != null && userId != null &&
+                    userEmail != null && userName != null
+                if (hasCompleteUserData) {
                     AuthUiState(
                         isAuthenticated = true,
                         user = User(
-                            id = userId,
-                            email = userEmail,
-                            name = userName,
+                            id = userId!!,
+                            email = userEmail!!,
+                            name = userName!!,
                             profileImageUrl = profileImageUrl
                         )
                     )

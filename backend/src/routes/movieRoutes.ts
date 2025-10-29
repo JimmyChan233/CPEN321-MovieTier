@@ -111,10 +111,12 @@ router.get('/search', authenticate, asyncHandler(async (req, res) => {
       baseResults.slice(0, limit).map(async (r) => {
         try {
           const { data: credits } = await tmdb.get(`/movie/${r.id}/credits`, { params: { language: 'en-US' } });
-          const cast = Array.isArray(credits?.cast) ? credits.cast.slice(0, 3).map((c: unknown) => {
-            const castMember = c as { name?: string };
-            return castMember.name;
-          }).filter(Boolean) : [];
+          const cast = Array.isArray(credits?.cast)
+            ? credits.cast.slice(0, 3).map((c: unknown) => {
+              const castMember = c as { name?: string };
+              return castMember.name;
+            }).filter(Boolean)
+            : [];
           return { ...r, cast };
         } catch {
           return { ...r, cast: [] };
@@ -316,10 +318,12 @@ router.get('/:movieId/providers', authenticate, asyncHandler(async (req, res) =>
     link = `https://www.themoviedb.org/movie/${movieId}/watch?locale=${country}`;
   }
     const mapProviders = (arr: unknown[] | undefined): string[] =>
-      Array.isArray(arr) ? arr.map((p: unknown) => {
-        const provider = p as WatchProvider;
-        return provider.provider_name;
-      }).filter((name): name is string => Boolean(name)) : [];
+      Array.isArray(arr)
+        ? arr.map((p: unknown) => {
+          const provider = p as WatchProvider;
+          return provider.provider_name;
+        }).filter((name): name is string => Boolean(name))
+        : [];
 
     const payload = {
       link,
@@ -410,12 +414,14 @@ router.get('/:movieId/videos', authenticate, asyncHandler(async (req, res) => {
       })
       ?? youtubeVideos[0];
 
-    const shaped = trailer ? {
-      key: trailer.key,
-      name: trailer.name,
-      type: trailer.type,
-      site: trailer.site
-    } : null;
+    const shaped = trailer
+      ? {
+        key: trailer.key,
+        name: trailer.name,
+        type: trailer.type,
+        site: trailer.site
+      }
+      : null;
 
     res.json({ success: true, data: shaped });
   } catch (error) {

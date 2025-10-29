@@ -6,7 +6,7 @@ interface CompareSession {
   };
   low: number;
   high: number;
-};
+}
 
 const sessionStore = new Map<string, CompareSession>();
 

@@ -9,7 +9,7 @@ interface Client {
 }
 
 class SseService {
-  private clients: Map<UserId, Set<Response>> = new Map();
+  private clients = new Map<UserId, Set<Response>>();
 
   addClient(userId: UserId, res: Response) {
     if (!this.clients.has(userId)) {

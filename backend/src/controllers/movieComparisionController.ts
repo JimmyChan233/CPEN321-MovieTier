@@ -247,7 +247,7 @@ export const compareMovies = async (req: Request, res: Response) => {
 
       // Enrich details for activity when finalizing insert
       let finalPosterPath: string | undefined = movie.posterPath
-      let finalOverview: string | undefined = undefined
+      let finalOverview: string | undefined
       try {
         const { getTmdbClient } = await import('../services/tmdb/tmdbClient')
         const tmdb = getTmdbClient()

@@ -9,7 +9,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
-const requestTimestamps: Map<string, number[]> = new Map();
+const requestTimestamps = new Map<string, number[]>();
 
 export function checkRateLimit(userId: string): boolean {
   const now = Date.now();
