@@ -38,6 +38,9 @@ import com.cpen321.movietier.ui.components.MovieDetailActions
 import com.cpen321.movietier.ui.components.YouTubePlayerDialog
 import com.cpen321.movietier.ui.components.StarRating
 import androidx.compose.ui.draw.clip
+import com.cpen321.movietier.ui.common.CommonContext
+import com.cpen321.movietier.ui.common.MovieDialogState
+import com.cpen321.movietier.ui.common.MovieDialogCallbacks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,25 +54,34 @@ fun FriendProfileScreen(
     val compareState by rankingViewModel.compareState.collectAsState()
     LaunchedEffect(userId) { vm.load(userId) }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val commonContext = CommonContext(
+        context = LocalContext.current,
+        scope = rememberCoroutineScope(),
+        snackbarHostState = remember { SnackbarHostState() }
+    )
     var country by remember { mutableStateOf("CA") }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
-    var trailerKey by remember { mutableStateOf<String?>(null) }
-    var showTrailerDialog by remember { mutableStateOf(false) }
-    var trailerMovieTitle by remember { mutableStateOf("") }
+    var dialogState by remember { mutableStateOf(MovieDialogState()) }
     var movieDetailsMap by remember { mutableStateOf<Map<Int, Movie>>(emptyMap()) }
 
-    FPSideEffects(userId, ui.watchlist, context, scope, vm, rankingViewModel, movieDetailsMap, { country = it }, { movieDetailsMap = it }, { selectedMovie = null }, snackbarHostState)
+    val dialogCallbacks = remember {
+        MovieDialogCallbacks(
+            onTrailerKeyUpdate = { dialogState = dialogState.copy(trailerKey = it) },
+            onDismissMovie = { selectedMovie = null; dialogState = dialogState.copy(trailerKey = null) },
+            onShowTrailer = { title -> dialogState = dialogState.copy(trailerMovieTitle = title, showTrailerDialog = true) },
+            onDismissTrailer = { dialogState = dialogState.copy(showTrailerDialog = it) }
+        )
+    }
+
+    FPSideEffects(userId, ui.watchlist, commonContext, vm, rankingViewModel, movieDetailsMap, { country = it }, { movieDetailsMap = it }, { selectedMovie = null })
 
     Scaffold(
         topBar = { FPTopBar(ui.userName, navController) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(commonContext.snackbarHostState) }
     ) { padding ->
         Box(Modifier.fillMaxSize()) {
             FPContent(ui, movieDetailsMap, padding) { movie -> selectedMovie = movie }
-            FPDialogs(selectedMovie, compareState, trailerKey, showTrailerDialog, trailerMovieTitle, country, vm, rankingViewModel, navController, context, scope, snackbarHostState, { trailerKey = it }, { selectedMovie = null; trailerKey = null }, { trailerMovieTitle = it; showTrailerDialog = true }, { showTrailerDialog = false })
+            FPDialogs(selectedMovie, dialogState, compareState, country, vm, rankingViewModel, navController, commonContext, dialogCallbacks)
         }
     }
 }
@@ -171,18 +183,16 @@ private fun WatchItemMetadata(
 private fun FPSideEffects(
     userId: String,
     watchlist: List<WatchlistItem>,
-    context: android.content.Context,
-    scope: kotlinx.coroutines.CoroutineScope,
+    commonContext: CommonContext,
     vm: FriendProfileViewModel,
     rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
     movieDetailsMap: Map<Int, Movie>,
     onCountryChanged: (String) -> Unit,
     onMovieDetailsUpdated: (Map<Int, Movie>) -> Unit,
-    onCloseSheet: () -> Unit,
-    snackbarHostState: SnackbarHostState
+    onCloseSheet: () -> Unit
 ) {
     LaunchedEffect(userId) { vm.load(userId) }
-    
+
     LaunchedEffect(watchlist) {
         watchlist.forEach { item ->
             if (!movieDetailsMap.containsKey(item.movieId)) {
@@ -193,34 +203,34 @@ private fun FPSideEffects(
             }
         }
     }
-    
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            scope.launch { onCountryChanged(LocationHelper.getCountryCode(context)) }
+            commonContext.scope.launch { onCountryChanged(LocationHelper.getCountryCode(commonContext.context)) }
         }
     }
-    
+
     LaunchedEffect(Unit) {
-        if (LocationHelper.hasLocationPermission(context)) {
-            onCountryChanged(LocationHelper.getCountryCode(context))
+        if (LocationHelper.hasLocationPermission(commonContext.context)) {
+            onCountryChanged(LocationHelper.getCountryCode(commonContext.context))
         } else {
             locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
         }
     }
-    
+
     LaunchedEffect(Unit) {
         rankingViewModel.events.collect { event ->
             when (event) {
                 is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
                     onCloseSheet()
-                    snackbarHostState.showSnackbar(event.text)
+                    commonContext.snackbarHostState.showSnackbar(event.text)
                 }
                 is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> {
                     onCloseSheet()
-                    snackbarHostState.showSnackbar(event.text)
+                    commonContext.snackbarHostState.showSnackbar(event.text)
                 }
             }
         }
@@ -273,26 +283,19 @@ private fun FPContent(
 @Composable
 private fun FPDialogs(
     selectedMovie: Movie?,
+    dialogState: MovieDialogState,
     compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?,
-    trailerKey: String?,
-    showTrailerDialog: Boolean,
-    trailerMovieTitle: String,
     country: String,
     vm: FriendProfileViewModel,
     rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
     navController: NavController,
-    context: android.content.Context,
-    scope: kotlinx.coroutines.CoroutineScope,
-    snackbarHostState: SnackbarHostState,
-    onTrailerKeyUpdate: (String?) -> Unit,
-    onDismissMovie: () -> Unit,
-    onShowTrailer: (String) -> Unit,
-    onDismissTrailer: () -> Unit
+    commonContext: CommonContext,
+    callbacks: MovieDialogCallbacks
 ) {
     selectedMovie?.let { movie ->
         LaunchedEffect(movie.id) {
             val result = vm.getMovieVideos(movie.id)
-            onTrailerKeyUpdate(when (result) {
+            callbacks.onTrailerKeyUpdate(when (result) {
                 is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
                 else -> null
             })
@@ -302,50 +305,50 @@ private fun FPDialogs(
             actions = MovieDetailActions(
                 onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
                 onAddToWatchlist = {
-                    scope.launch {
-                        onDismissMovie()
+                    commonContext.scope.launch {
+                        callbacks.onDismissMovie()
                         when (val res = vm.addToMyWatchlist(movie.id, movie.title, movie.overview, movie.posterPath)) {
                             is com.cpen321.movietier.data.repository.Result.Success -> {
-                                val result = snackbarHostState.showSnackbar("Added to my watchlist", "View", false, SnackbarDuration.Short)
+                                val result = commonContext.snackbarHostState.showSnackbar("Added to my watchlist", "View", false, SnackbarDuration.Short)
                                 if (result == SnackbarResult.ActionPerformed) { navController.navigate(NavRoutes.WATCHLIST) }
                             }
                             is com.cpen321.movietier.data.repository.Result.Error -> {
                                 val msg = if (res.message?.contains("already", ignoreCase = true) == true) "Already in Watchlist" else res.message ?: "Already in Watchlist"
-                                snackbarHostState.showSnackbar(msg, null, false, SnackbarDuration.Short)
+                                commonContext.snackbarHostState.showSnackbar(msg, null, false, SnackbarDuration.Short)
                             }
                             else -> {}
                         }
                     }
                 },
                 onOpenWhereToWatch = {
-                    scope.launch {
+                    commonContext.scope.launch {
                         val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
                         var tmdbOpened = false
-                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
+                        try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
                         if (!tmdbOpened) {
                             when (val res = vm.getWatchProviders(movie.id, country)) {
                                 is com.cpen321.movietier.data.repository.Result.Success -> {
                                     val link = res.data.link
                                     val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
                                     if (!link.isNullOrBlank()) {
-                                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link))) }
-                                        catch (e: ActivityNotFoundException) { snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}") }
-                                    } else if (providers.isNotEmpty()) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
-                                    else { snackbarHostState.showSnackbar("No streaming info found") }
+                                        try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link))) }
+                                        catch (e: ActivityNotFoundException) { commonContext.snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}") }
+                                    } else if (providers.isNotEmpty()) { commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                                    else { commonContext.snackbarHostState.showSnackbar("No streaming info found") }
                                 }
-                                is com.cpen321.movietier.data.repository.Result.Error -> { snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
+                                is com.cpen321.movietier.data.repository.Result.Error -> { commonContext.snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
                                 else -> {}
                             }
                         }
                     }
                 },
-                onPlayTrailer = trailerKey?.let { { onShowTrailer(movie.title) } },
-                onDismissRequest = onDismissMovie
+                onPlayTrailer = dialogState.trailerKey?.let { { callbacks.onShowTrailer(movie.title) } },
+                onDismissRequest = callbacks.onDismissMovie
             )
         )
     }
-    if (showTrailerDialog && trailerKey != null) {
-        YouTubePlayerDialog(trailerKey, trailerMovieTitle, onDismissTrailer)
+    if (dialogState.showTrailerDialog && dialogState.trailerKey != null) {
+        YouTubePlayerDialog(dialogState.trailerKey!!, dialogState.trailerMovieTitle) { callbacks.onDismissTrailer(false) }
     }
     if (compareState != null) {
         AlertDialog(

@@ -40,6 +40,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.cpen321.movietier.data.local.MovieQuoteProvider
 import java.time.LocalDate
+import com.cpen321.movietier.ui.common.CommonContext
+import com.cpen321.movietier.ui.common.MovieDialogState
+import com.cpen321.movietier.ui.common.MovieDialogCallbacks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,26 +53,35 @@ fun RecommendationScreen(
 ) {
     val uiState by recommendationViewModel.uiState.collectAsState()
     val compareState by rankingViewModel.compareState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val commonContext = CommonContext(
+        context = LocalContext.current,
+        scope = rememberCoroutineScope(),
+        snackbarHostState = remember { SnackbarHostState() }
+    )
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
-    var trailerKey by remember { mutableStateOf<String?>(null) }
-    var showTrailerDialog by remember { mutableStateOf(false) }
-    var trailerMovieTitle by remember { mutableStateOf("") }
+    var dialogState by remember { mutableStateOf(MovieDialogState()) }
     var featuredMovieOffset by remember { mutableStateOf(0) }
     var country by remember { mutableStateOf("CA") }
 
-    RSLocationHandler(context, scope) { country = it }
-    RSSideEffects(recommendationViewModel, rankingViewModel, snackbarHostState, { selectedMovie = null })
+    val dialogCallbacks = remember {
+        MovieDialogCallbacks(
+            onTrailerKeyUpdate = { dialogState = dialogState.copy(trailerKey = it) },
+            onDismissMovie = { selectedMovie = null; dialogState = dialogState.copy(trailerKey = null) },
+            onShowTrailer = { title -> dialogState = dialogState.copy(trailerMovieTitle = title, showTrailerDialog = true) },
+            onDismissTrailer = { dialogState = dialogState.copy(showTrailerDialog = it) }
+        )
+    }
+
+    RSLocationHandler(commonContext.context, commonContext.scope) { country = it }
+    RSSideEffects(recommendationViewModel, rankingViewModel, commonContext.snackbarHostState, { selectedMovie = null })
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { SnackbarHost(commonContext.snackbarHostState) },
         topBar = { RSTopBar(recommendationViewModel) }
     ) { padding ->
         RSContent(uiState, padding, featuredMovieOffset, recommendationViewModel, { featuredMovieOffset++ }, { selectedMovie = it })
-        RSDialogs(selectedMovie, trailerKey, showTrailerDialog, trailerMovieTitle, compareState, country, recommendationViewModel, rankingViewModel, context, scope, snackbarHostState, { trailerKey = it }, { selectedMovie = null; trailerKey = null }, { trailerMovieTitle = it; showTrailerDialog = true }, { showTrailerDialog = it })
+        RSDialogs(selectedMovie, dialogState, compareState, country, recommendationViewModel, rankingViewModel, commonContext, dialogCallbacks)
     }
 }
 
@@ -229,25 +241,18 @@ private fun RSContentList(
 @Composable
 private fun RSDialogs(
     selectedMovie: Movie?,
-    trailerKey: String?,
-    showTrailerDialog: Boolean,
-    trailerMovieTitle: String,
+    dialogState: MovieDialogState,
     compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?,
     country: String,
     recommendationViewModel: RecommendationViewModel,
     rankingViewModel: RankingViewModel,
-    context: android.content.Context,
-    scope: kotlinx.coroutines.CoroutineScope,
-    snackbarHostState: SnackbarHostState,
-    onTrailerKeyUpdate: (String?) -> Unit,
-    onDismissMovie: () -> Unit,
-    onShowTrailer: (String) -> Unit,
-    onDismissTrailer: (Boolean) -> Unit
+    commonContext: CommonContext,
+    callbacks: MovieDialogCallbacks
 ) {
     selectedMovie?.let { movie ->
         LaunchedEffect(movie.id) {
             val result = recommendationViewModel.getMovieVideos(movie.id)
-            onTrailerKeyUpdate(when (result) {
+            callbacks.onTrailerKeyUpdate(when (result) {
                 is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
                 else -> null
             })
@@ -256,35 +261,35 @@ private fun RSDialogs(
             movie = movie,
             actions = MovieDetailActions(
                 onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
-                onPlayTrailer = trailerKey?.let { { onShowTrailer(movie.title) } },
+                onPlayTrailer = dialogState.trailerKey?.let { { callbacks.onShowTrailer(movie.title) } },
                 onOpenWhereToWatch = {
-                    scope.launch {
+                    commonContext.scope.launch {
                         val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
                         var tmdbOpened = false
-                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
+                        try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
                         if (!tmdbOpened) {
                             when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
                                 is com.cpen321.movietier.data.repository.Result.Success -> {
                                     val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
                                     if (!res.data.link.isNullOrBlank()) {
-                                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
-                                        catch (e: ActivityNotFoundException) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
-                                    } else if (providers.isNotEmpty()) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
-                                    else { snackbarHostState.showSnackbar("No streaming info found") }
+                                        try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
+                                        catch (e: ActivityNotFoundException) { commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                                    } else if (providers.isNotEmpty()) { commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                                    else { commonContext.snackbarHostState.showSnackbar("No streaming info found") }
                                 }
-                                is com.cpen321.movietier.data.repository.Result.Error -> snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                is com.cpen321.movietier.data.repository.Result.Error -> commonContext.snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
                                 else -> {}
                             }
                         }
                     }
                 },
-                onAddToWatchlist = { recommendationViewModel.addToWatchlist(movie); onDismissMovie() },
-                onDismissRequest = onDismissMovie
+                onAddToWatchlist = { recommendationViewModel.addToWatchlist(movie); callbacks.onDismissMovie() },
+                onDismissRequest = callbacks.onDismissMovie
             )
         )
     }
-    if (showTrailerDialog && trailerKey != null) {
-        YouTubePlayerDialog(trailerKey, trailerMovieTitle) { onDismissTrailer(false) }
+    if (dialogState.showTrailerDialog && dialogState.trailerKey != null) {
+        YouTubePlayerDialog(dialogState.trailerKey!!, dialogState.trailerMovieTitle) { callbacks.onDismissTrailer(false) }
     }
     if (compareState != null) {
         RSComparisonDialog(compareState, rankingViewModel)
