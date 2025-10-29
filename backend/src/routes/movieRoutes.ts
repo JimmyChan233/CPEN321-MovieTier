@@ -160,6 +160,15 @@ router.get('/ranked', authenticate, asyncHandler(async (req: AuthRequest, res) =
 router.post('/rank', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { movieId, title, posterPath, overview } = req.body as { movieId: number; title: string; posterPath?: string; overview?: string };
+
+    // Validate required fields
+    if (!movieId || !title) {
+      return res.status(400).json({
+        success: false,
+        message: 'movieId and title are required'
+      });
+    }
+
     const count = await RankedMovie.countDocuments({ userId: req.userId });
 
     const rankedMovie = new RankedMovie({

@@ -41,6 +41,15 @@ export const addMovie = async (req: Request, res: Response) => {
       posterPath?: string;
       overview?: string;
     };
+
+    // Validate required fields
+    if (!movieId || !title) {
+      return res.status(400).json({
+        success: false,
+        message: 'movieId and title are required'
+      });
+    }
+
     const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const rankedMovies = await RankedMovie.find({ userId: userObjectId }).sort({ rank: 1 });
@@ -185,6 +194,12 @@ export const compareMovies = async (req: Request, res: Response) => {
     const { preferredMovieId } = req.body as {
       preferredMovieId: number;
     };
+
+    // Validate required field
+    if (!preferredMovieId) {
+      return res.status(400).json({ success: false, message: 'preferredMovieId is required' });
+    }
+
     const session = getSession(userId);
 
     if (!session) {
