@@ -248,6 +248,7 @@ router.get('/me', authenticate, asyncHandler(async (req: AuthRequest, res) => {
 }));
 
 // SSE stream for feed events
+// eslint-disable-next-line @typescript-eslint/require-await
 router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     if (!req.userId) {

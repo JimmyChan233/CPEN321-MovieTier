@@ -17,22 +17,36 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 
+/**
+ * Actions available for movie detail bottom sheet
+ */
+data class MovieDetailActions(
+    val onAddToRanking: (() -> Unit)? = null,
+    val onAddToWatchlist: (() -> Unit)? = null,
+    val onOpenWhereToWatch: (() -> Unit)? = null,
+    val onPlayTrailer: (() -> Unit)? = null,
+    val onDismissRequest: () -> Unit
+)
+
+/**
+ * Availability information for movie streaming/rental
+ */
+data class AvailabilityInfo(
+    val availabilityText: String? = null,
+    val availabilityLoading: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieDetailBottomSheet(
     movie: Movie,
-    onAddToRanking: (() -> Unit)? = null,
-    onAddToWatchlist: (() -> Unit)? = null,
-    onOpenWhereToWatch: (() -> Unit)? = null,
-    onPlayTrailer: (() -> Unit)? = null,
-    availabilityText: String? = null,
-    availabilityLoading: Boolean = false,
-    onDismissRequest: () -> Unit,
+    actions: MovieDetailActions,
+    availabilityInfo: AvailabilityInfo = AvailabilityInfo(),
     modifier: Modifier = Modifier
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = actions.onDismissRequest,
         sheetState = sheetState
     ) {
         Column(
@@ -42,14 +56,14 @@ fun MovieDetailBottomSheet(
             horizontalAlignment = Alignment.Start
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                MovieDetailPoster(movie, onPlayTrailer)
+                MovieDetailPoster(movie, actions.onPlayTrailer)
                 MovieDetailInfo(
                     movie = movie,
-                    onAddToRanking = onAddToRanking,
-                    onAddToWatchlist = onAddToWatchlist,
-                    onOpenWhereToWatch = onOpenWhereToWatch,
-                    availabilityText = availabilityText,
-                    availabilityLoading = availabilityLoading
+                    onAddToRanking = actions.onAddToRanking,
+                    onAddToWatchlist = actions.onAddToWatchlist,
+                    onOpenWhereToWatch = actions.onOpenWhereToWatch,
+                    availabilityText = availabilityInfo.availabilityText,
+                    availabilityLoading = availabilityInfo.availabilityLoading
                 )
             }
 

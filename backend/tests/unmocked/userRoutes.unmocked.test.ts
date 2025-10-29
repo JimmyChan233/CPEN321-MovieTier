@@ -22,8 +22,7 @@ describe('User Routes - Unmocked Tests', () => {
   let token2: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    await mongoose.connect(process.env.MONGO_URI_FOR_TESTS!);
 
     app = express();
     app.use(express.json());
@@ -32,7 +31,6 @@ describe('User Routes - Unmocked Tests', () => {
 
   afterAll(async () => {
     await mongoose.disconnect();
-    await mongoServer.stop();
   });
 
   beforeEach(async () => {

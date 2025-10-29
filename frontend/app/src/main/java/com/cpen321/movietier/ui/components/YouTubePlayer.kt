@@ -25,6 +25,25 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 /**
+ * State holder for fullscreen-related parameters
+ */
+private data class FullscreenState(
+    val customView: View?,
+    val onCustomViewChanged: (View?) -> Unit,
+    val fullscreenContainer: FrameLayout?,
+    val onFullscreenContainerChanged: (FrameLayout?) -> Unit,
+    val onFullscreenChanged: (Boolean) -> Unit
+)
+
+/**
+ * State holder for WebView-related parameters
+ */
+private data class WebViewState(
+    val webViewContainer: FrameLayout?,
+    val onWebViewContainerChanged: (FrameLayout?) -> Unit
+)
+
+/**
  * Displays a YouTube video in a popup dialog with fullscreen support
  * Uses WebView to load full YouTube mobile page and automatically enters fullscreen
  */
@@ -63,13 +82,17 @@ fun YouTubePlayerDialog(
 
                 YouTubePlayerWebView(
                     videoKey = videoKey,
-                    onFullscreenChanged = { isFullscreen = it },
-                    customView = customView,
-                    onCustomViewChanged = { customView = it },
-                    fullscreenContainer = fullscreenContainer,
-                    onFullscreenContainerChanged = { fullscreenContainer = it },
-                    webViewContainer = webViewContainer,
-                    onWebViewContainerChanged = { webViewContainer = it }
+                    fullscreenState = FullscreenState(
+                        customView = customView,
+                        onCustomViewChanged = { customView = it },
+                        fullscreenContainer = fullscreenContainer,
+                        onFullscreenContainerChanged = { fullscreenContainer = it },
+                        onFullscreenChanged = { isFullscreen = it }
+                    ),
+                    webViewState = WebViewState(
+                        webViewContainer = webViewContainer,
+                        onWebViewContainerChanged = { webViewContainer = it }
+                    )
                 )
             }
         }
@@ -104,26 +127,16 @@ private fun YouTubePlayerCloseButton(onDismiss: () -> Unit) {
 @Composable
 private fun YouTubePlayerWebView(
     videoKey: String,
-    onFullscreenChanged: (Boolean) -> Unit,
-    customView: View?,
-    onCustomViewChanged: (View?) -> Unit,
-    fullscreenContainer: FrameLayout?,
-    onFullscreenContainerChanged: (FrameLayout?) -> Unit,
-    webViewContainer: FrameLayout?,
-    onWebViewContainerChanged: (FrameLayout?) -> Unit
+    fullscreenState: FullscreenState,
+    webViewState: WebViewState
 ) {
     AndroidView(
         factory = { ctx ->
             createYouTubeWebViewContainer(
                 context = ctx,
                 videoKey = videoKey,
-                onFullscreenChanged = onFullscreenChanged,
-                onCustomViewChanged = onCustomViewChanged,
-                onFullscreenContainerChanged = onFullscreenContainerChanged,
-                onWebViewContainerChanged = onWebViewContainerChanged,
-                fullscreenContainer = fullscreenContainer,
-                webViewContainer = webViewContainer,
-                customView = customView
+                fullscreenState = fullscreenState,
+                webViewState = webViewState
             )
         },
         modifier = Modifier
@@ -137,26 +150,21 @@ private fun YouTubePlayerWebView(
 private fun createYouTubeWebViewContainer(
     context: android.content.Context,
     videoKey: String,
-    onFullscreenChanged: (Boolean) -> Unit,
-    onCustomViewChanged: (View?) -> Unit,
-    onFullscreenContainerChanged: (FrameLayout?) -> Unit,
-    onWebViewContainerChanged: (FrameLayout?) -> Unit,
-    fullscreenContainer: FrameLayout?,
-    webViewContainer: FrameLayout?,
-    customView: View?
+    fullscreenState: FullscreenState,
+    webViewState: WebViewState
 ): FrameLayout {
     return FrameLayout(context).apply {
-        onWebViewContainerChanged(this)
+        webViewState.onWebViewContainerChanged(this)
         val newFullscreenContainer = FrameLayout(context)
-        onFullscreenContainerChanged(newFullscreenContainer)
+        fullscreenState.onFullscreenContainerChanged(newFullscreenContainer)
 
         addView(WebView(context).apply {
             configureWebViewSettings(settings)
             webChromeClient = createWebChromeClient(
-                onFullscreenChanged,
-                onCustomViewChanged,
-                onFullscreenContainerChanged,
-                onWebViewContainerChanged,
+                fullscreenState.onFullscreenChanged,
+                fullscreenState.onCustomViewChanged,
+                fullscreenState.onFullscreenContainerChanged,
+                webViewState.onWebViewContainerChanged,
                 newFullscreenContainer
             )
             webViewClient = WebViewClient()

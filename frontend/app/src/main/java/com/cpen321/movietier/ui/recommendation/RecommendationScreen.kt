@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import com.cpen321.movietier.data.model.Movie
 import com.cpen321.movietier.ui.components.*
 import com.cpen321.movietier.ui.components.YouTubePlayerDialog
+import com.cpen321.movietier.ui.components.MovieDetailActions
 import com.cpen321.movietier.ui.viewmodels.RecommendationViewModel
 import com.cpen321.movietier.ui.viewmodels.RankingViewModel
 import androidx.compose.ui.platform.LocalContext
@@ -249,66 +250,68 @@ fun RecommendationScreen(
 
                             MovieDetailBottomSheet(
                                 movie = movie,
-                                onAddToRanking = {
-                                    rankingViewModel.addMovieFromSearch(movie)
-                                    // Sheet will close when success/error message is received
-                                },
-                                onPlayTrailer = trailerKey?.let {
-                                    {
-                                        trailerMovieTitle = movie.title
-                                        showTrailerDialog = true
-                                    }
-                                },
-                                onOpenWhereToWatch = {
-                                    scope.launch {
-                                        // Prefer exact TMDB watch page for the movie
-                                        val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
-                                        var tmdbOpened = false
-                                        try {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
-                                            context.startActivity(intent)
-                                            tmdbOpened = true
-                                        } catch (_: Exception) {}
+                                actions = MovieDetailActions(
+                                    onAddToRanking = {
+                                        rankingViewModel.addMovieFromSearch(movie)
+                                        // Sheet will close when success/error message is received
+                                    },
+                                    onPlayTrailer = trailerKey?.let {
+                                        {
+                                            trailerMovieTitle = movie.title
+                                            showTrailerDialog = true
+                                        }
+                                    },
+                                    onOpenWhereToWatch = {
+                                        scope.launch {
+                                            // Prefer exact TMDB watch page for the movie
+                                            val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+                                            var tmdbOpened = false
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
+                                                context.startActivity(intent)
+                                                tmdbOpened = true
+                                            } catch (_: Exception) {}
 
-                                        if (!tmdbOpened) {
-                                            when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
-                                            is com.cpen321.movietier.data.repository.Result.Success -> {
-                                                val link = res.data.link
-                                                val providers = buildList {
-                                                    addAll(res.data.providers.flatrate)
-                                                    addAll(res.data.providers.rent)
-                                                    addAll(res.data.providers.buy)
-                                                }.distinct()
-                                                if (!link.isNullOrBlank()) {
-                                                    try {
-                                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                                                        context.startActivity(intent)
-                                                    } catch (e: ActivityNotFoundException) {
+                                            if (!tmdbOpened) {
+                                                when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
+                                                is com.cpen321.movietier.data.repository.Result.Success -> {
+                                                    val link = res.data.link
+                                                    val providers = buildList {
+                                                        addAll(res.data.providers.flatrate)
+                                                        addAll(res.data.providers.rent)
+                                                        addAll(res.data.providers.buy)
+                                                    }.distinct()
+                                                    if (!link.isNullOrBlank()) {
+                                                        try {
+                                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                                            context.startActivity(intent)
+                                                        } catch (e: ActivityNotFoundException) {
+                                                            snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                                        }
+                                                    } else if (providers.isNotEmpty()) {
                                                         snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                                    } else {
+                                                        snackbarHostState.showSnackbar("No streaming info found")
                                                     }
-                                                } else if (providers.isNotEmpty()) {
-                                                    snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                                } else {
-                                                    snackbarHostState.showSnackbar("No streaming info found")
+                                                }
+                                                is com.cpen321.movietier.data.repository.Result.Error -> {
+                                                    snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                                }
+                                                else -> {}
                                                 }
                                             }
-                                            is com.cpen321.movietier.data.repository.Result.Error -> {
-                                                snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
-                                            }
-                                            else -> {}
-                                            }
                                         }
+                                    },
+                                    onAddToWatchlist = {
+                                        recommendationViewModel.addToWatchlist(movie)
+                                        // Close sheet so snackbar is visible immediately
+                                        selectedMovie = null
+                                    },
+                                    onDismissRequest = {
+                                        selectedMovie = null
+                                        trailerKey = null
                                     }
-                                },
-                                onAddToWatchlist = {
-                                    recommendationViewModel.addToWatchlist(movie)
-                                    // Close sheet so snackbar is visible immediately
-                                    selectedMovie = null
-                                },
-                                onDismissRequest = {
-                                    selectedMovie = null
-                                    trailerKey = null
-                                }
+                                )
                             )
                         }
 

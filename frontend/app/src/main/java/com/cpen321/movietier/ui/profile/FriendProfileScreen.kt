@@ -34,6 +34,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import com.cpen321.movietier.data.model.Movie
 import com.cpen321.movietier.ui.components.MovieDetailBottomSheet
+import com.cpen321.movietier.ui.components.MovieDetailActions
 import com.cpen321.movietier.ui.components.YouTubePlayerDialog
 import com.cpen321.movietier.ui.components.StarRating
 import androidx.compose.ui.draw.clip
@@ -178,92 +179,94 @@ fun FriendProfileScreen(
 
             MovieDetailBottomSheet(
                 movie = movie,
-                onAddToRanking = {
-                    rankingViewModel.addMovieFromSearch(movie)
-                    // Sheet will close when success/error message is received
-                },
-                onAddToWatchlist = {
-                    scope.launch {
-                        // Close the bottom sheet first so snackbar is visible at top
-                        selectedMovie = null
+                actions = MovieDetailActions(
+                    onAddToRanking = {
+                        rankingViewModel.addMovieFromSearch(movie)
+                        // Sheet will close when success/error message is received
+                    },
+                    onAddToWatchlist = {
+                        scope.launch {
+                            // Close the bottom sheet first so snackbar is visible at top
+                            selectedMovie = null
 
-                        when (val res = vm.addToMyWatchlist(movie.id, movie.title, movie.overview, movie.posterPath)) {
-                            is com.cpen321.movietier.data.repository.Result.Success -> {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "Added to my watchlist",
-                                    actionLabel = "View",
-                                    duration = SnackbarDuration.Short
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    navController.navigate(NavRoutes.WATCHLIST)
-                                }
-                            }
-                            is com.cpen321.movietier.data.repository.Result.Error -> {
-                                val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
-                                    "Already in Watchlist"
-                                } else {
-                                    res.message ?: "Already in Watchlist"
-                                }
-                                snackbarHostState.showSnackbar(
-                                    message = msg,
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                            else -> {}
-                        }
-                    }
-                },
-                onOpenWhereToWatch = {
-                    scope.launch {
-                        // Prefer exact TMDB watch page for the movie
-                        val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
-                        var tmdbOpened = false
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
-                            context.startActivity(intent)
-                            tmdbOpened = true
-                        } catch (_: Exception) {}
-
-                        if (!tmdbOpened) {
-                            when (val res = vm.getWatchProviders(movie.id, country)) {
+                            when (val res = vm.addToMyWatchlist(movie.id, movie.title, movie.overview, movie.posterPath)) {
                                 is com.cpen321.movietier.data.repository.Result.Success -> {
-                                    val link = res.data.link
-                                    val providers = buildList {
-                                        addAll(res.data.providers.flatrate)
-                                        addAll(res.data.providers.rent)
-                                        addAll(res.data.providers.buy)
-                                    }.distinct()
-                                    if (!link.isNullOrBlank()) {
-                                        try {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                                            context.startActivity(intent)
-                                        } catch (e: ActivityNotFoundException) {
-                                            snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
-                                        }
-                                    } else if (providers.isNotEmpty()) {
-                                        snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                    } else {
-                                        snackbarHostState.showSnackbar("No streaming info found")
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Added to my watchlist",
+                                        actionLabel = "View",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        navController.navigate(NavRoutes.WATCHLIST)
                                     }
                                 }
                                 is com.cpen321.movietier.data.repository.Result.Error -> {
-                                    snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                    val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
+                                        "Already in Watchlist"
+                                    } else {
+                                        res.message ?: "Already in Watchlist"
+                                    }
+                                    snackbarHostState.showSnackbar(
+                                        message = msg,
+                                        duration = SnackbarDuration.Short
+                                    )
                                 }
                                 else -> {}
                             }
                         }
+                    },
+                    onOpenWhereToWatch = {
+                        scope.launch {
+                            // Prefer exact TMDB watch page for the movie
+                            val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+                            var tmdbOpened = false
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
+                                context.startActivity(intent)
+                                tmdbOpened = true
+                            } catch (_: Exception) {}
+
+                            if (!tmdbOpened) {
+                                when (val res = vm.getWatchProviders(movie.id, country)) {
+                                    is com.cpen321.movietier.data.repository.Result.Success -> {
+                                        val link = res.data.link
+                                        val providers = buildList {
+                                            addAll(res.data.providers.flatrate)
+                                            addAll(res.data.providers.rent)
+                                            addAll(res.data.providers.buy)
+                                        }.distinct()
+                                        if (!link.isNullOrBlank()) {
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                                context.startActivity(intent)
+                                            } catch (e: ActivityNotFoundException) {
+                                                snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
+                                            }
+                                        } else if (providers.isNotEmpty()) {
+                                            snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                                        } else {
+                                            snackbarHostState.showSnackbar("No streaming info found")
+                                        }
+                                    }
+                                    is com.cpen321.movietier.data.repository.Result.Error -> {
+                                        snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                    }
+                                    else -> {}
+                                }
+                            }
+                        }
+                    },
+                    onPlayTrailer = trailerKey?.let {
+                        {
+                            trailerMovieTitle = movie.title
+                            showTrailerDialog = true
+                        }
+                    },
+                    onDismissRequest = {
+                        selectedMovie = null
+                        trailerKey = null
                     }
-                },
-                onPlayTrailer = trailerKey?.let {
-                    {
-                        trailerMovieTitle = movie.title
-                        showTrailerDialog = true
-                    }
-                },
-                onDismissRequest = {
-                    selectedMovie = null
-                    trailerKey = null
-                }
+                )
             )
         }
 

@@ -300,6 +300,7 @@ router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, 
 }));
 
 // SSE stream for friend events
+// eslint-disable-next-line @typescript-eslint/require-await
 router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     if (!req.userId) {

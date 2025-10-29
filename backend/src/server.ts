@@ -99,7 +99,7 @@ async function startServer() {
   });
 
   // Graceful shutdown handlers
-  const gracefulShutdown = async (signal: string) => {
+  const gracefulShutdown = (signal: string) => {
     logger.info(`${signal} received. Starting graceful shutdown...`);
 
     // Close all SSE connections
@@ -107,7 +107,7 @@ async function startServer() {
 
     // Close the server
     server.close(() => {
-      void (async () => {
+      (async () => {
         logger.info('HTTP server closed');
 
       try {
@@ -119,7 +119,10 @@ async function startServer() {
 
         logger.success('Graceful shutdown completed');
         process.exit(0);
-      })();
+      })().catch((err: unknown) => {
+        logger.error('Error during shutdown:', (err as Error).message);
+        process.exit(1);
+      });
     });
 
     // Force exit after 10 seconds
@@ -130,10 +133,10 @@ async function startServer() {
   };
 
   process.on('SIGTERM', () => {
-    void gracefulShutdown('SIGTERM');
+    gracefulShutdown('SIGTERM');
   });
   process.on('SIGINT', () => {
-    void gracefulShutdown('SIGINT');
+    gracefulShutdown('SIGINT');
   });
 }
 

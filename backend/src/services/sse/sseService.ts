@@ -3,11 +3,6 @@ import { logger } from '../../utils/logger';
 
 type UserId = string;
 
-interface Client {
-  userId: UserId;
-  res: Response;
-}
-
 class SseService {
   private clients = new Map<UserId, Set<Response>>();
 

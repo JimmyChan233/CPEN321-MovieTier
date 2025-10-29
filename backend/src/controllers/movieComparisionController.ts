@@ -182,8 +182,7 @@ export const compareMovies = async (req: Request, res: Response) => {
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
-    const { comparedMovieId, preferredMovieId } = req.body as {
-      comparedMovieId: number;
+    const { preferredMovieId } = req.body as {
       preferredMovieId: number;
     };
     const session = getSession(userId);
