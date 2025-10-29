@@ -15,7 +15,7 @@ import {
 import notificationService from '../services/notification.service';
 import { AuthRequest } from '../middleware/auth';
 
-const RankedMovie = mongoose.models.RankedMovie ?? RankedMovieModel;
+const RankedMovie = RankedMovieModel;
 
 async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
   try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}

@@ -289,7 +289,7 @@ router.get('/:movieId/providers', authenticate, asyncHandler(async (req, res) =>
       return res.status(400).json({ success: false, message: 'Invalid movie id' });
     }
 
-    const country = (req.query.country as string)?.toUpperCase?.() ?? 'CA';
+    const country = String(req.query.country ?? 'CA').toUpperCase();
 
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {

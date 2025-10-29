@@ -33,7 +33,7 @@ export const signIn = async (req: Request, res: Response) => {
   } catch (error: unknown) {
     res.status(400).json({
       success: false,
-      message: (error as Error).message ?? 'Unable to sign in. Please try again'
+      message: (error as Error).message || 'Unable to sign in. Please try again'
     });
   }
 };
@@ -65,7 +65,7 @@ export const signUp = async (req: Request, res: Response) => {
   } catch (error: unknown) {
     res.status(400).json({
       success: false,
-      message: (error as Error).message ?? 'Unable to sign up. Please try again'
+      message: (error as Error).message || 'Unable to sign up. Please try again'
     });
   }
 };
@@ -101,7 +101,7 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
   } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      message: (error as Error).message ?? 'Unable to delete account. Please try again'
+      message: (error as Error).message || 'Unable to delete account. Please try again'
     });
   }
 };

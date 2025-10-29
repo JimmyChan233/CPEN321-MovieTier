@@ -19,7 +19,7 @@ function escapeRegexForMongo(str: string): string {
 // Search users by name or email (must be defined before '/:userId')
 router.get('/search', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
-    const query = (req.query.query as string) ?? '';
+    const query = String(req.query.query ?? '');
     if (!query || query.trim().length < 2) {
       return res.status(400).json({ success: false, message: 'Query must be at least 2 characters' });
     }

@@ -256,7 +256,7 @@ router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) =
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders?.();
+    res.flushHeaders();
     res.write(`event: connected\n` + `data: {"ok":true}\n\n`);
 
     sseService.addClient(String(req.userId), res);
