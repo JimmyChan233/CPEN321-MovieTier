@@ -61,321 +61,15 @@ fun FriendProfileScreen(
     var trailerMovieTitle by remember { mutableStateOf("") }
     var movieDetailsMap by remember { mutableStateOf<Map<Int, Movie>>(emptyMap()) }
 
-    // Fetch movie details for all watchlist items
-    LaunchedEffect(ui.watchlist) {
-        ui.watchlist.forEach { item ->
-            if (!movieDetailsMap.containsKey(item.movieId)) {
-                val result = vm.getMovieDetails(item.movieId)
-                if (result is com.cpen321.movietier.data.repository.Result.Success) {
-                    movieDetailsMap = movieDetailsMap + (item.movieId to result.data)
-                }
-            }
-        }
-    }
+    FPSideEffects(userId, ui.watchlist, context, scope, vm, rankingViewModel, movieDetailsMap, { country = it }, { movieDetailsMap = it }, { selectedMovie = null }, snackbarHostState)
 
-    // Request location permission and get country code
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
-            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            scope.launch {
-                country = LocationHelper.getCountryCode(context)
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (LocationHelper.hasLocationPermission(context)) {
-            country = LocationHelper.getCountryCode(context)
-        } else {
-            locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
-        }
-    }
-
-    // Listen to ranking events
-    LaunchedEffect(Unit) {
-        rankingViewModel.events.collect { event ->
-            when (event) {
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
-                    // Close bottom sheet so message is visible at top
-                    selectedMovie = null
-                    snackbarHostState.showSnackbar(event.text)
-                }
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> {
-                    // Close bottom sheet so error message is visible at top
-                    selectedMovie = null
-                    snackbarHostState.showSnackbar(event.text)
-                }
-            }
-        }
-    }
-
-    Scaffold(topBar = {
-        CenterAlignedTopAppBar(
-            title = {
-                Text(
-                    text = ui.userName ?: "Profile",
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            },
-            windowInsets = WindowInsets(0, 0, 0, 0)
-        )
-    }, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(
+        topBar = { FPTopBar(ui.userName, navController) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         Box(Modifier.fillMaxSize()) {
-            Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-                // Header
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Avatar(imageUrl = null, name = ui.userName ?: "", size = 64.dp)
-                    Column(Modifier.weight(1f)) {
-                        Text(ui.userName ?: "", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text(ui.userEmail ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp))
-                Text("Watchlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(8.dp))
-
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(ui.watchlist, key = { it.id }) { item ->
-                        val movieDetails = movieDetailsMap[item.movieId]
-                        WatchItemCard(
-                            item = item,
-                            releaseDate = movieDetails?.releaseDate,
-                            voteAverage = movieDetails?.voteAverage,
-                            onClick = {
-                                // Convert WatchlistItem to Movie for the bottom sheet
-                                selectedMovie = movieDetails ?: Movie(
-                                    id = item.movieId,
-                                    title = item.title,
-                                    overview = item.overview,
-                                    posterPath = item.posterPath,
-                                    releaseDate = null as String?,
-                                    voteAverage = null as Double?
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-
-        // Movie Detail Bottom Sheet
-        selectedMovie?.let { movie ->
-            // Fetch trailer when movie is selected
-            LaunchedEffect(movie.id) {
-                val result = vm.getMovieVideos(movie.id)
-                trailerKey = when (result) {
-                    is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
-                    else -> null
-                }
-            }
-
-            MovieDetailBottomSheet(
-                movie = movie,
-                actions = MovieDetailActions(
-                    onAddToRanking = {
-                        rankingViewModel.addMovieFromSearch(movie)
-                        // Sheet will close when success/error message is received
-                    },
-                    onAddToWatchlist = {
-                        scope.launch {
-                            // Close the bottom sheet first so snackbar is visible at top
-                            selectedMovie = null
-
-                            when (val res = vm.addToMyWatchlist(movie.id, movie.title, movie.overview, movie.posterPath)) {
-                                is com.cpen321.movietier.data.repository.Result.Success -> {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Added to my watchlist",
-                                        actionLabel = "View",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        navController.navigate(NavRoutes.WATCHLIST)
-                                    }
-                                }
-                                is com.cpen321.movietier.data.repository.Result.Error -> {
-                                    val msg = if (res.message?.contains("already", ignoreCase = true) == true) {
-                                        "Already in Watchlist"
-                                    } else {
-                                        res.message ?: "Already in Watchlist"
-                                    }
-                                    snackbarHostState.showSnackbar(
-                                        message = msg,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                                else -> {}
-                            }
-                        }
-                    },
-                    onOpenWhereToWatch = {
-                        scope.launch {
-                            // Prefer exact TMDB watch page for the movie
-                            val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
-                            var tmdbOpened = false
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
-                                context.startActivity(intent)
-                                tmdbOpened = true
-                            } catch (_: Exception) {}
-
-                            if (!tmdbOpened) {
-                                when (val res = vm.getWatchProviders(movie.id, country)) {
-                                    is com.cpen321.movietier.data.repository.Result.Success -> {
-                                        val link = res.data.link
-                                        val providers = buildList {
-                                            addAll(res.data.providers.flatrate)
-                                            addAll(res.data.providers.rent)
-                                            addAll(res.data.providers.buy)
-                                        }.distinct()
-                                        if (!link.isNullOrBlank()) {
-                                            try {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                                                context.startActivity(intent)
-                                            } catch (e: ActivityNotFoundException) {
-                                                snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
-                                            }
-                                        } else if (providers.isNotEmpty()) {
-                                            snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                        } else {
-                                            snackbarHostState.showSnackbar("No streaming info found")
-                                        }
-                                    }
-                                    is com.cpen321.movietier.data.repository.Result.Error -> {
-                                        snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
-                                    }
-                                    else -> {}
-                                }
-                            }
-                        }
-                    },
-                    onPlayTrailer = trailerKey?.let {
-                        {
-                            trailerMovieTitle = movie.title
-                            showTrailerDialog = true
-                        }
-                    },
-                    onDismissRequest = {
-                        selectedMovie = null
-                        trailerKey = null
-                    }
-                )
-            )
-        }
-
-        // Trailer Player Dialog
-        if (showTrailerDialog && trailerKey != null) {
-            YouTubePlayerDialog(
-                videoKey = trailerKey!!,
-                movieTitle = trailerMovieTitle,
-                onDismiss = {
-                    showTrailerDialog = false
-                }
-            )
-        }
-
-            // Comparison Dialog
-            if (compareState != null) {
-                val state = compareState!!
-                AlertDialog(
-                    onDismissRequest = { /* Disabled during ranking */ },
-                    title = { Text("Which movie do you prefer?") },
-                    text = {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Text(
-                                "Help us place '${state.newMovie.title}' in your rankings:",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-
-                            // Side-by-side posters with clickable movie names
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                // First movie
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = state.newMovie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                        contentDescription = state.newMovie.title,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .aspectRatio(2f / 3f)
-                                            .clip(MaterialTheme.shapes.medium),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    Button(
-                                        onClick = {
-                                            rankingViewModel.compareMovies(
-                                                newMovie = state.newMovie,
-                                                compareWith = state.compareWith,
-                                                preferredMovie = state.newMovie
-                                            )
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(
-                                            state.newMovie.title,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                }
-
-                                // Second movie
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = state.compareWith.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                        contentDescription = state.compareWith.title,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .aspectRatio(2f / 3f)
-                                            .clip(MaterialTheme.shapes.medium),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    Button(
-                                        onClick = {
-                                            rankingViewModel.compareMovies(
-                                                newMovie = state.newMovie,
-                                                compareWith = state.compareWith,
-                                                preferredMovie = state.compareWith
-                                            )
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(
-                                            state.compareWith.title,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {},
-                    dismissButton = {}
-                )
-            }
+            FPContent(ui, movieDetailsMap, padding) { movie -> selectedMovie = movie }
+            FPDialogs(selectedMovie, compareState, trailerKey, showTrailerDialog, trailerMovieTitle, country, vm, rankingViewModel, navController, context, scope, snackbarHostState, { trailerKey = it }, { selectedMovie = null; trailerKey = null }, { trailerMovieTitle = it; showTrailerDialog = true }, { showTrailerDialog = false })
         }
     }
 }
@@ -469,6 +163,228 @@ private fun WatchItemMetadata(
         }
         voteAverage?.let { rating ->
             StarRating(rating = rating, starSize = 14.dp)
+        }
+    }
+}
+
+@Composable
+private fun FPSideEffects(
+    userId: String,
+    watchlist: List<WatchlistItem>,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    vm: FriendProfileViewModel,
+    rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
+    movieDetailsMap: Map<Int, Movie>,
+    onCountryChanged: (String) -> Unit,
+    onMovieDetailsUpdated: (Map<Int, Movie>) -> Unit,
+    onCloseSheet: () -> Unit,
+    snackbarHostState: SnackbarHostState
+) {
+    LaunchedEffect(userId) { vm.load(userId) }
+    
+    LaunchedEffect(watchlist) {
+        watchlist.forEach { item ->
+            if (!movieDetailsMap.containsKey(item.movieId)) {
+                val result = vm.getMovieDetails(item.movieId)
+                if (result is com.cpen321.movietier.data.repository.Result.Success) {
+                    onMovieDetailsUpdated(movieDetailsMap + (item.movieId to result.data))
+                }
+            }
+        }
+    }
+    
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            scope.launch { onCountryChanged(LocationHelper.getCountryCode(context)) }
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        if (LocationHelper.hasLocationPermission(context)) {
+            onCountryChanged(LocationHelper.getCountryCode(context))
+        } else {
+            locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        rankingViewModel.events.collect { event ->
+            when (event) {
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
+                    onCloseSheet()
+                    snackbarHostState.showSnackbar(event.text)
+                }
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> {
+                    onCloseSheet()
+                    snackbarHostState.showSnackbar(event.text)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FPTopBar(userName: String?, navController: NavController) {
+    CenterAlignedTopAppBar(
+        title = { Text(userName ?: "Profile", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        navigationIcon = {
+            IconButton(onClick = { navController.navigateUp() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+        },
+        windowInsets = WindowInsets(0, 0, 0, 0)
+    )
+}
+
+@Composable
+private fun FPContent(
+    ui: com.cpen321.movietier.ui.viewmodels.FriendProfileUi,
+    movieDetailsMap: Map<Int, Movie>,
+    padding: PaddingValues,
+    onMovieSelect: (Movie) -> Unit
+) {
+    Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Avatar(imageUrl = null, name = ui.userName ?: "", size = 64.dp)
+            Column(Modifier.weight(1f)) {
+                Text(ui.userName ?: "", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(ui.userEmail ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Text("Watchlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(8.dp))
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(ui.watchlist, key = { it.id }) { item ->
+                val movieDetails = movieDetailsMap[item.movieId]
+                WatchItemCard(item, movieDetails?.releaseDate, movieDetails?.voteAverage) {
+                    onMovieSelect(movieDetails ?: Movie(item.movieId, item.title, item.overview, item.posterPath, null, null))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FPDialogs(
+    selectedMovie: Movie?,
+    compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?,
+    trailerKey: String?,
+    showTrailerDialog: Boolean,
+    trailerMovieTitle: String,
+    country: String,
+    vm: FriendProfileViewModel,
+    rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
+    navController: NavController,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState,
+    onTrailerKeyUpdate: (String?) -> Unit,
+    onDismissMovie: () -> Unit,
+    onShowTrailer: (String) -> Unit,
+    onDismissTrailer: () -> Unit
+) {
+    selectedMovie?.let { movie ->
+        LaunchedEffect(movie.id) {
+            val result = vm.getMovieVideos(movie.id)
+            onTrailerKeyUpdate(when (result) {
+                is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
+                else -> null
+            })
+        }
+        MovieDetailBottomSheet(
+            movie = movie,
+            actions = MovieDetailActions(
+                onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
+                onAddToWatchlist = {
+                    scope.launch {
+                        onDismissMovie()
+                        when (val res = vm.addToMyWatchlist(movie.id, movie.title, movie.overview, movie.posterPath)) {
+                            is com.cpen321.movietier.data.repository.Result.Success -> {
+                                val result = snackbarHostState.showSnackbar("Added to my watchlist", "View", false, SnackbarDuration.Short)
+                                if (result == SnackbarResult.ActionPerformed) { navController.navigate(NavRoutes.WATCHLIST) }
+                            }
+                            is com.cpen321.movietier.data.repository.Result.Error -> {
+                                val msg = if (res.message?.contains("already", ignoreCase = true) == true) "Already in Watchlist" else res.message ?: "Already in Watchlist"
+                                snackbarHostState.showSnackbar(msg, null, false, SnackbarDuration.Short)
+                            }
+                            else -> {}
+                        }
+                    }
+                },
+                onOpenWhereToWatch = {
+                    scope.launch {
+                        val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+                        var tmdbOpened = false
+                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
+                        if (!tmdbOpened) {
+                            when (val res = vm.getWatchProviders(movie.id, country)) {
+                                is com.cpen321.movietier.data.repository.Result.Success -> {
+                                    val link = res.data.link
+                                    val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
+                                    if (!link.isNullOrBlank()) {
+                                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link))) }
+                                        catch (e: ActivityNotFoundException) { snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}") }
+                                    } else if (providers.isNotEmpty()) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                                    else { snackbarHostState.showSnackbar("No streaming info found") }
+                                }
+                                is com.cpen321.movietier.data.repository.Result.Error -> { snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
+                                else -> {}
+                            }
+                        }
+                    }
+                },
+                onPlayTrailer = trailerKey?.let { { onShowTrailer(movie.title) } },
+                onDismissRequest = onDismissMovie
+            )
+        )
+    }
+    if (showTrailerDialog && trailerKey != null) {
+        YouTubePlayerDialog(trailerKey, trailerMovieTitle, onDismissTrailer)
+    }
+    if (compareState != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Which movie do you prefer?") },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Help us place '${compareState.newMovie.title}' in your rankings:", style = MaterialTheme.typography.bodyMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FPComparisonOption(compareState.newMovie, compareState, rankingViewModel, Modifier.weight(1f))
+                        FPComparisonOption(compareState.compareWith, compareState, rankingViewModel, Modifier.weight(1f))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
+}
+
+@Composable
+private fun FPComparisonOption(
+    movie: Movie,
+    compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState,
+    rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
+    modifier: Modifier
+) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AsyncImage(
+            model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+            contentDescription = movie.title,
+            modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(MaterialTheme.shapes.medium),
+            contentScale = ContentScale.Crop
+        )
+        Button(
+            onClick = { rankingViewModel.compareMovies(compareState.newMovie, compareState.compareWith, movie) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(movie.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
