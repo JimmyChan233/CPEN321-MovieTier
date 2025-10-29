@@ -70,7 +70,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Start ranking new movie
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: mockMovies.darkKnight
@@ -110,7 +110,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Start ranking new movie
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {
@@ -153,7 +153,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Rank the same movie (should trigger watchlist removal)
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -186,7 +186,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Start ranking new movie
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {
@@ -239,7 +239,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Start ranking a movie that will be #1
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {
@@ -298,7 +298,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Start ranking a movie that will be last
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {
@@ -350,7 +350,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Rank first movie
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.inception.id,
@@ -361,7 +361,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Rank second movie
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movieId: mockMovies.darkKnight.id,
@@ -391,7 +391,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {
@@ -426,7 +426,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Start ranking
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {
@@ -461,7 +461,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
   // Test Case 11: Rank with missing movie data
   it('should handle ranking with incomplete movie data', async () => {
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {
@@ -476,7 +476,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
   it('should handle sequential ranking of multiple movies', async () => {
     // Rank first movie (no comparison needed)
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: mockMovies.inception
@@ -484,7 +484,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Immediately rank second movie
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: mockMovies.darkKnight
@@ -513,7 +513,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       };
 
       const rankRes = await request(app)
-        .post('/rank')
+        .post('/add')
         .set('Authorization', `Bearer ${token}`)
         .send({ movie });
 
@@ -543,7 +543,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
 
     // Test path 1: new > middle, new > top
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: { id: 1200004, title: 'D1', poster_path: '/d1.jpg', overview: 'D1', release_date: '2024-01-01', vote_average: 9 }
@@ -575,7 +575,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
     await RankedMovie.create(movies);
 
     await request(app)
-      .post('/rank')
+      .post('/add')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie: {

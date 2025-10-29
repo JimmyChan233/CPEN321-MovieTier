@@ -425,8 +425,9 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body.watchlist || res.body)).toBe(true);
-    const watchlist = res.body.watchlist || res.body;
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    const watchlist = res.body.data;
     expect(watchlist.length).toStrictEqual(2);
   });
 
@@ -513,7 +514,7 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
     expect(res.body.success).toBe(true);
     const watchlist = res.body.data;
     expect(watchlist[0].title).toStrictEqual(mockMovies.inception.title);
-    expect(watchlist[0].year).toStrictEqual(mockMovies.inception.year);
-    expect(watchlist[0].rating).toStrictEqual(mockMovies.inception.rating);
+    expect(watchlist[0].movieId).toStrictEqual(mockMovies.inception.id);
+    expect(watchlist[0].overview).toStrictEqual(mockMovies.inception.overview);
   });
 });

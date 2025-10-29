@@ -192,8 +192,8 @@ describe('Friend Routes - Mocked Error Tests', () => {
         .set('Authorization', `Bearer ${token1}`)
         .send({ email: 'user2@example.com' });
 
-      // Should still succeed even if notification fails
-      expect(res.status).toBe(200);
+      // Should still succeed even if notification fails (201 = Created)
+      expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
     });
   });
