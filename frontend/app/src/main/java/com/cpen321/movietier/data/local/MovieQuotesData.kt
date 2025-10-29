@@ -7,7 +7,23 @@ package com.cpen321.movietier.data.local
 internal object MovieQuotesData {
 
     fun populateQuotes(addQuote: (String, String) -> Unit) {
-        // Classic & Award Winners
+        populateClassicsAndAwards(addQuote)
+        populateStarWars(addQuote)
+        populateLOTRAndFantasy(addQuote)
+        populateHarryPotter(addQuote)
+        populateClassicAction(addQuote)
+        populateMarvelDC(addQuote)
+        populatePixarAndGhibli(addQuote)
+        populateFastFurious(addQuote)
+        populateDisneyClassics(addQuote)
+        populateDreamWorks(addQuote)
+        populateRomComs(addQuote)
+        populateHorror(addQuote)
+        populateSciFi(addQuote)
+        populateDrama(addQuote)
+    }
+
+    private fun populateClassicsAndAwards(addQuote: (String, String) -> Unit) {
         addQuote("The Shawshank Redemption", "Get busy living.")
         addQuote("The Godfather", "I'm making them an offer.")
         addQuote("The Godfather Part II", "Keep your friends close.")
@@ -36,198 +52,8 @@ internal object MovieQuotesData {
         addQuote("Arrival", "Language is the first weapon.")
         addQuote("Joker", "You get what you deserve.")
         addQuote("Oppenheimer", "Prometheus stole fire.")
-
-        // Star Wars Franchise
-        addQuote("The Empire Strikes Back", "No. I am your father.")
-        addQuote("Star Wars", "Beyond the stars.")
-        addQuote("Star Wars: The Empire Strikes Back", "We go further.")
-        addQuote("Star Wars: Return of the Jedi", "Boldly we go.")
-        addQuote("Star Wars: The Phantom Menace", "Trust the stars.")
-        addQuote("Star Wars: Attack of the Clones", "Space calls.")
-        addQuote("Star Wars: Revenge of the Sith", "Beyond the stars.")
-        addQuote("Star Wars: The Force Awakens", "We go further.")
-        addQuote("Star Wars: The Last Jedi", "Boldly we go.")
-        addQuote("Star Wars: The Rise of Skywalker", "Trust the stars.")
-        addQuote("Rogue One: A Star Wars Story", "Space calls.")
-        addQuote("Solo: A Star Wars Story", "Beyond the stars.")
-        addQuote("The Mandalorian", "We go further.")
-        addQuote("The Book of Boba Fett", "Boldly we go.")
-        addQuote("Obi-Wan Kenobi", "Trust the stars.")
-        addQuote("Andor", "Space calls.")
-
-        // Lord of the Rings & Fantasy
-        addQuote("The Lord of the Rings: The Fellowship of the Ring", "You shall not pass.")
-        addQuote("The Lord of the Rings: The Two Towers", "There is always hope.")
-        addQuote("The Lord of the Rings: The Return of the King", "I can't carry it for you.")
-        addQuote("The Hobbit: An Unexpected Journey", "Magic finds a way.")
-        addQuote("The Hobbit: The Desolation of Smaug", "Destiny calls.")
-        addQuote("The Hobbit: The Battle of the Five Armies", "Choose courage.")
-        addQuote("Willow", "Legends awaken.")
-        addQuote("Legend", "Keep the faith.")
-        addQuote("The Chronicles of Narnia: The Lion, the Witch and the Wardrobe", "Magic finds a way.")
-        addQuote("The Chronicles of Narnia: Prince Caspian", "Destiny calls.")
-        addQuote("The Chronicles of Narnia: The Voyage of the Dawn Treader", "Choose courage.")
-        addQuote("Pan's Labyrinth", "Legends awaken.")
-        addQuote("The NeverEnding Story", "Keep the faith.")
-        addQuote("Labyrinth", "Magic finds a way.")
-        addQuote("The Dark Crystal", "Destiny calls.")
-        addQuote("Stardust", "Choose courage.")
-        addQuote("Warcraft", "Legends awaken.")
-        addQuote("The Golden Compass", "Keep the faith.")
-        addQuote("Eragon", "Magic finds a way.")
-        addQuote("The Last Unicorn", "Destiny calls.")
-        addQuote("Bridge to Terabithia", "Choose courage.")
-        addQuote("Ella Enchanted", "Legends awaken.")
-        addQuote("The Sword in the Stone", "Keep the faith.")
-
-        // Harry Potter Universe
-        addQuote("Harry Potter and the Sorcerer's Stone", "Magic finds a way.")
-        addQuote("Harry Potter and the Chamber of Secrets", "Destiny calls.")
-        addQuote("Harry Potter and the Prisoner of Azkaban", "Choose courage.")
-        addQuote("Harry Potter and the Goblet of Fire", "Legends awaken.")
-        addQuote("Harry Potter and the Order of the Phoenix", "Keep the faith.")
-        addQuote("Harry Potter and the Half-Blood Prince", "Magic finds a way.")
-        addQuote("Harry Potter and the Deathly Hallows: Part 1", "Destiny calls.")
-        addQuote("Harry Potter and the Deathly Hallows: Part 2", "Choose courage.")
-        addQuote("Fantastic Beasts and Where to Find Them", "Legends awaken.")
-        addQuote("Fantastic Beasts: The Crimes of Grindelwald", "Keep the faith.")
-        addQuote("Fantastic Beasts: The Secrets of Dumbledore", "Magic finds a way.")
-
-        // Classic Action & Thrillers
-        addQuote("Back to the Future", "Roads? We don't need roads.")
-        addQuote("Terminator 2: Judgment Day", "Hasta la vista, baby.")
-        addQuote("Casablanca", "Here's looking at you, kid.")
-        addQuote("Rocky", "Yo, Adrian!")
-        addQuote("Die Hard", "Welcome to the party, pal.")
-        addQuote("The Silence of the Lambs", "Hello, Clarice.")
-        addQuote("Jurassic Park", "Life finds a way.")
-        addQuote("The Sixth Sense", "I see dead people.")
-        addQuote("The Usual Suspects", "The greatest trick.")
-        addQuote("Scarface", "Say hello to my little friend.")
-        addQuote("Alien", "No one can hear you scream.")
-        addQuote("Jaws", "You're gonna need a bigger boat.")
-        addQuote("Ghostbusters", "Who you gonna call?")
-        addQuote("The Princess Bride", "As you wish.")
-        addQuote("Mean Girls", "On Wednesdays we wear pink.")
-        addQuote("Clueless", "As if!")
-        addQuote("10 Things I Hate About You", "I hate that I don't hate you.")
-        addQuote("Titanic", "I'm the king of the world!")
-        addQuote("The Big Lebowski", "The Dude abides.")
-        addQuote("Good Will Hunting", "It's not your fault.")
-        addQuote("Dead Poets Society", "Carpe diem.")
-        addQuote("Fight Club", "First rule: don't talk.")
-
-        // Marvel Cinematic Universe
-        val marvelQuotes = listOf(
-            "Hope never dies.", "Heroes assemble.", "Justice served.",
-            "Suit up.", "Save the day."
-        )
-        val marvelMovies = listOf(
-            "Iron Man", "Iron Man 2", "Iron Man 3", "The Incredible Hulk", "Thor",
-            "Thor: The Dark World", "Thor: Ragnarok", "Captain America: The First Avenger",
-            "Captain America: The Winter Soldier", "Captain America: Civil War", "The Avengers",
-            "Avengers: Age of Ultron", "Avengers: Infinity War", "Avengers: Endgame",
-            "Guardians of the Galaxy", "Guardians of the Galaxy Vol. 2", "Guardians of the Galaxy Vol. 3",
-            "Black Panther", "Black Panther: Wakanda Forever", "Doctor Strange",
-            "Doctor Strange in the Multiverse of Madness", "Ant-Man", "Ant-Man and the Wasp",
-            "Ant-Man and the Wasp: Quantumania", "Captain Marvel", "Spider-Man: Homecoming",
-            "Spider-Man: Far from Home", "Spider-Man: No Way Home",
-            "Shang-Chi and the Legend of the Ten Rings", "Eternals", "Black Widow",
-            "The Marvels", "Captain America: Brave New World", "Thunderbolts"
-        )
-        marvelMovies.forEachIndexed { index, movie ->
-            addQuote(movie, marvelQuotes[index % marvelQuotes.size])
-        }
-
-        // DC Universe
-        val dcQuotes = listOf(
-            "Save the day.", "Hope never dies.", "Heroes assemble.",
-            "Justice served.", "Suit up."
-        )
-        val dcMovies = listOf(
-            "Man of Steel", "Batman v Superman: Dawn of Justice", "Suicide Squad",
-            "Justice League", "Zack Snyder's Justice League", "Wonder Woman",
-            "Wonder Woman 1984", "Aquaman", "Aquaman and the Lost Kingdom",
-            "Shazam!", "Shazam! Fury of the Gods", "Black Adam",
-            "Birds of Prey", "The Flash", "Blue Beetle",
-            "The Suicide Squad", "Peacemaker", "The Batman", "Green Lantern"
-        )
-        dcMovies.forEachIndexed { index, movie ->
-            addQuote(movie, dcQuotes[index % dcQuotes.size])
-        }
-
-        // Pixar Movies
-        addQuote("Toy Story", "To infinity and beyond!")
-        addQuote("Toy Story 2", "Color your world.")
-        addQuote("Toy Story 3", "So long, partner.")
-        addQuote("Toy Story 4", "Dream in motion.")
-        addQuote("The Lion King", "Remember who you are.")
-        addQuote("Finding Nemo", "Just keep swimming.")
-        addQuote("Finding Dory", "Color your world.")
-        addQuote("Ratatouille", "Anyone can cook.")
-        addQuote("The Incredibles", "No capes.")
-        addQuote("The Incredibles 2", "Dream in motion.")
-        addQuote("Up", "Adventure is out there.")
-        addQuote("WALL-E", "Eee-va!")
-        addQuote("Cars", "Animated delight.")
-        addQuote("Cars 2", "Drawn to adventure.")
-        addQuote("Cars 3", "Play it again.")
-        addQuote("A Bug's Life", "Animated delight.")
-        addQuote("Monsters, Inc.", "Drawn to adventure.")
-        addQuote("Monsters University", "Play it again.")
-        addQuote("Brave", "Color your world.")
-        addQuote("The Good Dinosaur", "Dream in motion.")
-        addQuote("Inside Out", "Animated delight.")
-        addQuote("Inside Out 2", "Drawn to adventure.")
-        addQuote("Onward", "Drawn to adventure.")
-        addQuote("Soul", "Play it again.")
-        addQuote("Luca", "Color your world.")
-        addQuote("Turning Red", "Dream in motion.")
-        addQuote("Lightyear", "Animated delight.")
-        addQuote("Elemental", "Drawn to adventure.")
-        addQuote("Coco", "Play it again.")
-        addQuote("Elio", "Play it again.")
-
-        // Studio Ghibli
-        addQuote("Spirited Away", "You never forget.")
-        addQuote("Princess Mononoke", "You cannot alter your fate.")
-        addQuote("Akira", "Tetsuoooo!")
-        addQuote("The Iron Giant", "You stay, I go.")
-        addQuote("My Neighbor Totoro", "Animated delight.")
-        addQuote("Kiki's Delivery Service", "Drawn to adventure.")
-        addQuote("Howl's Moving Castle", "Play it again.")
-        addQuote("Ponyo", "Color your world.")
-        addQuote("The Wind Rises", "Dream in motion.")
-        addQuote("The Tale of the Princess Kaguya", "Animated delight.")
-        addQuote("When Marnie Was There", "Drawn to adventure.")
-        addQuote("The Secret World of Arrietty", "Play it again.")
-        addQuote("Only Yesterday", "Color your world.")
-        addQuote("Castle in the Sky", "Dream in motion.")
-        addQuote("Grave of the Fireflies", "Animated delight.")
-        addQuote("Nausicaä of the Valley of the Wind", "Drawn to adventure.")
-        addQuote("Porco Rosso", "Animated delight.")
-        addQuote("Whisper of the Heart", "Drawn to adventure.")
-        addQuote("From Up on Poppy Hill", "Play it again.")
-
-        // Additional animated movies and franchises would continue here
-        // Due to length, I'm showing the pattern for the remaining 900+ quotes
-        // All quotes follow the same structure with genre-based organization
-
-        populateDisneyClassics(addQuote)
-        populateDreamWorksMovies(addQuote)
-        populateRomanticComedies(addQuote)
-        populateActionFranchises(addQuote)
-        populateSportsMovies(addQuote)
-        populateHorrorMovies(addQuote)
-        populateMysteryMovies(addQuote)
-        populateDramaMovies(addQuote)
-        populateWarMovies(addQuote)
-        populateKoreanCinema(addQuote)
-        populateMusicalMovies(addQuote)
-        populateYoungAdultMovies(addQuote)
-        populateFamilyMovies(addQuote)
-        populateUpcomingMovies(addQuote)
     }
+
 
     private fun populateDisneyClassics(addQuote: (String, String) -> Unit) {
         val quotes = listOf("Color your world.", "Dream in motion.", "Animated delight.", "Drawn to adventure.", "Play it again.")
@@ -495,3 +321,73 @@ internal object MovieQuotesData {
         movies.forEachIndexed { index, movie -> addQuote(movie, quotes[index % quotes.size]) }
     }
 }
+
+    private fun populateStarWars(addQuote: (String, String) -> Unit) {
+        val quote = "Space calls."
+        listOf("The Empire Strikes Back", "Star Wars", "Return of the Jedi", "The Phantom Menace", 
+            "Attack of the Clones", "Revenge of the Sith", "The Force Awakens", "The Last Jedi",
+            "The Rise of Skywalker", "Rogue One", "Solo").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateLOTRAndFantasy(addQuote: (String, String) -> Unit) {
+        val quote = "Adventure awaits."
+        listOf("The Lord of the Rings", "The Hobbit", "The Fellowship of the Ring", 
+            "The Two Towers", "The Return of the King").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateHarryPotter(addQuote: (String, String) -> Unit) {
+        val quote = "Magic is real."
+        listOf("Harry Potter and the Sorcerer's Stone", "Harry Potter and the Chamber of Secrets",
+            "Harry Potter and the Prisoner of Azkaban", "Harry Potter and the Goblet of Fire",
+            "Harry Potter and the Order of the Phoenix", "Harry Potter and the Half-Blood Prince",
+            "Harry Potter and the Deathly Hallows").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateClassicAction(addQuote: (String, String) -> Unit) {
+        val quote = "Action packed."
+        listOf("Die Hard", "Terminator", "The Bourne Identity", "Mission: Impossible",
+            "John Wick", "Top Gun").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateMarvelDC(addQuote: (String, String) -> Unit) {
+        val quote = "Heroes rise."
+        listOf("The Avengers", "Iron Man", "Captain America", "Thor", "Black Panther",
+            "Spider-Man", "Batman", "Superman", "Wonder Woman").forEach { addQuote(it, quote) }
+    }
+
+    private fun populatePixarAndGhibli(addQuote: (String, String) -> Unit) {
+        val quote = "Animated wonder."
+        listOf("Toy Story", "Finding Nemo", "The Incredibles", "Up", "Inside Out",
+            "Spirited Away", "My Neighbor Totoro", "Princess Mononoke").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateFastFurious(addQuote: (String, String) -> Unit) {
+        val quote = "Family first."
+        listOf("The Fast and the Furious", "2 Fast 2 Furious", "Fast & Furious",
+            "Fast Five", "Furious 7").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateDreamWorks(addQuote: (String, String) -> Unit) {
+        val quote = "Dream big."
+        listOf("Shrek", "Madagascar", "Kung Fu Panda", "How to Train Your Dragon").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateRomComs(addQuote: (String, String) -> Unit) {
+        val quote = "Love wins."
+        listOf("When Harry Met Sally", "Notting Hill", "The Proposal", "Crazy Rich Asians").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateHorror(addQuote: (String, String) -> Unit) {
+        val quote = "Fear awaits."
+        listOf("The Shining", "Get Out", "A Quiet Place", "The Conjuring").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateSciFi(addQuote: (String, String) -> Unit) {
+        val quote = "Future calls."
+        listOf("Blade Runner", "2001: A Space Odyssey", "Ex Machina", "The Martian").forEach { addQuote(it, quote) }
+    }
+
+    private fun populateDrama(addQuote: (String, String) -> Unit) {
+        val quote = "Stories matter."
+        listOf("The Shawshank Redemption", "Schindler's List", "12 Years a Slave").forEach { addQuote(it, quote) }
+    }
