@@ -577,7 +577,7 @@ private fun RequestRow(
                 indication = null,
                 onClick = onViewProfile
             )
-            .testTag("request_row_${'$'}{request.id}")
+            .testTag("request_row_${request.id}")
     ) {
         Row(
             modifier = Modifier
@@ -591,46 +591,56 @@ private fun RequestRow(
                 name = request.senderName.ifBlank { request.senderId.takeLast(6) },
                 size = 48.dp
             )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = request.senderName.ifBlank { "Incoming request" },
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (request.senderEmail.isNotBlank()) {
-                    Text(
-                        text = request.senderEmail,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                horizontalAlignment = Alignment.End
-            ) {
-                Button(
-                    onClick = onAccept,
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    Text("Accept", style = MaterialTheme.typography.labelSmall)
-                }
-                OutlinedButton(
-                    onClick = onReject,
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    Text("Reject", style = MaterialTheme.typography.labelSmall)
-                }
-            }
+            RequestSenderInfo(request, Modifier.weight(1f))
+            RequestActionButtons(onAccept, onReject)
+        }
+    }
+}
+
+@Composable
+private fun RequestSenderInfo(request: FriendRequestUi, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = request.senderName.ifBlank { "Incoming request" },
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (request.senderEmail.isNotBlank()) {
+            Text(
+                text = request.senderEmail,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun RequestActionButtons(onAccept: () -> Unit, onReject: () -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        Button(
+            onClick = onAccept,
+            modifier = Modifier.height(32.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text("Accept", style = MaterialTheme.typography.labelSmall)
+        }
+        OutlinedButton(
+            onClick = onReject,
+            modifier = Modifier.height(32.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text("Reject", style = MaterialTheme.typography.labelSmall)
         }
     }
 }
