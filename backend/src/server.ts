@@ -107,7 +107,7 @@ async function startServer() {
 
     // Close the server
     server.close(() => {
-      (async () => {
+      void (async () => {
         logger.info('HTTP server closed');
 
       try {
@@ -130,10 +130,10 @@ async function startServer() {
   };
 
   process.on('SIGTERM', () => {
-    gracefulShutdown('SIGTERM');
+    void gracefulShutdown('SIGTERM');
   });
   process.on('SIGINT', () => {
-    gracefulShutdown('SIGINT');
+    void gracefulShutdown('SIGINT');
   });
 }
 

@@ -372,7 +372,7 @@ class NotificationService {
       if (response.failureCount > 0) {
         response.responses.forEach((resp, idx) => {
           if (!resp.success) {
-            const token = tokens.at(idx) ?? 'unknown';
+            const token = String(tokens.at(idx) ?? 'unknown');
             logger.warn(`Failed to send to token ${token}: ${resp.error?.message}`);
           }
         });

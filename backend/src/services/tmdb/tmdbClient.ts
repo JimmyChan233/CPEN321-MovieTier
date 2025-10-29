@@ -45,9 +45,9 @@ export function getTmdbClient(): AxiosInstance {
       const cfg = error.config ?? {};
       const start = (cfg as { __start?: number }).__start;
       const ms = start ? Date.now() - start : undefined;
-      const sanitizedMethod = sanitizeForLog(cfg.method?.toUpperCase?.() ?? 'GET');
-      const sanitizedUrl = sanitizeForLog(cfg.url ?? '');
-      const sanitizedError = sanitizeForLog(error.message ?? '');
+      const sanitizedMethod = sanitizeForLog(String(cfg.method?.toUpperCase?.() ?? 'GET'));
+      const sanitizedUrl = sanitizeForLog(String(cfg.url ?? ''));
+      const sanitizedError = sanitizeForLog(String(error.message ?? ''));
       // eslint-disable-next-line no-console, security/detect-non-literal-fs-filename
       console.log(`🌐 TMDB ⬅️  ${sanitizedMethod} ${sanitizedUrl} ERROR${ms !== undefined ? ` ${ms}ms` : ''}: ${sanitizedError}`);
       throw error;
