@@ -60,8 +60,8 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
 
     expect(res.status).toStrictEqual(201);
     expect(res.body.success).toStrictEqual(true);
-    expect(res.body.watchlistItem).toBeDefined();
-    expect(res.body.watchlistItem.movieId).toStrictEqual(mockMovies.inception.id);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.movieId).toStrictEqual(mockMovies.inception.id);
 
     const watchlistItem = await WatchlistItem.findOne({
       userId: user._id,
@@ -118,7 +118,7 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
         posterUrl: mockMovies.inception.posterUrl
       });
 
-    expect(res.status).toStrictEqual(400);
+    expect(res.status).toStrictEqual(409);
     expect(res.body.message).toMatch(/already|watchlist/i);
   });
 
@@ -473,7 +473,8 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);
-    const watchlist = res.body.watchlist || res.body;
+    expect(res.body.success).toBe(true);
+    const watchlist = res.body.data;
     expect(watchlist.length).toStrictEqual(1);
     expect(watchlist[0].movieId).toStrictEqual(mockMovies.inception.id);
   });
@@ -488,7 +489,8 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);
-    const watchlist = res.body.watchlist || res.body;
+    expect(res.body.success).toBe(true);
+    const watchlist = res.body.data;
     expect(Array.isArray(watchlist)).toBe(true);
     expect(watchlist.length).toStrictEqual(0);
   });
@@ -525,7 +527,8 @@ describe('Unmocked: GET /watchlist - Additional Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
 
     expect(res.status).toStrictEqual(200);
-    const watchlist = res.body.watchlist || res.body;
+    expect(res.body.success).toBe(true);
+    const watchlist = res.body.data;
     expect(watchlist[0].title).toStrictEqual(mockMovies.inception.title);
     expect(watchlist[0].year).toStrictEqual(mockMovies.inception.year);
     expect(watchlist[0].rating).toStrictEqual(mockMovies.inception.rating);

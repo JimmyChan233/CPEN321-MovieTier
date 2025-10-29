@@ -520,7 +520,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: longTitle
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.title).toBe(longTitle);
     });
 
@@ -535,7 +535,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: specialTitle
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.title).toBe(specialTitle);
     });
 
@@ -564,7 +564,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Large ID Movie'
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.movieId).toBe(largeId);
     });
   });
