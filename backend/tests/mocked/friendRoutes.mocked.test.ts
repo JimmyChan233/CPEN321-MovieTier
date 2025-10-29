@@ -17,7 +17,8 @@ jest.mock('../../src/services/notification.service', () => ({
   __esModule: true,
   default: {
     sendFriendRequestNotification: jest.fn(),
-    sendFriendAcceptNotification: jest.fn()
+    sendFriendAcceptNotification: jest.fn(),
+    sendFriendRequestAcceptedNotification: jest.fn() 
   }
 }));
 
@@ -388,4 +389,72 @@ describe('Friend Routes - Mocked Error Tests', () => {
       expect(res.body.message).toContain('Not authorized');
     });
   });
+  // Update the existing test in "POST /request error handling" section
+it('should handle notification service failure gracefully and still create request', async () => {
+  // Set fcmToken on user2 so the notification code path is triggered
+  await User.findByIdAndUpdate((user2 as any)._id, { fcmToken: 'valid-fcm-token' });
+
+  const notificationService = require('../../src/services/notification.service').default;
+  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+  
+  // Mock the notification to throw an error
+  jest.spyOn(notificationService, 'sendFriendRequestNotification')
+    .mockRejectedValueOnce(new Error('FCM service unavailable'));
+
+  const res = await request(app)
+    .post('/api/friends/request')
+    .set('Authorization', `Bearer ${token1}`)
+    .send({ email: 'user2@example.com' });
+
+  // Should still succeed even if notification fails (201 = Created)
+  expect(res.status).toBe(201);
+  expect(res.body.success).toBe(true);
+  
+  // Verify the error was logged
+  expect(consoleErrorSpy).toHaveBeenCalledWith(
+    'Failed to send FCM friend request notification:',
+    expect.any(Error)
+  );
+
+  consoleErrorSpy.mockRestore();
+});
+
+// Add this NEW test in "POST /respond error handling" section
+it('should handle FCM notification failure when accepting friend request', async () => {
+  // Set fcmToken on user1 (sender) so notification code path is triggered
+  await User.findByIdAndUpdate((user1 as any)._id, { fcmToken: 'valid-fcm-token' });
+
+  const friendRequest = await FriendRequest.create({
+    senderId: (user1 as any)._id,
+    receiverId: (user2 as any)._id,
+    status: 'pending'
+  });
+
+  const notificationService = require('../../src/services/notification.service').default;
+  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+  // Mock the correct method name
+  jest.spyOn(notificationService, 'sendFriendRequestAcceptedNotification')
+    .mockRejectedValueOnce(new Error('FCM delivery failed'));
+
+  const res = await request(app)
+    .post('/api/friends/respond')
+    .set('Authorization', `Bearer ${token2}`)
+    .send({
+      requestId: (friendRequest as any)._id.toString(),
+      accept: true
+    });
+
+  // Should still succeed even if notification fails
+  expect(res.status).toBe(200);
+  expect(res.body.success).toBe(true);
+
+  // Verify the error was logged
+  expect(consoleErrorSpy).toHaveBeenCalledWith(
+    'Failed to send FCM friend request accepted notification:',
+    expect.any(Error)
+  );
+
+  consoleErrorSpy.mockRestore();
+});
 });
