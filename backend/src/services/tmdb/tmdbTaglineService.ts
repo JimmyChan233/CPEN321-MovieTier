@@ -2,7 +2,7 @@ import { getTmdbClient } from './tmdbClient';
 import { logger } from '../../utils/logger';
 
 interface CacheItem { tagline: string; ts: number }
-const cache = new Map<string, CacheItem>();
+export const cache = new Map<string, CacheItem>();
 const TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
 function getCacheKey(title: string, year?: string | number): string {

@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 import { getTmdbClient } from '../../src/services/tmdb/tmdbClient';
-import { fetchMovieTagline } from '../../src/services/tmdb/tmdbTaglineService';
+import { fetchMovieTagline, cache } from '../../src/services/tmdb/tmdbTaglineService';
 
 // Mock axios
 jest.mock('axios');
@@ -304,8 +304,7 @@ describe('TMDB Tagline Service Tests', () => {
     jest.useFakeTimers();
 
     // Clear cache
-    const cache = (require('../../src/services/tmdb/tmdbTaglineService') as any).cache;
-    if (cache) cache.clear();
+    cache.clear();
 
     mockClient = {
       get: jest.fn(),

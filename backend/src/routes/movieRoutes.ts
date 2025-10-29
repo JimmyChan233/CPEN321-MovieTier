@@ -169,6 +169,15 @@ router.post('/rank', authenticate, asyncHandler(async (req: AuthRequest, res) =>
       });
     }
 
+    // Check for duplicate movie
+    const existing = await RankedMovie.findOne({ userId: req.userId, movieId });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'Movie already ranked'
+      });
+    }
+
     const count = await RankedMovie.countDocuments({ userId: req.userId });
 
     const rankedMovie = new RankedMovie({

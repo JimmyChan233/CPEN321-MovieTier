@@ -13,6 +13,13 @@ import { generateTestJWT } from '../utils/test-fixtures';
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+// Mock getTmdbClient to return a mock axios instance
+jest.mock('../../src/services/tmdb/tmdbClient', () => ({
+  getTmdbClient: jest.fn(() => ({
+    get: mockedAxios.get
+  }))
+}));
+
 describe('Mocked: GET /movies/search - TMDB API Failure', () => {
   let app: express.Application;
   const token = generateTestJWT('test-user-id');
@@ -75,7 +82,8 @@ describe('Mocked: GET /movies/search - TMDB API Failure', () => {
       .query({ query: 'xyz123nonexistent' });
 
     expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body.results || res.body)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data).toHaveLength(0);
   });
 
   // Mocked behavior: TMDB returns 401 (invalid API key)
@@ -173,8 +181,11 @@ describe('Mocked: GET /movies/ranked - Database Query Failure', () => {
   // Expected behavior: Error is caught and reported
   // Expected output: Database error message
   it('should handle ranked movies query failure', async () => {
+    const mockQuery = {
+      sort: jest.fn().mockRejectedValueOnce(new Error('Database connection lost'))
+    };
     const findSpy = jest.spyOn(RankedMovie, 'find')
-      .mockRejectedValueOnce(new Error('Database connection lost'));
+      .mockReturnValueOnce(mockQuery as any);
 
     const res = await request(app)
       .get('/api/movies/ranked')
