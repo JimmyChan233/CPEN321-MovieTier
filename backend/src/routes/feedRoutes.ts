@@ -9,10 +9,11 @@ import Like from '../models/feed/Like';
 import Comment from '../models/feed/Comment';
 import User from '../models/user/User';
 import notificationService from '../services/notification.service';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const friendships = await Friendship.find({ userId: req.userId });
     const friendIds = friendships.map(f => f.friendId);
@@ -128,10 +129,10 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load feed. Please try again' });
   }
-});
+}));
 
 // Get user's own feed activities
-router.get('/me', authenticate, async (req: AuthRequest, res) => {
+router.get('/me', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const activities = await FeedActivity.find({
       userId: req.userId
@@ -244,10 +245,10 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load your activities' });
   }
-});
+}));
 
 // SSE stream for feed events
-router.get('/stream', authenticate, async (req: AuthRequest, res) => {
+router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -263,10 +264,10 @@ router.get('/stream', authenticate, async (req: AuthRequest, res) => {
   } catch {
     res.end();
   }
-});
+}));
 
 // Like an activity
-router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => {
+router.post('/:activityId/like', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { activityId } = req.params;
 
@@ -312,10 +313,10 @@ router.post('/:activityId/like', authenticate, async (req: AuthRequest, res) => 
     }
     res.status(500).json({ success: false, message: 'Failed to like activity' });
   }
-});
+}));
 
 // Unlike an activity
-router.delete('/:activityId/like', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:activityId/like', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { activityId } = req.params;
 
@@ -332,10 +333,10 @@ router.delete('/:activityId/like', authenticate, async (req: AuthRequest, res) =
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to unlike activity' });
   }
-});
+}));
 
 // Get comments for an activity
-router.get('/:activityId/comments', authenticate, async (req: AuthRequest, res) => {
+router.get('/:activityId/comments', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { activityId } = req.params;
 
@@ -365,10 +366,10 @@ router.get('/:activityId/comments', authenticate, async (req: AuthRequest, res) 
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to load comments' });
   }
-});
+}));
 
 // Add a comment to an activity
-router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res) => {
+router.post('/:activityId/comments', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { activityId } = req.params;
     const { text } = req.body;
@@ -432,10 +433,10 @@ router.post('/:activityId/comments', authenticate, async (req: AuthRequest, res)
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to add comment' });
   }
-});
+}));
 
 // Delete a comment
-router.delete('/:activityId/comments/:commentId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:activityId/comments/:commentId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { activityId, commentId } = req.params;
 
@@ -460,6 +461,6 @@ router.delete('/:activityId/comments/:commentId', authenticate, async (req: Auth
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to delete comment' });
   }
-});
+}));
 
 export default router;

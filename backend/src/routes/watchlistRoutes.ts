@@ -2,21 +2,22 @@ import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import WatchlistItem from '../models/watch/WatchlistItem';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
 // Get current user's watchlist
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const items = await WatchlistItem.find({ userId: req.userId }).sort({ createdAt: -1 });
     res.json({ success: true, data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load watchlist. Please try again' });
   }
-});
+}));
 
 // Add to watchlist
-router.post('/', authenticate, async (req: AuthRequest, res) => {
+router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { movieId, title, posterPath, overview } = req.body as {
       movieId: number
@@ -69,11 +70,11 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
       .status(500)
       .json({ success: false, message: 'Unable to add to watchlist. Please try again' })
   }
-})
+}));
 
 
 // Remove from watchlist (by movieId)
-router.delete('/:movieId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:movieId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const movieId = Number(req.params.movieId);
     const result = await WatchlistItem.deleteOne({ userId: req.userId, movieId });
@@ -84,6 +85,6 @@ router.delete('/:movieId', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to remove from watchlist. Please try again' });
   }
-});
+}));
 
 export default router;

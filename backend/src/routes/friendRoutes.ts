@@ -4,6 +4,7 @@ import { Friendship, FriendRequest } from '../models/friend/Friend';
 import User from '../models/user/User';
 import { sseService } from '../services/sse/sseService';
 import notificationService from '../services/notification.service';
+import { asyncHandler } from '../utils/asyncHandler';
 
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -22,7 +23,7 @@ export function checkRateLimit(userId: string): boolean {
 
 const router = Router();
 
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const friendships = await Friendship.find({ userId: req.userId }).populate('friendId');
     const friends = friendships.map(f => (f as unknown as { friendId: unknown }).friendId);
@@ -30,9 +31,9 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get friends' });
   }
-});
+}));
 
-router.get('/requests', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     // Return pending requests directed to the current user (no populate to match frontend model)
     const requests = await FriendRequest.find({
@@ -43,10 +44,10 @@ router.get('/requests', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get requests' });
   }
-});
+}));
 
 // Incoming requests with sender details
-router.get('/requests/detailed', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests/detailed', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const requests = await FriendRequest.find({ receiverId: req.userId, status: 'pending' })
       .populate('senderId', '_id email name profileImageUrl');
@@ -64,20 +65,20 @@ router.get('/requests/detailed', authenticate, async (req: AuthRequest, res) => 
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get requests' });
   }
-});
+}));
 
 // Outgoing requests (pending) basic
-router.get('/requests/outgoing', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests/outgoing', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const requests = await FriendRequest.find({ senderId: req.userId, status: 'pending' });
     res.json({ success: true, data: requests });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get outgoing requests' });
   }
-});
+}));
 
 // Outgoing requests detailed with receiver profile
-router.get('/requests/outgoing/detailed', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests/outgoing/detailed', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const requests = await FriendRequest.find({ senderId: req.userId, status: 'pending' })
       .populate('receiverId', '_id email name profileImageUrl');
@@ -95,9 +96,9 @@ router.get('/requests/outgoing/detailed', authenticate, async (req: AuthRequest,
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get outgoing requests' });
   }
-});
+}));
 
-router.post('/request', authenticate, async (req: AuthRequest, res) => {
+router.post('/request', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { email } = req.body as { email?: string };
 
@@ -184,9 +185,9 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to send friend request. Please try again' });
   }
-});
+}));
 
-router.post('/respond', authenticate, async (req: AuthRequest, res) => {
+router.post('/respond', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { requestId, accept } = req.body as { requestId?: string; accept?: boolean };
 
@@ -268,9 +269,9 @@ router.post('/respond', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to respond to request' });
   }
-});
+}));
 
-router.delete('/:friendId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { friendId } = req.params;
     if (!friendId) {
@@ -296,10 +297,10 @@ router.delete('/:friendId', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to remove friend' });
   }
-});
+}));
 
 // SSE stream for friend events
-router.get('/stream', authenticate, async (req: AuthRequest, res) => {
+router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -318,10 +319,10 @@ router.get('/stream', authenticate, async (req: AuthRequest, res) => {
   } catch {
     res.end();
   }
-});
+}));
 
 // Cancel a pending outgoing friend request
-router.delete('/requests/:requestId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/requests/:requestId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { requestId } = req.params;
     const request = await FriendRequest.findById(requestId);
@@ -344,7 +345,7 @@ router.delete('/requests/:requestId', authenticate, async (req: AuthRequest, res
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to cancel friend request' });
   }
-});
+}));
 
 export default router;
 

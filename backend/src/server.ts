@@ -106,8 +106,9 @@ async function startServer() {
     await sseService.clear();
 
     // Close the server
-    server.close(async () => {
-      logger.info('HTTP server closed');
+    server.close(() => {
+      void (async () => {
+        logger.info('HTTP server closed');
 
       try {
         await mongoose.disconnect();
@@ -116,8 +117,9 @@ async function startServer() {
         logger.error('Error disconnecting from MongoDB:', (err as Error).message);
       }
 
-      logger.success('Graceful shutdown completed');
-      process.exit(0);
+        logger.success('Graceful shutdown completed');
+        process.exit(0);
+      })();
     });
 
     // Force exit after 10 seconds

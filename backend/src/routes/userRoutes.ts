@@ -4,6 +4,7 @@ import User from '../models/user/User';
 import mongoose from 'mongoose';
 import WatchlistItem from '../models/watch/WatchlistItem';
 import { logger } from '../utils/logger';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ function escapeRegexForMongo(str: string): string {
 }
 
 // Search users by name or email (must be defined before '/:userId')
-router.get('/search', authenticate, async (req: AuthRequest, res) => {
+router.get('/search', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const query = (req.query.query as string) ?? '';
     if (!query || query.trim().length < 2) {
@@ -40,10 +41,10 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to search users. Please try again' });
   }
-});
+}));
 
 // Update current user's profile (name only)
-router.put('/profile', authenticate, async (req: AuthRequest, res) => {
+router.put('/profile', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { name } = req.body as { name?: string };
     logger.info(`Profile update request for user ${req.userId}`, { name: name ? 'updating' : 'unchanged' });
@@ -75,10 +76,10 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
     logger.error('Profile update error:', error);
     res.status(500).json({ success: false, message: 'Unable to update profile. Please try again' });
   }
-});
+}));
 
 // Register/update FCM token for push notifications
-router.post('/fcm-token', authenticate, async (req: AuthRequest, res) => {
+router.post('/fcm-token', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { token } = req.body as { token?: string };
 
@@ -102,9 +103,9 @@ router.post('/fcm-token', authenticate, async (req: AuthRequest, res) => {
     logger.error('FCM token registration error:', error);
     res.status(500).json({ success: false, message: 'Unable to register FCM token. Please try again' });
   }
-});
+}));
 
-router.get('/:userId', authenticate, async (req, res) => {
+router.get('/:userId', authenticate, asyncHandler(async (req, res) => {
   try {
     const { userId } = req.params as { userId: string };
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -118,10 +119,10 @@ router.get('/:userId', authenticate, async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load user. Please try again' });
   }
-});
+}));
 
 // Public watchlist of a user (friend view)
-router.get('/:userId/watchlist', authenticate, async (req, res) => {
+router.get('/:userId/watchlist', authenticate, asyncHandler(async (req, res) => {
   try {
     const { userId } = req.params as { userId: string };
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -132,6 +133,6 @@ router.get('/:userId/watchlist', authenticate, async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load user watchlist. Please try again' });
   }
-});
+}));
 
 export default router;

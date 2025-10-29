@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { fetchMovieTagline } from '../services/tmdb/tmdbTaglineService';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
 // GET /api/quotes?title=Inception&year=2010
 // Fetches TMDB tagline for a movie.
 // Returns the official movie tagline if available, or null otherwise.
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, asyncHandler(async (req, res) => {
   try {
     const title = String(req.query.title ?? '').trim();
     const year = String(req.query.year ?? '').trim() || undefined;
@@ -24,7 +25,7 @@ router.get('/', authenticate, async (req, res) => {
   } catch (e: unknown) {
     return res.status(500).json({ success: false, message: 'Failed to fetch tagline', data: null });
   }
-});
+}));
 
 export default router;
 

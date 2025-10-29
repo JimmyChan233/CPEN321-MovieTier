@@ -11,10 +11,11 @@ import {
 import { startRerank } from '../controllers/rerankController';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
 import mongoose from 'mongoose';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
-router.get('/search', authenticate, async (req, res) => {
+router.get('/search', authenticate, asyncHandler(async (req, res) => {
   try {
     const query = String(req.query.query ?? '').trim();
     if (!query || query.length < 2) {
@@ -126,9 +127,9 @@ router.get('/search', authenticate, async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to search movies. Please try again' });
   }
-});
+}));
 
-router.get('/ranked', authenticate, async (req: AuthRequest, res) => {
+router.get('/ranked', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const movies = await RankedMovie.find({ userId: req.userId }).sort({ rank: 1 });
     const shaped = movies.map((m) => {
@@ -152,9 +153,9 @@ router.get('/ranked', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load rankings. Please try again' });
   }
-});
+}));
 
-router.post('/rank', authenticate, async (req: AuthRequest, res) => {
+router.post('/rank', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { movieId, title, posterPath, overview } = req.body as { movieId: number; title: string; posterPath?: string; overview?: string };
     const count = await RankedMovie.countDocuments({ userId: req.userId });
@@ -236,22 +237,22 @@ router.post('/rank', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to rank movie. Please try again' });
   }
-});
+}));
 
-// router.post('/compare', authenticate, async (req, res) => {
+// router.post('/compare', authenticate, asyncHandler(async (req, res) => {
 //   res.json({ success: true, message: 'Compare movies route - placeholder' });
 // });
 // use interactive add logic instead of static rank
-router.post('/add', authenticate, addMovie);
+router.post('/add', authenticate, asyncHandler(addMovie));
 
 //placeholder compare
-router.post('/compare', authenticate, compareMovies);
+router.post('/compare', authenticate, asyncHandler(compareMovies));
 
 // start re-rank session for an existing ranked item
-router.post('/rerank/start', authenticate, startRerank);
+router.post('/rerank/start', authenticate, asyncHandler(startRerank));
 
 // Delete a ranked movie and re-sequence ranks
-router.delete('/ranked/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/ranked/:id', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as { id: string };
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -276,10 +277,10 @@ router.delete('/ranked/:id', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to remove from rankings. Please try again' });
   }
-});
+}));
 
 // Get watch providers for a TMDB movie id
-router.get('/:movieId/providers', authenticate, async (req, res) => {
+router.get('/:movieId/providers', authenticate, asyncHandler(async (req, res) => {
   try {
     const movieId = Number(req.params.movieId);
     if (!movieId || Number.isNaN(movieId)) {
@@ -321,10 +322,10 @@ router.get('/:movieId/providers', authenticate, async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load watch providers. Please try again' });
   }
-});
+}));
 
 // Get movie details + top cast from TMDB
-router.get('/:movieId/details', authenticate, async (req, res) => {
+router.get('/:movieId/details', authenticate, asyncHandler(async (req, res) => {
   try {
     const movieId = Number(req.params.movieId);
     if (!movieId || Number.isNaN(movieId)) {
@@ -359,10 +360,10 @@ router.get('/:movieId/details', authenticate, async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load movie details. Please try again' });
   }
-});
+}));
 
 // Get movie videos/trailers from TMDB
-router.get('/:movieId/videos', authenticate, async (req, res) => {
+router.get('/:movieId/videos', authenticate, asyncHandler(async (req, res) => {
   try {
     const movieId = Number(req.params.movieId);
     if (!movieId || Number.isNaN(movieId)) {
@@ -408,6 +409,6 @@ router.get('/:movieId/videos', authenticate, async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load movie videos. Please try again' });
   }
-});
+}));
 
 export default router;
