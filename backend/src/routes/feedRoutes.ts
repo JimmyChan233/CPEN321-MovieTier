@@ -53,7 +53,7 @@ router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
           movieId: activity.movieId
         });
         if (rankedMovie) {
-          const key = `${activity.userId?._id}_${activity.movieId}`;
+          const key = `${String(activity.userId?._id)}_${String(activity.movieId)}`;
           movieRankMap.set(key, rankedMovie.rank);
         }
       } catch {}
@@ -259,8 +259,9 @@ router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) =
     res.flushHeaders();
     res.write(`event: connected\n` + `data: {"ok":true}\n\n`);
 
-    sseService.addClient(String(req.userId), res);
-    req.on('close', () => sseService.removeClient(String(req.userId!), res));
+    const userId = String(req.userId);
+    sseService.addClient(userId, res);
+    req.on('close', () => sseService.removeClient(userId, res));
   } catch {
     res.end();
   }

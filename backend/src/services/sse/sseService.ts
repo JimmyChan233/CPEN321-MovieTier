@@ -15,7 +15,10 @@ class SseService {
     if (!this.clients.has(userId)) {
       this.clients.set(userId, new Set());
     }
-    this.clients.get(userId)!.add(res);
+    const clientSet = this.clients.get(userId);
+    if (clientSet) {
+      clientSet.add(res);
+    }
 
     // Clean up when client disconnects
     res.on('close', () => {

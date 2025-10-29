@@ -41,7 +41,7 @@ export class AuthService {
     }
 
     const token = this.generateToken(String(user._id));
-    logger.success(`User signed in: ${user.email} (${user._id})`);
+    logger.success(`User signed in: ${user.email} (${String(user._id)})`);
 
     return { user, token };
   }
@@ -66,7 +66,7 @@ export class AuthService {
     });
 
     await user.save();
-    logger.success(`New user created: ${user.email} (${user._id})`);
+    logger.success(`New user created: ${user.email} (${String(user._id)})`);
 
     const token = this.generateToken(String(user._id));
 
@@ -76,6 +76,6 @@ export class AuthService {
   generateToken(userId: string): string {
     return jwt.sign({ userId }, process.env.JWT_SECRET ?? 'default_secret', {
       expiresIn: '30d'
-    });
+    }) as string;
   }
 }

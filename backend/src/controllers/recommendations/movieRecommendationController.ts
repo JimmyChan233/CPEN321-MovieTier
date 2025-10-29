@@ -5,6 +5,12 @@ import { getTmdbClient } from '../../services/tmdb/tmdbClient';
 import { logger } from '../../utils/logger';
 import { AxiosInstance } from 'axios';
 import { AuthRequest } from '../../middleware/auth';
+import crypto from 'crypto';
+
+// Cryptographically secure random number generator
+function secureRandom(): number {
+  return crypto.randomBytes(4).readUInt32BE(0) / 0xffffffff;
+}
 
 interface UserPreferences {
   topGenres: number[];
@@ -245,8 +251,8 @@ export const getRecommendations = async (req: Request, res: Response) => {
     // Step 6: Sort by score and add slight randomness to top tier
     scoredMovies.sort((a, b) => {
       // Add small randomness (±5) to prevent same order every time
-      const aScore = a.score + (Math.random() * 10 - 5);
-      const bScore = b.score + (Math.random() * 10 - 5);
+      const aScore = a.score + (secureRandom() * 10 - 5);
+      const bScore = b.score + (secureRandom() * 10 - 5);
       return bScore - aScore;
     });
 

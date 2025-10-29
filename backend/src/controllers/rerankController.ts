@@ -5,7 +5,10 @@ import { startSession } from '../utils/comparisonSession';
 
 export const startRerank = async (req: Request, res: Response) => {
   try {
-    const userId = (req as { userId?: string }).userId!;
+    const userId = (req as { userId?: string }).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
     const { rankedId } = req.body as { rankedId: string };
     if (!rankedId || !mongoose.Types.ObjectId.isValid(rankedId)) {
       return res.status(400).json({ success: false, message: 'Invalid rankedId' });

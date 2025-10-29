@@ -378,7 +378,7 @@ class NotificationService {
         });
       }
 
-      return response.successCount;
+      return Number(response.successCount);
     } catch (error) {
       logger.error('Error sending multicast notification:', error);
       return 0;

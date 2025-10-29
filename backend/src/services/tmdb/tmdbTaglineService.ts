@@ -57,7 +57,7 @@ export async function fetchMovieTagline(title: string, year?: string | number): 
     });
 
     const tagline = detailsResp.data?.tagline;
-    if (tagline && tagline.trim().length > 0) {
+    if (tagline && typeof tagline === 'string' && tagline.trim().length > 0) {
       cache.set(cacheKey, { tagline, ts: Date.now() });
       return tagline;
     }
