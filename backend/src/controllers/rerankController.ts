@@ -38,7 +38,10 @@ export const startRerank = async (req: Request, res: Response) => {
     // Start a compare session and return mid element as first comparator
     startSession(userId, newMovie, remaining.length - 1);
     const mid = Math.floor((0 + (remaining.length - 1)) / 2);
-    const cmp = remaining[mid];
+    const cmp = remaining.at(mid);
+    if (!cmp) {
+      return res.status(500).json({ success: false, message: 'Unable to find comparison movie' });
+    }
     return res.json({
       success: true,
       status: 'compare',

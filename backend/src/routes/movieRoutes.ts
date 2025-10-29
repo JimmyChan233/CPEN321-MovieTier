@@ -310,7 +310,8 @@ router.get('/:movieId/providers', authenticate, asyncHandler(async (req, res) =>
     buy?: unknown[];
   }
 
-  const result = (data?.results?.[country] ?? {}) as WatchProvidersResult;
+  const results = data?.results ?? {};
+  const result = (Object.prototype.hasOwnProperty.call(results, country) ? results[country as keyof typeof results] : {}) as WatchProvidersResult;
 
   let link: string | null = result.link ?? null;
   if (!link) {

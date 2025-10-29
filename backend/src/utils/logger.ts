@@ -1,6 +1,11 @@
 // Simple logger utility without external dependencies
 // Uses ANSI color codes for terminal output
 
+// Sanitize strings to prevent CRLF injection in logs
+function sanitizeForLog(value: string): string {
+  return value.replace(/[\r\n]/g, ' ');
+}
+
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -33,14 +38,15 @@ function getTimestamp(): string {
 
 function formatMessage(level: string, color: string, message: string, ...args: unknown[]): void {
   const timestamp = getTimestamp();
+  const sanitizedMessage = sanitizeForLog(message);
   const formattedArgs = args.length > 0
     ? ' ' + args.map(arg =>
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : sanitizeForLog(String(arg))
       ).join(' ')
     : '';
 
   console.log(
-    `${colors.dim}[${timestamp}]${colors.reset} ${color}${level}${colors.reset} ${message}${formattedArgs}`
+    `${colors.dim}[${timestamp}]${colors.reset} ${color}${level}${colors.reset} ${sanitizedMessage}${formattedArgs}`
   );
 }
 
@@ -71,9 +77,11 @@ export const logger = {
     const methodColor = colors.bright + colors.blue;
     const statusColor = statusCode && statusCode >= 400 ? colors.red : colors.green;
     const durationStr = duration ? ` ${colors.dim}(${duration}ms)${colors.reset}` : '';
+    const sanitizedMethod = sanitizeForLog(method);
+    const sanitizedUrl = sanitizeForLog(url);
 
     console.log(
-      `${colors.dim}[${getTimestamp()}]${colors.reset} ${methodColor}${method}${colors.reset} ${url} ${statusColor}${statusCode ?? ''}${colors.reset}${durationStr}`
+      `${colors.dim}[${getTimestamp()}]${colors.reset} ${methodColor}${sanitizedMethod}${colors.reset} ${sanitizedUrl} ${statusColor}${statusCode ?? ''}${colors.reset}${durationStr}`
     );
   },
 };

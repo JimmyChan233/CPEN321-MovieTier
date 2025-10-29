@@ -144,7 +144,10 @@ export const addMovie = async (req: Request, res: Response) => {
     // Use the same middle calculation as compareMovies to avoid repetitive comparisons
     const high = rankedMovies.length - 1;
     const middleIndex = Math.floor((0 + high) / 2);
-    const compareWith = rankedMovies[middleIndex];
+    const compareWith = rankedMovies.at(middleIndex);
+    if (!compareWith) {
+      return res.status(500).json({ success: false, message: 'Unable to find comparison movie' });
+    }
     startSession(userId, { movieId, title, posterPath }, high);
 
     // Remove from watchlist immediately when starting comparison
@@ -305,7 +308,10 @@ export const compareMovies = async (req: Request, res: Response) => {
     // Continue comparison
     updateSession(userId, low, high);
     const nextIndex = Math.floor((low + high) / 2);
-    const nextCompare = rankedMovies[nextIndex];
+    const nextCompare = rankedMovies.at(nextIndex);
+    if (!nextCompare) {
+      return res.status(500).json({ success: false, message: 'Unable to find comparison movie' });
+    }
 
     return res.json({
       success: true,
