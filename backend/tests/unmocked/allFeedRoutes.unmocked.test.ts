@@ -77,7 +77,7 @@ describe('Comprehensive Feed Routes Tests', () => {
     // Create activity from friend
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -100,7 +100,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -125,7 +125,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -154,7 +154,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -183,7 +183,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -212,7 +212,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -239,7 +239,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -263,7 +263,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -299,7 +299,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -334,7 +334,7 @@ describe('Comprehensive Feed Routes Tests', () => {
     for (let i = 0; i < 15; i++) {
       await FeedActivity.create({
         userId: user2._id,
-        activityType: 'movie_ranked',
+        activityType: 'ranked_movie',
         movieId: mockMovies.inception.id + i,
         movieTitle: `Movie ${i}`,
         posterUrl: mockMovies.inception.posterUrl,
@@ -359,7 +359,7 @@ describe('Comprehensive Feed Routes Tests', () => {
 
     const activity = await FeedActivity.create({
       userId: user2._id,
-      activityType: 'movie_ranked',
+      activityType: 'ranked_movie',
       movieId: mockMovies.inception.id,
       movieTitle: mockMovies.inception.title,
       posterUrl: mockMovies.inception.posterUrl,
@@ -387,7 +387,7 @@ describe('Comprehensive Feed Routes Tests', () => {
     await FeedActivity.create([
       {
         userId: user2._id,
-        activityType: 'movie_ranked',
+        activityType: 'ranked_movie',
         movieId: mockMovies.inception.id,
         movieTitle: mockMovies.inception.title,
         posterUrl: mockMovies.inception.posterUrl,
@@ -395,7 +395,7 @@ describe('Comprehensive Feed Routes Tests', () => {
       },
       {
         userId: user2._id,
-        activityType: 'movie_updated',
+        activityType: 'ranked_movie',
         movieId: mockMovies.darkKnight.id,
         movieTitle: mockMovies.darkKnight.title,
         posterUrl: mockMovies.darkKnight.posterUrl,

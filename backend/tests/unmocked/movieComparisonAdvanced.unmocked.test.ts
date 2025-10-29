@@ -156,7 +156,10 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        movie: mockMovies.inception
+        movieId: mockMovies.inception.id,
+        title: mockMovies.inception.title,
+        posterPath: mockMovies.inception.poster_path,
+        overview: mockMovies.inception.overview
       });
 
     // Verify movie removed from watchlist
@@ -350,7 +353,10 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        movie: mockMovies.inception
+        movieId: mockMovies.inception.id,
+        title: mockMovies.inception.title,
+        posterPath: mockMovies.inception.poster_path,
+        overview: mockMovies.inception.overview
       });
 
     // Rank second movie
@@ -358,7 +364,10 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/rank')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        movie: mockMovies.darkKnight
+        movieId: mockMovies.darkKnight.id,
+        title: mockMovies.darkKnight.title,
+        posterPath: mockMovies.darkKnight.poster_path,
+        overview: mockMovies.darkKnight.overview
       });
 
     // Both should be removed from watchlist

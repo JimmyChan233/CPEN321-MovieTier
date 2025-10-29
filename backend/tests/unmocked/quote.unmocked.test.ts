@@ -40,7 +40,7 @@ describe('Unmocked: GET /quotes', () => {
   // Expected output: Quote object or fallback quote
   it('should return quote for movie', async () => {
     const res = await request(app)
-      .get('/')
+      .get('/api/quotes')
       .set('Authorization', `Bearer ${token}`)
       .query({ title: 'Inception' });
 
@@ -54,7 +54,7 @@ describe('Unmocked: GET /quotes', () => {
   // Expected output: Fallback quote
   it('should return fallback quote for unknown movie', async () => {
     const res = await request(app)
-      .get('/')
+      .get('/api/quotes')
       .set('Authorization', `Bearer ${token}`)
       .query({ title: 'NonexistentMoviexyz123' });
 
@@ -68,7 +68,7 @@ describe('Unmocked: GET /quotes', () => {
   // Expected output: Unauthorized error
   it('should reject unauthenticated quote request', async () => {
     const res = await request(app)
-      .get('/')
+      .get('/api/quotes')
       .query({ title: 'Inception' });
 
     expect(res.status).toStrictEqual(401);
@@ -80,7 +80,7 @@ describe('Unmocked: GET /quotes', () => {
   // Expected output: Validation error
   it('should reject quote request without title', async () => {
     const res = await request(app)
-      .get('/')
+      .get('/api/quotes')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);

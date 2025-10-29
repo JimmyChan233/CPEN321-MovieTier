@@ -46,7 +46,8 @@ describe('Unmocked: PUT /users/profile', () => {
       .send({ name: newName });
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body.user.name).toStrictEqual(newName);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.name).toStrictEqual(newName);
 
     const updatedUser = await User.findById(user._id);
     expect(updatedUser!.name).toStrictEqual(newName);
@@ -64,7 +65,8 @@ describe('Unmocked: PUT /users/profile', () => {
       .send({ profileImageUrl: newImageUrl });
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body.user.profileImageUrl).toStrictEqual(newImageUrl);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.profileImageUrl).toStrictEqual(newImageUrl);
 
     const updatedUser = await User.findById(user._id);
     expect(updatedUser!.profileImageUrl).toStrictEqual(newImageUrl);
@@ -87,8 +89,9 @@ describe('Unmocked: PUT /users/profile', () => {
       });
 
     expect(res.status).toStrictEqual(200);
-    expect(res.body.user.name).toStrictEqual(newName);
-    expect(res.body.user.profileImageUrl).toStrictEqual(newImageUrl);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.name).toStrictEqual(newName);
+    expect(res.body.data.profileImageUrl).toStrictEqual(newImageUrl);
   });
 
   // Input: Empty name string
