@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">52.94% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>9/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">45.45% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>5/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -109,31 +109,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">54x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">57x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">46x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">interface CompareSession {
   newMovie: {
@@ -147,29 +147,29 @@
 &nbsp;
 const sessionStore = new Map&lt;string, CompareSession&gt;();
 &nbsp;
-export const startSession = (
+export const startSession = <span class="fstat-no" title="function not covered" >(</span>
   userId: string,
   movie: CompareSession['newMovie'],
   maxIndex: number
 ) =&gt; {
-  sessionStore.set(userId, {
+<span class="cstat-no" title="statement not covered" >  sessionStore.set(userId, {</span>
     newMovie: movie,
     low: 0,
     high: maxIndex,
   });
 };
 &nbsp;
-export const getSession = (userId: string) =&gt; sessionStore.get(userId);
+export const getSession = <span class="fstat-no" title="function not covered" >(u</span>serId: string) =&gt; <span class="cstat-no" title="statement not covered" >sessionStore.get(userId);</span>
 &nbsp;
-export const updateSession = (userId: string, low: number, high: number) =&gt; {
-  const s = sessionStore.get(userId);
-  if (!s) return;
-  s.low = low;
-  s.high = high;
+export const updateSession = <span class="fstat-no" title="function not covered" >(u</span>serId: string, low: number, high: number) =&gt; {
+  const s = <span class="cstat-no" title="statement not covered" >sessionStore.get(userId);</span>
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!s) <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >  s.low = low;</span>
+<span class="cstat-no" title="statement not covered" >  s.high = high;</span>
 };
 &nbsp;
-export const endSession = (userId: string) =&gt; {
-  sessionStore.delete(userId);
+export const endSession = <span class="fstat-no" title="function not covered" >(u</span>serId: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >  sessionStore.delete(userId);</span>
 };
 &nbsp;</pre></td></tr></table></pre>
 
@@ -178,7 +178,7 @@ export const endSession = (userId: string) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-29T07:20:18.964Z
+                at 2025-10-29T07:26:04.453Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

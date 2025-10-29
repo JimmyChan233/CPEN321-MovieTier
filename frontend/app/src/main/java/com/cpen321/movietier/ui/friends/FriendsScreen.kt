@@ -711,12 +711,3 @@ private fun OutgoingRequestRow(
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-private fun FriendsScreenPreview() {
-    MovieTierTheme {
-        val navController = rememberNavController()
-        FriendsScreen(navController = navController)
-    }
-}
