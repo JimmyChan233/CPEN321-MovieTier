@@ -38,8 +38,16 @@ fun FeaturedMovieCard(
         Box(modifier = Modifier.fillMaxSize()) {
             FeaturedMovieBackdrop(movie)
             FeaturedMovieGradientOverlay()
-            FeaturedMovieRefreshButton(onRefresh)
-            FeaturedMovieContent(movie, quote, isLoadingQuote)
+            FeaturedMovieContent(
+                movie = movie,
+                quote = quote,
+                isLoadingQuote = isLoadingQuote,
+                modifier = Modifier.align(Alignment.BottomStart)
+            )
+            FeaturedMovieRefreshButton(
+                onRefresh = onRefresh,
+                modifier = Modifier.align(Alignment.TopEnd)
+            )
         }
     }
 }
@@ -74,12 +82,13 @@ private fun FeaturedMovieGradientOverlay() {
 }
 
 @Composable
-private fun FeaturedMovieRefreshButton(onRefresh: () -> Unit) {
+private fun FeaturedMovieRefreshButton(
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     IconButton(
         onClick = onRefresh,
-        modifier = Modifier
-            .wrapContentSize(Alignment.TopEnd)
-            .padding(8.dp)
+        modifier = modifier.padding(8.dp)
     ) {
         Icon(
             imageVector = Icons.Default.Refresh,
@@ -93,11 +102,11 @@ private fun FeaturedMovieRefreshButton(onRefresh: () -> Unit) {
 private fun FeaturedMovieContent(
     movie: Movie,
     quote: String,
-    isLoadingQuote: Boolean
+    isLoadingQuote: Boolean,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
-            .wrapContentSize(Alignment.BottomStart)
+        modifier = modifier
             .fillMaxWidth()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
