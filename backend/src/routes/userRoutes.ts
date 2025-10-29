@@ -7,15 +7,24 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+/**
+ * Escape special regex characters to prevent ReDoS attacks
+ */
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Search users by name or email (must be defined before '/:userId')
 router.get('/search', authenticate, async (req: AuthRequest, res) => {
   try {
-    const query = (req.query.query as string) || '';
+    const query = (req.query.query as string) ?? '';
     if (!query || query.trim().length < 2) {
       return res.status(400).json({ success: false, message: 'Query must be at least 2 characters' });
     }
 
-    const regex = new RegExp(query.trim(), 'i');
+    // Escape special regex characters to prevent ReDoS attacks
+    const escapedQuery = escapeRegExp(query.trim());
+    const regex = new RegExp(escapedQuery, 'i');
     const users = await User.find({
       _id: { $ne: req.userId },
       $or: [{ name: regex }, { email: regex }]

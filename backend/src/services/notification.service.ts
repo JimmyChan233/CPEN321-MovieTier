@@ -2,6 +2,8 @@
 import '../config';
 import admin from 'firebase-admin';
 import { logger } from '../utils/logger';
+import * as fs from 'fs';
+import * as path from 'path';
 
 class NotificationService {
   private initialized = false;
@@ -23,7 +25,22 @@ class NotificationService {
       const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 
       if (serviceAccountPath) {
-        const serviceAccount = require(serviceAccountPath);
+        // Validate and sanitize the path to prevent directory traversal
+        const resolvedPath = path.resolve(serviceAccountPath);
+
+        // Ensure the file exists and is a .json file
+        if (!fs.existsSync(resolvedPath)) {
+          throw new Error(`Service account file not found: ${resolvedPath}`);
+        }
+
+        if (!resolvedPath.endsWith('.json')) {
+          throw new Error('Service account file must be a .json file');
+        }
+
+        // Read and parse the service account file securely
+        const serviceAccountContent = fs.readFileSync(resolvedPath, 'utf8');
+        const serviceAccount = JSON.parse(serviceAccountContent);
+
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount)
         });
@@ -90,10 +107,11 @@ class NotificationService {
       const response = await admin.messaging().send(message);
       logger.info(`Feed notification sent successfully: ${response}`);
       return true;
-    } catch (error: any) {
-      if (error.code === 'messaging/invalid-registration-token' ||
-          error.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for feed notification: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'messaging/invalid-registration-token' ||
+          err.code === 'messaging/registration-token-not-registered') {
+        logger.warn(`Invalid FCM token for feed notification: ${err.message ?? 'Unknown error'}`);
       } else {
         logger.error('Error sending feed notification:', error);
       }
@@ -140,10 +158,11 @@ class NotificationService {
       const response = await admin.messaging().send(message);
       logger.info(`Friend request notification sent successfully: ${response}`);
       return true;
-    } catch (error: any) {
-      if (error.code === 'messaging/invalid-registration-token' ||
-          error.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for friend request notification: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'messaging/invalid-registration-token' ||
+          err.code === 'messaging/registration-token-not-registered') {
+        logger.warn(`Invalid FCM token for friend request notification: ${err.message ?? 'Unknown error'}`);
       } else {
         logger.error('Error sending friend request notification:', error);
       }
@@ -187,10 +206,11 @@ class NotificationService {
       const response = await admin.messaging().send(message);
       logger.info(`Friend request accepted notification sent successfully: ${response}`);
       return true;
-    } catch (error: any) {
-      if (error.code === 'messaging/invalid-registration-token' ||
-          error.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for friend request accepted notification: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'messaging/invalid-registration-token' ||
+          err.code === 'messaging/registration-token-not-registered') {
+        logger.warn(`Invalid FCM token for friend request accepted notification: ${err.message ?? 'Unknown error'}`);
       } else {
         logger.error('Error sending friend request accepted notification:', error);
       }
@@ -238,10 +258,11 @@ class NotificationService {
       const response = await admin.messaging().send(message);
       logger.info(`Like notification sent successfully: ${response}`);
       return true;
-    } catch (error: any) {
-      if (error.code === 'messaging/invalid-registration-token' ||
-          error.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for like notification: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'messaging/invalid-registration-token' ||
+          err.code === 'messaging/registration-token-not-registered') {
+        logger.warn(`Invalid FCM token for like notification: ${err.message ?? 'Unknown error'}`);
       } else {
         logger.error('Error sending like notification:', error);
       }
@@ -296,10 +317,11 @@ class NotificationService {
       const response = await admin.messaging().send(message);
       logger.info(`Comment notification sent successfully: ${response}`);
       return true;
-    } catch (error: any) {
-      if (error.code === 'messaging/invalid-registration-token' ||
-          error.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for comment notification: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'messaging/invalid-registration-token' ||
+          err.code === 'messaging/registration-token-not-registered') {
+        logger.warn(`Invalid FCM token for comment notification: ${err.message ?? 'Unknown error'}`);
       } else {
         logger.error('Error sending comment notification:', error);
       }
