@@ -8,9 +8,10 @@ import { logger } from '../utils/logger';
 const router = Router();
 
 /**
- * Escape special regex characters to prevent ReDoS attacks
+ * Escape special regex characters for MongoDB $regex operator
+ * This prevents ReDoS attacks by sanitizing user input before using it in a regex pattern
  */
-function escapeRegExp(str: string): string {
+function escapeRegexForMongo(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
@@ -23,11 +24,14 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
     }
 
     // Escape special regex characters to prevent ReDoS attacks
-    const escapedQuery = escapeRegExp(query.trim());
-    const regex = new RegExp(escapedQuery, 'i');
+    // Use MongoDB's $regex operator with a string pattern instead of RegExp object
+    const escapedQuery = escapeRegexForMongo(query.trim());
     const users = await User.find({
       _id: { $ne: req.userId },
-      $or: [{ name: regex }, { email: regex }]
+      $or: [
+        { name: { $regex: escapedQuery, $options: 'i' } },
+        { email: { $regex: escapedQuery, $options: 'i' } }
+      ]
     })
       .select('_id email name profileImageUrl')
       .limit(20);
