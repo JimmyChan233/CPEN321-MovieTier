@@ -51,397 +51,284 @@ fun RecommendationScreen(
     val uiState by recommendationViewModel.uiState.collectAsState()
     val compareState by rankingViewModel.compareState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
     var trailerKey by remember { mutableStateOf<String?>(null) }
     var showTrailerDialog by remember { mutableStateOf(false) }
     var trailerMovieTitle by remember { mutableStateOf("") }
     var featuredMovieOffset by remember { mutableStateOf(0) }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     var country by remember { mutableStateOf("CA") }
-    var hasRequestedLocationPermission by remember { mutableStateOf(false) }
 
-    // Request location permission and get country code
+    RSLocationHandler(context, scope) { country = it }
+    RSSideEffects(recommendationViewModel, rankingViewModel, snackbarHostState, { selectedMovie = null })
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = { RSTopBar(recommendationViewModel) }
+    ) { padding ->
+        RSContent(uiState, padding, featuredMovieOffset, recommendationViewModel, { featuredMovieOffset++ }, { selectedMovie = it })
+        RSDialogs(selectedMovie, trailerKey, showTrailerDialog, trailerMovieTitle, compareState, country, recommendationViewModel, rankingViewModel, context, scope, snackbarHostState, { trailerKey = it }, { selectedMovie = null; trailerKey = null }, { trailerMovieTitle = it; showTrailerDialog = true }, { showTrailerDialog = it })
+    }
+}
+
+@Composable
+private fun RSLocationHandler(
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onCountryChanged: (String) -> Unit
+) {
+    var hasRequestedLocationPermission by remember { mutableStateOf(false) }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            scope.launch {
-                country = LocationHelper.getCountryCode(context)
-            }
+            scope.launch { onCountryChanged(LocationHelper.getCountryCode(context)) }
         }
     }
-
     LaunchedEffect(Unit) {
         if (!hasRequestedLocationPermission) {
             hasRequestedLocationPermission = true
             if (LocationHelper.hasLocationPermission(context)) {
-                country = LocationHelper.getCountryCode(context)
+                onCountryChanged(LocationHelper.getCountryCode(context))
             } else {
                 locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
             }
         }
     }
+}
 
+@Composable
+private fun RSSideEffects(
+    recommendationViewModel: RecommendationViewModel,
+    rankingViewModel: RankingViewModel,
+    snackbarHostState: SnackbarHostState,
+    onCloseSheet: () -> Unit
+) {
     LaunchedEffect(Unit) {
         recommendationViewModel.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> {
-                    snackbarHostState.showSnackbar(event.text)
-                }
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> {
-                    // Close bottom sheet if open and show error
-                    selectedMovie = null
-                    snackbarHostState.showSnackbar(event.text)
-                }
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
             }
         }
     }
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.in_app_icon),
-                            contentDescription = "MovieTier",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { recommendationViewModel.loadRecommendations() }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh recommendations")
-                    }
-                },
-                windowInsets = WindowInsets(0, 0, 0, 0)
-            )
-        }
-    ) { padding ->
-
-        Crossfade(
-            targetState = when {
-                uiState.isLoading -> RecommendationState.LOADING
-                uiState.errorMessage != null -> RecommendationState.ERROR
-                uiState.recommendations.isEmpty() -> RecommendationState.EMPTY
-                else -> RecommendationState.CONTENT
-            },
-            label = "recommendation_state"
-        ) { state ->
-            when (state) {
-                RecommendationState.LOADING -> {
-                    LoadingState(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        hint = "Finding recommendations..."
-                    )
-                }
-
-                RecommendationState.ERROR -> {
-                    ErrorState(
-                        message = uiState.errorMessage ?: "Failed to load recommendations",
-                        onRetry = { recommendationViewModel.loadRecommendations() },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                    )
-                }
-
-                RecommendationState.EMPTY -> {
-                    EmptyState(
-                        icon = Icons.Default.Favorite,
-                        title = "No recommendations yet",
-                        message = "Rank some movies to get personalized suggestions",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                    )
-                }
-
-                RecommendationState.CONTENT -> {
-                    val dayOfYear = remember { LocalDate.now().dayOfYear }
-                    var currentMovie by remember { mutableStateOf<Movie?>(null) }
-                    var currentQuote by remember { mutableStateOf("") }
-                    var isLoadingQuote by remember { mutableStateOf(false) }
-
-                    // Select featured movie from trending movies list
-                    LaunchedEffect(dayOfYear, featuredMovieOffset, uiState.trendingMovies) {
-                        if (uiState.trendingMovies.isNotEmpty()) {
-                            val size = uiState.trendingMovies.size
-                            val index = ((dayOfYear + featuredMovieOffset) % size + size) % size
-                            currentMovie = uiState.trendingMovies[index]
-                            currentQuote = "" // Reset quote when movie changes
-                        }
-                    }
-
-                    // Fetch quote asynchronously when movie changes
-                    LaunchedEffect(currentMovie) {
-                        currentMovie?.let { movie ->
-                            isLoadingQuote = true
-                            val quote = recommendationViewModel.getQuote(
-                                title = movie.title,
-                                year = movie.releaseDate?.take(4),
-                                rating = movie.voteAverage
-                            )
-                            currentQuote = quote
-                            isLoadingQuote = false
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                    ) {
-                        LazyColumn(
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            // Featured movie card
-                            currentMovie?.let { movie ->
-                                item {
-                                    FeaturedMovieCard(
-                                        movie = movie,
-                                        quote = currentQuote,
-                                        onClick = { selectedMovie = movie },
-                                        onRefresh = { featuredMovieOffset++ },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        isLoadingQuote = isLoadingQuote
-                                    )
-                                }
-                            }
-
-                            // Section title
-                            item {
-                                Text(
-                                    text = if (uiState.isShowingTrending) "Trending Now" else "Recommended for You",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                            }
-
-                            // Recommendation cards
-                            items(uiState.recommendations, key = { it.id }) { movie ->
-                                RecommendationCard(
-                                    movie = movie,
-                                    onClick = { selectedMovie = movie },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-
-                        selectedMovie?.let { movie ->
-                            // Fetch trailer when movie is selected
-                            LaunchedEffect(movie.id) {
-                                val result = recommendationViewModel.getMovieVideos(movie.id)
-                                trailerKey = when (result) {
-                                    is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
-                                    else -> null
-                                }
-                            }
-
-                            MovieDetailBottomSheet(
-                                movie = movie,
-                                actions = MovieDetailActions(
-                                    onAddToRanking = {
-                                        rankingViewModel.addMovieFromSearch(movie)
-                                        // Sheet will close when success/error message is received
-                                    },
-                                    onPlayTrailer = trailerKey?.let {
-                                        {
-                                            trailerMovieTitle = movie.title
-                                            showTrailerDialog = true
-                                        }
-                                    },
-                                    onOpenWhereToWatch = {
-                                        scope.launch {
-                                            // Prefer exact TMDB watch page for the movie
-                                            val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
-                                            var tmdbOpened = false
-                                            try {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
-                                                context.startActivity(intent)
-                                                tmdbOpened = true
-                                            } catch (_: Exception) {}
-
-                                            if (!tmdbOpened) {
-                                                when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
-                                                is com.cpen321.movietier.data.repository.Result.Success -> {
-                                                    val link = res.data.link
-                                                    val providers = buildList {
-                                                        addAll(res.data.providers.flatrate)
-                                                        addAll(res.data.providers.rent)
-                                                        addAll(res.data.providers.buy)
-                                                    }.distinct()
-                                                    if (!link.isNullOrBlank()) {
-                                                        try {
-                                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                                                            context.startActivity(intent)
-                                                        } catch (e: ActivityNotFoundException) {
-                                                            snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                                        }
-                                                    } else if (providers.isNotEmpty()) {
-                                                        snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                                    } else {
-                                                        snackbarHostState.showSnackbar("No streaming info found")
-                                                    }
-                                                }
-                                                is com.cpen321.movietier.data.repository.Result.Error -> {
-                                                    snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
-                                                }
-                                                else -> {}
-                                                }
-                                            }
-                                        }
-                                    },
-                                    onAddToWatchlist = {
-                                        recommendationViewModel.addToWatchlist(movie)
-                                        // Close sheet so snackbar is visible immediately
-                                        selectedMovie = null
-                                    },
-                                    onDismissRequest = {
-                                        selectedMovie = null
-                                        trailerKey = null
-                                    }
-                                )
-                            )
-                        }
-
-                        // Trailer Player Dialog
-                        if (showTrailerDialog && trailerKey != null) {
-                            YouTubePlayerDialog(
-                                videoKey = trailerKey!!,
-                                movieTitle = trailerMovieTitle,
-                                onDismiss = {
-                                    showTrailerDialog = false
-                                }
-                            )
-                        }
-
-                        // Comparison Dialog
-                        if (compareState != null) {
-                            val state = compareState!!
-                            AlertDialog(
-                                onDismissRequest = { /* Disabled during ranking */ },
-                                title = { Text("Which movie do you prefer?") },
-                                text = {
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                                    ) {
-                                        Text(
-                                            "Help us place '${state.newMovie.title}' in your rankings:",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-
-                                        // Side-by-side posters with clickable movie names
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            // First movie
-                                            Column(
-                                                modifier = Modifier.weight(1f),
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                AsyncImage(
-                                                    model = state.newMovie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                                    contentDescription = state.newMovie.title,
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .aspectRatio(2f / 3f)
-                                                        .clip(MaterialTheme.shapes.medium),
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                                Button(
-                                                    onClick = {
-                                                        rankingViewModel.compareMovies(
-                                                            newMovie = state.newMovie,
-                                                            compareWith = state.compareWith,
-                                                            preferredMovie = state.newMovie
-                                                        )
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth()
-                                                ) {
-                                                    Text(
-                                                        state.newMovie.title,
-                                                        maxLines = 2,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                }
-                                            }
-
-                                            // Second movie
-                                            Column(
-                                                modifier = Modifier.weight(1f),
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                AsyncImage(
-                                                    model = state.compareWith.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                                    contentDescription = state.compareWith.title,
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .aspectRatio(2f / 3f)
-                                                        .clip(MaterialTheme.shapes.medium),
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                                Button(
-                                                    onClick = {
-                                                        rankingViewModel.compareMovies(
-                                                            newMovie = state.newMovie,
-                                                            compareWith = state.compareWith,
-                                                            preferredMovie = state.compareWith
-                                                        )
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth()
-                                                ) {
-                                                    Text(
-                                                        state.compareWith.title,
-                                                        maxLines = 2,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                confirmButton = {},
-                                dismissButton = {}
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Listen to ranking events
     LaunchedEffect(Unit) {
         rankingViewModel.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
-                    // Close bottom sheet so message is visible at top
-                    selectedMovie = null
-                    snackbarHostState.showSnackbar(event.text)
-                }
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> {
-                    // Close bottom sheet so error message is visible at top
-                    selectedMovie = null
-                    snackbarHostState.showSnackbar(event.text)
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
+                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RSTopBar(recommendationViewModel: RecommendationViewModel) {
+    TopAppBar(
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(painter = painterResource(id = R.drawable.in_app_icon), contentDescription = "MovieTier", modifier = Modifier.size(32.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+        },
+        actions = {
+            IconButton(onClick = { recommendationViewModel.loadRecommendations() }) {
+                Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh recommendations")
+            }
+        },
+        windowInsets = WindowInsets(0, 0, 0, 0)
+    )
+}
+
+@Composable
+private fun RSContent(
+    uiState: com.cpen321.movietier.ui.viewmodels.RecommendationUiState,
+    padding: PaddingValues,
+    featuredMovieOffset: Int,
+    recommendationViewModel: RecommendationViewModel,
+    onRefreshFeatured: () -> Unit,
+    onMovieSelect: (Movie) -> Unit
+) {
+    Crossfade(
+        targetState = when {
+            uiState.isLoading -> RecommendationState.LOADING
+            uiState.errorMessage != null -> RecommendationState.ERROR
+            uiState.recommendations.isEmpty() -> RecommendationState.EMPTY
+            else -> RecommendationState.CONTENT
+        },
+        label = "recommendation_state"
+    ) { state ->
+        when (state) {
+            RecommendationState.LOADING -> LoadingState(modifier = Modifier.fillMaxSize().padding(padding), hint = "Finding recommendations...")
+            RecommendationState.ERROR -> ErrorState(message = uiState.errorMessage ?: "Failed to load recommendations", onRetry = { recommendationViewModel.loadRecommendations() }, modifier = Modifier.fillMaxSize().padding(padding))
+            RecommendationState.EMPTY -> EmptyState(icon = Icons.Default.Favorite, title = "No recommendations yet", message = "Rank some movies to get personalized suggestions", modifier = Modifier.fillMaxSize().padding(padding))
+            RecommendationState.CONTENT -> RSContentList(uiState, padding, featuredMovieOffset, recommendationViewModel, onRefreshFeatured, onMovieSelect)
+        }
+    }
+}
+
+@Composable
+private fun RSContentList(
+    uiState: com.cpen321.movietier.ui.viewmodels.RecommendationUiState,
+    padding: PaddingValues,
+    featuredMovieOffset: Int,
+    recommendationViewModel: RecommendationViewModel,
+    onRefreshFeatured: () -> Unit,
+    onMovieSelect: (Movie) -> Unit
+) {
+    val dayOfYear = remember { LocalDate.now().dayOfYear }
+    var currentMovie by remember { mutableStateOf<Movie?>(null) }
+    var currentQuote by remember { mutableStateOf("") }
+    var isLoadingQuote by remember { mutableStateOf(false) }
+
+    LaunchedEffect(dayOfYear, featuredMovieOffset, uiState.trendingMovies) {
+        if (uiState.trendingMovies.isNotEmpty()) {
+            val size = uiState.trendingMovies.size
+            val index = ((dayOfYear + featuredMovieOffset) % size + size) % size
+            currentMovie = uiState.trendingMovies[index]
+            currentQuote = ""
+        }
+    }
+
+    LaunchedEffect(currentMovie) {
+        currentMovie?.let { movie ->
+            isLoadingQuote = true
+            currentQuote = recommendationViewModel.getQuote(movie.title, movie.releaseDate?.take(4), movie.voteAverage)
+            isLoadingQuote = false
+        }
+    }
+
+    Column(Modifier.fillMaxSize().padding(padding)) {
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            currentMovie?.let { movie ->
+                item { FeaturedMovieCard(movie, currentQuote, { onMovieSelect(movie) }, onRefreshFeatured, Modifier.fillMaxWidth(), isLoadingQuote) }
+            }
+            item {
+                Text(
+                    text = if (uiState.isShowingTrending) "Trending Now" else "Recommended for You",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            items(uiState.recommendations, key = { it.id }) { movie ->
+                RecommendationCard(movie, { onMovieSelect(movie) }, Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+@Composable
+private fun RSDialogs(
+    selectedMovie: Movie?,
+    trailerKey: String?,
+    showTrailerDialog: Boolean,
+    trailerMovieTitle: String,
+    compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?,
+    country: String,
+    recommendationViewModel: RecommendationViewModel,
+    rankingViewModel: RankingViewModel,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState,
+    onTrailerKeyUpdate: (String?) -> Unit,
+    onDismissMovie: () -> Unit,
+    onShowTrailer: (String) -> Unit,
+    onDismissTrailer: (Boolean) -> Unit
+) {
+    selectedMovie?.let { movie ->
+        LaunchedEffect(movie.id) {
+            val result = recommendationViewModel.getMovieVideos(movie.id)
+            onTrailerKeyUpdate(when (result) {
+                is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
+                else -> null
+            })
+        }
+        MovieDetailBottomSheet(
+            movie = movie,
+            actions = MovieDetailActions(
+                onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
+                onPlayTrailer = trailerKey?.let { { onShowTrailer(movie.title) } },
+                onOpenWhereToWatch = {
+                    scope.launch {
+                        val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+                        var tmdbOpened = false
+                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
+                        if (!tmdbOpened) {
+                            when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
+                                is com.cpen321.movietier.data.repository.Result.Success -> {
+                                    val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
+                                    if (!res.data.link.isNullOrBlank()) {
+                                        try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
+                                        catch (e: ActivityNotFoundException) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                                    } else if (providers.isNotEmpty()) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                                    else { snackbarHostState.showSnackbar("No streaming info found") }
+                                }
+                                is com.cpen321.movietier.data.repository.Result.Error -> snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                else -> {}
+                            }
+                        }
+                    }
+                },
+                onAddToWatchlist = { recommendationViewModel.addToWatchlist(movie); onDismissMovie() },
+                onDismissRequest = onDismissMovie
+            )
+        )
+    }
+    if (showTrailerDialog && trailerKey != null) {
+        YouTubePlayerDialog(trailerKey, trailerMovieTitle) { onDismissTrailer(false) }
+    }
+    if (compareState != null) {
+        RSComparisonDialog(compareState, rankingViewModel)
+    }
+}
+
+@Composable
+private fun RSComparisonDialog(
+    compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState,
+    rankingViewModel: RankingViewModel
+) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("Which movie do you prefer?") },
+        text = {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Help us place '${compareState.newMovie.title}' in your rankings:", style = MaterialTheme.typography.bodyMedium)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    RSComparisonOption(compareState.newMovie, compareState, rankingViewModel, Modifier.weight(1f))
+                    RSComparisonOption(compareState.compareWith, compareState, rankingViewModel, Modifier.weight(1f))
                 }
             }
+        },
+        confirmButton = {},
+        dismissButton = {}
+    )
+}
+
+@Composable
+private fun RSComparisonOption(
+    movie: Movie,
+    state: com.cpen321.movietier.ui.viewmodels.CompareUiState,
+    rankingViewModel: RankingViewModel,
+    modifier: Modifier
+) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AsyncImage(
+            model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+            contentDescription = movie.title,
+            modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(MaterialTheme.shapes.medium),
+            contentScale = ContentScale.Crop
+        )
+        Button(onClick = { rankingViewModel.compareMovies(state.newMovie, state.compareWith, movie) }, modifier = Modifier.fillMaxWidth()) {
+            Text(movie.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
