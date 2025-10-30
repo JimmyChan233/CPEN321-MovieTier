@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.48% </span>
+                <span class="strong">92.52% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>147/174</span>
+                <span class='fraction'>161/174</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.84% </span>
+                <span class="strong">94.73% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>33/38</span>
+                <span class='fraction'>36/38</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.25% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>13/16</span>
+                <span class='fraction'>14/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.02% </span>
+                <span class="strong">92.3% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>142/169</span>
+                <span class='fraction'>156/169</span>
             </div>
         
             
@@ -778,27 +778,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1151,28 +1151,28 @@ router.get('/stream', authenticate, asyncHandler(<span class="fstat-no" title="f
 }));
 &nbsp;
 // Cancel a pending outgoing friend request
-router.delete('/requests/:requestId', authenticate, asyncHandler(<span class="fstat-no" title="function not covered" >async </span>(req: AuthRequest, res) =&gt; {
-<span class="cstat-no" title="statement not covered" >  try {</span>
-    const { requestId } = <span class="cstat-no" title="statement not covered" >req.params;</span>
-    const request = <span class="cstat-no" title="statement not covered" >await FriendRequest.findById(requestId);</span>
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!request) {</span>
-<span class="cstat-no" title="statement not covered" >      return res.status(404).json({ success: false, message: 'Friend request not found' });</span>
+router.delete('/requests/:requestId', authenticate, asyncHandler(async (req: AuthRequest, res) =&gt; {
+  try {
+    const { requestId } = req.params;
+    const request = await FriendRequest.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Friend request not found' });
     }
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (String(request.senderId) !== String(req.userId)) {</span>
-<span class="cstat-no" title="statement not covered" >      return res.status(403).json({ success: false, message: 'Not authorized to cancel this request' });</span>
+    if (String(request.senderId) !== String(req.userId)) {
+      return res.status(403).json({ success: false, message: 'Not authorized to cancel this request' });
     }
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (request.status !== 'pending') {</span>
-<span class="cstat-no" title="statement not covered" >      return res.status(400).json({ success: false, message: 'Request is not pending' });</span>
+    if (request.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Request is not pending' });
     }
-<span class="cstat-no" title="statement not covered" >    request.status = 'rejected';</span>
-<span class="cstat-no" title="statement not covered" >    await request.save();</span>
+    request.status = 'rejected';
+    await request.save();
 &nbsp;
     // Notify receiver
-<span class="cstat-no" title="statement not covered" >    sseService.send(String(request.receiverId), 'friend_request_canceled', { userId: request.senderId });</span>
+    sseService.send(String(request.receiverId), 'friend_request_canceled', { userId: request.senderId });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    res.json({ success: true, message: 'Friend request canceled' });</span>
+    res.json({ success: true, message: 'Friend request canceled' });
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    res.status(500).json({ success: false, message: 'Failed to cancel friend request' });</span>
+    res.status(500).json({ success: false, message: 'Failed to cancel friend request' });
   }
 }));
 &nbsp;
@@ -1192,7 +1192,7 @@ export const __test__ = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-29T23:17:03.730Z
+                at 2025-10-30T00:10:47.655Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
