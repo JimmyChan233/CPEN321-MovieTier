@@ -790,5 +790,102 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Unable to save comparison');
     });
+
+    // Uncovered line: 332 - Unable to find next comparison movie
+    it('should handle case when next comparison movie cannot be found', async () => {
+      // Create a session first and then mock RankedMovie.find to return empty array
+      const session = startSession((user as any)._id.toString(), {
+        movieId: 999,
+        title: 'New Movie',
+        posterPath: '/new.jpg'
+      }, 0);
+
+      jest.spyOn(RankedMovie, 'find').mockResolvedValueOnce([]);
+
+      const res = await request(app)
+        .post('/api/movies/compare')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          comparedMovieId: 100,
+          preferredMovieId: 999
+        });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to save comparison');
+    });
+  });
+
+  describe('Mocked: POST /add error handling', () => {
+    // Uncovered line: 36 - Unauthorized check in addMovie
+    it('should return 401 when userId is missing', async () => {
+      const invalidToken = 'Bearer invalid.jwt.token';
+
+      const res = await request(app)
+        .post('/api/movies/add')
+        .set('Authorization', invalidToken)
+        .send({
+          movieId: 123,
+          title: 'Test Movie',
+          posterPath: '/path.jpg'
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+
+    // Uncovered line: 23, 26 - watchlist removal error handling
+    it('should handle watchlist removal errors gracefully', async () => {
+      jest.spyOn(WatchlistItem, 'deleteOne').mockRejectedValueOnce(new Error('DB connection error'));
+
+      const res = await request(app)
+        .post('/api/movies/add')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movieId: 456,
+          title: 'New Movie',
+          posterPath: '/new.jpg'
+        });
+
+      // Should succeed even if watchlist removal fails
+      expect(res.status).toStrictEqual(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    // Uncovered line: 163 - Unable to find comparison movie on initial add
+    it('should handle case when no comparison movie found on initial add', async () => {
+      // Setup: create a ranked movie that gets deleted before comparison
+      jest.spyOn(RankedMovie, 'find').mockResolvedValueOnce([]);
+
+      const res = await request(app)
+        .post('/api/movies/add')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movieId: 789,
+          title: 'Another Movie',
+          posterPath: '/another.jpg'
+        });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to add movie to ranking');
+    });
+  });
+
+  describe('Mocked: POST /compare error handling', () => {
+    // Uncovered line: 192 - Unauthorized check in compareMovies
+    it('should return 401 when userId is missing in compareMovies', async () => {
+      const invalidToken = 'invalid.jwt.token';
+
+      const res = await request(app)
+        .post('/api/movies/compare')
+        .set('Authorization', `Bearer ${invalidToken}`)
+        .send({
+          preferredMovieId: 123
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
   });
 });
