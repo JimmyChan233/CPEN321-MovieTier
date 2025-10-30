@@ -401,7 +401,7 @@ describe('Advanced Friend Routes Tests', () => {
         .set('Authorization', `Bearer ${token1}`)
         .send({ email: `user${i}@example.com` });
 
-      expect([400, 404, 429]).toContain(res.status); // User doesn't exist or rate limited
+      expect(res.status).toStrictEqual(429); // Rate limited after multiple requests
     }
   });
 
@@ -419,7 +419,7 @@ describe('Advanced Friend Routes Tests', () => {
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: user2.email });
 
-    expect([409, 429]).toContain(res.status); // Conflict or rate limited
+    expect(res.status).toStrictEqual(429); // Rate limited
   });
 
   // Test Case 29: Get empty friends list

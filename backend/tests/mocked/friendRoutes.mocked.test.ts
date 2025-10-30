@@ -599,9 +599,8 @@ describe('DELETE /:friendId parameter validation', () => {
         .delete(pattern)
         .set('Authorization', `Bearer ${token1}`);
 
-      // Should return either 400 (validation) or 404 (route not found)
-      // Both are acceptable depending on Express routing behavior
-      expect([400, 404]).toContain(res.status);
+      // Should return 404 (route not found for empty friendId)
+      expect(res.status).toStrictEqual(404);
     }
   });
 
@@ -614,10 +613,9 @@ describe('DELETE /:friendId parameter validation', () => {
       .delete('/api/friends/ ')  // Space gets trimmed by Express
       .set('Authorization', `Bearer ${token1}`);
 
-    // The validation should prevent any database operations
-    // Status could be 400 or 404 depending on routing
-    expect([400, 404]).toContain(res.status);
-    
+    // Should return 404 (route not found for empty friendId)
+    expect(res.status).toStrictEqual(404);
+
     deleteSpy.mockRestore();
   });
 

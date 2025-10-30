@@ -230,7 +230,7 @@ describe('Unmocked: POST /friends/request', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ email: user.email });
 
-    expect([400, 409]).toContain(res.status);
+    expect(res.status).toStrictEqual(400);
   });
 
   // Input: Email of existing friend

@@ -352,7 +352,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
   });
 
   // Input: Invalid movieId format
-  // Expected status code: 404 or 400
+  // Expected status code: 400
   // Expected behavior: Validation or not found error
   // Expected output: Error message
   it('should handle invalid movieId format', async () => {
@@ -360,7 +360,7 @@ describe('Unmocked: DELETE /watchlist/:movieId - Additional Tests', () => {
       .delete('/invalid-movie-id')
       .set('Authorization', `Bearer ${token}`);
 
-    expect([400, 404]).toContain(res.status);
+    expect(res.status).toStrictEqual(400);
   });
 });
 

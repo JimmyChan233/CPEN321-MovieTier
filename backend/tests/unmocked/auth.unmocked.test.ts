@@ -123,7 +123,7 @@ describe('Unmocked: POST /auth/signin', () => {
   });
 
   // Input: Email for non-existent user
-  // Expected status code: 404 or 400
+  // Expected status code: 400
   // Expected behavior: Database is unchanged, error is returned
   // Expected output: Error message "User not found"
   it('should reject signin for non-existent user', async () => {
@@ -136,7 +136,7 @@ describe('Unmocked: POST /auth/signin', () => {
         googleId: 'google-999'
       });
 
-    expect([400, 404]).toContain(res.status);
+    expect(res.status).toStrictEqual(400);
     expect(res.body.message).toMatch(/not found|error/i);
   });
 });

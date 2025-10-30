@@ -251,7 +251,7 @@ describe('Mocked: Recommendations API Errors', () => {
       .get('/api/recommendations/trending')
       .set('Authorization', `Bearer ${token}`);
 
-    expect([500, 200]).toContain(res.status); // May cache or fail
+    expect(res.status).toStrictEqual(500);
   });
 
   // Mocked behavior: Database query fails for recommendations

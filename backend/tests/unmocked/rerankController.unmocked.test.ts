@@ -506,8 +506,8 @@ describe('Rerank Controller - Complete Coverage', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ rankedId });
 
-    // Should handle error
-    expect([500, 200]).toContain(res.status);
+    // Should handle error when connection is closed
+    expect(res.status).toStrictEqual(500);
 
     // Reconnect and wait for connection to be ready
     await mongoose.connect(mongoServer.getUri());

@@ -1105,8 +1105,8 @@ describe('DELETE /:activityId/comments/:commentId - Delete comment', () => {
       .delete(`/api/feed/${activity._id}/comments/invalid-id`)
       .set('Authorization', `Bearer ${token1}`);
 
-    // Should return 404 or 400 depending on how mongoose handles invalid ObjectId
-    expect([400, 404, 500]).toContain(res.status);
+    // Should return 500
+    expect(res.status).toStrictEqual(500);
   });
 
   it('should verify comment ownership before deletion', async () => {

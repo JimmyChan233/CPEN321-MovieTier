@@ -141,7 +141,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
   });
 
   // Input: Invalid email format
-  // Expected status code: 404 or 400
+  // Expected status code: 400
   // Expected behavior: User not found or validation error
   // Expected output: Error message
   it('should reject invalid email format', async () => {
@@ -150,7 +150,7 @@ describe('Unmocked: POST /friends/request - Additional Tests', () => {
       .set('Authorization', `Bearer ${token1}`)
       .send({ email: 'invalid-email' });
 
-    expect([400, 404]).toContain(res.status);
+    expect(res.status).toStrictEqual(400);
   });
 });
 

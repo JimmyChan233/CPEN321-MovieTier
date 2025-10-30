@@ -380,8 +380,8 @@ describe('Feed Route Handlers - Inline Handlers', () => {
       .post(`/api/feed/${(activity as any)._id.toString()}/like`)
       .set('Authorization', `Bearer ${token1}`);
 
-    // Should handle duplicate (unique index error)
-    expect([200, 400, 409, 500]).toContain(res.status);
+    // Should handle duplicate (unique index error) - 201 on first, then 400 or 409 on duplicate
+    expect(res.status).toStrictEqual(400);
   });
 
   // Test Case 17: DELETE /:activityId/like
@@ -428,8 +428,8 @@ describe('Feed Route Handlers - Inline Handlers', () => {
       .delete(`/api/feed/${(activity as any)._id.toString()}/like`)
       .set('Authorization', `Bearer ${token1}`);
 
-    // Should still succeed (no-op)
-    expect([200, 404]).toContain(res.status);
+    // Should handle not found when not previously liked
+    expect(res.status).toStrictEqual(404);
   });
 
   // Test Case 19: GET /:activityId/comments
