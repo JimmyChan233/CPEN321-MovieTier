@@ -177,6 +177,16 @@ describe('Feed Routes - Mocked Error Tests', () => {
   // ==================== GET /stream Error Tests ====================
 
   describe('GET /stream error handling', () => {
+    // Line 255: Unauthorized check
+    it('should return 401 when userId is missing', async () => {
+      const res = await request(app)
+        .get('/api/feed/stream')
+        .set('Authorization', 'Bearer invalid.token');
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+
     it('should handle SSE setup errors gracefully', async () => {
       const { sseService } = require('../../src/services/sse/sseService');
       sseService.addClient.mockImplementationOnce(() => {
