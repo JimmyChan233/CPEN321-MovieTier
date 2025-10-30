@@ -14,6 +14,12 @@ jest.mock('../../src/utils/logger', () => ({
   }
 }));
 
+// Mock fs to prevent file system access during tests
+jest.mock('fs', () => ({
+  existsSync: jest.fn(() => false),
+  readFileSync: jest.fn()
+}));
+
 describe('Notification Service Tests - Mocked', () => {
   let mockMessaging: any;
   let mockAdmin: any;
@@ -1024,8 +1030,12 @@ describe('Notification Service Tests - Mocked', () => {
   // Current coverage: 81.73% (improved from 80%)
   // Uncovered lines are primarily initialization edge cases and "not initialized" state checks
   // ============== INITIALIZATION TESTS ==============
-  
+
   describe('Firebase Initialization', () => {
+    // Reset mockAdmin.apps before each Firebase initialization test
+    beforeEach(() => {
+      mockAdmin.apps = [];
+    });
     it('should handle service account file not found', () => {
       process.env.FIREBASE_SERVICE_ACCOUNT_PATH = '/path/to/missing.json';
 
