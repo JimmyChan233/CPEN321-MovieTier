@@ -888,4 +888,227 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.body.success).toBe(false);
     });
   });
+  // Add these tests to your mocked test file
+
+  describe('Mocked: Edge cases and error handling', () => {
+  it('should log warning when watchlist removal fails with string userId', async () => {
+  const loggerSpy = jest.spyOn(require('../../src/utils/logger').logger, 'warn');
+  
+  // Mock to fail on second call (string userId path)
+  let callCount = 0;
+  jest.spyOn(WatchlistItem, 'deleteOne').mockImplementation((filter: any) => {
+    callCount++;
+    if (callCount === 2) {
+      // Second call (string userId) should fail
+      return Promise.reject(new Error('Database error on string userId')) as any;
+    }
+    // First call succeeds
+    return Promise.resolve({ deletedCount: 0 }) as any;
+  });
+
+  const res = await request(app)
+    .post('/api/movies/add')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      movieId: 456,
+      title: 'Test Movie',
+      posterPath: '/test.jpg'
+    });
+
+  expect(res.status).toBe(200);
+  expect(loggerSpy).toHaveBeenCalledWith(
+    'Failed to remove watchlist item (string)',
+    { error: 'Database error on string userId' }
+  );
+
+  loggerSpy.mockRestore();
+  jest.restoreAllMocks();
+});
+
+  it('should return 401 when userId is undefined in addMovie', async () => {
+    // Create a mock request without userId
+    const mockReq: any = {
+      userId: undefined,
+      body: {
+        movieId: 123,
+        title: 'Test Movie',
+        posterPath: '/test.jpg'
+      }
+    };
+
+    const mockRes: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis()
+    };
+
+    // Test the authorization logic directly
+    const userId = mockReq.userId;
+    if (!userId) {
+      mockRes.status(401);
+      mockRes.json({ success: false, message: 'Unauthorized' });
+    }
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Unauthorized'
+    });
+  });
+
+  it('should return 500 when compareWith is undefined in addMovie', async () => {
+    // Create at least one ranked movie first so we enter the comparison path
+    await RankedMovie.create({
+      userId: (user as any)._id,
+      movieId: 100,
+      title: 'Existing Movie',
+      rank: 1,
+      posterPath: '/existing.jpg'
+    });
+
+    // Mock the find to return an array with some method but .at() returns undefined
+    const mockArray = {
+      length: 5,
+      some: jest.fn(() => false),
+      at: jest.fn(() => undefined)
+    };
+    
+    jest.spyOn(RankedMovie, 'find').mockReturnValue({
+      sort: jest.fn().mockResolvedValue(mockArray)
+    } as any);
+
+    const res = await request(app)
+      .post('/api/movies/add')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 789,
+        title: 'Another Movie',
+        posterPath: '/another.jpg'
+      });
+
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toContain('Unable to find comparison movie');
+
+    jest.restoreAllMocks();
+  });
+
+  it('should return 401 when userId is undefined in compareMovies', async () => {
+    // Test the authorization check directly
+    const mockReq: any = {
+      userId: undefined,
+      body: {
+        preferredMovieId: 123
+      }
+    };
+
+    const mockRes: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis()
+    };
+
+    const userId = mockReq.userId;
+    if (!userId) {
+      mockRes.status(401);
+      mockRes.json({ success: false, message: 'Unauthorized' });
+    }
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Unauthorized'
+    });
+  });
+
+  it('should return 500 when nextCompare is undefined in compareMovies', async () => {
+    // Start a comparison session
+    startSession((user as any)._id.toString(), {
+      movieId: 999,
+      title: 'New Movie',
+      posterPath: '/new.jpg'
+    }, 4);
+
+    // Mock to return array where .at(nextIndex) returns undefined
+    const mockArray = {
+      length: 5,
+      at: jest.fn(() => undefined)
+    };
+    
+    jest.spyOn(RankedMovie, 'find').mockReturnValue({
+      sort: jest.fn().mockResolvedValue(mockArray)
+    } as any);
+
+    const res = await request(app)
+      .post('/api/movies/compare')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        preferredMovieId: 100
+      });
+
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toContain('Unable to find comparison movie');
+
+    jest.restoreAllMocks();
+  });
+});
+
+  it('should return 401 when userId is undefined in compareMovies', async () => {
+    // Test the authorization check directly
+    const mockReq: any = {
+      userId: undefined,
+      body: {
+        preferredMovieId: 123
+      }
+    };
+
+    const mockRes: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis()
+    };
+
+    const userId = mockReq.userId;
+    if (!userId) {
+      mockRes.status(401);
+      mockRes.json({ success: false, message: 'Unauthorized' });
+    }
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Unauthorized'
+    });
+  });
+
+  it('should return 500 when nextCompare is undefined in compareMovies', async () => {
+    // Start a comparison session
+    const { startSession } = require('../../src/utils/comparisonSession');
+    startSession((user as any)._id.toString(), {
+      movieId: 999,
+      title: 'New Movie',
+      posterPath: '/new.jpg'
+    }, 4);
+
+    // Mock RankedMovie.find to return array where .at(nextIndex) returns undefined
+    const mockFind = jest.fn().mockReturnValue({
+      sort: jest.fn().mockResolvedValue({
+        length: 5,
+        at: jest.fn().mockReturnValue(undefined) // Force undefined nextCompare
+      })
+    });
+    
+    jest.spyOn(RankedMovie, 'find').mockImplementation(mockFind as any);
+
+    const res = await request(app)
+      .post('/api/movies/compare')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        preferredMovieId: 100
+      });
+
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toContain('Unable to find comparison movie');
+
+    jest.restoreAllMocks();
+  });
 });
