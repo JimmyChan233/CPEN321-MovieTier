@@ -34,6 +34,16 @@ yarn-error.log*
 # Test coverage and output
 backend/coverage/
 backend/test-output*.txt
+backend/test-output*.log
+backend/test-results*.txt
+backend/test-*.log
+backend/TESTING_STATUS.md
+backend/fix_test*.sh
 
 # Old/reference projects
 M1-starter-app-itsjimmy/
+
+# Temporary analysis and reference files
+QUICK_REFERENCE.md
+SSE_NOTIFICATION_ANALYSIS.md
+VERIFICATION_SUMMARY.txt

@@ -5,3 +5,10 @@ dist/
 .DS_Store
 uploads/
 serviceAccountKey.json
+
+# Test artifacts
+test-output*.txt
+test-results*.txt
+test-*.log
+TESTING_STATUS.md
+fix_test*.sh
