@@ -890,4 +890,644 @@ describe('Movie Routes - Mocked Tests', () => {
       expect(res.body.message).toContain('Unable to load movie videos');
     });
   });
+  describe('GET /search - Branch coverage', () => {
+  it('should handle missing optional fields in search results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id: 550,
+            title: 'Fight Club'
+            // Missing: overview, poster_path, release_date, vote_average
+          }
+        ]
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=Fight')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].overview).toBeNull();
+    expect(res.body.data[0].posterPath).toBeNull();
+    expect(res.body.data[0].releaseDate).toBeNull();
+    expect(res.body.data[0].voteAverage).toBeNull();
+  });
+
+  it('should handle missing zh results data structure', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    // zh-CN search returns malformed data
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: null // Not an array
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=测试')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
+
+  it('should handle CJK search with missing optional fields in zh results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [{
+          id: 123,
+          title: '测试'
+          // Missing optional fields
+        }]
+      }
+    });
+
+    // Detail fetch returns data with missing fields
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        id: 123
+        // Missing: title, overview, poster_path, etc.
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=测试')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].title).toBe('测试'); // Falls back to zh title
+  });
+
+  it('should handle CJK search detail fetch with all optional fields missing', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [{
+          id: 123,
+          title: '测试'
+          // No optional fields
+        }]
+      }
+    });
+
+    // Detail fetch returns minimal data
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {} // Empty object
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=测试')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].overview).toBeNull();
+    expect(res.body.data[0].posterPath).toBeNull();
+    expect(res.body.data[0].releaseDate).toBeNull();
+    expect(res.body.data[0].voteAverage).toBeNull();
+  });
+
+  it('should handle undefined data.results in search', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        // results is undefined
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=Test')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
+});
+
+describe('GET /:movieId/details - Branch coverage', () => {
+  it('should handle missing optional fields in movie details', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        id: 550,
+        title: 'Fight Club'
+        // Missing: overview, poster_path, release_date, vote_average
+      }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        cast: [
+          { name: 'Brad Pitt' },
+          { name: 'Edward Norton' }
+        ]
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/details')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.overview).toBeNull();
+    expect(res.body.data.posterPath).toBeNull();
+    expect(res.body.data.releaseDate).toBeNull();
+    expect(res.body.data.voteAverage).toBeNull();
+  });
+
+  it('should handle undefined detailsResp.data', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      // data is undefined
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        cast: []
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/details')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBeUndefined();
+  });
+
+  it('should handle non-array cast data', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        id: 550,
+        title: 'Fight Club'
+      }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        cast: null // Not an array
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/details')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.cast).toEqual([]);
+  });
+
+  it('should handle undefined creditsResp.data', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        id: 550,
+        title: 'Fight Club'
+      }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      // data is undefined
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/details')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.cast).toEqual([]);
+  });
+
+  it('should filter out cast members without names', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        id: 550,
+        title: 'Fight Club'
+      }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        cast: [
+          { name: 'Brad Pitt' },
+          {}, // No name property
+          { name: null }, // Null name
+          { name: '' }, // Empty name
+          { name: 'Edward Norton' }
+        ]
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/details')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.cast).toEqual(['Brad Pitt', 'Edward Norton']);
+  });
+});
+describe('POST /rank - Branch coverage', () => {
+  it('should use TMDB_KEY as fallback when TMDB_API_KEY not set', async () => {
+    const originalApiKey = process.env.TMDB_API_KEY;
+    const originalKey = process.env.TMDB_KEY;
+    
+    delete process.env.TMDB_API_KEY;
+    process.env.TMDB_KEY = 'fallback-key';
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        overview: 'Enriched overview',
+        poster_path: '/enriched.jpg'
+      }
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 550,
+        title: 'Fight Club'
+      });
+
+    expect(res.status).toBe(200);
+
+    process.env.TMDB_API_KEY = originalApiKey;
+    process.env.TMDB_KEY = originalKey;
+  });
+
+  it('should not enrich when overview exists but poster missing', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        overview: 'From TMDB',
+        poster_path: '/from_tmdb.jpg'
+      }
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 550,
+        title: 'Fight Club',
+        overview: 'Provided overview'
+        // posterPath missing
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.movie.overview).toBe('Provided overview');
+    expect(res.body.data.movie.posterPath).toBe('/from_tmdb.jpg');
+  });
+
+  it('should not enrich when poster exists but overview missing', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        overview: 'From TMDB',
+        poster_path: '/from_tmdb.jpg'
+      }
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 550,
+        title: 'Fight Club',
+        posterPath: '/provided.jpg'
+        // overview missing
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.movie.posterPath).toBe('/provided.jpg');
+    expect(res.body.data.movie.overview).toBe('From TMDB');
+  });
+
+  it('should handle TMDB returning undefined for optional fields', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        // overview and poster_path are undefined
+      }
+    });
+
+    const res = await request(app)
+      .post('/api/movies/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 550,
+        title: 'Fight Club'
+      });
+
+    expect(res.status).toBe(200);
+  });
+
+  it('should skip TMDB enrichment when both overview and poster provided', async () => {
+    const tmdbSpy = mockTmdbGet;
+
+    const res = await request(app)
+      .post('/api/movies/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 550,
+        title: 'Fight Club',
+        overview: 'Provided overview',
+        posterPath: '/provided.jpg'
+      });
+
+    expect(res.status).toBe(200);
+    // TMDB should not be called since both are provided
+    expect(tmdbSpy).not.toHaveBeenCalled();
+  });
+
+  it('should skip TMDB enrichment when no API key available', async () => {
+    const originalApiKey = process.env.TMDB_API_KEY;
+    const originalKey = process.env.TMDB_KEY;
+    
+    delete process.env.TMDB_API_KEY;
+    delete process.env.TMDB_KEY;
+
+    const res = await request(app)
+      .post('/api/movies/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 550,
+        title: 'Fight Club'
+      });
+
+    expect(res.status).toBe(200);
+
+    process.env.TMDB_API_KEY = originalApiKey;
+    process.env.TMDB_KEY = originalKey;
+  });
+});
+
+describe('GET /:movieId/providers - Branch coverage', () => {
+  it('should handle missing country data in results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: {
+          US: {
+            link: 'https://example.com',
+            flatrate: [{ provider_name: 'Netflix' }]
+          }
+          // CA is missing
+        }
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/providers?country=CA')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.link).toContain('themoviedb.org/movie/550/watch');
+    expect(res.body.data.providers.flatrate).toEqual([]);
+  });
+
+  it('should handle undefined data.results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        // results is undefined
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/providers')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.link).toContain('themoviedb.org');
+  });
+
+  it('should handle null data.results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: null
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/providers')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.link).toContain('themoviedb.org');
+  });
+});
+
+describe('GET /:movieId/videos - Branch coverage', () => {
+  it('should handle non-array video results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: null // Not an array
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/videos')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeNull();
+  });
+
+  it('should handle undefined data.results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        // results is undefined
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/videos')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeNull();
+  });
+
+  it('should fallback to first YouTube video when no trailer or teaser', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            key: 'behind123',
+            name: 'Behind the Scenes',
+            type: 'Behind the Scenes',
+            site: 'YouTube'
+          },
+          {
+            key: 'clip456',
+            name: 'Clip',
+            type: 'Clip',
+            site: 'YouTube'
+          }
+        ]
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/videos')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.key).toBe('behind123'); // First YouTube video
+  });
+
+  it('should filter out non-YouTube videos', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            key: 'vimeo123',
+            name: 'Trailer',
+            type: 'Trailer',
+            site: 'Vimeo'
+          },
+          {
+            key: 'yt456',
+            name: 'Teaser',
+            type: 'Teaser',
+            site: 'YouTube'
+          }
+        ]
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/videos')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.key).toBe('yt456'); // Should skip Vimeo
+  });
+});
+
+describe('GET /search - Additional branch coverage', () => {
+it('should handle cast array with undefined/null names when filtering', async () => {
+  mockTmdbGet.mockResolvedValueOnce({
+    data: {
+      results: [{
+        id: 550,
+        title: 'Fight Club',
+        overview: 'Overview',
+        poster_path: '/poster.jpg',
+        release_date: '1999-10-15',
+        vote_average: 8.4
+      }]
+    }
+  });
+
+  mockTmdbGet.mockResolvedValueOnce({
+    data: {
+      cast: [
+        { name: 'Brad Pitt' },
+        { name: 'Edward Norton' },
+        { name: 'Helena Bonham Carter' },
+        { name: undefined }, // This will be after the slice
+        { name: null }
+      ]
+    }
+  });
+
+  const res = await request(app)
+    .get('/api/movies/search?query=Fight&includeCast=true')
+    .set('Authorization', `Bearer ${token}`);
+
+  expect(res.status).toBe(200);
+  // Should have 3 valid names (first 3 are valid, slice happens before filter)
+  expect(res.body.data[0].cast).toEqual(['Brad Pitt', 'Edward Norton', 'Helena Bonham Carter']);
+});
+
+it('should filter out invalid names within first 3 cast members', async () => {
+  mockTmdbGet.mockResolvedValueOnce({
+    data: {
+      results: [{
+        id: 550,
+        title: 'Fight Club',
+        overview: 'Overview',
+        poster_path: '/poster.jpg',
+        release_date: '1999-10-15',
+        vote_average: 8.4
+      }]
+    }
+  });
+
+  mockTmdbGet.mockResolvedValueOnce({
+    data: {
+      cast: [
+        { name: 'Brad Pitt' },
+        { name: undefined }, // Within first 3, will be filtered
+        { name: 'Edward Norton' },
+        { name: 'Helena Bonham Carter' }, // After first 3, won't be included
+        { name: null }
+      ]
+    }
+  });
+
+  const res = await request(app)
+    .get('/api/movies/search?query=Fight&includeCast=true')
+    .set('Authorization', `Bearer ${token}`);
+
+  expect(res.status).toBe(200);
+  // slice(0,3) gets first 3, then filter removes undefined -> ['Brad Pitt', 'Edward Norton']
+  expect(res.body.data[0].cast).toEqual(['Brad Pitt', 'Edward Norton']);
+});
+
+  it('should handle non-array credits.cast', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [{
+          id: 550,
+          title: 'Fight Club',
+          overview: 'Overview',
+          poster_path: '/poster.jpg',
+          release_date: '1999-10-15',
+          vote_average: 8.4
+        }]
+      }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        cast: null // Not an array
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=Fight&includeCast=true')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].cast).toEqual([]);
+  });
+
+  it('should handle undefined credits.cast', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [{
+          id: 550,
+          title: 'Fight Club'
+        }]
+      }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        // cast is undefined
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=Fight&includeCast=true')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].cast).toEqual([]);
+  });
+});
 });
