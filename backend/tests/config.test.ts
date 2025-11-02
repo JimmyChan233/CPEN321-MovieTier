@@ -1,5 +1,10 @@
 
-import config from '../src/config';
+import dotenv from 'dotenv';
+
+// Mock dotenv to prevent loading .env file during tests
+jest.mock('dotenv', () => ({
+  config: jest.fn(),
+}));
 
 describe('config', () => {
   const OLD_ENV = process.env;
@@ -7,6 +12,7 @@ describe('config', () => {
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...OLD_ENV };
+    (dotenv.config as jest.Mock).mockClear();
   });
 
   afterAll(() => {
@@ -40,7 +46,7 @@ describe('config', () => {
 
     const configModule = require('../src/config').default;
 
-    expect(configModule.port).toBe('4000');
+    expect(configModule.port).toBe(4000);
     expect(configModule.nodeEnv).toBe('production');
     expect(configModule.mongodbUri).toBe('mongodb://test');
     expect(configModule.jwtSecret).toBe('test-secret');

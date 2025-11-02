@@ -37,7 +37,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export default {
-  port: process.env.PORT ?? 3000,
+  port: parseInt(process.env.PORT ?? '3000', 10),
   nodeEnv: process.env.NODE_ENV ?? 'development',
   mongodbUri: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/movietier',
   googleClientId: process.env.GOOGLE_CLIENT_ID,
