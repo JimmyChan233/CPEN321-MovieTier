@@ -5,7 +5,10 @@ import { startSession } from '../utils/comparisonSession';
 
 export const startRerank = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId as string;
+    const userId = (req as { userId?: string }).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
     const { rankedId } = req.body as { rankedId: string };
     if (!rankedId || !mongoose.Types.ObjectId.isValid(rankedId)) {
       return res.status(400).json({ success: false, message: 'Invalid rankedId' });
@@ -17,7 +20,7 @@ export const startRerank = async (req: Request, res: Response) => {
 
     // Remove the item and close the gap
     const removedRank = doc.rank;
-    const newMovie = { movieId: doc.movieId, title: doc.title, posterPath: doc.posterPath as string | undefined };
+    const newMovie = { movieId: doc.movieId, title: doc.title, posterPath: doc.posterPath };
     await doc.deleteOne();
     await RankedMovieModel.updateMany({ userId: userObjectId, rank: { $gt: removedRank } }, { $inc: { rank: -1 } });
 
@@ -38,7 +41,10 @@ export const startRerank = async (req: Request, res: Response) => {
     // Start a compare session and return mid element as first comparator
     startSession(userId, newMovie, remaining.length - 1);
     const mid = Math.floor((0 + (remaining.length - 1)) / 2);
-    const cmp = remaining[mid];
+    const cmp = remaining.at(mid);
+    if (!cmp) {
+      return res.status(500).json({ success: false, message: 'Unable to find comparison movie' });
+    }
     return res.json({
       success: true,
       status: 'compare',

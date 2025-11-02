@@ -45,6 +45,20 @@ android {
         compose = true
         buildConfig = true
     }
+    packaging {
+        resources {
+            excludes += listOf(
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE-notice.md",
+                "META-INF/LICENSE.txt",
+                "META-INF/LICENSE",
+                "META-INF/NOTICE.md",
+                "META-INF/NOTICE.txt",
+                "META-INF/NOTICE",
+                "META-INF/*.md"
+            )
+        }
+    }
 }
 
 // Apply Google Services plugin only if a google-services.json exists
@@ -133,4 +147,26 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Jetpack Compose Testing
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.0")
+    androidTestImplementation("androidx.compose.ui:ui-test-manifest:1.7.0")
+
+    // Android Test Framework
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
+    // MockK for mocking
+    androidTestImplementation("io.mockk:mockk-android:1.13.9") {
+        exclude(group = "org.junit.jupiter")
+        exclude(group = "org.junit.platform")
+    }
+    androidTestImplementation("io.mockk:mockk:1.13.9") {
+        exclude(group = "org.junit.jupiter")
+        exclude(group = "org.junit.platform")
+    }
+
+    // Coroutines Testing
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
 }

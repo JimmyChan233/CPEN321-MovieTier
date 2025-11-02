@@ -1,18 +1,20 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { Friendship, FriendRequest } from '../models/friend/Friend';
 import User from '../models/user/User';
 import { sseService } from '../services/sse/sseService';
 import notificationService from '../services/notification.service';
+import { asyncHandler } from '../utils/asyncHandler';
 
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
-const requestTimestamps: Map<string, number[]> = new Map();
+const requestTimestamps = new Map<string, number[]>();
 
 export function checkRateLimit(userId: string): boolean {
   const now = Date.now();
-  const arr = requestTimestamps.get(userId) || [];
+  const arr = requestTimestamps.get(userId) ?? [];
   const recent = arr.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
   if (recent.length >= RATE_LIMIT_MAX) return false;
   recent.push(now);
@@ -22,17 +24,17 @@ export function checkRateLimit(userId: string): boolean {
 
 const router = Router();
 
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const friendships = await Friendship.find({ userId: req.userId }).populate('friendId');
-    const friends = friendships.map(f => (f as any).friendId);
+    const friends = friendships.map(f => (f as unknown as { friendId: unknown }).friendId);
     res.json({ success: true, data: friends });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get friends' });
   }
-});
+}));
 
-router.get('/requests', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     // Return pending requests directed to the current user (no populate to match frontend model)
     const requests = await FriendRequest.find({
@@ -43,55 +45,61 @@ router.get('/requests', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get requests' });
   }
-});
+}));
 
 // Incoming requests with sender details
-router.get('/requests/detailed', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests/detailed', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const requests = await FriendRequest.find({ receiverId: req.userId, status: 'pending' })
       .populate('senderId', '_id email name profileImageUrl');
-    const data = requests.map((r: any) => ({
-      _id: r._id,
-      sender: r.senderId,
-      receiverId: r.receiverId,
-      status: r.status,
-      createdAt: r.createdAt
-    }));
+    const data = requests.map((r: unknown) => {
+      const request = r as { _id: unknown; senderId: unknown; receiverId: unknown; status: unknown; createdAt: unknown };
+      return {
+        _id: request._id,
+        sender: request.senderId,
+        receiverId: request.receiverId,
+        status: request.status,
+        createdAt: request.createdAt
+      };
+    });
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get requests' });
   }
-});
+}));
 
 // Outgoing requests (pending) basic
-router.get('/requests/outgoing', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests/outgoing', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const requests = await FriendRequest.find({ senderId: req.userId, status: 'pending' });
     res.json({ success: true, data: requests });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get outgoing requests' });
   }
-});
+}));
 
 // Outgoing requests detailed with receiver profile
-router.get('/requests/outgoing/detailed', authenticate, async (req: AuthRequest, res) => {
+router.get('/requests/outgoing/detailed', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const requests = await FriendRequest.find({ senderId: req.userId, status: 'pending' })
       .populate('receiverId', '_id email name profileImageUrl');
-    const data = requests.map((r: any) => ({
-      _id: r._id,
-      receiver: r.receiverId,
-      senderId: r.senderId,
-      status: r.status,
-      createdAt: r.createdAt
-    }));
+    const data = requests.map((r: unknown) => {
+      const request = r as { _id: unknown; receiverId: unknown; senderId: unknown; status: unknown; createdAt: unknown };
+      return {
+        _id: request._id,
+        receiver: request.receiverId,
+        senderId: request.senderId,
+        status: request.status,
+        createdAt: request.createdAt
+      };
+    });
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get outgoing requests' });
   }
-});
+}));
 
-router.post('/request', authenticate, async (req: AuthRequest, res) => {
+router.post('/request', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { email } = req.body as { email?: string };
 
@@ -126,7 +134,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
     // Check if already friends
     const existingFriendship = await Friendship.findOne({ userId: req.userId, friendId: friend._id });
     if (existingFriendship) {
-      return res.status(400).json({ success: false, message: 'Already friends with this user' });
+      return res.status(409).json({ success: false, message: 'Already friends with this user' });
     }
 
     // Check if a pending request already exists from current user to target
@@ -136,7 +144,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
       status: 'pending'
     });
     if (existingPending) {
-      return res.status(400).json({ success: false, message: 'Friend request already sent' });
+      return res.status(409).json({ success: false, message: 'Friend request already sent' });
     }
 
     // Also check if reverse pending request exists (the other user already sent you a request)
@@ -174,13 +182,13 @@ router.post('/request', authenticate, async (req: AuthRequest, res) => {
       }
     }
 
-    res.json({ success: true, data: request });
+    res.status(201).json({ success: true, data: request });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to send friend request. Please try again' });
   }
-});
+}));
 
-router.post('/respond', authenticate, async (req: AuthRequest, res) => {
+router.post('/respond', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { requestId, accept } = req.body as { requestId?: string; accept?: boolean };
 
@@ -262,19 +270,33 @@ router.post('/respond', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to respond to request' });
   }
-});
+}));
 
-router.delete('/:friendId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { friendId } = req.params;
     if (!friendId) {
       return res.status(400).json({ success: false, message: 'friendId is required' });
     }
 
+    // Validate friendId format
+    if (!mongoose.Types.ObjectId.isValid(friendId)) {
+      return res.status(400).json({ success: false, message: 'Invalid friendId format' });
+    }
+
+    // Check if user is trying to remove themselves
+    if (String(req.userId) === String(friendId)) {
+      return res.status(400).json({ success: false, message: 'Cannot remove yourself' });
+    }
+
+    // Convert to ObjectIds for proper matching
+    const userObjectId = new mongoose.Types.ObjectId(req.userId);
+    const friendObjectId = new mongoose.Types.ObjectId(friendId);
+
     const result = await Friendship.deleteMany({
       $or: [
-        { userId: req.userId, friendId },
-        { userId: friendId, friendId: req.userId }
+        { userId: userObjectId, friendId: friendObjectId },
+        { userId: friendObjectId, friendId: userObjectId }
       ]
     });
 
@@ -290,10 +312,11 @@ router.delete('/:friendId', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to remove friend' });
   }
-});
+}));
 
 // SSE stream for friend events
-router.get('/stream', authenticate, async (req: AuthRequest, res) => {
+// eslint-disable-next-line @typescript-eslint/require-await
+router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -301,7 +324,7 @@ router.get('/stream', authenticate, async (req: AuthRequest, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders?.();
+    res.flushHeaders();
     res.write(`event: connected\n` + `data: {"ok":true}\n\n`);
 
     sseService.addClient(String(req.userId), res);
@@ -312,10 +335,10 @@ router.get('/stream', authenticate, async (req: AuthRequest, res) => {
   } catch {
     res.end();
   }
-});
+}));
 
 // Cancel a pending outgoing friend request
-router.delete('/requests/:requestId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/requests/:requestId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { requestId } = req.params;
     const request = await FriendRequest.findById(requestId);
@@ -338,7 +361,7 @@ router.delete('/requests/:requestId', authenticate, async (req: AuthRequest, res
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to cancel friend request' });
   }
-});
+}));
 
 export default router;
 

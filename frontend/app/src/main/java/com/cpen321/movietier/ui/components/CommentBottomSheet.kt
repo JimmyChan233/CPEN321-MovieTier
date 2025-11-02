@@ -38,7 +38,6 @@ fun CommentBottomSheet(
                 .fillMaxWidth()
                 .fillMaxHeight(0.8f)
         ) {
-            // Header
             Text(
                 text = "Comments",
                 style = MaterialTheme.typography.titleLarge,
@@ -48,94 +47,119 @@ fun CommentBottomSheet(
 
             HorizontalDivider()
 
-            // Comments list (scrollable)
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 12.dp)
-            ) {
-                if (comments.isEmpty()) {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "No comments yet",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Be the first to comment!",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-                items(comments) { comment ->
-                    CommentItem(
-                        comment = comment,
-                        currentUserId = currentUserId,
-                        onDelete = { onDeleteComment(comment.id) }
-                    )
-                }
-            }
+            CommentsList(comments, currentUserId, onDeleteComment)
 
-            // Fixed input bar at bottom
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                tonalElevation = 8.dp,
-                shadowElevation = 8.dp
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        TextField(
-                            value = commentText,
-                            onValueChange = { commentText = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = { Text("Add a comment...") },
-                            maxLines = 4,
-                            shape = MaterialTheme.shapes.medium,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
-                            )
-                        )
-                        Button(
-                            onClick = {
-                                if (commentText.isNotBlank()) {
-                                    onAddComment(commentText)
-                                    commentText = ""
-                                }
-                            },
-                            enabled = commentText.isNotBlank(),
-                            modifier = Modifier.height(56.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = "Send",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+            CommentInputBar(
+                commentText = commentText,
+                onCommentTextChange = { commentText = it },
+                onSendComment = {
+                    if (commentText.isNotBlank()) {
+                        onAddComment(commentText)
+                        commentText = ""
                     }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.ColumnScope.CommentsList(
+    comments: List<FeedComment>,
+    currentUserId: String?,
+    onDeleteComment: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 12.dp)
+    ) {
+        if (comments.isEmpty()) {
+            item {
+                CommentsEmptyState()
+            }
+        }
+        items(comments) { comment ->
+            CommentItem(
+                comment = comment,
+                currentUserId = currentUserId,
+                onDelete = { onDeleteComment(comment.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CommentsEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "No comments yet",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Be the first to comment!",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun CommentInputBar(
+    commentText: String,
+    onCommentTextChange: (String) -> Unit,
+    onSendComment: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                TextField(
+                    value = commentText,
+                    onValueChange = onCommentTextChange,
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Add a comment...") },
+                    maxLines = 4,
+                    shape = MaterialTheme.shapes.medium,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                        unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+                    )
+                )
+                Button(
+                    onClick = onSendComment,
+                    enabled = commentText.isNotBlank(),
+                    modifier = Modifier.height(56.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Send",
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
@@ -160,35 +184,10 @@ private fun CommentItem(
             name = comment.userName,
             size = 40.dp
         )
-        Column(modifier = Modifier.weight(1f)) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = comment.userName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = formatIsoToPstDateTime(comment.createdAt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = comment.text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        CommentContent(comment)
 
-        // Show delete button only for user's own comments
         if (currentUserId == comment.userId) {
-            IconButton(
-                onClick = { showDeleteDialog = true }
-            ) {
+            IconButton(onClick = { showDeleteDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete comment",
@@ -198,27 +197,62 @@ private fun CommentItem(
         }
     }
 
-    // Delete confirmation dialog
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Comment") },
-            text = { Text("Are you sure you want to delete this comment?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete()
-                    }
-                ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
+        DeleteCommentDialog(
+            onConfirm = {
+                showDeleteDialog = false
+                onDelete()
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { showDeleteDialog = false }
         )
     }
+}
+
+@Composable
+private fun RowScope.CommentContent(comment: FeedComment) {
+    Column(modifier = Modifier.weight(1f)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = comment.userName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = formatIsoToPstDateTime(comment.createdAt),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = comment.text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun DeleteCommentDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete Comment") },
+        text = { Text("Are you sure you want to delete this comment?") },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Delete", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

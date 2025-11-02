@@ -4,9 +4,10 @@ import com.cpen321.movietier.data.model.*
 import retrofit2.Response
 import retrofit2.http.*
 
-interface ApiService {
-
-    // Authentication
+/**
+ * Authentication API endpoints
+ */
+interface AuthApiService {
     @POST("auth/signin")
     suspend fun signIn(@Body request: LoginRequest): Response<LoginResponse>
 
@@ -18,8 +19,12 @@ interface ApiService {
 
     @DELETE("auth/account")
     suspend fun deleteAccount(): Response<ApiResponse<Unit>>
+}
 
-    // User
+/**
+ * User API endpoints
+ */
+interface UserApiService {
     @GET("users/{userId}")
     suspend fun getUser(@Path("userId") userId: String): Response<ApiResponse<User>>
 
@@ -37,9 +42,12 @@ interface ApiService {
 
     @GET("users/search")
     suspend fun searchUsers(@Query("query") query: String): Response<ApiResponse<List<User>>>
+}
 
-
-    // Friends
+/**
+ * Friends API endpoints
+ */
+interface FriendsApiService {
     @GET("friends")
     suspend fun getFriends(): Response<ApiResponse<List<Friend>>>
 
@@ -66,8 +74,12 @@ interface ApiService {
 
     @DELETE("friends/requests/{requestId}")
     suspend fun cancelFriendRequest(@Path("requestId") requestId: String): Response<ApiResponse<Unit>>
+}
 
-    // Movies
+/**
+ * Movies API endpoints
+ */
+interface MoviesApiService {
     @GET("movies/search")
     suspend fun searchMovies(
         @Query("query") query: String,
@@ -118,8 +130,12 @@ interface ApiService {
     suspend fun getMovieVideos(
         @Path("movieId") movieId: Int
     ): Response<ApiResponse<MovieVideo?>>
+}
 
-    // Feed
+/**
+ * Feed API endpoints
+ */
+interface FeedApiService {
     @GET("feed")
     suspend fun getFeed(): Response<ApiResponse<List<FeedActivity>>>
 
@@ -149,8 +165,12 @@ interface ApiService {
         @Path("activityId") activityId: String,
         @Path("commentId") commentId: String
     ): Response<ApiResponse<Unit>>
+}
 
-    // Watchlist
+/**
+ * Watchlist API endpoints
+ */
+interface WatchlistApiService {
     @GET("watchlist")
     suspend fun getWatchlist(): Response<ApiResponse<List<WatchlistItem>>>
 
@@ -162,19 +182,39 @@ interface ApiService {
 
     @GET("users/{userId}/watchlist")
     suspend fun getUserWatchlist(@Path("userId") userId: String): Response<ApiResponse<List<WatchlistItem>>>
+}
 
-    // Recommendations
+/**
+ * Recommendations API endpoints
+ */
+interface RecommendationsApiService {
     @GET("recommendations")
     suspend fun getRecommendations(): Response<ApiResponse<List<Movie>>>
 
     @GET("recommendations/trending")
     suspend fun getTrendingMovies(): Response<ApiResponse<List<Movie>>>
+}
 
-    // Quotes
+/**
+ * Quotes API endpoints
+ */
+interface QuotesApiService {
     @GET("quotes")
     suspend fun getQuote(
         @Query("title") title: String,
         @Query("year") year: String? = null
     ): Response<ApiResponse<String>>
-
 }
+
+/**
+ * Main API service interface combining all sub-interfaces
+ */
+interface ApiService :
+    AuthApiService,
+    UserApiService,
+    FriendsApiService,
+    MoviesApiService,
+    FeedApiService,
+    WatchlistApiService,
+    RecommendationsApiService,
+    QuotesApiService

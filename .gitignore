@@ -29,6 +29,11 @@ yarn-error.log*
 # Temporary files
 *.tmp
 *.temp
+*.bak
+
+# Test coverage and output
+backend/coverage/
+backend/test-output*.txt
 
 # Old/reference projects
 M1-starter-app-itsjimmy/

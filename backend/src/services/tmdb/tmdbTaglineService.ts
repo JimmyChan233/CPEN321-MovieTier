@@ -1,8 +1,8 @@
 import { getTmdbClient } from './tmdbClient';
 import { logger } from '../../utils/logger';
 
-type CacheItem = { tagline: string; ts: number };
-const cache = new Map<string, CacheItem>();
+interface CacheItem { tagline: string; ts: number }
+export const cache = new Map<string, CacheItem>();
 const TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
 function getCacheKey(title: string, year?: string | number): string {
@@ -57,7 +57,7 @@ export async function fetchMovieTagline(title: string, year?: string | number): 
     });
 
     const tagline = detailsResp.data?.tagline;
-    if (tagline && tagline.trim().length > 0) {
+    if (tagline && typeof tagline === 'string' && tagline.trim().length > 0) {
       cache.set(cacheKey, { tagline, ts: Date.now() });
       return tagline;
     }

@@ -3,19 +3,17 @@ import { logger } from '../../utils/logger';
 
 type UserId = string;
 
-interface Client {
-  userId: UserId;
-  res: Response;
-}
-
 class SseService {
-  private clients: Map<UserId, Set<Response>> = new Map();
+  private clients = new Map<UserId, Set<Response>>();
 
   addClient(userId: UserId, res: Response) {
     if (!this.clients.has(userId)) {
       this.clients.set(userId, new Set());
     }
-    this.clients.get(userId)!.add(res);
+    const clientSet = this.clients.get(userId);
+    if (clientSet) {
+      clientSet.add(res);
+    }
 
     // Clean up when client disconnects
     res.on('close', () => {
@@ -54,7 +52,7 @@ class SseService {
     }
 
     // Clean up closed connections
-    toRemove.forEach(res => this.removeClient(userId, res));
+    toRemove.forEach(res => { this.removeClient(userId, res); });
   }
 
   /**

@@ -4,6 +4,7 @@ import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.local.MovieQuoteProvider
 import com.cpen321.movietier.data.local.ProvidersCache
 import com.cpen321.movietier.data.model.*
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,7 +22,7 @@ class MovieRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to search movies: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -34,7 +35,7 @@ class MovieRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to get ranked movies: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -47,7 +48,7 @@ class MovieRepository @Inject constructor(
 //            } else {
 //                Result.Error(Exception("Failed to add movie: ${response.message()}"))
 //            }
-//        } catch (e: Exception) {
+//        } catch (e: IOException) {
 //            Result.Error(e, "Network error: ${e.message}")
 //        }
 //    }
@@ -65,7 +66,7 @@ class MovieRepository @Inject constructor(
             } else {
                 Result.Error(Exception(response.body()?.message ?: "Failed to add movie"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -81,7 +82,7 @@ class MovieRepository @Inject constructor(
 //            } else {
 //                Result.Error(Exception("Failed to compare movies: ${response.message()}"))
 //            }
-//        } catch (e: Exception) {
+//        } catch (e: IOException) {
 //            Result.Error(e, "Network error: ${e.message}")
 //        }
 //    }
@@ -99,7 +100,7 @@ suspend fun compareMovies(
         } else {
             Result.Error(Exception(response.body()?.message ?: "Failed to compare movies"))
         }
-    } catch (e: Exception) {
+    } catch (e: IOException) {
         Result.Error(e, "Network error: ${e.message}")
     }
 }
@@ -113,7 +114,7 @@ suspend fun compareMovies(
             } else {
                 Result.Error(Exception("Failed to get recommendations: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -126,7 +127,7 @@ suspend fun compareMovies(
             } else {
                 Result.Error(Exception("Failed to get trending movies: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -148,7 +149,7 @@ suspend fun compareMovies(
             } else {
                 Result.Error(Exception("Failed to get movie videos: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -167,7 +168,7 @@ suspend fun compareMovies(
             } else {
                 Result.Error(Exception("Failed to get watch providers: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             // Optional: fall back to stale cache in the future
             Result.Error(e, "Network error: ${e.message}")
         }
@@ -184,7 +185,7 @@ suspend fun compareMovies(
             } else {
                 Result.Error(Exception("Failed to get details: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -197,7 +198,7 @@ suspend fun compareMovies(
             } else {
                 Result.Error(Exception("Failed to delete ranked movie: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -210,7 +211,7 @@ suspend fun compareMovies(
             } else {
                 Result.Error(Exception("Failed to start rerank: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }

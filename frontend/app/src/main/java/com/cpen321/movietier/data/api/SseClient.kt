@@ -45,25 +45,27 @@ class SseClient @Inject constructor(
                         if (!resp.isSuccessful) {
                             kotlinx.coroutines.delay(backoff)
                             backoff = (backoff * 2).coerceAtMost(30_000L)
-                            return@use
-                        }
-                        backoff = 1000L // reset backoff on success
+                        } else {
+                            backoff = 1000L // reset backoff on success
 
-                        val body = resp.body ?: return@use
-                        val source: BufferedSource = body.source()
-                        var currentEvent = "message"
-                        try {
-                            while (isActive && (shouldRuns[path] == true)) {
-                                val line = source.readUtf8Line() ?: break
-                                if (line.startsWith("event:")) {
-                                    currentEvent = line.removePrefix("event:").trim()
-                                } else if (line.startsWith("data:")) {
-                                    val data = line.removePrefix("data:").trim()
-                                    onEvent(currentEvent, data)
+                            val body = resp.body
+                            if (body != null) {
+                                val source: BufferedSource = body.source()
+                                var currentEvent = "message"
+                                try {
+                                    while (isActive && (shouldRuns[path] == true)) {
+                                        val line = source.readUtf8Line() ?: break
+                                        if (line.startsWith("event:")) {
+                                            currentEvent = line.removePrefix("event:").trim()
+                                        } else if (line.startsWith("data:")) {
+                                            val data = line.removePrefix("data:").trim()
+                                            onEvent(currentEvent, data)
+                                        }
+                                    }
+                                } catch (_: Exception) {
+                                    // will reconnect via loop
                                 }
                             }
-                        } catch (_: Exception) {
-                            // will reconnect via loop
                         }
                     }
                 } catch (_: Exception) {

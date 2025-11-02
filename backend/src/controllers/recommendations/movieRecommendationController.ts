@@ -3,11 +3,67 @@ import mongoose from 'mongoose';
 import RankedMovie from '../../models/movie/RankedMovie';
 import { getTmdbClient } from '../../services/tmdb/tmdbClient';
 import { logger } from '../../utils/logger';
+import { AxiosInstance } from 'axios';
+import { AuthRequest } from '../../middleware/auth';
+import crypto from 'crypto';
+
+// Cryptographically secure random number generator
+function secureRandom(): number {
+  return crypto.randomBytes(4).readUInt32BE(0) / 0xffffffff;
+}
 
 interface UserPreferences {
   topGenres: number[];
   languages: string[];
   minVoteAverage: number;
+}
+
+interface TmdbMovie {
+  id: number;
+  title: string;
+  overview?: string;
+  poster_path?: string;
+  release_date?: string;
+  vote_average?: number;
+  genre_ids?: number[];
+  original_language?: string;
+}
+
+interface TmdbGenre {
+  id: number;
+  name: string;
+}
+
+interface TmdbMovieDetails {
+  id: number;
+  title: string;
+  overview?: string;
+  poster_path?: string;
+  release_date?: string;
+  vote_average?: number;
+  genres?: TmdbGenre[];
+  original_language?: string;
+}
+
+interface MovieRecommendation {
+  id: number;
+  title: string;
+  overview: string | null;
+  posterPath: string | null;
+  releaseDate: string | null;
+  voteAverage: number | null;
+  genreIds?: number[];
+  originalLanguage?: string;
+}
+
+interface ScoredMovie extends MovieRecommendation {
+  score: number;
+}
+
+interface RankedMovieDoc {
+  movieId: number;
+  rank: number;
+  userId: mongoose.Types.ObjectId;
 }
 
 export const getTrendingMovies = async (req: Request, res: Response) => {
@@ -26,12 +82,12 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
     }
 
     // Map to our movie format
-    const movies = data.results.slice(0, 20).map((movie: any) => ({
+    const movies = (data.results as TmdbMovie[]).slice(0, 20).map((movie) => ({
       id: movie.id,
       title: movie.title,
-      overview: movie.overview || null,
-      posterPath: movie.poster_path || null,
-      releaseDate: movie.release_date || null,
+      overview: movie.overview ?? null,
+      posterPath: movie.poster_path ?? null,
+      releaseDate: movie.release_date ?? null,
       voteAverage: movie.vote_average ?? null
     }));
 
@@ -46,7 +102,11 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
 
 export const getRecommendations = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const tmdb = getTmdbClient();
 
@@ -61,10 +121,11 @@ export const getRecommendations = async (req: Request, res: Response) => {
     const topMovies = rankedMovies.slice(0, topHalfCount);
 
     const preferences = await analyzeUserPreferences(tmdb, topMovies);
-    const seenMovieIds = new Set(rankedMovies.map((m: any) => m.movieId));
+    const rankedMovieDocs = rankedMovies as unknown as RankedMovieDoc[];
+    const seenMovieIds = new Set(rankedMovieDocs.map((m) => m.movieId));
 
     // Step 3: Fetch recommendations from multiple sources
-    const allRecs: any[] = [];
+    const allRecs: MovieRecommendation[] = [];
 
     // 3a. Use TMDB discover with user's preferred genres and languages
     try {
@@ -79,25 +140,26 @@ export const getRecommendations = async (req: Request, res: Response) => {
 
     // 3b. Get similar movies for top 30% (max 10) of ranked movies
     const similarCount = Math.min(10, Math.max(3, Math.ceil(rankedMovies.length * 0.3)));
-    const topForSimilar = rankedMovies.slice(0, similarCount);
-    for (const movie of topForSimilar) {
+    const topForSimilarDocs = rankedMovies.slice(0, similarCount) as unknown as RankedMovieDoc[];
+    for (const movie of topForSimilarDocs) {
       try {
         const { data } = await tmdb.get(`/movie/${movie.movieId}/similar`, {
           params: { language: 'en-US', page: 1 }
         });
         if (data?.results?.length) {
-          const similar = data.results
-            .filter((r: any) => !seenMovieIds.has(r.id))
+          const tmdbResults = data.results as TmdbMovie[];
+          const similar = tmdbResults
+            .filter((r) => !seenMovieIds.has(r.id))
             .slice(0, 8)
-            .map((r: any) => ({
+            .map((r): MovieRecommendation => ({
               id: r.id,
               title: r.title,
-              overview: r.overview || null,
-              posterPath: r.poster_path || null,
-              releaseDate: r.release_date || null,
+              overview: r.overview ?? null,
+              posterPath: r.poster_path ?? null,
+              releaseDate: r.release_date ?? null,
               voteAverage: r.vote_average ?? null,
-              genreIds: r.genre_ids || [],
-              originalLanguage: r.original_language || 'en'
+              genreIds: r.genre_ids ?? [],
+              originalLanguage: r.original_language ?? 'en'
             }));
           allRecs.push(...similar);
         }
@@ -112,25 +174,26 @@ export const getRecommendations = async (req: Request, res: Response) => {
 
     // 3c. Get recommendations for top 20% (max 8) of ranked movies
     const recCount = Math.min(8, Math.max(3, Math.ceil(rankedMovies.length * 0.2)));
-    const topForRecs = rankedMovies.slice(0, recCount);
-    for (const movie of topForRecs) {
+    const topForRecsDocs = rankedMovies.slice(0, recCount) as unknown as RankedMovieDoc[];
+    for (const movie of topForRecsDocs) {
       try {
         const { data } = await tmdb.get(`/movie/${movie.movieId}/recommendations`, {
           params: { page: 1 }
         });
         if (data?.results?.length) {
-          const recs = data.results
-            .filter((r: any) => !seenMovieIds.has(r.id))
+          const tmdbResults = data.results as TmdbMovie[];
+          const recs = tmdbResults
+            .filter((r) => !seenMovieIds.has(r.id))
             .slice(0, 8)
-            .map((r: any) => ({
+            .map((r): MovieRecommendation => ({
               id: r.id,
               title: r.title,
-              overview: r.overview || null,
-              posterPath: r.poster_path || null,
-              releaseDate: r.release_date || null,
+              overview: r.overview ?? null,
+              posterPath: r.poster_path ?? null,
+              releaseDate: r.release_date ?? null,
               voteAverage: r.vote_average ?? null,
-              genreIds: r.genre_ids || [],
-              originalLanguage: r.original_language || 'en'
+              genreIds: r.genre_ids ?? [],
+              originalLanguage: r.original_language ?? 'en'
             }));
           allRecs.push(...recs);
         }
@@ -149,24 +212,24 @@ export const getRecommendations = async (req: Request, res: Response) => {
 
     // Step 4: Remove duplicates
     const uniqueMovies = Array.from(
-      new Map(allRecs.map((m: any) => [m.id, m])).values()
+      new Map(allRecs.map((m) => [m.id, m])).values()
     );
 
     // Step 5: Score each movie based on preference matching
-    const scoredMovies = uniqueMovies.map((movie: any) => {
+    const scoredMovies = uniqueMovies.map((movie): ScoredMovie => {
       let score = 0;
 
       // Base score from TMDB rating
       score += (movie.voteAverage ?? 5) * 10;
 
       // Genre match bonus (high weight)
-      const genreMatches = (movie.genreIds || []).filter((gid: number) =>
+      const genreMatches = (movie.genreIds ?? []).filter((gid) =>
         preferences.topGenres.includes(gid)
       ).length;
       score += genreMatches * 15;
 
       // Language match bonus (very high for matching user's languages)
-      if (preferences.languages.includes(movie.originalLanguage)) {
+      if (movie.originalLanguage && preferences.languages.includes(movie.originalLanguage)) {
         score += 40;
       }
 
@@ -188,13 +251,13 @@ export const getRecommendations = async (req: Request, res: Response) => {
     // Step 6: Sort by score and add slight randomness to top tier
     scoredMovies.sort((a, b) => {
       // Add small randomness (±5) to prevent same order every time
-      const aScore = a.score + (Math.random() * 10 - 5);
-      const bScore = b.score + (Math.random() * 10 - 5);
+      const aScore = a.score + (secureRandom() * 10 - 5);
+      const bScore = b.score + (secureRandom() * 10 - 5);
       return bScore - aScore;
     });
 
     // Step 7: Return top 20 recommendations
-    const finalList = scoredMovies.slice(0, 20).map((m: any) => ({
+    const finalList = scoredMovies.slice(0, 20).map((m) => ({
       id: m.id,
       title: m.title,
       overview: m.overview,
@@ -205,45 +268,49 @@ export const getRecommendations = async (req: Request, res: Response) => {
 
     res.json({ success: true, data: finalList });
   } catch (error) {
+    const authReq = req as AuthRequest;
     logger.error('Recommendation error', {
-      userId: (req as any).userId,
+      userId: authReq.userId,
       error: (error as Error).message,
     });
     res.status(500).json({ success: false, message: 'Unable to load recommendations. Please try again' });
   }
 };
 
-async function analyzeUserPreferences(tmdb: any, topMovies: any[]): Promise<UserPreferences> {
+async function analyzeUserPreferences(tmdb: AxiosInstance, topMovies: unknown[]): Promise<UserPreferences> {
   const genreCounts = new Map<number, number>();
   const languageCounts = new Map<string, number>();
   let totalVoteAverage = 0;
   let voteCount = 0;
 
   // Fetch details for top movies to get genres and languages
-  for (const movie of topMovies) {
+  const topMovieDocs = topMovies as RankedMovieDoc[];
+  for (const movie of topMovieDocs) {
     try {
       const { data } = await tmdb.get(`/movie/${movie.movieId}`, {
         params: { language: 'en-US' }
       });
 
+      const movieDetails = data as TmdbMovieDetails;
+
       // Count genres
-      if (data.genres) {
-        data.genres.forEach((g: any) => {
-          genreCounts.set(g.id, (genreCounts.get(g.id) || 0) + 1);
+      if (movieDetails.genres) {
+        movieDetails.genres.forEach((g) => {
+          genreCounts.set(g.id, (genreCounts.get(g.id) ?? 0) + 1);
         });
       }
 
       // Count languages
-      if (data.original_language) {
+      if (movieDetails.original_language) {
         languageCounts.set(
-          data.original_language,
-          (languageCounts.get(data.original_language) || 0) + 1
+          movieDetails.original_language,
+          (languageCounts.get(movieDetails.original_language) ?? 0) + 1
         );
       }
 
       // Track vote averages
-      if (data.vote_average) {
-        totalVoteAverage += data.vote_average;
+      if (movieDetails.vote_average) {
+        totalVoteAverage += movieDetails.vote_average;
         voteCount++;
       }
     } catch (err) {
@@ -275,16 +342,25 @@ async function analyzeUserPreferences(tmdb: any, topMovies: any[]): Promise<User
 }
 
 async function fetchDiscoverRecommendations(
-  tmdb: any,
+  tmdb: AxiosInstance,
   preferences: UserPreferences,
   seenMovieIds: Set<number>
-): Promise<any[]> {
-  const results: any[] = [];
+): Promise<MovieRecommendation[]> {
+  const results: MovieRecommendation[] = [];
 
   // For each preferred language, fetch discover results
   for (const language of preferences.languages.slice(0, 2)) {
     try {
-      const params: any = {
+      interface DiscoverParams {
+        with_original_language: string;
+        'vote_average.gte': number;
+        'vote_count.gte': number;
+        sort_by: string;
+        page: number;
+        with_genres?: string;
+      }
+
+      const params: DiscoverParams = {
         with_original_language: language,
         'vote_average.gte': preferences.minVoteAverage,
         'vote_count.gte': 100,
@@ -300,18 +376,19 @@ async function fetchDiscoverRecommendations(
       const { data } = await tmdb.get('/discover/movie', { params });
 
       if (data?.results?.length) {
-        const discovered = data.results
-          .filter((r: any) => !seenMovieIds.has(r.id))
+        const tmdbResults = data.results as TmdbMovie[];
+        const discovered = tmdbResults
+          .filter((r) => !seenMovieIds.has(r.id))
           .slice(0, 10)
-          .map((r: any) => ({
+          .map((r): MovieRecommendation => ({
             id: r.id,
             title: r.title,
-            overview: r.overview || null,
-            posterPath: r.poster_path || null,
-            releaseDate: r.release_date || null,
+            overview: r.overview ?? null,
+            posterPath: r.poster_path ?? null,
+            releaseDate: r.release_date ?? null,
             voteAverage: r.vote_average ?? null,
-            genreIds: r.genre_ids || [],
-            originalLanguage: r.original_language || language
+            genreIds: r.genre_ids ?? [],
+            originalLanguage: r.original_language ?? language
           }));
         results.push(...discovered);
       }

@@ -64,148 +64,205 @@ fun FeedActivityCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            // Top: Ranked info row
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Avatar(
-                    imageUrl = activity.userProfileImage,
-                    name = activity.userName,
-                    size = 48.dp
+            FeedActivityHeader(activity)
+            Spacer(modifier = Modifier.height(12.dp))
+            FeedActivityMovieDetails(activity, availabilityText)
+            Spacer(modifier = Modifier.height(12.dp))
+            FeedActivitySocialActions(activity, onLikeClick, onCommentClick)
+        }
+    }
+}
+
+@Composable
+private fun FeedActivityHeader(activity: FeedActivity) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Avatar(
+            imageUrl = activity.userProfileImage,
+            name = activity.userName,
+            size = 48.dp
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(activity.userName)
+                    }
+                    append(" ranked ")
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Medium)) {
+                        append(activity.movie.title)
+                    }
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = formatIsoToPstDateTime(activity.createdAt),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        activity.rank?.let { rank ->
+            AssistChip(
+                onClick = { },
+                label = { Text(text = "#$rank", style = MaterialTheme.typography.labelLarge) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeedActivityMovieDetails(
+    activity: FeedActivity,
+    availabilityText: String?
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        FeedActivityMovieInfo(activity, availabilityText)
+        activity.movie.posterPath?.let { posterPath ->
+            AsyncImage(
+                model = "https://image.tmdb.org/t/p/w185$posterPath",
+                contentDescription = "Poster for ${activity.movie.title}",
+                modifier = Modifier
+                    .height(180.dp)
+                    .aspectRatio(2f / 3f),
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.FeedActivityMovieInfo(
+    activity: FeedActivity,
+    availabilityText: String?
+) {
+    Column(modifier = Modifier.weight(1f)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            activity.movie.releaseDate?.take(4)?.let { year ->
+                Text(
+                    text = year,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(activity.userName) }
-                            append(" ranked ")
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Medium)) { append(activity.movie.title) }
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = formatIsoToPstDateTime(activity.createdAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                activity.rank?.let { rank ->
-                    AssistChip(
-                        onClick = { },
-                        label = { Text(text = "#$rank", style = MaterialTheme.typography.labelLarge) }
-                    )
-                }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Bottom: Description (left) and poster (right)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                // Description + availability on the left
-                Column(modifier = Modifier.weight(1f)) {
-                    // Year and rating on single line (consistent with Ranking/Watchlist format)
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        activity.movie.releaseDate?.take(4)?.let { year ->
-                            Text(
-                                text = year,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        activity.movie.voteAverage?.let { rating ->
-                            StarRating(rating = rating, starSize = 14.dp)
-                        }
-                    }
-                    if (activity.movie.releaseDate != null || activity.movie.voteAverage != null) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                    }
-
-                    val desc = activity.movie.overview
-                    if (!desc.isNullOrBlank()) {
-                        Text(
-                            text = desc,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 5,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    availabilityText?.let {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                // Poster on the right (only if available)
-                activity.movie.posterPath?.let { posterPath ->
-                    AsyncImage(
-                        model = "https://image.tmdb.org/t/p/w185$posterPath",
-                        contentDescription = "Poster for ${activity.movie.title}",
-                        modifier = Modifier
-                            .height(180.dp)
-                            .aspectRatio(2f / 3f),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-
-            // Like and Comment buttons
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Like button
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(
-                        enabled = onLikeClick != null,
-                        onClick = { onLikeClick?.invoke() }
-                    ).padding(4.dp)
-                ) {
-                    Icon(
-                        imageVector = if (activity.isLikedByUser) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
-                        contentDescription = "Like",
-                        modifier = Modifier.size(20.dp),
-                        tint = if (activity.isLikedByUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = activity.likeCount.toString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (activity.isLikedByUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Comment button
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(
-                        enabled = onCommentClick != null,
-                        onClick = { onCommentClick?.invoke() }
-                    ).padding(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.Message,
-                        contentDescription = "Comments",
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = activity.commentCount.toString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            activity.movie.voteAverage?.let { rating ->
+                StarRating(rating = rating, starSize = 14.dp)
             }
         }
+        if (activity.movie.releaseDate != null || activity.movie.voteAverage != null) {
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
+        activity.movie.overview?.let { overview ->
+            if (overview.isNotBlank()) {
+                Text(
+                    text = overview,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        availabilityText?.let {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeedActivitySocialActions(
+    activity: FeedActivity,
+    onLikeClick: (() -> Unit)?,
+    onCommentClick: (() -> Unit)?
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        FeedActivityLikeButton(activity, onLikeClick)
+        FeedActivityCommentButton(activity, onCommentClick)
+    }
+}
+
+@Composable
+private fun FeedActivityLikeButton(
+    activity: FeedActivity,
+    onLikeClick: (() -> Unit)?
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clickable(
+                enabled = onLikeClick != null,
+                onClick = { onLikeClick?.invoke() }
+            )
+            .padding(4.dp)
+    ) {
+        Icon(
+            imageVector = if (activity.isLikedByUser) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
+            contentDescription = "Like",
+            modifier = Modifier.size(20.dp),
+            tint = if (activity.isLikedByUser) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
+        Text(
+            text = activity.likeCount.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (activity.isLikedByUser) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
+    }
+}
+
+@Composable
+private fun FeedActivityCommentButton(
+    activity: FeedActivity,
+    onCommentClick: (() -> Unit)?
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clickable(
+                enabled = onCommentClick != null,
+                onClick = { onCommentClick?.invoke() }
+            )
+            .padding(4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Outlined.Message,
+            contentDescription = "Comments",
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = activity.commentCount.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

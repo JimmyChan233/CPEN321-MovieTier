@@ -138,37 +138,41 @@ Design notes:
 
 <a name="uc2"></a>
 
-#### Use Case 2: SEND FRIEND REQUEST
+#### Use Case 2: SEND FRIEND REQUEST WITH NAME
 
 
-**Description**: User sends a friend request to a friend by entering their email address.
+**Description**: User sends a friend request to another user by entering their display name.
 
 **Primary actor(s)**: User
 
-**Precondition(s)**: 
+**Precondition(s)**:
 
 1. User is logged into the system
-2. User is on the “Manage Friends” Page
+2. User is on the "Manage Friends" Page
 
 **Main success scenario**:
 
-1. User enters the friends username/email address
-2. System searches and displays matching profile
-3. User clicks send friend request button 
-4. System displays a success message: “Friend Request Successfully Sent”
-5. System notifies Friend to accept/deny pending request
+1. User clicks the "Add Friend" button on the Friends page
+2. A search dialog appears with a search field
+3. User switches to the "Name" option in the search field
+4. User enters the friend's display name
+5. System searches and displays matching user profiles
+6. User selects a user from the search results
+7. User clicks the send friend request button
+8. System displays a success message: "Friend Request Successfully Sent"
+9. System notifies the recipient to accept/deny the pending request
 
 **Failure scenario(s)**:
 
-- 1a. No user with the given email/username exists
-  - 1a1. System notifies the user: “No user Found”
-  - 1a2. User retires this use cases with a different input
+- 4a. No user with the given name exists
+  - 4a1. System notifies the user: "No users found"
+  - 4a2. User retries searching with a different name
 
-- 3a. Friend is already added
-  -3a1. System Notifies the user: “Error: Friend already exists”
+- 5a. User is already added as a friend
+  - 5a1. System displays "Friends" label instead of an "Add Friend" button in the search results, indicating the user is already a friend
 
-- 3b. Friend request already pending
-  - 3b1. The system notifies the user: “Error: Request was already sent.”
+- 5b. Friend request has already been sent to this user
+  - 5b1. System displays "Pending" label instead of an "Add Friend" button in the search results, indicating a request is already pending
 
 
 <a name="uc3"></a>

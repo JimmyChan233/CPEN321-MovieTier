@@ -11,6 +11,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,13 +53,15 @@ class AuthViewModel @Inject constructor(
                 authRepository.userName,
                 authRepository.userProfileImageUrl
             ) { token, userId, userEmail, userName, profileImageUrl ->
-                if (token != null && userId != null && userEmail != null && userName != null) {
+                val hasCompleteUserData = token != null && userId != null &&
+                    userEmail != null && userName != null
+                if (hasCompleteUserData) {
                     AuthUiState(
                         isAuthenticated = true,
                         user = User(
-                            id = userId,
-                            email = userEmail,
-                            name = userName,
+                            id = userId!!,
+                            email = userEmail!!,
+                            name = userName!!,
                             profileImageUrl = profileImageUrl
                         )
                     )
@@ -161,7 +164,7 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                 )
             }
         }
-    } catch (e: Exception) {
+    } catch (e: GetCredentialException) {
         Log.e(TAG, "Sign in error", e)
         _uiState.value = _uiState.value.copy(
             isLoading = false,

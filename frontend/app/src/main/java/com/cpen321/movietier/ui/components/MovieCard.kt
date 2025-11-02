@@ -45,52 +45,62 @@ fun MovieCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
-            // Poster Image
-            AsyncImage(
-                model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                contentDescription = "Poster: ${movie.title}",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(2f / 3f),
-                contentScale = ContentScale.Crop
+            MoviePosterImage(movie)
+            MovieInfoSection(movie)
+        }
+    }
+}
+
+@Composable
+private fun MoviePosterImage(movie: Movie) {
+    AsyncImage(
+        model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+        contentDescription = "Poster: ${movie.title}",
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(2f / 3f),
+        contentScale = ContentScale.Crop
+    )
+}
+
+@Composable
+private fun MovieInfoSection(movie: Movie) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+    ) {
+        Text(
+            text = movie.title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        MovieMetadataRow(movie)
+    }
+}
+
+@Composable
+private fun MovieMetadataRow(movie: Movie) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        movie.releaseDate?.let { releaseDate ->
+            Text(
+                text = releaseDate.take(4),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
 
-            // Movie Info
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = movie.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Year
-                    movie.releaseDate?.let { releaseDate ->
-                        Text(
-                            text = releaseDate.take(4),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    // Rating
-                    movie.voteAverage?.let { rating ->
-                        StarRating(rating = rating, starSize = 14.dp)
-                    }
-                }
-            }
+        movie.voteAverage?.let { rating ->
+            StarRating(rating = rating, starSize = 14.dp)
         }
     }
 }

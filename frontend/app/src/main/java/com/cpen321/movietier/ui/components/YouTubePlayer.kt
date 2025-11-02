@@ -25,6 +25,25 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 /**
+ * State holder for fullscreen-related parameters
+ */
+private data class FullscreenState(
+    val customView: View?,
+    val onCustomViewChanged: (View?) -> Unit,
+    val fullscreenContainer: FrameLayout?,
+    val onFullscreenContainerChanged: (FrameLayout?) -> Unit,
+    val onFullscreenChanged: (Boolean) -> Unit
+)
+
+/**
+ * State holder for WebView-related parameters
+ */
+private data class WebViewState(
+    val webViewContainer: FrameLayout?,
+    val onWebViewContainerChanged: (FrameLayout?) -> Unit
+)
+
+/**
  * Displays a YouTube video in a popup dialog with fullscreen support
  * Uses WebView to load full YouTube mobile page and automatically enters fullscreen
  */
@@ -52,116 +71,170 @@ fun YouTubePlayerDialog(
                 .background(Color.Black.copy(alpha = 0.8f)),
             contentAlignment = Alignment.Center
         ) {
-            // Browser container - 9:16 aspect ratio maxed to width
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(9f / 16f)
             ) {
-                // Close button row - hide when in fullscreen
                 if (!isFullscreen) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        FilledIconButton(
-                            onClick = onDismiss,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = Color.White,
-                                contentColor = Color.Black
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close",
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
+                    YouTubePlayerCloseButton(onDismiss)
                 }
 
-                // Embedded Chrome browser with YouTube page
-                AndroidView(
-                    factory = { ctx ->
-                        FrameLayout(ctx).apply {
-                            webViewContainer = this
-
-                            // Create fullscreen container
-                            fullscreenContainer = FrameLayout(ctx)
-
-                            addView(WebView(ctx).apply {
-                                settings.apply {
-                                    javaScriptEnabled = true
-                                    domStorageEnabled = true
-                                    loadWithOverviewMode = true
-                                    useWideViewPort = true
-                                    mediaPlaybackRequiresUserGesture = false
-                                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                                    // Enable modern web features
-                                    databaseEnabled = true
-                                    cacheMode = WebSettings.LOAD_DEFAULT
-                                    setSupportZoom(true)
-                                    builtInZoomControls = true
-                                    displayZoomControls = false
-                                    // Set user agent to mobile for better experience
-                                    userAgentString = settings.userAgentString?.replace("wv", "")
-                                }
-
-                                // Custom WebChromeClient to handle fullscreen
-                                webChromeClient = object : WebChromeClient() {
-                                    override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
-                                        if (view != null && fullscreenContainer != null) {
-                                            customView = view
-                                            isFullscreen = true
-
-                                            // Add fullscreen view to container
-                                            fullscreenContainer!!.addView(
-                                                view,
-                                                ViewGroup.LayoutParams(
-                                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                                    ViewGroup.LayoutParams.MATCH_PARENT
-                                                )
-                                            )
-
-                                            // Add fullscreen container to parent
-                                            webViewContainer?.addView(
-                                                fullscreenContainer,
-                                                ViewGroup.LayoutParams(
-                                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                                    ViewGroup.LayoutParams.MATCH_PARENT
-                                                )
-                                            )
-                                        }
-                                    }
-
-                                    override fun onHideCustomView() {
-                                        if (customView != null && fullscreenContainer != null) {
-                                            // Remove fullscreen view
-                                            fullscreenContainer!!.removeView(customView)
-                                            webViewContainer?.removeView(fullscreenContainer)
-                                            customView = null
-                                            isFullscreen = false
-                                        }
-                                    }
-                                }
-
-                                webViewClient = WebViewClient()
-
-                                // Load YouTube page
-                                loadUrl("https://m.youtube.com/watch?v=$videoKey")
-                            }, ViewGroup.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            ))
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.Black)
+                YouTubePlayerWebView(
+                    videoKey = videoKey,
+                    fullscreenState = FullscreenState(
+                        customView = customView,
+                        onCustomViewChanged = { customView = it },
+                        fullscreenContainer = fullscreenContainer,
+                        onFullscreenContainerChanged = { fullscreenContainer = it },
+                        onFullscreenChanged = { isFullscreen = it }
+                    ),
+                    webViewState = WebViewState(
+                        webViewContainer = webViewContainer,
+                        onWebViewContainerChanged = { webViewContainer = it }
+                    )
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun YouTubePlayerCloseButton(onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.End
+    ) {
+        FilledIconButton(
+            onClick = onDismiss,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Close",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun YouTubePlayerWebView(
+    videoKey: String,
+    fullscreenState: FullscreenState,
+    webViewState: WebViewState
+) {
+    AndroidView(
+        factory = { ctx ->
+            createYouTubeWebViewContainer(
+                context = ctx,
+                videoKey = videoKey,
+                fullscreenState = fullscreenState,
+                webViewState = webViewState
+            )
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.Black)
+    )
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+private fun createYouTubeWebViewContainer(
+    context: android.content.Context,
+    videoKey: String,
+    fullscreenState: FullscreenState,
+    webViewState: WebViewState
+): FrameLayout {
+    return FrameLayout(context).apply {
+        webViewState.onWebViewContainerChanged(this)
+        val newFullscreenContainer = FrameLayout(context)
+        fullscreenState.onFullscreenContainerChanged(newFullscreenContainer)
+
+        addView(WebView(context).apply {
+            configureWebViewSettings(settings)
+            webChromeClient = createWebChromeClient(
+                fullscreenState.onFullscreenChanged,
+                fullscreenState.onCustomViewChanged,
+                fullscreenState.onFullscreenContainerChanged,
+                webViewState.onWebViewContainerChanged,
+                newFullscreenContainer
+            )
+            webViewClient = WebViewClient()
+            loadUrl("https://m.youtube.com/watch?v=$videoKey")
+        }, ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ))
+    }
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+private fun configureWebViewSettings(settings: WebSettings) {
+    settings.apply {
+        javaScriptEnabled = true
+        domStorageEnabled = true
+        loadWithOverviewMode = true
+        useWideViewPort = true
+        mediaPlaybackRequiresUserGesture = false
+        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        databaseEnabled = true
+        cacheMode = WebSettings.LOAD_DEFAULT
+        setSupportZoom(true)
+        builtInZoomControls = true
+        displayZoomControls = false
+        userAgentString = userAgentString?.replace("wv", "")
+    }
+}
+
+private fun createWebChromeClient(
+    onFullscreenChanged: (Boolean) -> Unit,
+    onCustomViewChanged: (View?) -> Unit,
+    onFullscreenContainerChanged: (FrameLayout?) -> Unit,
+    onWebViewContainerChanged: (FrameLayout?) -> Unit,
+    fullscreenContainer: FrameLayout
+): WebChromeClient {
+    var webViewContainerRef: FrameLayout? = null
+    var customViewRef: View? = null
+
+    return object : WebChromeClient() {
+        override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+            if (view != null) {
+                customViewRef = view
+                onCustomViewChanged(view)
+                onFullscreenChanged(true)
+
+                fullscreenContainer.addView(
+                    view,
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                )
+
+                webViewContainerRef?.addView(
+                    fullscreenContainer,
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                )
+            }
+        }
+
+        override fun onHideCustomView() {
+            if (customViewRef != null) {
+                fullscreenContainer.removeView(customViewRef)
+                webViewContainerRef?.removeView(fullscreenContainer)
+                onCustomViewChanged(null)
+                onFullscreenChanged(false)
             }
         }
     }

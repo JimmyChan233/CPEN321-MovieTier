@@ -2,6 +2,7 @@ package com.cpen321.movietier.data.repository
 
 import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.model.*
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,7 +18,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to get friends: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -30,7 +31,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to get friend requests: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -43,7 +44,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to search users: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -56,7 +57,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception(response.body()?.message ?: "Failed to send friend request"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -69,7 +70,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to respond to friend request: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -82,7 +83,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to remove friend: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
     }
@@ -95,7 +96,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to get user: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, e.message)
         }
     }
@@ -108,7 +109,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to get detailed friend requests: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, e.message)
         }
     }
@@ -121,7 +122,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception("Failed to get outgoing detailed requests: ${response.message()}"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, e.message)
         }
     }
@@ -134,7 +135,7 @@ class FriendRepository @Inject constructor(
             } else {
                 Result.Error(Exception(response.body()?.message ?: "Failed to cancel request"))
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Result.Error(e, e.message)
         }
     }

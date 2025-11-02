@@ -14,6 +14,7 @@ import com.cpen321.movietier.data.api.ApiService
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -55,7 +56,7 @@ class MovieTierFirebaseMessagingService : FirebaseMessagingService() {
                 } else {
                     Log.e(TAG, "Failed to register FCM token: ${response.message()}")
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Log.e(TAG, "Error registering FCM token", e)
             }
         }

@@ -1,4 +1,4 @@
-type CompareSession = {
+interface CompareSession {
   newMovie: {
     movieId: number;
     title: string;
@@ -6,7 +6,7 @@ type CompareSession = {
   };
   low: number;
   high: number;
-};
+}
 
 const sessionStore = new Map<string, CompareSession>();
 

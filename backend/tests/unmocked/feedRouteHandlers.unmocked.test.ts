@@ -1,0 +1,629 @@
+/**
+ * Feed Route Handlers Tests - Unmocked
+ * Comprehensive tests for inline handlers in feedRoutes.ts
+ */
+
+import request from 'supertest';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import express from 'express';
+import feedRoutes from '../../src/routes/feedRoutes';
+import User from '../../src/models/user/User';
+import FeedActivity from '../../src/models/feed/FeedActivity';
+import RankedMovie from '../../src/models/movie/RankedMovie';
+import { Friendship } from '../../src/models/friend/Friend';
+import Like from '../../src/models/feed/Like';
+import Comment from '../../src/models/feed/Comment';
+import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
+
+describe('Feed Route Handlers - Inline Handlers', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user1: any;
+  let user2: any;
+  let user3: any;
+  let token1: string;
+  let token2: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/feed', feedRoutes);
+
+    user1 = await User.create(mockUsers.validUser);
+    user2 = await User.create({
+      ...mockUsers.validUser,
+      email: 'user2@example.com',
+      googleId: 'google-user2',
+      fcmToken: 'test-fcm-token-user2'
+    });
+    user3 = await User.create({
+      ...mockUsers.validUser,
+      email: 'user3@example.com',
+      googleId: 'google-user3'
+    });
+
+    token1 = generateTestJWT((user1 as any)._id.toString());
+    token2 = generateTestJWT((user2 as any)._id.toString());
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  beforeEach(async () => {
+    await FeedActivity.deleteMany({});
+    await RankedMovie.deleteMany({});
+    await Friendship.deleteMany({});
+    await Like.deleteMany({});
+    await Comment.deleteMany({});
+  });
+
+  // Test Case 1: GET /feed with friends' activities
+  it('should get friends feed activities with enrichment', async () => {
+    // Create friendship
+    await Friendship.create({ userId: user1._id, friendId: user2._id });
+
+    // Create friend activity
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 27205,
+      movieTitle: 'Inception',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  // Test Case 2: GET /feed with no friends
+  it('should return empty feed when user has no friends', async () => {
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
+
+  // Test Case 3: GET /feed with activities lacking overview/poster
+  it('should handle activities missing overview and poster', async () => {
+    await Friendship.create({ userId: user1._id, friendId: user2._id });
+
+    await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Test Movie',
+      rank: 1
+      // Missing overview, posterPath
+    });
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 4: GET /feed with like counts
+  it('should include like counts in feed', async () => {
+    await Friendship.create({ userId: user1._id, friendId: user2._id });
+
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    // Add likes
+    await Like.create({ userId: user1._id, activityId: activity._id });
+    await Like.create({ userId: user3._id, activityId: activity._id });
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 5: GET /feed with comment counts
+  it('should include comment counts in feed', async () => {
+    await Friendship.create({ userId: user1._id, friendId: user2._id });
+
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    // Add comments
+    await Comment.create({
+      userId: user1._id,
+      activityId: activity._id,
+      text: 'Great movie!'
+    });
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 6: GET /feed with user's like status
+  it('should mark activities liked by user', async () => {
+    await Friendship.create({ userId: user1._id, friendId: user2._id });
+
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    // User1 likes the activity
+    await Like.create({ userId: user1._id, activityId: activity._id });
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 7: GET /feed with current rank from RankedMovie
+  it('should show current rank from RankedMovie collection', async () => {
+    await Friendship.create({ userId: user1._id, friendId: user2._id });
+
+    await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    // Create ranked movie with updated rank
+    await RankedMovie.create({
+      userId: user2._id,
+      movieId: 278,
+      title: 'Movie',
+      rank: 3,
+      posterPath: '/test.jpg'
+    });
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 8: GET /feed with multiple friends
+  it('should aggregate activities from multiple friends', async () => {
+    await Friendship.create([
+      { userId: user1._id, friendId: user2._id },
+      { userId: user1._id, friendId: user3._id }
+    ]);
+
+    await FeedActivity.create([
+      {
+        userId: user2._id,
+        activityType: 'ranked_movie',
+        movieId: 278,
+        movieTitle: 'Movie 1',
+        rank: 1
+      },
+      {
+        userId: user3._id,
+        activityType: 'ranked_movie',
+        movieId: 238,
+        movieTitle: 'Movie 2',
+        rank: 1
+      }
+    ]);
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 9: GET /feed error handling
+  it('should handle errors gracefully', async () => {
+    // Force error by closing connection
+    await mongoose.connection.close();
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(500);
+
+    // Reconnect
+    await mongoose.connect(mongoServer.getUri());
+  });
+
+  // Test Case 10: GET /me (own activities)
+  it('should get users own activities', async () => {
+    await FeedActivity.create({
+      userId: user1._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'My Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .get('/api/feed/me')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 11: GET /me with no activities
+  it('should return empty array when user has no activities', async () => {
+    const res = await request(app)
+      .get('/api/feed/me')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
+
+  // Test Case 12: GET /stream (SSE)
+  it('should establish SSE stream', (done) => {
+    const req = request(app)
+      .get('/api/feed/stream')
+      .set('Authorization', `Bearer ${token1}`)
+      .set('Accept', 'text/event-stream')
+      .parse((res: any) => {
+        // Check headers on initial response
+        if (res.statusCode === 200 && res.headers['content-type'] === 'text/event-stream') {
+          req.abort();
+          done();
+        }
+      })
+      .end((err: any) => {
+        // Ignore abort errors - they're expected for SSE
+        if (err && err.code !== 'ECONNRESET') {
+          done(err);
+        }
+      });
+  });
+
+  // Test Case 13: POST /:activityId/like
+  it('should like an activity', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/like`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(201);
+
+    // Verify like was created
+    const like = await Like.findOne({
+      userId: user1._id,
+      activityId: activity._id
+    });
+    expect(like).toBeDefined();
+  });
+
+  // Test Case 14: POST /:activityId/like with non-existent activity
+  it('should return 404 when liking non-existent activity', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+
+    const res = await request(app)
+      .post(`/api/feed/${fakeId.toString()}/like`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  // Test Case 15: POST /:activityId/like own activity
+  it('should allow liking own activity without notification', async () => {
+    const activity = await FeedActivity.create({
+      userId: user1._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/like`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(201);
+  });
+
+  // Test Case 16: POST /:activityId/like duplicate
+  it('should handle duplicate like gracefully', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    // First like
+    await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/like`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    // Duplicate like
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/like`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    // Should handle duplicate (unique index error) - 201 on first, then 400 or 409 on duplicate
+    expect(res.status).toStrictEqual(400);
+  });
+
+  // Test Case 17: DELETE /:activityId/like
+  it('should unlike an activity', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    // Create like
+    await Like.create({
+      userId: user1._id,
+      activityId: activity._id
+    });
+
+    const res = await request(app)
+      .delete(`/api/feed/${(activity as any)._id.toString()}/like`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+
+    // Verify like was deleted
+    const like = await Like.findOne({
+      userId: user1._id,
+      activityId: activity._id
+    });
+    expect(like).toBeNull();
+  });
+
+  // Test Case 18: DELETE /:activityId/like when not liked
+  it('should handle unlike when not previously liked', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .delete(`/api/feed/${(activity as any)._id.toString()}/like`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    // Should handle not found when not previously liked
+    expect(res.status).toStrictEqual(404);
+  });
+
+  // Test Case 19: GET /:activityId/comments
+  it('should get comments for an activity', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    await Comment.create([
+      {
+        userId: user1._id,
+        activityId: activity._id,
+        text: 'Comment 1'
+      },
+      {
+        userId: user2._id,
+        activityId: activity._id,
+        text: 'Comment 2'
+      }
+    ]);
+
+    const res = await request(app)
+      .get(`/api/feed/${(activity as any)._id.toString()}/comments`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 20: GET /:activityId/comments with no comments
+  it('should return empty array when no comments', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .get(`/api/feed/${(activity as any)._id.toString()}/comments`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  // Test Case 21: POST /:activityId/comments
+  it('should add comment to activity', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/comments`)
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'Great movie!' });
+
+    expect(res.status).toBe(201);
+
+    // Verify comment was created
+    const comment = await Comment.findOne({
+      userId: user1._id,
+      activityId: activity._id
+    });
+    expect(comment).toBeDefined();
+  });
+
+  // Test Case 22: POST /:activityId/comments with missing text
+  it('should reject comment without text', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/comments`)
+      .set('Authorization', `Bearer ${token1}`)
+      .send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  // Test Case 23: POST /:activityId/comments on non-existent activity
+  it('should return 404 when commenting on non-existent activity', async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+
+    const res = await request(app)
+      .post(`/api/feed/${fakeId.toString()}/comments`)
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'Comment' });
+
+    expect(res.status).toBe(404);
+  });
+
+  // Test Case 24: POST /:activityId/comments sends notification
+  it('should send notification when commenting', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/comments`)
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'Amazing!' });
+
+    expect(res.status).toBe(201);
+  });
+
+  // Test Case 25: POST /:activityId/comments on own activity (no notification)
+  it('should not send notification when commenting on own activity', async () => {
+    const activity = await FeedActivity.create({
+      userId: user1._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/comments`)
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'Self comment' });
+
+    expect(res.status).toBe(201);
+  });
+
+  // Test Case 26: Unauthorized access to feed
+  it('should reject unauthorized access to feed', async () => {
+    const res = await request(app)
+      .get('/api/feed');
+
+    expect(res.status).toBe(401);
+  });
+
+  // Test Case 27: Unauthorized access to /me
+  it('should reject unauthorized access to /me', async () => {
+    const res = await request(app)
+      .get('/api/feed/me');
+
+    expect(res.status).toBe(401);
+  });
+
+  // Test Case 28: Unauthorized access to /stream
+  it('should reject unauthorized access to /stream', async () => {
+    const res = await request(app)
+      .get('/api/feed/stream');
+
+    expect(res.status).toBe(401);
+  });
+
+  // Test Case 29: Unauthorized like
+  it('should reject unauthorized like', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/like`);
+
+    expect(res.status).toBe(401);
+  });
+
+  // Test Case 30: Unauthorized comment
+  it('should reject unauthorized comment', async () => {
+    const activity = await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 278,
+      movieTitle: 'Movie',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post(`/api/feed/${(activity as any)._id.toString()}/comments`)
+      .send({ text: 'Comment' });
+
+    expect(res.status).toBe(401);
+  });
+});

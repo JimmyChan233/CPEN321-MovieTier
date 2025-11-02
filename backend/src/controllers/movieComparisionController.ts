@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-const RankedMovie = (mongoose.models.RankedMovie || mongoose.model('RankedMovie')) as any;
+import RankedMovieModel, { IRankedMovie } from '../models/movie/RankedMovie';
 import FeedActivity from '../models/feed/FeedActivity';
 import { Friendship } from '../models/friend/Friend';
+import WatchlistItem from '../models/watch/WatchlistItem';
+import User from '../models/user/User';
 import { sseService } from '../services/sse/sseService';
 import {
   startSession,
@@ -10,21 +12,44 @@ import {
   updateSession,
   endSession,
 } from '../utils/comparisonSession';
-import { IRankedMovie } from '../models/movie/RankedMovie';
-import WatchlistItem from '../models/watch/WatchlistItem';
-import User from '../models/user/User';
 import notificationService from '../services/notification.service';
+import { AuthRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
+
+const RankedMovie = RankedMovieModel;
 
 async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
-  try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch {}
-  try { await WatchlistItem.deleteOne({ userId: userIdStr as any, movieId }); } catch {}
+  try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch (err) {
+    logger.warn('Failed to remove watchlist item (ObjectId)', { error: (err as Error).message });
+  }
+  try { await WatchlistItem.deleteOne({ userId: userIdStr as unknown as mongoose.Types.ObjectId, movieId }); } catch (err) {
+    logger.warn('Failed to remove watchlist item (string)', { error: (err as Error).message });
+  }
 }
 
 
 export const addMovie = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const { movieId, title, posterPath, overview } = req.body;
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const { movieId, title, posterPath, overview } = req.body as {
+      movieId: number;
+      title: string;
+      posterPath?: string;
+      overview?: string;
+    };
+
+    // Validate required fields
+    if (!movieId || !title) {
+      return res.status(400).json({
+        success: false,
+        message: 'movieId and title are required'
+      });
+    }
+
     const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const rankedMovies = await RankedMovie.find({ userId: userObjectId }).sort({ rank: 1 });
@@ -69,8 +94,8 @@ export const addMovie = async (req: Request, res: Response) => {
         const { getTmdbClient } = await import('../services/tmdb/tmdbClient')
         const tmdb = getTmdbClient()
         const { data } = await tmdb.get(`/movie/${movieId}`, { params: { language: 'en-US' } })
-        if (!finalPosterPath) finalPosterPath = data?.poster_path || undefined
-        if (!finalOverview) finalOverview = data?.overview || undefined
+        if (!finalPosterPath) finalPosterPath = data?.poster_path ?? undefined
+        if (!finalOverview) finalOverview = data?.overview ?? undefined
       }
     } catch {}
 
@@ -87,7 +112,7 @@ export const addMovie = async (req: Request, res: Response) => {
 
     // Get user info for notifications
     const user = await User.findById(userId).select('name');
-    const userName = user?.name || 'A friend';
+    const userName = user?.name ?? 'A friend';
 
     // Notify friends via SSE and FCM
     const friendships = await Friendship.find({ userId });
@@ -133,7 +158,10 @@ export const addMovie = async (req: Request, res: Response) => {
     // Use the same middle calculation as compareMovies to avoid repetitive comparisons
     const high = rankedMovies.length - 1;
     const middleIndex = Math.floor((0 + high) / 2);
-    const compareWith = rankedMovies[middleIndex];
+    const compareWith = rankedMovies.at(middleIndex);
+    if (!compareWith) {
+      return res.status(500).json({ success: false, message: 'Unable to find comparison movie' });
+    }
     startSession(userId, { movieId, title, posterPath }, high);
 
     // Remove from watchlist immediately when starting comparison
@@ -158,8 +186,20 @@ export const addMovie = async (req: Request, res: Response) => {
 
 export const compareMovies = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const { comparedMovieId, preferredMovieId } = req.body;
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const { preferredMovieId } = req.body as {
+      preferredMovieId: number;
+    };
+
+    // Validate required field
+    if (!preferredMovieId) {
+      return res.status(400).json({ success: false, message: 'preferredMovieId is required' });
+    }
+
     const session = getSession(userId);
 
     if (!session) {
@@ -229,13 +269,13 @@ export const compareMovies = async (req: Request, res: Response) => {
 
       // Enrich details for activity when finalizing insert
       let finalPosterPath: string | undefined = movie.posterPath
-      let finalOverview: string | undefined = undefined
+      let finalOverview: string | undefined
       try {
         const { getTmdbClient } = await import('../services/tmdb/tmdbClient')
         const tmdb = getTmdbClient()
         const { data } = await tmdb.get(`/movie/${movie.movieId}`, { params: { language: 'en-US' } })
-        if (!finalPosterPath) finalPosterPath = data?.poster_path || undefined
-        finalOverview = data?.overview || undefined
+        if (!finalPosterPath) finalPosterPath = data?.poster_path ?? undefined
+        finalOverview = data?.overview ?? undefined
       } catch {}
 
       const activity = new FeedActivity({
@@ -251,7 +291,7 @@ export const compareMovies = async (req: Request, res: Response) => {
 
       // Get user info for notifications
       const user = await User.findById(userId).select('name');
-      const userName = user?.name || 'A friend';
+      const userName = user?.name ?? 'A friend';
 
       // Notify friends via SSE and FCM
       const friendships = await Friendship.find({ userId });
@@ -287,7 +327,10 @@ export const compareMovies = async (req: Request, res: Response) => {
     // Continue comparison
     updateSession(userId, low, high);
     const nextIndex = Math.floor((low + high) / 2);
-    const nextCompare = rankedMovies[nextIndex];
+    const nextCompare = rankedMovies.at(nextIndex);
+    if (!nextCompare) {
+      return res.status(500).json({ success: false, message: 'Unable to find comparison movie' });
+    }
 
     return res.json({
       success: true,

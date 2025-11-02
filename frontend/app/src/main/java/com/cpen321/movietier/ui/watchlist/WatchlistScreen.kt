@@ -27,6 +27,7 @@ import com.cpen321.movietier.ui.components.StarRating
 import com.cpen321.movietier.ui.viewmodels.WatchlistViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.Lifecycle
@@ -36,6 +37,8 @@ import com.cpen321.movietier.utils.LocationHelper
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.cpen321.movietier.ui.common.CommonContext
+import com.cpen321.movietier.ui.common.WatchlistContentData
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -45,352 +48,327 @@ fun WatchlistScreen(
 ) {
     val ui by vm.ui.collectAsState()
     val compareState by vm.compareState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    var country by remember { mutableStateOf("CA") }
     val details by vm.details.collectAsState()
+    val commonContext = CommonContext(
+        context = LocalContext.current,
+        scope = rememberCoroutineScope(),
+        snackbarHostState = remember { SnackbarHostState() }
+    )
+    val listState = rememberLazyListState()
+    var country by remember { mutableStateOf("CA") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf<com.cpen321.movietier.data.model.WatchlistItem?>(null) }
-    val listState = rememberLazyListState()
 
-    // Request location permission and get country code
+    WSLocationHandler(commonContext) { country = it }
+    WSSideEffects(navController, vm, commonContext.snackbarHostState)
+
+    Scaffold(
+        topBar = { WSTopBar(navController, vm, commonContext.scope, listState) },
+        snackbarHost = { SnackbarHost(commonContext.snackbarHostState) }
+    ) { padding ->
+        WSContent(
+            contentData = WatchlistContentData(ui, details, country),
+            padding = padding,
+            listState = listState,
+            vm = vm,
+            commonContext = commonContext,
+            onLongClick = { itemToDelete = it; showDeleteDialog = true }
+        )
+        WSComparisonDialog(compareState, vm)
+        WSDeleteDialog(showDeleteDialog, itemToDelete, vm, commonContext, { showDeleteDialog = it }, { itemToDelete = it })
+    }
+}
+
+@Composable
+private fun WSLocationHandler(
+    commonContext: CommonContext,
+    onCountryChanged: (String) -> Unit
+) {
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            scope.launch {
-                country = LocationHelper.getCountryCode(context)
-            }
+            commonContext.scope.launch { onCountryChanged(LocationHelper.getCountryCode(commonContext.context)) }
         }
     }
-
     LaunchedEffect(Unit) {
-        if (LocationHelper.hasLocationPermission(context)) {
-            country = LocationHelper.getCountryCode(context)
+        if (LocationHelper.hasLocationPermission(commonContext.context)) {
+            onCountryChanged(LocationHelper.getCountryCode(commonContext.context))
         } else {
             locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
         }
     }
+}
 
-    Scaffold(topBar = {
-        var sortMenu by remember { mutableStateOf(false) }
-        CenterAlignedTopAppBar(
-            title = { Text("My Watchlist", style = MaterialTheme.typography.titleMedium) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            },
-            actions = {
-                IconButton(onClick = { sortMenu = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "Sort")
-                }
-                DropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Date Added (Newest)") },
-                        onClick = {
-                            sortMenu = false
-                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_DESC)
-                            scope.launch { listState.animateScrollToItem(0) }
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Date Added (Oldest)") },
-                        onClick = {
-                            sortMenu = false
-                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_ASC)
-                            scope.launch { listState.animateScrollToItem(0) }
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Rating (High → Low)") },
-                        onClick = {
-                            sortMenu = false
-                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_DESC)
-                            scope.launch { listState.animateScrollToItem(0) }
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Rating (Low → High)") },
-                        onClick = {
-                            sortMenu = false
-                            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_ASC)
-                            scope.launch { listState.animateScrollToItem(0) }
-                        }
-                    )
-                }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WSTopBar(
+    navController: NavController,
+    vm: WatchlistViewModel,
+    scope: kotlinx.coroutines.CoroutineScope,
+    listState: LazyListState
+) {
+    var sortMenu by remember { mutableStateOf(false) }
+    CenterAlignedTopAppBar(
+        title = { Text("My Watchlist", style = MaterialTheme.typography.titleMedium) },
+        navigationIcon = {
+            IconButton(onClick = { navController.navigateUp() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
-        )
-    }, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        if (ui.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding)) { CircularProgressIndicator(Modifier.padding(24.dp)) }
-        } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(ui.displayed, key = { it.id }) { item ->
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = {
-                                    itemToDelete = item
-                                    showDeleteDialog = true
-                                }
-                            )
-                    ) {
-                        Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title, modifier = Modifier.height(140.dp).aspectRatio(2f/3f))
-                            Column(Modifier.weight(1f)) {
-                                Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                val det = details[item.movieId]
-                                // Year and rating on single line (consistent with Ranking format)
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    det?.releaseDate?.take(4)?.let { year ->
-                                        Text(
-                                            text = year,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    det?.voteAverage?.let { rating ->
-                                        StarRating(rating = rating, starSize = 14.dp)
-                                    }
-                                }
-                                if (det != null) {
-                                    Spacer(Modifier.height(4.dp))
-                                }
-                                item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
-                                Spacer(Modifier.height(8.dp))
-                                FilledTonalButton(onClick = {
-                                    scope.launch {
-                                        // Prefer exact TMDB watch page for the movie
-                                        val tmdbLink = "https://www.themoviedb.org/movie/${item.movieId}/watch?locale=${country}"
-                                        try {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))
-                                            context.startActivity(intent)
-                                            return@launch
-                                        } catch (_: Exception) {}
-
-                                        when (val res = vm.getWatchProviders(item.movieId, country)) {
-                                            is com.cpen321.movietier.data.repository.Result.Success -> {
-                                                val link = res.data.link
-                                                val providers = buildList {
-                                                    addAll(res.data.providers.flatrate)
-                                                    addAll(res.data.providers.rent)
-                                                    addAll(res.data.providers.buy)
-                                                }.distinct()
-                                                if (!link.isNullOrBlank()) {
-                                                    try {
-                                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                                                        context.startActivity(intent)
-                                                    } catch (e: Exception) {
-                                                        snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}")
-                                                    }
-                                                } else if (providers.isNotEmpty()) {
-                                                    snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                                } else {
-                                                    snackbarHostState.showSnackbar("No streaming info found")
-                                                }
-                                            }
-                                            is com.cpen321.movietier.data.repository.Result.Error -> {
-                                                snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
-                                            }
-                                            else -> {}
-                                        }
-                                    }
-                                }, modifier = Modifier.fillMaxWidth()) {
-                                    Text("Where to Watch")
-                                }
-                                Spacer(Modifier.height(8.dp))
-                                Button(onClick = {
-                                    vm.addToRanking(item)
-                                }, modifier = Modifier.fillMaxWidth()) {
-                                    Text("Add to Ranking")
-                                }
-                            }
-                        }
-                    }
-                }
-                if (ui.displayed.isEmpty()) {
-                    item { Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
+        },
+        actions = {
+            IconButton(onClick = { sortMenu = true }) {
+                Icon(Icons.Filled.MoreVert, contentDescription = "Sort")
             }
+            WSTopBarSortMenu(sortMenu, vm, scope, listState) { sortMenu = it }
         }
+    )
+}
 
-        // Comparison dialog
-        if (compareState != null) {
-            val state = compareState!!
-            AlertDialog(
-                onDismissRequest = { /* block dismiss during compare */ },
-                title = { Text("Which movie do you prefer?") },
-                text = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            "Help us place '${state.newMovie.title}' in your rankings:",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+@Composable
+private fun WSTopBarSortMenu(
+    expanded: Boolean,
+    vm: WatchlistViewModel,
+    scope: kotlinx.coroutines.CoroutineScope,
+    listState: LazyListState,
+    onDismiss: (Boolean) -> Unit
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = { onDismiss(false) }) {
+        DropdownMenuItem(text = { Text("Date Added (Newest)") }, onClick = {
+            onDismiss(false)
+            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_DESC)
+            scope.launch { listState.animateScrollToItem(0) }
+        })
+        DropdownMenuItem(text = { Text("Date Added (Oldest)") }, onClick = {
+            onDismiss(false)
+            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_ASC)
+            scope.launch { listState.animateScrollToItem(0) }
+        })
+        DropdownMenuItem(text = { Text("Rating (High → Low)") }, onClick = {
+            onDismiss(false)
+            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_DESC)
+            scope.launch { listState.animateScrollToItem(0) }
+        })
+        DropdownMenuItem(text = { Text("Rating (Low → High)") }, onClick = {
+            onDismiss(false)
+            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_ASC)
+            scope.launch { listState.animateScrollToItem(0) }
+        })
+    }
+}
 
-                        // Side-by-side posters with clickable movie names
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            // First movie
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                AsyncImage(
-                                    model = state.newMovie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                    contentDescription = state.newMovie.title,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(2f / 3f)
-                                        .clip(MaterialTheme.shapes.medium),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Button(
-                                    onClick = {
-                                        vm.choosePreferred(
-                                            newMovie = state.newMovie,
-                                            compareWith = state.compareWith,
-                                            preferred = state.newMovie
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        state.newMovie.title,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun WSContent(
+    contentData: WatchlistContentData,
+    padding: PaddingValues,
+    listState: LazyListState,
+    vm: WatchlistViewModel,
+    commonContext: CommonContext,
+    onLongClick: (com.cpen321.movietier.data.model.WatchlistItem) -> Unit
+) {
+    val ui = contentData.uiState
+    val details = contentData.movieDetails
+    val country = contentData.country
 
-                            // Second movie
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                AsyncImage(
-                                    model = state.compareWith.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                                    contentDescription = state.compareWith.title,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(2f / 3f)
-                                        .clip(MaterialTheme.shapes.medium),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Button(
-                                    onClick = {
-                                        vm.choosePreferred(
-                                            newMovie = state.newMovie,
-                                            compareWith = state.compareWith,
-                                            preferred = state.compareWith
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        state.compareWith.title,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-                        }
-                    }
-                },
-                confirmButton = {},
-                dismissButton = {}
-            )
+    if (ui.isLoading) {
+        Box(Modifier.fillMaxSize().padding(padding)) { CircularProgressIndicator(Modifier.padding(24.dp)) }
+    } else {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(ui.displayed, key = { it.id }) { item ->
+                WSWatchlistItemCard(item, details[item.movieId], country, vm, commonContext, onLongClick)
+            }
+            if (ui.displayed.isEmpty()) {
+                item { Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
         }
     }
+}
 
-    // Delete confirmation dialog
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun WSWatchlistItemCard(
+    item: com.cpen321.movietier.data.model.WatchlistItem,
+    details: com.cpen321.movietier.data.model.Movie?,
+    country: String,
+    vm: WatchlistViewModel,
+    commonContext: CommonContext,
+    onLongClick: (com.cpen321.movietier.data.model.WatchlistItem) -> Unit
+) {
+    Card(Modifier.fillMaxWidth().combinedClickable(onClick = {}, onLongClick = { onLongClick(item) })) {
+        Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title, modifier = Modifier.height(140.dp).aspectRatio(2f/3f))
+            WSWatchlistItemInfo(item, details, country, vm, commonContext)
+        }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.WSWatchlistItemInfo(
+    item: com.cpen321.movietier.data.model.WatchlistItem,
+    details: com.cpen321.movietier.data.model.Movie?,
+    country: String,
+    vm: WatchlistViewModel,
+    commonContext: CommonContext
+) {
+    Column(Modifier.weight(1f)) {
+        Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        WSWatchlistItemMetadata(details)
+        if (details != null) Spacer(Modifier.height(4.dp))
+        item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
+        Spacer(Modifier.height(8.dp))
+        WSWatchlistItemActions(item, country, vm, commonContext)
+    }
+}
+
+@Composable
+private fun WSWatchlistItemMetadata(details: com.cpen321.movietier.data.model.Movie?) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        details?.releaseDate?.take(4)?.let { year ->
+            Text(text = year, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        details?.voteAverage?.let { rating -> StarRating(rating = rating, starSize = 14.dp) }
+    }
+}
+
+@Composable
+private fun WSWatchlistItemActions(
+    item: com.cpen321.movietier.data.model.WatchlistItem,
+    country: String,
+    vm: WatchlistViewModel,
+    commonContext: CommonContext
+) {
+    FilledTonalButton(onClick = {
+        commonContext.scope.launch {
+            val tmdbLink = "https://www.themoviedb.org/movie/${item.movieId}/watch?locale=${country}"
+            var tmdbOpened = false
+            try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
+            if (!tmdbOpened) {
+                when (val res = vm.getWatchProviders(item.movieId, country)) {
+                    is com.cpen321.movietier.data.repository.Result.Success -> {
+                        val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
+                        if (!res.data.link.isNullOrBlank()) {
+                            try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
+                            catch (e: ActivityNotFoundException) { commonContext.snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}") }
+                        } else if (providers.isNotEmpty()) { commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                        else { commonContext.snackbarHostState.showSnackbar("No streaming info found") }
+                    }
+                    is com.cpen321.movietier.data.repository.Result.Error -> { commonContext.snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
+                    else -> {}
+                }
+            }
+        }
+    }, modifier = Modifier.fillMaxWidth()) { Text("Where to Watch") }
+    Spacer(Modifier.height(8.dp))
+    Button(onClick = { vm.addToRanking(item) }, modifier = Modifier.fillMaxWidth()) { Text("Add to Ranking") }
+}
+
+@Composable
+private fun WSComparisonDialog(
+    compareState: com.cpen321.movietier.ui.viewmodels.WatchlistCompareState?,
+    vm: WatchlistViewModel
+) {
+    compareState?.let { state ->
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Which movie do you prefer?") },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Help us place '${state.newMovie.title}' in your rankings:", style = MaterialTheme.typography.bodyMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        WSComparisonOption(state.newMovie, state, vm, Modifier.weight(1f))
+                        WSComparisonOption(state.compareWith, state, vm, Modifier.weight(1f))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
+}
+
+@Composable
+private fun WSComparisonOption(
+    movie: com.cpen321.movietier.data.model.Movie,
+    state: com.cpen321.movietier.ui.viewmodels.WatchlistCompareState,
+    vm: WatchlistViewModel,
+    modifier: Modifier
+) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AsyncImage(
+            model = movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+            contentDescription = movie.title,
+            modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(MaterialTheme.shapes.medium),
+            contentScale = ContentScale.Crop
+        )
+        Button(
+            onClick = { vm.choosePreferred(state.newMovie, state.compareWith, movie) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(movie.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun WSDeleteDialog(
+    showDeleteDialog: Boolean,
+    itemToDelete: com.cpen321.movietier.data.model.WatchlistItem?,
+    vm: WatchlistViewModel,
+    commonContext: CommonContext,
+    onShowDialogChange: (Boolean) -> Unit,
+    onItemToDeleteChange: (com.cpen321.movietier.data.model.WatchlistItem?) -> Unit
+) {
     if (showDeleteDialog && itemToDelete != null) {
         AlertDialog(
-            onDismissRequest = {
-                showDeleteDialog = false
-                itemToDelete = null
-            },
+            onDismissRequest = { onShowDialogChange(false); onItemToDeleteChange(null) },
             title = { Text("Remove from Watchlist") },
-            text = { Text("Remove \"${itemToDelete?.title}\" from your watchlist?") },
+            text = { Text("Remove \"${itemToDelete.title}\" from your watchlist?") },
             confirmButton = {
                 Button(
                     onClick = {
-                        itemToDelete?.let { vm.removeFromWatchlist(it.movieId) }
-                        showDeleteDialog = false
-                        itemToDelete = null
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Removed from watchlist")
-                        }
+                        itemToDelete.let { vm.removeFromWatchlist(it.movieId) }
+                        onShowDialogChange(false)
+                        onItemToDeleteChange(null)
+                        commonContext.scope.launch { commonContext.snackbarHostState.showSnackbar("Removed from watchlist") }
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Remove")
-                }
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Remove") }
             },
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        itemToDelete = null
-                    }
-                ) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { onShowDialogChange(false); onItemToDeleteChange(null) }) { Text("Cancel") }
             }
         )
     }
+}
 
-    // Refresh watchlist when screen resumes to reflect changes from ranking actions
+@Composable
+private fun WSSideEffects(
+    navController: NavController,
+    vm: WatchlistViewModel,
+    snackbarHostState: SnackbarHostState
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                vm.load()
-            }
+            if (event == Lifecycle.Event.ON_RESUME) vm.load()
         }
         val lifecycle = lifecycleOwner.lifecycle
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
-
-    // Also refresh whenever navigating to this screen (handles bottom nav tab switching)
-    LaunchedEffect(navController.currentBackStackEntry) {
-        vm.load()
-    }
-
-    // Handle events (success/error messages)
+    LaunchedEffect(navController.currentBackStackEntry) { vm.load() }
     LaunchedEffect(Unit) {
         vm.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> {
-                    snackbarHostState.showSnackbar(event.text)
-                }
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> {
-                    snackbarHostState.showSnackbar(event.text)
-                }
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> snackbarHostState.showSnackbar(event.text)
             }
         }
     }

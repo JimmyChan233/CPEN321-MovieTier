@@ -2,21 +2,22 @@ import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import WatchlistItem from '../models/watch/WatchlistItem';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
 // Get current user's watchlist
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const items = await WatchlistItem.find({ userId: req.userId }).sort({ createdAt: -1 });
     res.json({ success: true, data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load watchlist. Please try again' });
   }
-});
+}));
 
 // Add to watchlist
-router.post('/', authenticate, async (req: AuthRequest, res) => {
+router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { movieId, title, posterPath, overview } = req.body as {
       movieId: number
@@ -34,7 +35,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
     // Step 1: Check for duplicate
     const existing = await WatchlistItem.findOne({ userId: req.userId, movieId })
     if (existing) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
         message: 'Movie already in watchlist',
       })
@@ -62,20 +63,23 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
     })
     await item.save()
 
-    return res.json({ success: true, data: item })
+    return res.status(201).json({ success: true, data: item })
   } catch (error) {
     console.error(error)
     res
       .status(500)
       .json({ success: false, message: 'Unable to add to watchlist. Please try again' })
   }
-})
+}));
 
 
 // Remove from watchlist (by movieId)
-router.delete('/:movieId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:movieId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const movieId = Number(req.params.movieId);
+    if (isNaN(movieId) || !Number.isInteger(movieId)) {
+      return res.status(400).json({ success: false, message: 'Invalid movie id' });
+    }
     const result = await WatchlistItem.deleteOne({ userId: req.userId, movieId });
     if (result.deletedCount === 0) {
       return res.status(404).json({ success: false, message: 'Movie not found in watchlist' });
@@ -84,6 +88,6 @@ router.delete('/:movieId', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to remove from watchlist. Please try again' });
   }
-});
+}));
 
 export default router;

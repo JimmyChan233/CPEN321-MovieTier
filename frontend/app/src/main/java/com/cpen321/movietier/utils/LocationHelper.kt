@@ -10,6 +10,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import java.io.IOException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
@@ -38,7 +39,7 @@ object LocationHelper {
         return withTimeoutOrNull(LOCATION_TIMEOUT_MS) {
             try {
                 getCountryFromLocation(context)
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 null
             }
         } ?: DEFAULT_COUNTRY
@@ -71,7 +72,7 @@ object LocationHelper {
         // Try to get last known location first (faster)
         val lastLocation = try {
             fusedLocationClient.lastLocation.await()
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
             null
         }
 
@@ -83,7 +84,7 @@ object LocationHelper {
                     Priority.PRIORITY_BALANCED_POWER_ACCURACY,
                     cancellationToken.token
                 ).await()
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 return null
             }
         }
@@ -115,7 +116,7 @@ object LocationHelper {
                 val countryCode = addresses?.firstOrNull()?.countryCode
                 continuation.resume(countryCode)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             continuation.resume(null)
         }
     }

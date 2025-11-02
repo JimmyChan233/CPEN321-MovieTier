@@ -8,9 +8,9 @@ const authService = new AuthService();
 
 export const signIn = async (req: Request, res: Response) => {
   try {
-    const { idToken } = req.body;
+    const { idToken } = req.body as { idToken?: string };
 
-    if (!idToken) {
+    if (!idToken || typeof idToken !== 'string') {
       return res.status(400).json({
         success: false,
         message: 'ID token is required'
@@ -30,19 +30,19 @@ export const signIn = async (req: Request, res: Response) => {
       },
       token
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(400).json({
       success: false,
-      message: error.message || 'Unable to sign in. Please try again'
+      message: (error as Error).message || 'Unable to sign in. Please try again'
     });
   }
 };
 
 export const signUp = async (req: Request, res: Response) => {
   try {
-    const { idToken } = req.body;
+    const { idToken } = req.body as { idToken?: string };
 
-    if (!idToken) {
+    if (!idToken || typeof idToken !== 'string') {
       return res.status(400).json({
         success: false,
         message: 'ID token is required'
@@ -62,15 +62,15 @@ export const signUp = async (req: Request, res: Response) => {
       },
       token
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(400).json({
       success: false,
-      message: error.message || 'Unable to sign up. Please try again'
+      message: (error as Error).message || 'Unable to sign up. Please try again'
     });
   }
 };
 
-export const signOut = async (req: AuthRequest, res: Response) => {
+export const signOut = (req: AuthRequest, res: Response) => {
   res.json({
     success: true,
     message: 'Signed out successfully'
@@ -98,10 +98,10 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
       success: true,
       message: 'Account deleted successfully'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      message: error.message || 'Unable to delete account. Please try again'
+      message: (error as Error).message || 'Unable to delete account. Please try again'
     });
   }
 };
