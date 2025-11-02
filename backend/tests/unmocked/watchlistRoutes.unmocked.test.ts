@@ -182,7 +182,9 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           overview: mockMovies.inception.overview
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
+
       expect(res.body.success).toBe(true);
       expect(res.body.data.movieId).toBe(mockMovies.inception.id);
       expect(res.body.data.title).toBe(mockMovies.inception.title);
@@ -205,6 +207,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Fight Club'
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.movieId).toBe(550);
@@ -230,6 +233,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           // No posterPath or overview
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.data.posterPath).toBe('/enriched-poster.jpg');
       expect(res.body.data.overview).toBe('Enriched overview');
@@ -256,6 +260,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           // No overview
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.data.overview).toBe('Enriched overview text');
       expect(res.body.data.posterPath).toBe('/existing-poster.jpg'); // Existing poster preserved
@@ -275,6 +280,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
         });
 
       // Should still succeed even if TMDB fails
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.movieId).toBe(550);
@@ -341,6 +347,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Fight Club'
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
     });
@@ -354,6 +361,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Fight Club'
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.data.movieId).toBe(550);
     });
@@ -369,6 +377,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           overview: 'Custom overview text'
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.data.movieId).toBe(550);
       expect(res.body.data.title).toBe('Fight Club');
@@ -521,6 +530,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: longTitle
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.data.title).toBe(longTitle);
     });
@@ -536,6 +546,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: specialTitle
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.data.title).toBe(specialTitle);
     });
@@ -565,6 +576,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
           title: 'Large ID Movie'
         });
 
+      console.log(res);
       expect(res.status).toBe(201);
       expect(res.body.data.movieId).toBe(largeId);
     });

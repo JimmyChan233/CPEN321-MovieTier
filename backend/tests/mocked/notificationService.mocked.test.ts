@@ -1036,6 +1036,18 @@ describe('Notification Service Tests - Mocked', () => {
     beforeEach(() => {
       mockAdmin.apps = [];
     });
+
+    it('should initialize with a service account file', () => {
+      process.env.FIREBASE_SERVICE_ACCOUNT_PATH = '/path/to/serviceAccount.json';
+      const fs = require('fs');
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('{"projectId": "test-project"}');
+
+      NotificationService = require('../../src/services/notification.service').default;
+
+      expect(mockAdmin.initializeApp).toHaveBeenCalled();
+    });
+
     it('should handle service account file not found', () => {
       process.env.FIREBASE_SERVICE_ACCOUNT_PATH = '/path/to/missing.json';
 

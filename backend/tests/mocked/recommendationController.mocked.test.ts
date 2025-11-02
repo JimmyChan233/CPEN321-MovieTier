@@ -191,6 +191,14 @@ describe('Recommendation Controller - Mocked Tests', () => {
   // ==================== GET / (getRecommendations) Tests ====================
 
   describe('GET /', () => {
+    it('should return 401 Unauthorized when no token is provided', async () => {
+      const res = await request(app).get('/api/recommendations');
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('No authentication token provided');
+    });
+
     it('should return empty array when user has no ranked movies', async () => {
       const res = await request(app)
         .get('/api/recommendations')

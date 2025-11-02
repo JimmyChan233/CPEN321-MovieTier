@@ -115,6 +115,16 @@ describe('Movie Routes - Mocked Tests', () => {
       expect(res.body.message).toContain('at least 2 characters');
     });
 
+    it('should reject when no query is provided', async () => {
+      const res = await request(app)
+        .get('/api/movies/search')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Query must be at least 2 characters');
+    });
+
     it('should search with includeCast parameter', async () => {
       mockTmdbGet.mockResolvedValueOnce({
         data: {
@@ -218,6 +228,22 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data[0].title).toBe('测试');
+    });
+
+    it('should handle CJK search when zh-CN search fails', async () => {
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      // zh-CN search fails
+      mockTmdbGet.mockRejectedValueOnce(new Error('API error'));
+
+      const res = await request(app)
+        .get('/api/movies/search?query=测试')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual([]);
     });
 
     it('should handle empty results', async () => {
@@ -405,6 +431,22 @@ describe('Movie Routes - Mocked Tests', () => {
 
     it('should handle TMDB enrichment failure gracefully', async () => {
       mockTmdbGet.mockRejectedValueOnce(new Error('TMDB error'));
+
+      const res = await request(app)
+        .post('/api/movies/rank')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movieId: 550,
+          title: 'Fight Club'
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle watchlist deletion error gracefully', async () => {
+      const WatchlistItem = (await import('../../src/models/watch/WatchlistItem')).default;
+      jest.spyOn(WatchlistItem, 'deleteOne').mockRejectedValue(new Error('DB error'));
 
       const res = await request(app)
         .post('/api/movies/rank')

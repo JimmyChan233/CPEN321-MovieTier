@@ -193,13 +193,11 @@ describe('Feed Routes - Mocked Error Tests', () => {
         throw new Error('SSE error');
       });
 
-      // This test verifies the error is caught and handled
       const res = await request(app)
         .get('/api/feed/stream')
         .set('Authorization', `Bearer ${token1}`);
 
-      // Connection might close or error, but shouldn't crash
-      expect(res.status).toBeLessThan(600);
+      expect(res.status).toBe(200);
     });
   });
 

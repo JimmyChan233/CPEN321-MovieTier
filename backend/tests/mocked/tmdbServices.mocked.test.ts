@@ -174,6 +174,27 @@ describe('TMDB Client Tests', () => {
     );
   });
 
+  it('should handle undefined params in redactParams', () => {
+    const mockConfig: any = {
+      method: 'GET',
+      url: '/test'
+      // No params
+    };
+
+    const mockInstance = {
+      interceptors: {
+        request: { use: jest.fn((interceptor) => interceptor(mockConfig)) },
+        response: { use: jest.fn() }
+      }
+    };
+
+    mockedAxios.create = jest.fn().mockReturnValue(mockInstance);
+
+    getTmdbClient();
+
+    expect(mockConfig.params).toBeDefined();
+  });
+
   // Test Case 7: Response interceptor logs successful response
   it('should log successful response', () => {
     let responseInterceptor: any;
@@ -239,6 +260,42 @@ describe('TMDB Client Tests', () => {
     );
   });
 
+  it('should log successful response without start time', () => {
+    let responseInterceptor: any;
+
+    const mockInstance = {
+      interceptors: {
+        request: { use: jest.fn() },
+        response: { use: jest.fn((success) => { responseInterceptor = success; }) }
+      }
+    };
+
+    mockedAxios.create = jest.fn().mockReturnValue(mockInstance);
+
+    getTmdbClient();
+
+    const mockResponse = {
+      config: {
+        method: 'GET',
+        url: '/movie/123'
+        // No __start property
+      },
+      status: 200
+    };
+
+    responseInterceptor(mockResponse);
+
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
+      expect.stringContaining('TMDB ⬅️')
+    );
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
+      expect.stringContaining('200')
+    );
+    expect(stdoutWriteSpy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/\d+ms/)
+    );
+  });
+
   // Test Case 9: Error interceptor logs error
   it('should log error response', () => {
     let errorInterceptor: any;
@@ -292,6 +349,39 @@ describe('TMDB Client Tests', () => {
 
     expect(() => errorInterceptor(mockError)).toThrow();
     expect(stdoutWriteSpy).toHaveBeenCalled();
+  });
+
+  it('should log error response without start time', () => {
+    let errorInterceptor: any;
+
+    const mockInstance = {
+      interceptors: {
+        request: { use: jest.fn() },
+        response: { use: jest.fn((success, error) => { errorInterceptor = error; }) }
+      }
+    };
+
+    mockedAxios.create = jest.fn().mockReturnValue(mockInstance);
+
+    getTmdbClient();
+
+    const mockError = {
+      message: 'Network Error',
+      config: {
+        method: 'GET',
+        url: '/test'
+        // No __start property
+      }
+    };
+
+    expect(() => errorInterceptor(mockError)).toThrow();
+
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(
+      expect.stringContaining('ERROR')
+    );
+    expect(stdoutWriteSpy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/\d+ms/)
+    );
   });
 });
 

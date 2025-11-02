@@ -68,13 +68,13 @@ describe('Advanced Rerank Controller Tests', () => {
 
     // Prefer C over B (middle comparison)
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 100003 });
 
     // Prefer C over A (move to top)
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 100003 });
   });
@@ -98,13 +98,13 @@ describe('Advanced Rerank Controller Tests', () => {
 
     // Prefer movie 4 over movie 3
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 200004 });
 
     // Prefer movie 5 over movie 3 (move to bottom)
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 200005 });
   });
@@ -133,7 +133,7 @@ describe('Advanced Rerank Controller Tests', () => {
     // Multiple comparisons
     for (let i = 0; i < 3; i++) {
       await request(app)
-        .post('/rerank/compare')
+        .post('/compare')
         .set('Authorization', `Bearer ${token}`)
         .send({ preferredMovieId: 300004 });
     }
@@ -163,7 +163,7 @@ describe('Advanced Rerank Controller Tests', () => {
     // Perform multiple comparisons
     for (let i = 0; i < 5; i++) {
       await request(app)
-        .post('/rerank/compare')
+        .post('/compare')
         .set('Authorization', `Bearer ${token}`)
         .send({ preferredMovieId: 400009 });
     }
@@ -186,7 +186,7 @@ describe('Advanced Rerank Controller Tests', () => {
 
     // Move top movie down
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 500002 });
   });
@@ -208,7 +208,7 @@ describe('Advanced Rerank Controller Tests', () => {
 
     // Move last movie up
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 600003 });
   });
@@ -240,7 +240,7 @@ describe('Advanced Rerank Controller Tests', () => {
   // Test Case 9: Compare without active rerank session
   it('should handle compare without active rerank session', async () => {
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 123456 });
   });
@@ -269,7 +269,7 @@ describe('Advanced Rerank Controller Tests', () => {
 
     // Compare with non-existent movie
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 999999 });
   });
@@ -290,7 +290,7 @@ describe('Advanced Rerank Controller Tests', () => {
       .send({ movieId: (movie1 as any)._id.toString() });
 
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 900002 });
 
@@ -302,7 +302,7 @@ describe('Advanced Rerank Controller Tests', () => {
       .send({ movieId: (movie2 as any)._id.toString() });
 
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 900002 });
   });
@@ -322,7 +322,7 @@ describe('Advanced Rerank Controller Tests', () => {
       .send({ movieId: (movie as any)._id.toString() });
 
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 1000002 });
   });
@@ -345,7 +345,7 @@ describe('Advanced Rerank Controller Tests', () => {
   // Test Case 15: Rerank compare unauthorized
   it('should reject unauthorized rerank compare', async () => {
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .send({ preferredMovieId: 123456 });
   });
 
@@ -366,13 +366,13 @@ describe('Advanced Rerank Controller Tests', () => {
 
     // Prefer higher ranked movie (B < A, so B moves down)
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 1200001 });
 
     // Then prefer B over C (B > C, so B stays at 2)
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 1200002 });
   });
@@ -401,7 +401,7 @@ describe('Advanced Rerank Controller Tests', () => {
     // Multiple comparisons to navigate binary search
     for (let i = 0; i < 4; i++) {
       await request(app)
-        .post('/rerank/compare')
+        .post('/compare')
         .set('Authorization', `Bearer ${token}`)
         .send({ preferredMovieId: 1300007 });
     }
@@ -426,7 +426,7 @@ describe('Advanced Rerank Controller Tests', () => {
 
       // Make a comparison
       await request(app)
-        .post('/rerank/compare')
+        .post('/compare')
         .set('Authorization', `Bearer ${token}`)
         .send({ preferredMovieId: (movie as any).movieId });
     }
@@ -447,7 +447,7 @@ describe('Advanced Rerank Controller Tests', () => {
       .send({ movieId: (movie as any)._id.toString() });
 
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({});
   });
@@ -475,12 +475,12 @@ describe('Advanced Rerank Controller Tests', () => {
 
     // Navigate binary tree
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 1600003 }); // Prefer the movie being reranked
 
     await request(app)
-      .post('/rerank/compare')
+      .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({ preferredMovieId: 1600001 }); // Prefer other movie
   });

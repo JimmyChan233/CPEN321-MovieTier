@@ -447,6 +447,19 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
         expect(res.body.success).toBe(false);
         expect(res.body.message).toContain('Unable to add movie');
       });
+
+      it('should return 401 Unauthorized when no token is provided', async () => {
+        const res = await request(app)
+          .post('/api/movies/add')
+          .send({
+            movieId: 550,
+            title: 'Fight Club'
+          });
+
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toBe('No authentication token provided');
+      });
     });
   });
 
@@ -478,6 +491,18 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('No active comparison session');
+    });
+
+    it('should return 401 Unauthorized when no token is provided', async () => {
+      const res = await request(app)
+        .post('/api/movies/compare')
+        .send({
+          preferredMovieId: 999
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('No authentication token provided');
     });
 
     it('should continue comparison when not finished', async () => {

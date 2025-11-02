@@ -130,6 +130,20 @@ describe('Mocked: POST /auth/signin', () => {
     expect(res.body.token).toBe('mock-jwt-token');
     expect(res.body.user.email).toBe('test@example.com');
   });
+
+  it('should handle errors without a message property during sign-in', async () => {
+    jest.spyOn(AuthService.prototype, 'signIn').mockRejectedValueOnce({});
+
+    const res = await request(app)
+      .post('/api/auth/signin')
+      .send({
+        idToken: 'valid-google-token'
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe('Unable to sign in. Please try again');
+  });
 });
 
 // Interface POST /auth/signup
@@ -249,6 +263,20 @@ describe('Mocked: POST /auth/signup', () => {
     expect(res.body.token).toBe('mock-jwt-token-signup');
     expect(res.body.user.email).toBe('newuser@example.com');
   });
+
+  it('should handle errors without a message property during sign-up', async () => {
+    jest.spyOn(AuthService.prototype, 'signUp').mockRejectedValueOnce({});
+
+    const res = await request(app)
+      .post('/api/auth/signup')
+      .send({
+        idToken: 'valid-google-token'
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe('Unable to sign up. Please try again');
+  });
 });
 
 // Interface POST /auth/signout
@@ -365,4 +393,17 @@ describe('Mocked: DELETE /auth/account', () => {
     message: 'Unauthorized'
   });
 });
+
+  it('should handle errors without a message property during account deletion', async () => {
+    jest.spyOn(User, 'findByIdAndDelete').mockRejectedValueOnce({});
+
+    const res = await request(app)
+      .delete('/api/auth/account')
+      .set('Authorization', `Bearer ${generateTestJWT('test-user-id')}`)
+      .send({});
+
+    expect(res.status).toStrictEqual(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe('Unable to delete account. Please try again');
+  });
 });

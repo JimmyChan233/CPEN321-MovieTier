@@ -12,6 +12,8 @@ import User from '../../src/models/user/User';
 import { Friendship, FriendRequest } from '../../src/models/friend/Friend';
 import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
 
+import { sseService } from '../../src/services/sse/sseService';
+
 // Mock notification service
 jest.mock('../../src/services/notification.service', () => ({
   __esModule: true,
@@ -260,50 +262,15 @@ describe('GET /stream SSE authorization and error handling', () => {
   });
 
   it('should handle errors in SSE setup and call res.end()', async () => {
-    const sseService = require('../../src/services/sse/sseService').sseService;
-    
-    const mockReq: any = {
-      userId: (user1 as any)._id.toString(),
-      on: jest.fn(),
-    };
+    jest.spyOn(sseService, 'addClient').mockImplementationOnce(() => {
+      throw new Error('SSE error');
+    });
 
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      setHeader: jest.fn(() => {
-        throw new Error('Header error');  // Force error to trigger catch
-      }),
-      flushHeaders: jest.fn(),
-      write: jest.fn(),
-      end: jest.fn(),
-    };
+    const res = await request(app)
+      .get('/api/friends/stream')
+      .set('Authorization', `Bearer ${token1}`);
 
-    jest.spyOn(sseService, 'addClient').mockImplementation(() => {});
-    jest.spyOn(sseService, 'removeClient').mockImplementation(() => {});
-
-    // Replicate the handler with error
-    try {
-      if (!mockReq.userId) {
-        mockRes.status(401);
-        mockRes.json({ success: false, message: 'Unauthorized' });
-        return;
-      }
-      mockRes.setHeader('Content-Type', 'text/event-stream');  // Throws error
-      mockRes.setHeader('Cache-Control', 'no-cache');
-      mockRes.setHeader('Connection', 'keep-alive');
-      mockRes.flushHeaders();
-      mockRes.write(`event: connected\n` + `data: {"ok":true}\n\n`);
-      sseService.addClient(String(mockReq.userId), mockRes);
-      mockReq.on('close', () => {
-        sseService.removeClient(String(mockReq.userId), mockRes);
-      });
-    } catch {
-      mockRes.end();  // Line 336 - should be called
-    }
-
-    expect(mockRes.end).toHaveBeenCalled();
-    
-    jest.restoreAllMocks();
+    expect(res.status).toBe(200);
   });
 
   it('should setup close handler for SSE cleanup', async () => {
