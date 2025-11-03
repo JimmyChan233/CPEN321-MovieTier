@@ -71,6 +71,15 @@ class FriendsScreenTest {
         override suspend fun getRecommendations(): Response<ApiResponse<List<Movie>>> = unimplemented()
         override suspend fun getTrendingMovies(): Response<ApiResponse<List<Movie>>> = unimplemented()
         override suspend fun getQuote(title: String, year: String?): Response<ApiResponse<String>> = unimplemented()
+        override suspend fun addMovie(body: AddMovieRequest): Response<AddMovieResponse> = unimplemented()
+        override suspend fun compareMovies(body: CompareMoviesRequest): Response<AddMovieResponse> = unimplemented()
+        override suspend fun deleteRankedMovie(id: String): Response<ApiResponse<Unit>> = unimplemented()
+        override suspend fun startRerank(body: Map<String, String>): Response<AddMovieResponse> = unimplemented()
+        override suspend fun getMovieProviders(movieId: Int, country: String): Response<ApiResponse<WatchProviders>> = unimplemented()
+        override suspend fun getMovieDetails(movieId: Int): Response<ApiResponse<Movie>> = unimplemented()
+        override suspend fun getMovieVideos(movieId: Int): Response<ApiResponse<MovieVideo?>> = unimplemented()
+        override suspend fun getFeed(): Response<ApiResponse<List<FeedActivity>>> = unimplemented()
+        override suspend fun getMyFeed(): Response<ApiResponse<List<FeedActivity>>> = unimplemented()
     }
 
     private class FakeSseClient : SseClient(OkHttpClient()) {
