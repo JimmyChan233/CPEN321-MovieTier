@@ -46,6 +46,7 @@ describe('Movie Routes - Mocked Tests', () => {
   let app: express.Application;
   let user: any;
   let token: string;
+  const originalTmdbKey = process.env.TMDB_API_KEY;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -61,6 +62,12 @@ describe('Movie Routes - Mocked Tests', () => {
   afterAll(async () => {
     await mongoose.disconnect();
     await mongoServer.stop();
+    // Restore original key
+    if (originalTmdbKey) {
+      process.env.TMDB_API_KEY = originalTmdbKey;
+    } else {
+      delete process.env.TMDB_API_KEY;
+    }
   });
 
   beforeEach(async () => {
@@ -73,6 +80,17 @@ describe('Movie Routes - Mocked Tests', () => {
     token = generateTestJWT((user as any)._id.toString());
 
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Always restore TMDB_API_KEY after each test
+    if (originalTmdbKey) {
+      process.env.TMDB_API_KEY = originalTmdbKey;
+    } else {
+      delete process.env.TMDB_API_KEY;
+    }
+    // Clear any TMDB_KEY as well
+    delete process.env.TMDB_KEY;
   });
 
   // ==================== GET /search Tests ====================
@@ -271,7 +289,6 @@ describe('Movie Routes - Mocked Tests', () => {
     });
 
     it('should return 500 when TMDB API key not configured', async () => {
-      const originalKey = process.env.TMDB_API_KEY;
       delete process.env.TMDB_API_KEY;
       delete process.env.TMDB_KEY;
 
@@ -281,9 +298,7 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.message).toContain('TMDB API key not configured');
-
-      process.env.TMDB_API_KEY = originalKey;
-    });
+    }, 10000);
 
     it('should handle cast enrichment API failure', async () => {
       mockTmdbGet.mockResolvedValueOnce({
@@ -668,7 +683,6 @@ describe('Movie Routes - Mocked Tests', () => {
     });
 
     it('should return 500 when TMDB API key not configured', async () => {
-      const originalKey = process.env.TMDB_API_KEY;
       delete process.env.TMDB_API_KEY;
       delete process.env.TMDB_KEY;
 
@@ -678,9 +692,7 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.message).toContain('TMDB API key not configured');
-
-      process.env.TMDB_API_KEY = originalKey;
-    });
+    }, 10000);
 
     it('should handle TMDB API error gracefully', async () => {
       mockTmdbGet.mockRejectedValueOnce(new Error('TMDB API error'));
@@ -741,7 +753,6 @@ describe('Movie Routes - Mocked Tests', () => {
     });
 
     it('should return 500 when TMDB API key not configured', async () => {
-      const originalKey = process.env.TMDB_API_KEY;
       delete process.env.TMDB_API_KEY;
       delete process.env.TMDB_KEY;
 
@@ -751,9 +762,7 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.message).toContain('TMDB API key not configured');
-
-      process.env.TMDB_API_KEY = originalKey;
-    });
+    }, 10000);
 
     it('should handle TMDB API error gracefully', async () => {
       mockTmdbGet.mockRejectedValueOnce(new Error('TMDB API error'));
@@ -865,7 +874,6 @@ describe('Movie Routes - Mocked Tests', () => {
     });
 
     it('should return 500 when TMDB API key not configured', async () => {
-      const originalKey = process.env.TMDB_API_KEY;
       delete process.env.TMDB_API_KEY;
       delete process.env.TMDB_KEY;
 
@@ -875,9 +883,7 @@ describe('Movie Routes - Mocked Tests', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.message).toContain('TMDB API key not configured');
-
-      process.env.TMDB_API_KEY = originalKey;
-    });
+    }, 10000);
 
     it('should handle TMDB API error gracefully', async () => {
       mockTmdbGet.mockRejectedValueOnce(new Error('TMDB API error'));
