@@ -64,7 +64,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 ### **3.2. Use Case Diagram**
 
-![UML diagram](images/UML.png)
+<img width="618" height="510" alt="Screenshot 2025-10-29 at 2 29 36 PM" src="https://github.com/user-attachments/assets/f8a76db8-ba70-43e4-84ef-b169f0aa8f52" />
 
 ### **3.3. Actors Description**
 

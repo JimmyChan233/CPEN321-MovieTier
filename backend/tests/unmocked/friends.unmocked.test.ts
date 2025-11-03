@@ -11,6 +11,7 @@ import friendRoutes from '../../src/routes/friendRoutes';
 import User from '../../src/models/user/User';
 import { Friendship, FriendRequest } from '../../src/models/friend/Friend';
 import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
+import { errorHandler } from '../../src/middleware/errorHandler';
 
 describe('Unmocked: GET /friends', () => {
   let mongoServer: MongoMemoryServer;
@@ -27,6 +28,7 @@ describe('Unmocked: GET /friends', () => {
     app = express();
     app.use(express.json());
     app.use('/', friendRoutes);
+    app.use(errorHandler);
 
     user = await User.create(mockUsers.validUser);
     friend1 = await User.create({
@@ -114,6 +116,7 @@ describe('Unmocked: GET /friends/requests', () => {
     app = express();
     app.use(express.json());
     app.use('/', friendRoutes);
+    app.use(errorHandler);
 
     user = await User.create(mockUsers.validUser);
     requester = await User.create({
@@ -166,6 +169,7 @@ describe('Unmocked: POST /friends/request', () => {
     app = express();
     app.use(express.json());
     app.use('/', friendRoutes);
+    app.use(errorHandler);
 
     user = await User.create(mockUsers.validUser);
     target = await User.create({
@@ -283,6 +287,7 @@ describe('Unmocked: POST /friends/respond', () => {
     app = express();
     app.use(express.json());
     app.use('/', friendRoutes);
+    app.use(errorHandler);
 
     user = await User.create(mockUsers.validUser);
     sender = await User.create({
@@ -358,6 +363,7 @@ describe('Unmocked: DELETE /friends/:friendId', () => {
     app = express();
     app.use(express.json());
     app.use('/', friendRoutes);
+    app.use(errorHandler);
 
     user = await User.create(mockUsers.validUser);
     friend = await User.create({

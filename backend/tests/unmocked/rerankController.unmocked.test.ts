@@ -11,6 +11,7 @@ import movieRoutes from '../../src/routes/movieRoutes';
 import User from '../../src/models/user/User';
 import RankedMovie from '../../src/models/movie/RankedMovie';
 import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
+import { errorHandler } from '../../src/middleware/errorHandler';
 
 describe('Rerank Controller - Complete Coverage', () => {
   let mongoServer: MongoMemoryServer;
@@ -25,6 +26,7 @@ describe('Rerank Controller - Complete Coverage', () => {
     app = express();
     app.use(express.json());
     app.use('/', movieRoutes);
+    app.use(errorHandler);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
