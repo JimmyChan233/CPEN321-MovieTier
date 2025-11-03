@@ -65,6 +65,7 @@ object LocationHelper {
         )
     }
 
+    @android.annotation.SuppressLint("MissingPermission")
     private suspend fun getCountryFromLocation(context: Context): String? {
         val fusedLocationClient: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(context)

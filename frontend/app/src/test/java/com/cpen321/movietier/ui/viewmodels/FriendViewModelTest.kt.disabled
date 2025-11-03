@@ -9,7 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody
@@ -98,6 +98,15 @@ class FriendViewModelTest {
         override suspend fun getRecommendations(): Response<ApiResponse<List<Movie>>> = unimplemented()
         override suspend fun getTrendingMovies(): Response<ApiResponse<List<Movie>>> = unimplemented()
         override suspend fun getQuote(title: String, year: String?): Response<ApiResponse<String>> = unimplemented()
+        override suspend fun addMovie(body: AddMovieRequest): Response<AddMovieResponse> = unimplemented()
+        override suspend fun compareMovies(body: CompareMoviesRequest): Response<AddMovieResponse> = unimplemented()
+        override suspend fun deleteRankedMovie(id: String): Response<ApiResponse<Unit>> = unimplemented()
+        override suspend fun startRerank(body: Map<String, String>): Response<AddMovieResponse> = unimplemented()
+        override suspend fun getMovieProviders(movieId: Int, country: String): Response<ApiResponse<WatchProviders>> = unimplemented()
+        override suspend fun getMovieDetails(movieId: Int): Response<ApiResponse<Movie>> = unimplemented()
+        override suspend fun getMovieVideos(movieId: Int): Response<ApiResponse<MovieVideo?>> = unimplemented()
+        override suspend fun getFeed(): Response<ApiResponse<List<FeedActivity>>> = unimplemented()
+        override suspend fun getMyFeed(): Response<ApiResponse<List<FeedActivity>>> = unimplemented()
     }
 
     private class FakeSseClient : SseClient(okhttp3.OkHttpClient()) {
@@ -110,7 +119,7 @@ class FriendViewModelTest {
     }
 
     @Test
-    fun loadFriends_populatesUiState() = runTest(UnconfinedTestDispatcher()) {
+    fun loadFriends_populatesUiState() = runTest {
         val api = FakeApiService().apply {
             friends = listOf(
                 Friend(id = "f1", email = "f@ex.com", name = "Friend One", profileImageUrl = null)
@@ -121,7 +130,7 @@ class FriendViewModelTest {
         val vm = FriendViewModel(FriendRepository(api), FakeSseClient())
 
         // allow initial init { loadFriends, loadRequests, loadOutgoingRequests }
-        kotlinx.coroutines.test.advanceUntilIdle()
+        advanceUntilIdle()
 
         val state = vm.uiState.value
         assertEquals(1, state.friends.size)
@@ -129,7 +138,7 @@ class FriendViewModelTest {
     }
 
     @Test
-    fun sendFriendRequest_emitsMessage_andRefreshesOutgoing() = runTest(UnconfinedTestDispatcher()) {
+    fun sendFriendRequest_emitsMessage_andRefreshesOutgoing() = runTest {
         val api = FakeApiService().apply {
             outgoingDetailed = emptyList()
         }
@@ -139,7 +148,7 @@ class FriendViewModelTest {
         val job = backgroundScope.launch { vm.events.collect { if (it is UiEvent.Message) events.add(it.text) } }
 
         vm.sendFriendRequest("pal@example.com")
-        kotlinx.coroutines.test.advanceUntilIdle()
+        advanceUntilIdle()
 
         assertEquals("pal@example.com", api.lastSentEmail)
         assertTrue(events.contains("Friend request sent"))
@@ -148,14 +157,14 @@ class FriendViewModelTest {
     }
 
     @Test
-    fun respondToRequest_accept_emitsMessage() = runTest(UnconfinedTestDispatcher()) {
+    fun respondToRequest_accept_emitsMessage() = runTest {
         val api = FakeApiService()
         val vm = FriendViewModel(FriendRepository(api), FakeSseClient())
         val events = mutableListOf<String>()
         val job = backgroundScope.launch { vm.events.collect { if (it is UiEvent.Message) events.add(it.text) } }
 
         vm.respondToRequest("req1", true)
-        kotlinx.coroutines.test.advanceUntilIdle()
+        advanceUntilIdle()
 
         assertEquals(true, api.respondAccept)
         assertTrue(events.contains("Friend request accepted"))
@@ -164,14 +173,14 @@ class FriendViewModelTest {
     }
 
     @Test
-    fun cancelOutgoingRequest_emitsMessage() = runTest(UnconfinedTestDispatcher()) {
+    fun cancelOutgoingRequest_emitsMessage() = runTest {
         val api = FakeApiService()
         val vm = FriendViewModel(FriendRepository(api), FakeSseClient())
         val events = mutableListOf<String>()
         val job = backgroundScope.launch { vm.events.collect { if (it is UiEvent.Message) events.add(it.text) } }
 
         vm.cancelOutgoingRequest("req42")
-        kotlinx.coroutines.test.advanceUntilIdle()
+        advanceUntilIdle()
 
         assertEquals("req42", api.cancelRequestId)
         assertTrue(events.contains("Friend request canceled"))

@@ -17,13 +17,13 @@ import javax.inject.Singleton
 import java.util.concurrent.TimeUnit
 
 @Singleton
-class SseClient @Inject constructor(
+open class SseClient @Inject constructor(
     private val okHttpClient: OkHttpClient
 ){
     private val jobs = mutableMapOf<String, Job>()
     private val shouldRuns = mutableMapOf<String, Boolean>()
 
-    fun connect(path: String, onEvent: (String, String) -> Unit) {
+    open fun connect(path: String, onEvent: (String, String) -> Unit) {
         jobs[path]?.cancel()
         shouldRuns[path] = true
         val handler = CoroutineExceptionHandler { _, _ -> /* swallow to avoid app crash */ }
