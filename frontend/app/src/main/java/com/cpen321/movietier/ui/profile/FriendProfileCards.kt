@@ -1,16 +1,13 @@
 package com.cpen321.movietier.ui.profile
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,36 +55,34 @@ private fun RankBadgeAndPoster(
     rank: Int,
     posterPath: String?
 ) {
-    Box {
-        AsyncImage(
-            model = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-            contentDescription = null,
-            modifier = Modifier
-                .width(80.dp)
-                .height(120.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            contentScale = ContentScale.Crop
-        )
-
-        // Rank badge
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset((-4).dp, (-4).dp)
-                .size(28.dp)
-                .background(
-                    MaterialTheme.colorScheme.primary,
-                    CircleShape
-                ),
-            contentAlignment = Alignment.Center
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Rank badge on top
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.primaryContainer
         ) {
             Text(
-                text = "$rank",
-                style = MaterialTheme.typography.labelMedium,
+                text = "#$rank",
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
             )
         }
+
+        // Poster below
+        AsyncImage(
+            model = posterPath?.let { "https://image.tmdb.org/t/p/w185$it" },
+            contentDescription = null,
+            modifier = Modifier
+                .height(120.dp)
+                .aspectRatio(2f / 3f)
+                .clip(MaterialTheme.shapes.small),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 
@@ -159,7 +154,7 @@ private fun MovieOverview(movieDetails: Movie) {
             text = overview,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
+            maxLines = 4,
             overflow = TextOverflow.Ellipsis
         )
     }

@@ -38,6 +38,7 @@ import com.cpen321.movietier.ui.components.MovieDetailBottomSheet
 import com.cpen321.movietier.ui.components.MovieDetailActions
 import com.cpen321.movietier.ui.components.AvailabilityInfo
 import com.cpen321.movietier.ui.components.CommentBottomSheet
+import com.cpen321.movietier.ui.components.YouTubePlayerDialog
 import com.cpen321.movietier.ui.components.shimmerPlaceholder
 import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.theme.MovieTierTheme
@@ -52,6 +53,8 @@ import com.cpen321.movietier.ui.common.CommonContext
 import com.cpen321.movietier.ui.common.MovieActionCallbacks
 import com.cpen321.movietier.ui.common.CommentsState
 import com.cpen321.movietier.ui.common.DismissCallbacks
+import com.cpen321.movietier.ui.common.MovieDialogState
+import com.cpen321.movietier.ui.common.MovieDialogCallbacks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +70,15 @@ fun FeedScreen(
     val currentUserId by tokenManager.userId.collectAsState(initial = null)
     var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
     var showCommentsForActivity by remember { mutableStateOf<String?>(null) }
+    var dialogState by remember { mutableStateOf(MovieDialogState()) }
+    val dialogCallbacks = remember {
+        MovieDialogCallbacks(
+            onTrailerKeyUpdate = { dialogState = dialogState.copy(trailerKey = it) },
+            onDismissMovie = { selectedMovie = null; dialogState = dialogState.copy(trailerKey = null) },
+            onShowTrailer = { title -> dialogState = dialogState.copy(trailerMovieTitle = title, showTrailerDialog = true) },
+            onDismissTrailer = { dialogState = dialogState.copy(showTrailerDialog = it) }
+        )
+    }
     val commonContext = CommonContext(
         context = context,
         scope = rememberCoroutineScope(),
@@ -99,6 +111,7 @@ fun FeedScreen(
 
     FeedSideEffects(
         selectedMovie = selectedMovie,
+        dialogState = dialogState,
         compareState = compareState,
         commentsState = CommentsState(
             showCommentsForActivity = showCommentsForActivity,
@@ -109,9 +122,10 @@ fun FeedScreen(
         country = country,
         commonContext = commonContext,
         callbacks = DismissCallbacks(
-            onDismissMovie = { selectedMovie = null },
+            onDismissMovie = dialogCallbacks.onDismissMovie,
             onDismissComments = { showCommentsForActivity = null }
-        )
+        ),
+        dialogCallbacks = dialogCallbacks
     )
 }
 
@@ -390,16 +404,19 @@ private fun FeedActivityItem(
 @Composable
 private fun FeedSideEffects(
     selectedMovie: com.cpen321.movietier.data.model.Movie?,
+    dialogState: MovieDialogState,
     compareState: com.cpen321.movietier.ui.viewmodels.FeedCompareState?,
     commentsState: CommentsState,
     feedViewModel: FeedViewModel,
     country: String,
     commonContext: CommonContext,
-    callbacks: DismissCallbacks
+    callbacks: DismissCallbacks,
+    dialogCallbacks: MovieDialogCallbacks
 ) {
     selectedMovie?.let { movie ->
         FeedMovieDetailSheet(
             movie = movie,
+            dialogState = dialogState,
             feedViewModel = feedViewModel,
             country = country,
             commonContext = commonContext,
@@ -407,8 +424,15 @@ private fun FeedSideEffects(
                 onAddToRanking = feedViewModel::addToRanking,
                 onAddToWatchlist = feedViewModel::addToWatchlist,
                 onDismiss = callbacks.onDismissMovie
-            )
+            ),
+            dialogCallbacks = dialogCallbacks
         )
+    }
+
+    if (dialogState.showTrailerDialog && dialogState.trailerKey != null) {
+        YouTubePlayerDialog(dialogState.trailerKey!!, dialogState.trailerMovieTitle) {
+            dialogCallbacks.onDismissTrailer(false)
+        }
     }
 
     compareState?.let {
@@ -432,13 +456,26 @@ private fun FeedSideEffects(
 @Composable
 private fun FeedMovieDetailSheet(
     movie: com.cpen321.movietier.data.model.Movie,
+    dialogState: MovieDialogState,
     feedViewModel: FeedViewModel,
     country: String,
     commonContext: CommonContext,
-    callbacks: MovieActionCallbacks
+    callbacks: MovieActionCallbacks,
+    dialogCallbacks: MovieDialogCallbacks
 ) {
     var availability by remember(movie.id) { mutableStateOf<String?>(null) }
     var loadingAvail by remember(movie.id) { mutableStateOf(true) }
+
+    // Fetch trailer key
+    LaunchedEffect(movie.id) {
+        val result = feedViewModel.getMovieVideos(movie.id)
+        dialogCallbacks.onTrailerKeyUpdate(when (result) {
+            is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
+            else -> null
+        })
+    }
+
+    // Fetch watch providers
     LaunchedEffect(movie.id) {
         loadingAvail = true
         when (val res = feedViewModel.getWatchProviders(movie.id, country)) {
@@ -456,12 +493,14 @@ private fun FeedMovieDetailSheet(
         }
         loadingAvail = false
     }
+
     MovieDetailBottomSheet(
         movie = movie,
         actions = MovieDetailActions(
             onOpenWhereToWatch = { commonContext.scope.launch { handleWhereToWatchClick(movie, feedViewModel, country, commonContext.context, commonContext.snackbarHostState) } },
             onAddToRanking = { callbacks.onAddToRanking(movie) },
             onAddToWatchlist = { callbacks.onAddToWatchlist(movie); callbacks.onDismiss() },
+            onPlayTrailer = dialogState.trailerKey?.let { { dialogCallbacks.onShowTrailer(movie.title) } },
             onDismissRequest = callbacks.onDismiss
         ),
         availabilityInfo = com.cpen321.movietier.ui.components.AvailabilityInfo(

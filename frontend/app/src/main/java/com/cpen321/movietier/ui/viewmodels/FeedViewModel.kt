@@ -203,6 +203,10 @@ class FeedViewModel @Inject constructor(
         return movieRepository.getWatchProviders(movieId, country)
     }
 
+    suspend fun getMovieVideos(movieId: Int): Result<com.cpen321.movietier.data.model.MovieVideo?> {
+        return movieRepository.getMovieVideos(movieId)
+    }
+
     fun toggleLike(activityId: String) {
         viewModelScope.launch {
             // Find the activity
