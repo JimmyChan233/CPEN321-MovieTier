@@ -103,7 +103,10 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
 export const getRecommendations = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
-    const userId = authReq.userId!;
+    if (!authReq.userId) {
+      return res.status(401).json({ success: false, message: 'User ID not found' });
+    }
+    const userId = authReq.userId;
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const tmdb = getTmdbClient();
 
