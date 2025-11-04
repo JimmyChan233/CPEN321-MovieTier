@@ -4,9 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.model.User
 import com.cpen321.movietier.data.repository.AuthRepository
 import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.fcm.FcmHelper
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.credentials.CredentialManager
@@ -29,7 +31,8 @@ data class AuthUiState(
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val apiService: ApiService
 ) : ViewModel() {
 
     companion object {
@@ -184,6 +187,8 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Sign in successful"
                 )
+                // Register FCM token after successful sign in
+                FcmHelper.initializeFcm(apiService, viewModelScope)
             }
             is Result.Error -> {
                 // If sign in fails, try sign up
@@ -218,6 +223,8 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Account created successfully"
                 )
+                // Register FCM token after successful sign up
+                FcmHelper.initializeFcm(apiService, viewModelScope)
             }
             is Result.Error -> {
                 Log.e(TAG, "Sign up failed: ${result.message}")

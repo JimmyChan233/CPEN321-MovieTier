@@ -45,8 +45,7 @@ class MainActivity : ComponentActivity() {
             runCatching { FirebaseApp.initializeApp(applicationContext) }
             // Request notification permission (Android 13+)
             FcmHelper.requestNotificationPermission(this)
-            // Initialize FCM and register token
-            FcmHelper.initializeFcm(apiService, lifecycleScope)
+            // Note: FCM token registration moved to AuthViewModel after successful authentication
         }
 
         setContent {
