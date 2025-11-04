@@ -4,6 +4,7 @@ import User from '../models/user/User';
 import mongoose from 'mongoose';
 import WatchlistItem from '../models/watch/WatchlistItem';
 import { Friendship } from '../models/friend/Friend';
+import RankedMovie from '../models/movie/RankedMovie';
 import { logger } from '../utils/logger';
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -146,6 +147,44 @@ router.get('/:userId/watchlist', authenticate, asyncHandler(async (req: AuthRequ
     res.json({ success: true, data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to load user watchlist. Please try again' });
+  }
+}));
+
+// Get a user's ranked movies
+router.get('/:userId/rankings', authenticate, asyncHandler(async (req: AuthRequest, res) => {
+  try {
+    const { userId } = req.params as { userId: string };
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid user id' });
+    }
+
+    // Friendship check
+    const areFriends = await Friendship.findOne({ userId: req.userId, friendId: userId });
+    if (!areFriends && String(req.userId) !== userId) {
+      return res.status(403).json({ success: false, message: 'You must be friends to view these rankings.' });
+    }
+
+    const movies = await RankedMovie.find({ userId: new mongoose.Types.ObjectId(userId) }).sort({ rank: 1 });
+    const shaped = movies.map((m) => {
+        const movieDoc = m as unknown as { _id: unknown; userId: unknown; movieId: number; title: string; posterPath?: string; rank: number; createdAt?: Date };
+        return {
+            _id: movieDoc._id,
+            userId: movieDoc.userId,
+            movie: {
+                id: movieDoc.movieId,
+                title: movieDoc.title,
+                overview: null,
+                posterPath: movieDoc.posterPath ?? null,
+                releaseDate: null,
+                voteAverage: null
+            },
+            rank: movieDoc.rank,
+            createdAt: movieDoc.createdAt
+        };
+    });
+    res.json({ success: true, data: shaped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Unable to load rankings. Please try again' });
   }
 }));
 

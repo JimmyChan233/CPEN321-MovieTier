@@ -14,6 +14,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.cpen321.movietier.ui.components.Avatar
+import com.cpen321.movietier.data.model.RankedMovie
 import com.cpen321.movietier.data.model.WatchlistItem
 import com.cpen321.movietier.ui.viewmodels.FriendProfileViewModel
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -108,6 +109,50 @@ fun FriendProfileScreen(
                 commonContext = commonContext,
                 callbacks = dialogCallbacks
             )
+        }
+    }
+}
+
+@Composable
+fun RankedMovieCard(
+    rankedMovie: RankedMovie,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "#${rankedMovie.rank}",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.width(50.dp)
+            )
+            AsyncImage(
+                model = rankedMovie.movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+                contentDescription = "Poster: ${rankedMovie.movie.title}",
+                modifier = Modifier
+                    .width(90.dp)
+                    .aspectRatio(2f / 3f),
+                contentScale = ContentScale.Crop
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = rankedMovie.movie.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -282,23 +327,68 @@ private fun FPContent(
     padding: PaddingValues,
     onMovieSelect: (Movie) -> Unit
 ) {
-    Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    var tabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("Rankings", "Watchlist")
+
+    Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(vertical = 16.dp)
+        ) {
             Avatar(imageUrl = null, name = ui.userName ?: "", size = 64.dp)
             Column(Modifier.weight(1f)) {
                 Text(ui.userName ?: "", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(ui.userEmail ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+
+        if (ui.errorMessage != null) {
+            Text(text = "Error: ${ui.errorMessage}", color = MaterialTheme.colorScheme.error)
+        }
+
+        TabRow(selectedTabIndex = tabIndex) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    text = { Text(title) },
+                    selected = tabIndex == index,
+                    onClick = { tabIndex = index }
+                )
+            }
+        }
         Spacer(Modifier.height(16.dp))
-        Text("Watchlist", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(8.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(ui.watchlist, key = { it.id }) { item ->
-                val movieDetails = movieDetailsMap[item.movieId]
-                WatchItemCard(item, movieDetails?.releaseDate, movieDetails?.voteAverage) {
-                    onMovieSelect(movieDetails ?: Movie(item.movieId, item.title, item.overview, item.posterPath, null, null))
-                }
+
+        when (tabIndex) {
+            0 -> FpRankingsList(ui.rankings, onMovieSelect)
+            1 -> FpWatchlist(ui.watchlist, movieDetailsMap, onMovieSelect)
+        }
+    }
+}
+
+@Composable
+private fun FpRankingsList(
+    rankings: List<com.cpen321.movietier.data.model.RankedMovie>,
+    onMovieSelect: (Movie) -> Unit
+) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(rankings, key = { it.id }) { rankedMovie ->
+            RankedMovieCard(rankedMovie) {
+                onMovieSelect(rankedMovie.movie)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FpWatchlist(
+    watchlist: List<WatchlistItem>,
+    movieDetailsMap: Map<Int, Movie>,
+    onMovieSelect: (Movie) -> Unit
+) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(watchlist, key = { it.id }) { item ->
+            val movieDetails = movieDetailsMap[item.movieId]
+            WatchItemCard(item, movieDetails?.releaseDate, movieDetails?.voteAverage) {
+                onMovieSelect(movieDetails ?: Movie(item.movieId, item.title, item.overview, item.posterPath, null, null))
             }
         }
     }

@@ -241,6 +241,7 @@ router.post('/rank', authenticate, asyncHandler(async (req: AuthRequest, res) =>
       sseService.send(String(f.friendId), 'feed_activity', {
         activityId: activity._id
       });
+      sseService.send(String(f.friendId), 'ranking_changed', { userId: req.userId });
     });
 
     // Shape response to match frontend model (movie nested)
@@ -307,6 +308,12 @@ router.delete('/ranked/:id', authenticate, asyncHandler(async (req: AuthRequest,
     try {
       await FeedActivity.deleteMany({ userId: req.userId, movieId: removedMovieId });
     } catch {}
+
+    const friendships = await Friendship.find({ userId: req.userId });
+    friendships.forEach(f => {
+      sseService.send(String(f.friendId), 'ranking_changed', { userId: req.userId });
+    });
+
     res.json({ success: true, message: 'Removed from rankings' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Unable to remove from rankings. Please try again' });

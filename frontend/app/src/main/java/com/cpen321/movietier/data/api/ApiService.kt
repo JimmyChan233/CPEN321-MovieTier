@@ -42,6 +42,9 @@ interface UserApiService {
 
     @GET("users/search")
     suspend fun searchUsers(@Query("query") query: String): Response<ApiResponse<List<User>>>
+
+    @GET("users/{userId}/rankings")
+    suspend fun getUserRankings(@Path("userId") userId: String): Response<ApiResponse<List<com.cpen321.movietier.data.model.RankedMovie>>>
 }
 
 /**

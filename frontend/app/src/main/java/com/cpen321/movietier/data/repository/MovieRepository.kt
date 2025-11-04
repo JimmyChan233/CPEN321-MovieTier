@@ -190,6 +190,19 @@ suspend fun compareMovies(
         }
     }
 
+    suspend fun getUserRankings(userId: String): Result<List<RankedMovie>> {
+        return try {
+            val response = apiService.getUserRankings(userId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data ?: emptyList())
+            } else {
+                Result.Error(Exception("Failed to get user rankings: ${response.message()}"))
+            }
+        } catch (e: IOException) {
+            Result.Error(e, "Network error: ${e.message}")
+        }
+    }
+
     suspend fun deleteRankedMovie(id: String): Result<Unit> {
         return try {
             val response = apiService.deleteRankedMovie(id)

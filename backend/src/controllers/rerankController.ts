@@ -24,6 +24,13 @@ export const startRerank = async (req: Request, res: Response) => {
     await doc.deleteOne();
     await RankedMovieModel.updateMany({ userId: userObjectId, rank: { $gt: removedRank } }, { $inc: { rank: -1 } });
 
+    const { Friendship } = await import('../models/friend/Friend');
+    const { sseService } = await import('../services/sse/sseService');
+    const friendships = await Friendship.find({ userId: userObjectId });
+    friendships.forEach(f => {
+      sseService.send(String(f.friendId), 'ranking_changed', { userId: userObjectId });
+    });
+
     // After removal, if list is empty, insert at rank 1 directly
     const remaining = await RankedMovieModel.find({ userId: userObjectId }).sort({ rank: 1 });
     if (remaining.length === 0) {
