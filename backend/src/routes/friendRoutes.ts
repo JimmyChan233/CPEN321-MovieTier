@@ -315,18 +315,13 @@ router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, 
 // eslint-disable-next-line @typescript-eslint/require-await
 router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
-    if (!req.userId) {
-      res.status(401).json({ success: false, message: 'User ID not found' });
-      return;
-    }
-
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
     res.write(`event: connected\n` + `data: {"ok":true}\n\n`);
 
-    const userId = String(req.userId);
+    const userId = String(req.userId!);
     sseService.addClient(userId, res);
 
     req.on('close', () => {
