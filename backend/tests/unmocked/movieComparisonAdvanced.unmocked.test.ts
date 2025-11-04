@@ -81,7 +81,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: mockMovies.darkKnight
+        preferredMovieId: mockMovies.darkKnight
       });
 
     // Compare: new movie < top (take left path, finalize at rank 2)
@@ -89,7 +89,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: mockMovies.theShawshankRedemption.id
+        preferredMovieId: mockMovies.theShawshankRedemption.id
       });
   });
 
@@ -128,7 +128,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 200000
+        preferredMovieId: 200000
       });
 
     // Continue comparisons
@@ -136,7 +136,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 100003
+        preferredMovieId: 100003
       });
   });
 
@@ -205,7 +205,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
         .post('/compare')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          preferredMovie: 300005
+          preferredMovieId: 300005
         });
     }
   });
@@ -257,7 +257,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 500000
+        preferredMovieId: 500000
       });
 
     // Compare: new movie > top (should rank at #1)
@@ -265,7 +265,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 500000
+        preferredMovieId: 500000
       });
   });
 
@@ -316,7 +316,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 600002
+        preferredMovieId: 600002
       });
 
     // Compare: new movie < bottom (should rank at last)
@@ -324,7 +324,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 600003
+        preferredMovieId: 600003
       });
   });
 
@@ -409,7 +409,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 700003 // This is the middle movie
+        preferredMovieId: 700003 // This is the middle movie
       });
   });
 
@@ -444,7 +444,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 999999 // Non-existent movie
+        preferredMovieId: 999999 // Non-existent movie
       });
   });
 
@@ -454,7 +454,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: 123456
+        preferredMovieId: 123456
       });
   });
 
@@ -495,7 +495,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        preferredMovie: mockMovies.darkKnight.id
+        preferredMovieId: mockMovies.darkKnight.id
       });
   });
 
@@ -525,7 +525,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
             .post('/compare')
             .set('Authorization', `Bearer ${token}`)
             .send({
-              preferredMovie: movie.id
+              preferredMovieId: movie.id
             });
         }
       }
@@ -552,12 +552,12 @@ describe('Advanced Movie Comparison Controller Tests', () => {
     await request(app)
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
-      .send({ preferredMovie: 1200004 }); // new > B
+      .send({ preferredMovieId: 1200004 }); // new > B
 
     await request(app)
       .post('/compare')
       .set('Authorization', `Bearer ${token}`)
-      .send({ preferredMovie: 1200004 }); // new > A
+      .send({ preferredMovieId: 1200004 }); // new > A
   });
 
   // Test Case 15: Test with 20 movies for deep binary search
@@ -594,7 +594,7 @@ describe('Advanced Movie Comparison Controller Tests', () => {
         .post('/compare')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          preferredMovie: 1300010 // Middle-ish movie
+          preferredMovieId: 1300010 // Middle-ish movie
         });
     }
   });
