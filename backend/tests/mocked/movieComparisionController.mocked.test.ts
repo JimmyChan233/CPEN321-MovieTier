@@ -90,6 +90,51 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
   // ==================== POST /add Tests ====================
 
   describe('POST /add', () => {
+    it('should return 401 when userId is missing from token', async () => {
+      // Create a malformed token without userId
+      const malformedToken = generateTestJWT('');
+
+      const res = await request(app)
+        .post('/api/movies/add')
+        .set('Authorization', `Bearer ${malformedToken}`)
+        .send({
+          movieId: 550,
+          title: 'Fight Club',
+          posterPath: '/poster.jpg',
+          overview: 'A ticking-time-bomb insomniac...'
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('User ID not found');
+    });
+
+    it('should return 400 when movieId is missing', async () => {
+      const res = await request(app)
+        .post('/api/movies/add')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          title: 'Fight Club'
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('movieId and title are required');
+    });
+
+    it('should return 400 when title is missing', async () => {
+      const res = await request(app)
+        .post('/api/movies/add')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movieId: 550
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('movieId and title are required');
+    });
+
     describe('Case 1: First movie (empty ranking)', () => {
       it('should add first movie without comparison', async () => {
         const res = await request(app)
@@ -261,6 +306,93 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+      });
+
+      it('should use provided posterPath and overview instead of TMDB data', async () => {
+        mockTmdbGet.mockResolvedValueOnce({
+          data: {
+            overview: 'TMDB overview (should not be used)',
+            poster_path: '/tmdb_poster.jpg (should not be used)'
+          }
+        });
+
+        const res = await request(app)
+          .post('/api/movies/add')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+            movieId: 550,
+            title: 'Fight Club',
+            posterPath: '/provided_poster.jpg',
+            overview: 'Provided overview'
+          });
+
+        expect(res.status).toBe(200);
+
+        const activity = await FeedActivity.findOne({ movieId: 550 });
+        expect(activity?.posterPath).toBe('/provided_poster.jpg');
+        expect(activity?.overview).toBe('Provided overview');
+      });
+
+      it('should handle TMDB returning null poster_path and overview', async () => {
+        mockTmdbGet.mockReset();
+        mockTmdbGet.mockResolvedValueOnce({
+          data: {
+            overview: null,
+            poster_path: null
+          }
+        });
+
+        const res = await request(app)
+          .post('/api/movies/add')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+            movieId: 550,
+            title: 'Fight Club'
+          });
+
+        expect(res.status).toBe(200);
+
+        const activity = await FeedActivity.findOne({ movieId: 550 });
+        expect(activity?.posterPath).toBeUndefined();
+        expect(activity?.overview).toBeUndefined();
+      });
+
+      it('should use default user name when user has no name field', async () => {
+        const friend = await User.create({
+          googleId: 'friend123',
+          email: 'friend@example.com',
+          name: 'Test Friend',
+          displayName: 'Test Friend',
+          fcmToken: 'test_fcm_token_123'
+        });
+
+        await Friendship.create({
+          userId: (user as any)._id.toString(),
+          friendId: (friend as any)._id
+        });
+
+        (notificationService.sendFeedNotification as jest.Mock).mockResolvedValueOnce(undefined);
+
+        // Mock User.findById to return user without name
+        jest.spyOn(User, 'findById').mockReturnValueOnce({
+          select: jest.fn().mockResolvedValueOnce({ _id: (user as any)._id })
+        } as any);
+
+        await request(app)
+          .post('/api/movies/add')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+            movieId: 550,
+            title: 'Fight Club',
+            posterPath: '/poster.jpg'
+          });
+
+        expect(notificationService.sendFeedNotification).toHaveBeenCalledWith(
+          'test_fcm_token_123',
+          'A friend',  // Should use default name
+          'Fight Club',
+          expect.any(String)
+        );
       });
 
       it('should handle FCM notification failure gracefully', async () => {
@@ -477,6 +609,35 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
           rank: i
         });
       }
+    });
+
+    it('should return 401 when userId is missing from token in compareMovies', async () => {
+      // Create a malformed token without userId
+      const malformedToken = generateTestJWT('');
+
+      const res = await request(app)
+        .post('/api/movies/compare')
+        .set('Authorization', `Bearer ${malformedToken}`)
+        .send({
+          preferredMovieId: 999
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Authentication required');
+    });
+
+    it('should return 400 when preferredMovieId is missing', async () => {
+      const res = await request(app)
+        .post('/api/movies/compare')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          comparedMovieId: 300
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('preferredMovieId is required');
     });
 
     it('should return error when no active session', async () => {
@@ -838,6 +999,107 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Unable to save comparison');
+    });
+
+    it('should use provided posterPath and TMDB overview when finalizing', async () => {
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          overview: 'TMDB enriched overview',
+          poster_path: '/tmdb_poster.jpg (should not be used because posterPath is provided)'
+        }
+      });
+
+      startSession((user as any)._id.toString(), {
+        movieId: 999,
+        title: 'New Movie',
+        posterPath: '/provided_poster.jpg'
+      }, 0);
+
+      const res = await request(app)
+        .post('/api/movies/compare')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          comparedMovieId: 100,
+          preferredMovieId: 999
+        });
+
+      expect(res.status).toBe(200);
+
+      const activity = await FeedActivity.findOne({ movieId: 999 });
+      expect(activity?.posterPath).toBe('/provided_poster.jpg');
+      expect(activity?.overview).toBe('TMDB enriched overview');
+    });
+
+    it('should handle TMDB returning null poster_path and overview when finalizing', async () => {
+      mockTmdbGet.mockReset();
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          overview: null,
+          poster_path: null
+        }
+      });
+
+      startSession((user as any)._id.toString(), {
+        movieId: 999,
+        title: 'New Movie'
+      }, 0);
+
+      const res = await request(app)
+        .post('/api/movies/compare')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          comparedMovieId: 100,
+          preferredMovieId: 999
+        });
+
+      expect(res.status).toBe(200);
+
+      const activity = await FeedActivity.findOne({ movieId: 999 });
+      expect(activity?.posterPath).toBeUndefined();
+      expect(activity?.overview).toBeUndefined();
+    });
+
+    it('should use default user name when finalizing without user name', async () => {
+      const friend = await User.create({
+        googleId: 'friend123',
+        email: 'friend@example.com',
+        name: 'Test Friend',
+        displayName: 'Test Friend',
+        fcmToken: 'test_fcm_token_123'
+      });
+
+      await Friendship.create({
+        userId: (user as any)._id.toString(),
+        friendId: (friend as any)._id
+      });
+
+      (notificationService.sendFeedNotification as jest.Mock).mockResolvedValueOnce(undefined);
+
+      // Mock User.findById to return user without name
+      jest.spyOn(User, 'findById').mockReturnValueOnce({
+        select: jest.fn().mockResolvedValueOnce({ _id: (user as any)._id })
+      } as any);
+
+      startSession((user as any)._id.toString(), {
+        movieId: 999,
+        title: 'New Movie',
+        posterPath: '/new.jpg'
+      }, 0);
+
+      await request(app)
+        .post('/api/movies/compare')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          comparedMovieId: 100,
+          preferredMovieId: 999
+        });
+
+      expect(notificationService.sendFeedNotification).toHaveBeenCalledWith(
+        'test_fcm_token_123',
+        'A friend',  // Should use default name
+        'New Movie',
+        expect.any(String)
+      );
     });
   });
 
