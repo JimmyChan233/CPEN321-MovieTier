@@ -275,9 +275,6 @@ router.post('/respond', authenticate, asyncHandler(async (req: AuthRequest, res)
 router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { friendId } = req.params;
-    if (!friendId) {
-      return res.status(400).json({ success: false, message: 'friendId is required' });
-    }
 
     // Validate friendId format
     if (!mongoose.Types.ObjectId.isValid(friendId)) {
@@ -318,19 +315,17 @@ router.delete('/:friendId', authenticate, asyncHandler(async (req: AuthRequest, 
 // eslint-disable-next-line @typescript-eslint/require-await
 router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
-    if (!req.userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
     res.write(`event: connected\n` + `data: {"ok":true}\n\n`);
 
-    sseService.addClient(String(req.userId), res);
+    const userId = String(req.userId!);
+    sseService.addClient(userId, res);
 
     req.on('close', () => {
-      sseService.removeClient(String(req.userId), res);
+      sseService.removeClient(userId, res);
     });
   } catch {
     res.end();

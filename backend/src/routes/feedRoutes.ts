@@ -251,16 +251,13 @@ router.get('/me', authenticate, asyncHandler(async (req: AuthRequest, res) => {
 // eslint-disable-next-line @typescript-eslint/require-await
 router.get('/stream', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
-    if (!req.userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
     res.write(`event: connected\n` + `data: {"ok":true}\n\n`);
 
-    const userId = String(req.userId);
+    const userId = String(req.userId!);
     sseService.addClient(userId, res);
     req.on('close', () => { sseService.removeClient(userId, res); });
   } catch {

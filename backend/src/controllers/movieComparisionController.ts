@@ -31,10 +31,7 @@ async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userId
 export const addMovie = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
+    const userId = authReq.userId!;
     const { movieId, title, posterPath, overview } = req.body as {
       movieId: number;
       title: string;
@@ -187,10 +184,7 @@ export const addMovie = async (req: Request, res: Response) => {
 export const compareMovies = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
+    const userId = authReq.userId!;
     const { preferredMovieId } = req.body as {
       preferredMovieId: number;
     };
