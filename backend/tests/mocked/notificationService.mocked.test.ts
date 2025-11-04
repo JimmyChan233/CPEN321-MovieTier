@@ -1219,5 +1219,121 @@ describe('Notification Service Tests - Mocked', () => {
     });
   });
 
-  
+  // Tests for error message nullish coalescing operator
+  describe('Error message handling with nullish coalescing', () => {
+    it('should handle error without message property in sendFeedNotification', async () => {
+      process.env.FIREBASE_PROJECT_ID = 'test-project';
+      process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
+      process.env.FIREBASE_PRIVATE_KEY = 'test-key';
+
+      mockAdmin.apps = [{}];
+      const errorWithoutMessage: any = new Error();
+      delete errorWithoutMessage.message; // Remove message property to test ?? 'Unknown error'
+      errorWithoutMessage.code = 'messaging/invalid-registration-token';
+      mockMessaging.send.mockRejectedValue(errorWithoutMessage);
+
+      NotificationService = require('../../src/services/notification.service').default;
+
+      const result = await NotificationService.sendFeedNotification(
+        'invalid-token',
+        'John',
+        'Movie',
+        'act-1'
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle error without message in sendFriendRequestNotification', async () => {
+      process.env.FIREBASE_PROJECT_ID = 'test-project';
+      process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
+      process.env.FIREBASE_PRIVATE_KEY = 'test-key';
+
+      mockAdmin.apps = [{}];
+      const errorWithoutMessage: any = new Error();
+      delete errorWithoutMessage.message;
+      errorWithoutMessage.code = 'messaging/registration-token-not-registered';
+      mockMessaging.send.mockRejectedValue(errorWithoutMessage);
+
+      NotificationService = require('../../src/services/notification.service').default;
+
+      const result = await NotificationService.sendFriendRequestNotification(
+        'unregistered-token',
+        'Alice',
+        'request-123'
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle error without message in sendFriendRequestAcceptedNotification', async () => {
+      process.env.FIREBASE_PROJECT_ID = 'test-project';
+      process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
+      process.env.FIREBASE_PRIVATE_KEY = 'test-key';
+
+      mockAdmin.apps = [{}];
+      const errorWithoutMessage: any = new Error();
+      delete errorWithoutMessage.message;
+      errorWithoutMessage.code = 'messaging/invalid-registration-token';
+      mockMessaging.send.mockRejectedValue(errorWithoutMessage);
+
+      NotificationService = require('../../src/services/notification.service').default;
+
+      const result = await NotificationService.sendFriendRequestAcceptedNotification(
+        'bad-token',
+        'Bob'
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle error without message in sendLikeNotification', async () => {
+      process.env.FIREBASE_PROJECT_ID = 'test-project';
+      process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
+      process.env.FIREBASE_PRIVATE_KEY = 'test-key';
+
+      mockAdmin.apps = [{}];
+      const errorWithoutMessage: any = new Error();
+      delete errorWithoutMessage.message;
+      errorWithoutMessage.code = 'messaging/registration-token-not-registered';
+      mockMessaging.send.mockRejectedValue(errorWithoutMessage);
+
+      NotificationService = require('../../src/services/notification.service').default;
+
+      const result = await NotificationService.sendLikeNotification(
+        'unregistered-token',
+        'Charlie',
+        'The Matrix',
+        'activity-789'
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle error without message in sendCommentNotification', async () => {
+      process.env.FIREBASE_PROJECT_ID = 'test-project';
+      process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
+      process.env.FIREBASE_PRIVATE_KEY = 'test-key';
+
+      mockAdmin.apps = [{}];
+      const errorWithoutMessage: any = new Error();
+      delete errorWithoutMessage.message;
+      errorWithoutMessage.code = 'messaging/invalid-registration-token';
+      mockMessaging.send.mockRejectedValue(errorWithoutMessage);
+
+      NotificationService = require('../../src/services/notification.service').default;
+
+      const result = await NotificationService.sendCommentNotification(
+        'invalid-token',
+        'Diana',
+        'Great movie!',
+        'Interstellar',
+        'activity-321'
+      );
+
+      expect(result).toBe(false);
+    });
+  });
+
+
 });
