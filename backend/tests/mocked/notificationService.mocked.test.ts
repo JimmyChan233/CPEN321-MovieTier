@@ -1062,6 +1062,9 @@ describe('Notification Service Tests - Mocked', () => {
     it('should throw error when service account file is not .json', () => {
       process.env.FIREBASE_SERVICE_ACCOUNT_PATH = '/path/to/serviceAccount.txt';
 
+      const fs = require('fs');
+      fs.existsSync.mockReturnValue(true); // File exists, so we can test the .json validation
+
       const { logger } = require('../../src/utils/logger');
 
       NotificationService = require('../../src/services/notification.service').default;

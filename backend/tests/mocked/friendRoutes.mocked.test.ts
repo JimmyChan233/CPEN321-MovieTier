@@ -326,7 +326,7 @@ describe('GET /stream SSE authorization and error handling', () => {
       (user1 as any)._id.toString(),
       mockRes
     );
-    
+
     jest.restoreAllMocks();
   });
 });

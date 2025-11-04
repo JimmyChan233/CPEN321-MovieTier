@@ -4,8 +4,7 @@ function sanitizeForLog(value: string): string {
   return value.replace(/[\r\n]/g, ' ');
 }
 
-function redactParams(params: Record<string, unknown> | undefined) {
-  if (!params) return params;
+function redactParams(params: Record<string, unknown>) {
   const clone: Record<string, unknown> = { ...params };
   if (clone.api_key) clone.api_key = '***';
   return clone;
@@ -28,7 +27,7 @@ export function getTmdbClient(): AxiosInstance {
     const start = Date.now();
     (config as unknown as { __start: number }).__start = start;
     const { method, url, params } = config;
-    const typedParams = params as Record<string, unknown> | undefined;
+    const typedParams = params as Record<string, unknown>;
     const sanitizedMethod = sanitizeForLog(method?.toUpperCase() ?? 'GET');
     const sanitizedUrl = sanitizeForLog(url ?? '');
     safeTmdbLog('🌐 TMDB ➡️  ', sanitizedMethod, ' ', sanitizedUrl, ' params=', JSON.stringify(redactParams(typedParams)));
