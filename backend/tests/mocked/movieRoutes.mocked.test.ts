@@ -1536,4 +1536,309 @@ it('should filter out invalid names within first 3 cast members', async () => {
     expect(res.body.data[0].cast).toEqual([]);
   });
 });
+
+describe('GET /search - Fallback catch block coverage (Lines 90-93)', () => {
+  /**
+   * This test specifically covers lines 90-93 - the fallback catch block
+   * when detail fetch fails for a zh-CN result
+   * 
+   * Coverage:
+   * Line 90: overview: movie.overview ?? null,
+   * Line 91: posterPath: movie.poster_path ?? null,
+   * Line 92: releaseDate: movie.release_date ?? null,
+   * Line 93: voteAverage: movie.vote_average ?? null
+   */
+  it('should handle failed detail fetch and return fallback with nullish coalescing', async () => {
+    // Clear previous mocks
+    jest.clearAllMocks();
+    
+    // First call: English search returns empty
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    // Second call: zh-CN search returns results
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id: 5959,
+            title: '卧虎藏龙',
+            overview: 'Chinese overview',
+            poster_path: '/poster.jpg',
+            release_date: '2000-07-06',
+            vote_average: 7.9
+          }
+        ]
+      }
+    });
+
+    // Third call: Detail fetch FAILS - this triggers the catch block (lines 90-93)
+    mockTmdbGet.mockRejectedValueOnce(new Error('Detail fetch failed'));
+
+    const res = await request(app)
+      .get('/api/movies/search?query=卧虎藏龙')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveLength(1);
+    
+    // Verify it used the zh result as fallback (lines 90-93)
+    expect(res.body.data[0].title).toBe('卧虎藏龙');
+    expect(res.body.data[0].overview).toBe('Chinese overview');
+    expect(res.body.data[0].posterPath).toBe('/poster.jpg');
+    expect(res.body.data[0].releaseDate).toBe('2000-07-06');
+    expect(res.body.data[0].voteAverage).toBe(7.9);
+  });
+
+  /**
+   * Edge case: zh result has missing optional fields
+   * Tests the ?? null operator chains
+   */
+  it('should apply nullish coalescing when zh result has undefined fields', async () => {
+    jest.clearAllMocks();
+    
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id: 123,
+            title: '测试'
+            // Missing: overview, poster_path, release_date, vote_average
+          }
+        ]
+      }
+    });
+
+    // Detail fetch fails
+    mockTmdbGet.mockRejectedValueOnce(new Error('API error'));
+
+    const res = await request(app)
+      .get('/api/movies/search?query=测试')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    // Lines 90-93 ensure these are null, not undefined
+    expect(res.body.data[0].overview).toBeNull();
+    expect(res.body.data[0].posterPath).toBeNull();
+    expect(res.body.data[0].releaseDate).toBeNull();
+    expect(res.body.data[0].voteAverage).toBeNull();
+  });
+
+  /**
+   * Multiple results - test catch block is hit for all failed fetches
+   */
+  it('should handle multiple detail fetch failures with fallback', async () => {
+    jest.clearAllMocks();
+    
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id: 1,
+            title: '电影1',
+            overview: 'Overview 1',
+            poster_path: '/poster1.jpg',
+            release_date: '2020-01-01',
+            vote_average: 7.0
+          },
+          {
+            id: 2,
+            title: '电影2',
+            overview: 'Overview 2',
+            poster_path: '/poster2.jpg',
+            release_date: '2020-02-01',
+            vote_average: 8.0
+          }
+        ]
+      }
+    });
+
+    // Both detail fetches fail
+    mockTmdbGet.mockRejectedValueOnce(new Error('Fetch failed'));
+    mockTmdbGet.mockRejectedValueOnce(new Error('Fetch failed'));
+
+    const res = await request(app)
+      .get('/api/movies/search?query=电影')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveLength(2);
+    
+    // Both should use fallback with original zh values
+    expect(res.body.data[0].title).toBe('电影1');
+    expect(res.body.data[0].overview).toBe('Overview 1');
+    expect(res.body.data[1].title).toBe('电影2');
+    expect(res.body.data[1].overview).toBe('Overview 2');
+  });
+
+  /**
+   * Test: Some detail fetches succeed, some fail
+   * Tests the mixed scenario
+   */
+  it('should handle mixed success/failure in detail fetches', async () => {
+    jest.clearAllMocks();
+    
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id: 1,
+            title: '电影1',
+            overview: 'Chinese overview 1',
+            poster_path: '/cn_poster1.jpg',
+            release_date: '2020-01-01',
+            vote_average: 7.0
+          },
+          {
+            id: 2,
+            title: '电影2',
+            overview: 'Chinese overview 2',
+            poster_path: '/cn_poster2.jpg',
+            release_date: '2020-02-01',
+            vote_average: 8.0
+          }
+        ]
+      }
+    });
+
+    // First detail fetch succeeds
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        id: 1,
+        title: 'Movie 1 English',
+        overview: 'English overview 1',
+        poster_path: '/en_poster1.jpg',
+        release_date: '2020-01-01',
+        vote_average: 7.5
+      }
+    });
+
+    // Second detail fetch FAILS - triggers catch block (lines 90-93)
+    mockTmdbGet.mockRejectedValueOnce(new Error('API error'));
+
+    const res = await request(app)
+      .get('/api/movies/search?query=电影')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveLength(2);
+    
+    // First result uses detail data
+    expect(res.body.data[0].title).toBe('Movie 1 English');
+    expect(res.body.data[0].overview).toBe('English overview 1');
+    
+    // Second result uses fallback (lines 90-93 operators)
+    expect(res.body.data[1].title).toBe('电影2');
+    expect(res.body.data[1].overview).toBe('Chinese overview 2');
+  });
+
+  /**
+   * Edge case: zh result with null values (not undefined)
+   * Tests the ?? null chains
+   */
+  it('should handle zh results with explicit null fields', async () => {
+    jest.clearAllMocks();
+    
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id: 789,
+            title: '电影',
+            overview: null,
+            poster_path: null,
+            release_date: null,
+            vote_average: null
+          }
+        ]
+      }
+    });
+
+    // Detail fetch fails
+    mockTmdbGet.mockRejectedValueOnce(new Error('API error'));
+
+    const res = await request(app)
+      .get('/api/movies/search?query=电影')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    // Verify nullish coalescing: null ?? null = null (not undefined)
+    expect(res.body.data[0].overview).toBeNull();
+    expect(res.body.data[0].posterPath).toBeNull();
+    expect(res.body.data[0].releaseDate).toBeNull();
+    expect(res.body.data[0].voteAverage).toBeNull();
+  });
+
+  /**
+   * Verify detail fetch succeeds - does NOT enter catch block
+   * This ensures we're testing the right scenario
+   */
+  it('should NOT use fallback when detail fetch succeeds', async () => {
+    jest.clearAllMocks();
+    
+    mockTmdbGet.mockResolvedValueOnce({
+      data: { results: [] }
+    });
+
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id: 456,
+            title: '中文标题',
+            overview: 'Chinese overview',
+            poster_path: '/cn.jpg',
+            release_date: '2020-01-01',
+            vote_average: 7.0
+          }
+        ]
+      }
+    });
+
+    // Detail fetch SUCCEEDS
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        id: 456,
+        title: 'English Title',
+        overview: 'English overview',
+        poster_path: '/en.jpg',
+        release_date: '2020-01-01',
+        vote_average: 7.5
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=中文标题')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    // Should use enriched English data, NOT fallback
+    expect(res.body.data[0].title).toBe('English Title');
+    expect(res.body.data[0].overview).toBe('English overview');
+    expect(res.body.data[0].posterPath).toBe('/en.jpg');
+  });
+});
 });
