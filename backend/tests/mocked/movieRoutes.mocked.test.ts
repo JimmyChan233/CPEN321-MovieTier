@@ -324,6 +324,46 @@ describe('Movie Routes - Mocked Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.data[0].cast).toEqual([]);
     });
+
+    it('should enrich first 10 results with cast and return remaining without cast', async () => {
+      // Return 15 movie results
+      const mockResults = Array.from({ length: 15 }, (_, i) => ({
+        id: 1000 + i,
+        title: `Movie ${i + 1}`,
+        overview: `Overview ${i + 1}`,
+        poster_path: `/poster${i + 1}.jpg`,
+        release_date: '2020-01-01',
+        vote_average: 7.0
+      }));
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: mockResults }
+      });
+
+      // Mock cast fetches for first 10 movies
+      for (let i = 0; i < 10; i++) {
+        mockTmdbGet.mockResolvedValueOnce({
+          data: {
+            cast: [{ name: `Actor ${i + 1}` }]
+          }
+        });
+      }
+
+      const res = await request(app)
+        .get('/api/movies/search?query=Movie&includeCast=true')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(15);
+
+      // First 10 should have cast
+      expect(res.body.data[0].cast).toEqual(['Actor 1']);
+      expect(res.body.data[9].cast).toEqual(['Actor 10']);
+
+      // Remaining 5 should have empty cast array
+      expect(res.body.data[10].cast).toEqual([]);
+      expect(res.body.data[14].cast).toEqual([]);
+    });
   });
 
   // ==================== GET /ranked Tests ====================
@@ -1322,6 +1362,43 @@ describe('GET /:movieId/providers - Branch coverage', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.link).toContain('themoviedb.org');
+  });
+
+  it('should filter out providers with missing provider_name', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        results: {
+          CA: {
+            link: 'https://example.com',
+            flatrate: [
+              { provider_name: 'Netflix' },
+              { provider_name: undefined },
+              { provider_name: null },
+              { provider_name: '' },
+              { provider_name: 'Disney+' }
+            ],
+            rent: [
+              {},
+              { provider_name: 'Apple TV' }
+            ],
+            buy: [
+              { provider_name: 'Amazon' },
+              { provider_name: undefined }
+            ]
+          }
+        }
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/550/providers?country=CA')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // Only valid provider names should be included
+    expect(res.body.data.providers.flatrate).toEqual(['Netflix', 'Disney+']);
+    expect(res.body.data.providers.rent).toEqual(['Apple TV']);
+    expect(res.body.data.providers.buy).toEqual(['Amazon']);
   });
 });
 
