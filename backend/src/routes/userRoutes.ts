@@ -3,6 +3,7 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 import User from '../models/user/User';
 import mongoose from 'mongoose';
 import WatchlistItem from '../models/watch/WatchlistItem';
+import { Friendship } from '../models/friend/Friend';
 import { logger } from '../utils/logger';
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -29,10 +30,7 @@ router.get('/search', authenticate, asyncHandler(async (req: AuthRequest, res) =
     const escapedQuery = escapeRegexForMongo(query.trim());
     const users = await User.find({
       _id: { $ne: req.userId },
-      $or: [
-        { name: { $regex: escapedQuery, $options: 'i' } },
-        { email: { $regex: escapedQuery, $options: 'i' } }
-      ]
+      name: { $regex: escapedQuery, $options: 'i' }
     })
       .select('_id email name profileImageUrl')
       .limit(20);
@@ -130,11 +128,19 @@ router.get('/:userId', authenticate, asyncHandler(async (req, res) => {
 }));
 
 // Public watchlist of a user (friend view)
-router.get('/:userId/watchlist', authenticate, asyncHandler(async (req, res) => {
+router.get('/:userId/watchlist', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const { userId } = req.params as { userId: string };
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ success: false, message: 'Invalid user id' });
+    }
+    // Allow users to see their own watchlist
+    if (String(req.userId) !== userId) {
+      // For other users, check for friendship
+      const areFriends = await Friendship.findOne({ userId: req.userId, friendId: userId });
+      if (!areFriends) {
+        return res.status(403).json({ success: false, message: 'You must be friends to view this watchlist.' });
+      }
     }
     const items = await WatchlistItem.find({ userId }).sort({ createdAt: -1 });
     res.json({ success: true, data: items });

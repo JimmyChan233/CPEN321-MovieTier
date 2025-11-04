@@ -131,11 +131,6 @@ internal fun OutgoingRequestRow(
         modifier = Modifier
             .fillMaxWidth()
             .scale(scale)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onViewProfile
-            )
             .testTag("outgoing_request_row_${request.id}")
     ) {
         Row(
@@ -156,13 +151,7 @@ internal fun OutgoingRequestRow(
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
-                if (request.senderEmail.isNotBlank()) {
-                    Text(
-                        text = request.senderEmail,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+
             }
             OutlinedButton(onClick = onCancel) { Text("Cancel") }
         }
