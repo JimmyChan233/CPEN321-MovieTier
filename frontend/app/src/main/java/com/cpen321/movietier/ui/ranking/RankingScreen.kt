@@ -215,7 +215,7 @@ private fun RankingContentList(
 }
 
 @Composable
-private fun AddWatchedMovieDialog(
+internal fun AddWatchedMovieDialog(
     query: String,
     onQueryChange: (String) -> Unit,
     searchResults: List<com.cpen321.movietier.data.model.Movie>,
@@ -313,7 +313,7 @@ private fun MovieSearchResultCard(
 }
 
 @Composable
-private fun MovieComparisonDialog(
+internal fun MovieComparisonDialog(
     compareState: Any,
     onCompare: (com.cpen321.movietier.data.model.Movie, com.cpen321.movietier.data.model.Movie, com.cpen321.movietier.data.model.Movie) -> Unit
 ) {
