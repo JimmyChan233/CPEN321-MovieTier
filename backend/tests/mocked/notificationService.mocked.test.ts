@@ -1227,11 +1227,10 @@ describe('Notification Service Tests - Mocked', () => {
       process.env.FIREBASE_PRIVATE_KEY = 'test-key';
 
       mockAdmin.apps = [{}];
-      const errorWithoutMessage: any = new Error();
-      delete errorWithoutMessage.message; // Remove message property to test ?? 'Unknown error'
-      errorWithoutMessage.code = 'messaging/invalid-registration-token';
+      const errorWithoutMessage: any = { code: 'messaging/invalid-registration-token' }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
+      const { logger } = require('../../src/utils/logger');
       NotificationService = require('../../src/services/notification.service').default;
 
       const result = await NotificationService.sendFeedNotification(
@@ -1242,6 +1241,7 @@ describe('Notification Service Tests - Mocked', () => {
       );
 
       expect(result).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Unknown error'));
     });
 
     it('should handle error without message in sendFriendRequestNotification', async () => {
@@ -1250,11 +1250,10 @@ describe('Notification Service Tests - Mocked', () => {
       process.env.FIREBASE_PRIVATE_KEY = 'test-key';
 
       mockAdmin.apps = [{}];
-      const errorWithoutMessage: any = new Error();
-      delete errorWithoutMessage.message;
-      errorWithoutMessage.code = 'messaging/registration-token-not-registered';
+      const errorWithoutMessage: any = { code: 'messaging/registration-token-not-registered' }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
+      const { logger } = require('../../src/utils/logger');
       NotificationService = require('../../src/services/notification.service').default;
 
       const result = await NotificationService.sendFriendRequestNotification(
@@ -1264,6 +1263,7 @@ describe('Notification Service Tests - Mocked', () => {
       );
 
       expect(result).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Unknown error'));
     });
 
     it('should handle error without message in sendFriendRequestAcceptedNotification', async () => {
@@ -1272,11 +1272,10 @@ describe('Notification Service Tests - Mocked', () => {
       process.env.FIREBASE_PRIVATE_KEY = 'test-key';
 
       mockAdmin.apps = [{}];
-      const errorWithoutMessage: any = new Error();
-      delete errorWithoutMessage.message;
-      errorWithoutMessage.code = 'messaging/invalid-registration-token';
+      const errorWithoutMessage: any = { code: 'messaging/invalid-registration-token' }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
+      const { logger } = require('../../src/utils/logger');
       NotificationService = require('../../src/services/notification.service').default;
 
       const result = await NotificationService.sendFriendRequestAcceptedNotification(
@@ -1285,6 +1284,7 @@ describe('Notification Service Tests - Mocked', () => {
       );
 
       expect(result).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Unknown error'));
     });
 
     it('should handle error without message in sendLikeNotification', async () => {
@@ -1293,11 +1293,10 @@ describe('Notification Service Tests - Mocked', () => {
       process.env.FIREBASE_PRIVATE_KEY = 'test-key';
 
       mockAdmin.apps = [{}];
-      const errorWithoutMessage: any = new Error();
-      delete errorWithoutMessage.message;
-      errorWithoutMessage.code = 'messaging/registration-token-not-registered';
+      const errorWithoutMessage: any = { code: 'messaging/registration-token-not-registered' }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
+      const { logger } = require('../../src/utils/logger');
       NotificationService = require('../../src/services/notification.service').default;
 
       const result = await NotificationService.sendLikeNotification(
@@ -1308,6 +1307,7 @@ describe('Notification Service Tests - Mocked', () => {
       );
 
       expect(result).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Unknown error'));
     });
 
     it('should handle error without message in sendCommentNotification', async () => {
@@ -1316,11 +1316,10 @@ describe('Notification Service Tests - Mocked', () => {
       process.env.FIREBASE_PRIVATE_KEY = 'test-key';
 
       mockAdmin.apps = [{}];
-      const errorWithoutMessage: any = new Error();
-      delete errorWithoutMessage.message;
-      errorWithoutMessage.code = 'messaging/invalid-registration-token';
+      const errorWithoutMessage: any = { code: 'messaging/invalid-registration-token' }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
+      const { logger } = require('../../src/utils/logger');
       NotificationService = require('../../src/services/notification.service').default;
 
       const result = await NotificationService.sendCommentNotification(
@@ -1332,6 +1331,39 @@ describe('Notification Service Tests - Mocked', () => {
       );
 
       expect(result).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Unknown error'));
+    });
+
+    it('should handle undefined token in multicast notification failure', async () => {
+      process.env.FIREBASE_PROJECT_ID = 'test-project';
+      process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
+      process.env.FIREBASE_PRIVATE_KEY = 'test-key';
+
+      mockAdmin.apps = [{}];
+      // Create a sparse array with undefined at index 1
+      const tokens = ['token1', undefined as any, 'token3'];
+      mockMessaging.sendEachForMulticast.mockResolvedValue({
+        successCount: 2,
+        failureCount: 1,
+        responses: [
+          { success: true },
+          { success: false, error: { message: 'Invalid token' } },
+          { success: true }
+        ]
+      });
+
+      const { logger } = require('../../src/utils/logger');
+      NotificationService = require('../../src/services/notification.service').default;
+
+      const result = await NotificationService.sendMulticastNotification(
+        tokens,
+        'Title',
+        'Body',
+        {}
+      );
+
+      expect(result).toBe(2);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('unknown'));
     });
   });
 
