@@ -1,6 +1,7 @@
 package com.cpen321.movietier.ui.recommendation
 
 import androidx.compose.animation.Crossfade
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -170,7 +171,8 @@ private fun RSTopBar(recommendationViewModel: RecommendationViewModel) {
 }
 
 @Composable
-private fun RSContent(
+@VisibleForTesting
+fun RSContent(
     uiState: com.cpen321.movietier.ui.viewmodels.RecommendationUiState,
     padding: PaddingValues,
     featuredMovieOffset: Int,

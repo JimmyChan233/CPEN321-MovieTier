@@ -12,6 +12,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.cpen321.movietier.data.model.Movie
+import androidx.compose.ui.platform.testTag
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +26,7 @@ fun RecommendationCard(
         modifier = modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
+            .testTag("movie_${movie.title}")
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
