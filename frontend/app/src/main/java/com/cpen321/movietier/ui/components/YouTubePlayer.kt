@@ -311,14 +311,8 @@ private fun enterFullscreenMode(activity: Activity) {
 }
 
 private fun exitFullscreenMode(activity: Activity) {
-    try {
-        // Only show system bars without modifying decorFitsSystemWindows
-        // This prevents affecting the bottom navigation layout
-        WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
-            show(WindowInsetsCompat.Type.systemBars())
-        }
-    } catch (e: Exception) {
-        // Handle any exceptions during window bar restoration
-        e.printStackTrace()
+    WindowCompat.setDecorFitsSystemWindows(activity.window, true)
+    WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
+        show(WindowInsetsCompat.Type.systemBars())
     }
 }
