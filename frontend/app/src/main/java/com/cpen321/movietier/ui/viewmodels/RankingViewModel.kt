@@ -132,9 +132,18 @@ class RankingViewModel @Inject constructor(
                             loadRankedMovies()
                         }
                         "compare" -> {
-                            val cmp = body.data?.compareWith
-                            if (cmp != null) {
-                                _compareState.value = CompareUiState(newMovie = item.movie, compareWith = cmp)
+                            val cmpData = body.data?.compareWith
+                            if (cmpData != null) {
+                                // Create a Movie object from the comparison data
+                                val cmpMovie = Movie(
+                                    id = cmpData.movieId,
+                                    title = cmpData.title,
+                                    overview = null,
+                                    posterPath = cmpData.posterPath,
+                                    releaseDate = null,
+                                    voteAverage = null
+                                )
+                                _compareState.value = CompareUiState(newMovie = item.movie, compareWith = cmpMovie)
                             } else {
                                 _events.emit(RankingEvent.Message("Comparison data missing"))
                             }
@@ -174,9 +183,18 @@ class RankingViewModel @Inject constructor(
                             loadRankedMovies()
                         }
                         "compare" -> {
-                            val compareWith = body.data?.compareWith
-                            if (compareWith != null) {
-                                _compareState.value = CompareUiState(newMovie = movie, compareWith = compareWith)
+                            val compareWithData = body.data?.compareWith
+                            if (compareWithData != null) {
+                                // Create a Movie object from the comparison data
+                                val compareWithMovie = Movie(
+                                    id = compareWithData.movieId,
+                                    title = compareWithData.title,
+                                    overview = null,
+                                    posterPath = compareWithData.posterPath,
+                                    releaseDate = null,
+                                    voteAverage = null
+                                )
+                                _compareState.value = CompareUiState(newMovie = movie, compareWith = compareWithMovie)
                             } else {
                                 _events.emit(RankingEvent.Message("Comparison data missing"))
                             }
@@ -203,9 +221,18 @@ class RankingViewModel @Inject constructor(
                     val body = res.data
                     when (body.status) {
                         "compare" -> {
-                            val nextCompare = body.data?.compareWith
-                            if (nextCompare != null) {
-                                _compareState.value = CompareUiState(newMovie = newMovie, compareWith = nextCompare)
+                            val nextCompareData = body.data?.compareWith
+                            if (nextCompareData != null) {
+                                // Create a Movie object from the comparison data
+                                val nextCompareMovie = Movie(
+                                    id = nextCompareData.movieId,
+                                    title = nextCompareData.title,
+                                    overview = null,
+                                    posterPath = nextCompareData.posterPath,
+                                    releaseDate = null,
+                                    voteAverage = null
+                                )
+                                _compareState.value = CompareUiState(newMovie = newMovie, compareWith = nextCompareMovie)
                             }
                         }
                         "added" -> {

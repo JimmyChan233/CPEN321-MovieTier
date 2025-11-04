@@ -10,6 +10,7 @@ import express from 'express';
 import userRoutes from '../../src/routes/userRoutes';
 import User from '../../src/models/user/User';
 import WatchlistItem from '../../src/models/watch/WatchlistItem';
+import RankedMovie from '../../src/models/movie/RankedMovie';
 import { Friendship } from '../../src/models/friend/Friend';
 import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
 
@@ -656,6 +657,136 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Unable to load user watchlist');
+
+      await mongoose.connect(mongoServer.getUri());
+    });
+  });
+
+  // ==================== GET /:userId/rankings Tests ====================
+
+  describe('GET /:userId/rankings', () => {
+    beforeEach(async () => {
+      // Create rankings for users
+      await RankedMovie.create([
+        {
+          userId: (user2 as any)._id,
+          movieId: 550,
+          title: 'Fight Club',
+          posterPath: '/poster1.jpg',
+          rank: 1
+        },
+        {
+          userId: (user2 as any)._id,
+          movieId: 680,
+          title: 'Pulp Fiction',
+          posterPath: '/poster2.jpg',
+          rank: 2
+        },
+        {
+          userId: (user1 as any)._id,
+          movieId: 155,
+          title: 'The Dark Knight',
+          posterPath: '/poster3.jpg',
+          rank: 1
+        }
+      ]);
+    });
+
+    it('should get user rankings successfully', async () => {
+      const res = await request(app)
+        .get(`/${(user2 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeInstanceOf(Array);
+      expect(res.body.data.length).toBe(2);
+      expect(res.body.data[0].rank).toBe(1);
+      expect(res.body.data[0].movie.title).toBe('Fight Club');
+    });
+
+    it('should return rankings sorted by rank ascending', async () => {
+      const res = await request(app)
+        .get(`/${(user2 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      const rankings = res.body.data;
+      expect(rankings.length).toBe(2);
+      expect(rankings[0].rank).toBe(1);
+      expect(rankings[1].rank).toBe(2);
+      for (let i = 0; i < rankings.length - 1; i++) {
+        expect(rankings[i].rank).toBeLessThanOrEqual(rankings[i + 1].rank);
+      }
+    });
+
+    it('should return empty array for user with no rankings', async () => {
+      const res = await request(app)
+        .get(`/${(user3 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toEqual([]);
+    });
+
+    it('should include nested movie object with correct structure', async () => {
+      const res = await request(app)
+        .get(`/${(user2 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data[0]).toHaveProperty('_id');
+      expect(res.body.data[0]).toHaveProperty('userId');
+      expect(res.body.data[0]).toHaveProperty('rank');
+      expect(res.body.data[0]).toHaveProperty('movie');
+      expect(res.body.data[0].movie).toHaveProperty('id');
+      expect(res.body.data[0].movie).toHaveProperty('title');
+      expect(res.body.data[0].movie).toHaveProperty('posterPath');
+      expect(res.body.data[0].movie.id).toBe(550);
+      expect(res.body.data[0].movie.title).toBe('Fight Club');
+    });
+
+    it('should reject invalid user ID format', async () => {
+      const res = await request(app)
+        .get('/invalid-id/rankings')
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid user id');
+    });
+
+    it('should allow user to view own rankings without friendship check', async () => {
+      const res = await request(app)
+        .get(`/${(user1 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBe(1);
+    });
+
+    it('should reject access to other user rankings without friendship', async () => {
+      const res = await request(app)
+        .get(`/${(user3 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token2}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('must be friends');
+    });
+
+    it('should handle database error gracefully', async () => {
+      await mongoose.disconnect();
+
+      const res = await request(app)
+        .get(`/${(user2 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Unable to load rankings');
 
       await mongoose.connect(mongoServer.getUri());
     });

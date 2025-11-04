@@ -24,6 +24,7 @@ data class FriendProfileUi(
     val isLoading: Boolean = false,
     val userName: String? = null,
     val userEmail: String? = null,
+    val profileImageUrl: String? = null,
     val watchlist: List<WatchlistItem> = emptyList(),
     val rankings: List<RankedMovie> = emptyList(),
     val errorMessage: String? = null
@@ -60,6 +61,7 @@ class FriendProfileViewModel @Inject constructor(
                 isLoading = false,
                 userName = user?.name,
                 userEmail = user?.email,
+                profileImageUrl = user?.profileImageUrl,
                 watchlist = wl,
                 rankings = rankings,
                 errorMessage = error

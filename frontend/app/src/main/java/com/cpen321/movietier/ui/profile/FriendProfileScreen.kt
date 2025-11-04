@@ -79,6 +79,7 @@ fun FriendProfileScreen(
     FPSideEffects(
         userId = userId,
         watchlist = ui.watchlist,
+        rankings = ui.rankings,
         commonContext = commonContext,
         vm = vm,
         rankingViewModel = rankingViewModel,
@@ -116,34 +117,54 @@ fun FriendProfileScreen(
 @Composable
 fun RankedMovieCard(
     rankedMovie: RankedMovie,
+    movieDetails: Movie?,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "#${rankedMovie.rank}",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.width(50.dp)
-            )
-            AsyncImage(
-                model = rankedMovie.movie.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-                contentDescription = "Poster: ${rankedMovie.movie.title}",
-                modifier = Modifier
-                    .width(90.dp)
-                    .aspectRatio(2f / 3f),
-                contentScale = ContentScale.Crop
-            )
+            // Rank Badge and Poster
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = "#${rankedMovie.rank}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+
+                rankedMovie.movie.posterPath?.let { poster ->
+                    AsyncImage(
+                        model = "https://image.tmdb.org/t/p/w185$poster",
+                        contentDescription = rankedMovie.movie.title,
+                        modifier = Modifier
+                            .height(140.dp)
+                            .aspectRatio(2f / 3f)
+                            .clip(MaterialTheme.shapes.small),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
+            // Movie Info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = rankedMovie.movie.title,
@@ -152,6 +173,54 @@ fun RankedMovieCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Metadata (Year + Rating)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val year = (movieDetails?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
+                    if (!year.isNullOrBlank()) {
+                        Text(
+                            text = year,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    val rating = (movieDetails?.voteAverage ?: rankedMovie.movie.voteAverage)
+                    rating?.let {
+                        StarRating(rating = it, starSize = 14.dp)
+                    }
+                }
+
+                // Cast
+                movieDetails?.cast?.take(3)?.let { cast ->
+                    if (cast.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = cast.joinToString(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                // Overview
+                (movieDetails?.overview ?: rankedMovie.movie.overview)?.let { overview ->
+                    if (overview.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = overview,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
     }
@@ -254,6 +323,7 @@ private fun WatchItemMetadata(
 private fun FPSideEffects(
     userId: String,
     watchlist: List<WatchlistItem>,
+    rankings: List<com.cpen321.movietier.data.model.RankedMovie>,
     commonContext: CommonContext,
     vm: FriendProfileViewModel,
     rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
@@ -262,14 +332,33 @@ private fun FPSideEffects(
 ) {
     LaunchedEffect(userId) { vm.load(userId) }
 
-    LaunchedEffect(watchlist) {
-        watchlist.forEach { item ->
-            if (!movieDetailsMap.containsKey(item.movieId)) {
-                val result = vm.getMovieDetails(item.movieId)
+    // Fetch details for all movies (rankings and watchlist)
+    LaunchedEffect(rankings, watchlist) {
+        var updatedMap = movieDetailsMap
+
+        // Fetch ranked movie details
+        rankings.forEach { rankedMovie ->
+            if (!updatedMap.containsKey(rankedMovie.movie.id)) {
+                val result = vm.getMovieDetails(rankedMovie.movie.id)
                 if (result is com.cpen321.movietier.data.repository.Result.Success) {
-                    callbacks.onMovieDetailsUpdated(movieDetailsMap + (item.movieId to result.data))
+                    updatedMap = updatedMap + (rankedMovie.movie.id to result.data)
                 }
             }
+        }
+
+        // Fetch watchlist item details
+        watchlist.forEach { item ->
+            if (!updatedMap.containsKey(item.movieId)) {
+                val result = vm.getMovieDetails(item.movieId)
+                if (result is com.cpen321.movietier.data.repository.Result.Success) {
+                    updatedMap = updatedMap + (item.movieId to result.data)
+                }
+            }
+        }
+
+        // Update once with all accumulated details
+        if (updatedMap != movieDetailsMap) {
+            callbacks.onMovieDetailsUpdated(updatedMap)
         }
     }
 
@@ -335,7 +424,7 @@ private fun FPContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(vertical = 16.dp)
         ) {
-            Avatar(imageUrl = null, name = ui.userName ?: "", size = 64.dp)
+            Avatar(imageUrl = ui.profileImageUrl, name = ui.userName ?: "", size = 64.dp)
             Column(Modifier.weight(1f)) {
                 Text(ui.userName ?: "", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(ui.userEmail ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -358,7 +447,7 @@ private fun FPContent(
         Spacer(Modifier.height(16.dp))
 
         when (tabIndex) {
-            0 -> FpRankingsList(ui.rankings, onMovieSelect)
+            0 -> FpRankingsList(ui.rankings, movieDetailsMap, onMovieSelect)
             1 -> FpWatchlist(ui.watchlist, movieDetailsMap, onMovieSelect)
         }
     }
@@ -367,12 +456,15 @@ private fun FPContent(
 @Composable
 private fun FpRankingsList(
     rankings: List<com.cpen321.movietier.data.model.RankedMovie>,
+    movieDetailsMap: Map<Int, Movie>,
     onMovieSelect: (Movie) -> Unit
 ) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(rankings, key = { it.id }) { rankedMovie ->
-            RankedMovieCard(rankedMovie) {
-                onMovieSelect(rankedMovie.movie)
+            val movieDetails = movieDetailsMap[rankedMovie.movie.id]
+            RankedMovieCard(rankedMovie, movieDetails) {
+                // Use full movieDetails if available, otherwise fall back to rankedMovie.movie
+                onMovieSelect(movieDetails ?: rankedMovie.movie)
             }
         }
     }

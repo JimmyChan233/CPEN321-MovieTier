@@ -63,9 +63,18 @@ data class AddMovieResponse(
     val data: CompareData?
 )
 
+data class CompareWithResponse(
+    @SerializedName("movieId")
+    val movieId: Int,
+    @SerializedName("title")
+    val title: String,
+    @SerializedName("posterPath")
+    val posterPath: String?
+)
+
 data class CompareData(
     @SerializedName("compareWith")
-    val compareWith: Movie?
+    val compareWith: CompareWithResponse?
 )
 
 data class MovieVideo(

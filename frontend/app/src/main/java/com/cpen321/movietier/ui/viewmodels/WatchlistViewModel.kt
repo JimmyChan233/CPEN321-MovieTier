@@ -162,9 +162,17 @@ class WatchlistViewModel @Inject constructor(
                 load() // Refresh watchlist (movie should be removed)
             }
             "compare" -> {
-                val cmp = response.data?.compareWith
-                if (cmp != null) {
-                    _compareState.value = WatchlistCompareState(newMovie = newMovie, compareWith = cmp)
+                val cmpData = response.data?.compareWith
+                if (cmpData != null) {
+                    val cmpMovie = Movie(
+                        id = cmpData.movieId,
+                        title = cmpData.title,
+                        overview = null,
+                        posterPath = cmpData.posterPath,
+                        releaseDate = null,
+                        voteAverage = null
+                    )
+                    _compareState.value = WatchlistCompareState(newMovie = newMovie, compareWith = cmpMovie)
                 } else {
                     _events.emit(FeedEvent.Error("Comparison data missing"))
                 }
@@ -178,9 +186,17 @@ class WatchlistViewModel @Inject constructor(
                 is Result.Success -> {
                     when (res.data.status) {
                         "compare" -> {
-                            val next = res.data.data?.compareWith
-                            if (next != null) {
-                                _compareState.value = WatchlistCompareState(newMovie = newMovie, compareWith = next)
+                            val nextData = res.data.data?.compareWith
+                            if (nextData != null) {
+                                val nextMovie = Movie(
+                                    id = nextData.movieId,
+                                    title = nextData.title,
+                                    overview = null,
+                                    posterPath = nextData.posterPath,
+                                    releaseDate = null,
+                                    voteAverage = null
+                                )
+                                _compareState.value = WatchlistCompareState(newMovie = newMovie, compareWith = nextMovie)
                             } else {
                                 _events.emit(FeedEvent.Error("Comparison data missing"))
                                 _compareState.value = null
