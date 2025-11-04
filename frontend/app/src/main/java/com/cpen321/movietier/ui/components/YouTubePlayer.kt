@@ -47,20 +47,7 @@ fun YouTubePlayerDialog(
     var customView by remember { mutableStateOf<View?>(null) }
     var rootContainer by remember { mutableStateOf<FrameLayout?>(null) }
 
-    // Store original orientation to restore later
-    val originalOrientation = remember { activity?.requestedOrientation }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            // Restore original orientation and show system UI when dialog closes
-            activity?.let {
-                originalOrientation?.let { orientation ->
-                    it.requestedOrientation = orientation
-                }
-                showSystemUI(it)
-            }
-        }
-    }
+    YouTubePlayerCleanup(activity)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -69,47 +56,102 @@ fun YouTubePlayerDialog(
             decorFitsSystemWindows = false
         )
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            // Fullscreen view overlay
-            if (isFullscreen && customView != null) {
-                AndroidView(
-                    factory = { customView!! },
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(16f / 9f),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    YouTubePlayerCloseButton(onDismiss)
-
-                    YouTubePlayerWebView(
-                        videoKey = videoKey,
-                        activity = activity,
-                        rootContainer = rootContainer,
-                        onRootContainerChanged = { rootContainer = it },
-                        onFullscreenChanged = { fullscreen, view ->
-                            isFullscreen = fullscreen
-                            customView = view
-                            activity?.let {
-                                if (fullscreen) {
-                                    hideSystemUI(it)
-                                } else {
-                                    showSystemUI(it)
-                                }
-                            }
-                        }
-                    )
+        YouTubePlayerContent(
+            videoKey = videoKey,
+            activity = activity,
+            isFullscreen = isFullscreen,
+            customView = customView,
+            rootContainer = rootContainer,
+            onRootContainerChanged = { rootContainer = it },
+            onFullscreenChanged = { fullscreen, view ->
+                isFullscreen = fullscreen
+                customView = view
+                activity?.let {
+                    if (fullscreen) {
+                        hideSystemUI(it)
+                    } else {
+                        showSystemUI(it)
+                    }
                 }
+            },
+            onDismiss = onDismiss
+        )
+    }
+}
+
+@Composable
+private fun YouTubePlayerCleanup(activity: Activity?) {
+    val originalOrientation = remember { activity?.requestedOrientation }
+    DisposableEffect(Unit) {
+        onDispose {
+            activity?.let {
+                originalOrientation?.let { orientation ->
+                    it.requestedOrientation = orientation
+                }
+                showSystemUI(it)
             }
         }
+    }
+}
+
+@Composable
+private fun YouTubePlayerContent(
+    videoKey: String,
+    activity: Activity?,
+    isFullscreen: Boolean,
+    customView: View?,
+    rootContainer: FrameLayout?,
+    onRootContainerChanged: (FrameLayout) -> Unit,
+    onFullscreenChanged: (Boolean, View?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isFullscreen && customView != null) {
+            AndroidView(
+                factory = { customView },
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            YouTubePlayerNormalView(
+                videoKey = videoKey,
+                activity = activity,
+                rootContainer = rootContainer,
+                onRootContainerChanged = onRootContainerChanged,
+                onFullscreenChanged = onFullscreenChanged,
+                onDismiss = onDismiss
+            )
+        }
+    }
+}
+
+@Composable
+private fun YouTubePlayerNormalView(
+    videoKey: String,
+    activity: Activity?,
+    rootContainer: FrameLayout?,
+    onRootContainerChanged: (FrameLayout) -> Unit,
+    onFullscreenChanged: (Boolean, View?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f),
+        horizontalAlignment = Alignment.End
+    ) {
+        YouTubePlayerCloseButton(onDismiss)
+        YouTubePlayerWebView(
+            videoKey = videoKey,
+            activity = activity,
+            rootContainer = rootContainer,
+            onRootContainerChanged = onRootContainerChanged,
+            onFullscreenChanged = onFullscreenChanged
+        )
     }
 }
 

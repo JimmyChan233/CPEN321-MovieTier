@@ -66,28 +66,54 @@ fun FeedScreen(
     val compareState by feedViewModel.compareState.collectAsState()
     val commentsState by feedViewModel.commentsState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val tokenManager = remember { com.cpen321.movietier.data.local.TokenManager(context) }
-    val currentUserId by tokenManager.userId.collectAsState(initial = null)
-    var selectedMovie by remember { mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null) }
-    var showCommentsForActivity by remember { mutableStateOf<String?>(null) }
-    var dialogState by remember { mutableStateOf(MovieDialogState()) }
-    val dialogCallbacks = remember {
-        MovieDialogCallbacks(
-            onTrailerKeyUpdate = { dialogState = dialogState.copy(trailerKey = it) },
-            onDismissMovie = { selectedMovie = null; dialogState = dialogState.copy(trailerKey = null) },
-            onShowTrailer = { title -> dialogState = dialogState.copy(trailerMovieTitle = title, showTrailerDialog = true) },
-            onDismissTrailer = { dialogState = dialogState.copy(showTrailerDialog = it) }
-        )
-    }
-    val commonContext = CommonContext(
+    val commonContext = rememberFeedCommonContext(context)
+    val feedState = rememberFeedScreenState(context)
+    val callbacks = rememberFeedCallbacks(feedState)
+
+    FeedLocationHandler(context, commonContext.scope, onCountryCodeChanged = { feedState.country = it })
+
+    FeedScaffold(
+        uiState = uiState,
+        feedViewModel = feedViewModel,
+        feedState = feedState,
+        navController = navController,
+        commonContext = commonContext
+    )
+
+    FeedSideEffects(
+        selectedMovie = feedState.selectedMovie,
+        dialogState = feedState.dialogState,
+        compareState = compareState,
+        commentsState = CommentsState(
+            showCommentsForActivity = feedState.showCommentsForActivity,
+            commentsData = commentsState,
+            currentUserId = feedState.currentUserId
+        ),
+        feedViewModel = feedViewModel,
+        country = feedState.country,
+        commonContext = commonContext,
+        callbacks = callbacks,
+        dialogCallbacks = feedState.dialogCallbacks
+    )
+}
+
+@Composable
+private fun rememberFeedCommonContext(context: android.content.Context): CommonContext {
+    return CommonContext(
         context = context,
         scope = rememberCoroutineScope(),
         snackbarHostState = remember { SnackbarHostState() }
     )
-    var country by remember { mutableStateOf("CA") }
+}
 
-    FeedLocationHandler(context, commonContext.scope, onCountryCodeChanged = { country = it })
-
+@Composable
+private fun FeedScaffold(
+    uiState: com.cpen321.movietier.ui.viewmodels.FeedUiState,
+    feedViewModel: FeedViewModel,
+    feedState: FeedScreenState,
+    navController: NavController,
+    commonContext: CommonContext
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize().testTag("feed_screen"),
         snackbarHost = { SnackbarHost(commonContext.snackbarHostState) },
@@ -99,34 +125,56 @@ fun FeedScreen(
             uiState = uiState,
             padding = padding,
             feedViewModel = feedViewModel,
-            country = country,
-            onMovieSelected = { selectedMovie = it },
+            country = feedState.country,
+            onMovieSelected = { feedState.selectedMovie = it },
             onShowComments = { activityId ->
-                showCommentsForActivity = activityId
+                feedState.showCommentsForActivity = activityId
                 feedViewModel.loadComments(activityId)
             },
             navController = navController
         )
     }
+}
 
-    FeedSideEffects(
-        selectedMovie = selectedMovie,
-        dialogState = dialogState,
-        compareState = compareState,
-        commentsState = CommentsState(
-            showCommentsForActivity = showCommentsForActivity,
-            commentsData = commentsState,
-            currentUserId = currentUserId
-        ),
-        feedViewModel = feedViewModel,
-        country = country,
-        commonContext = commonContext,
-        callbacks = DismissCallbacks(
-            onDismissMovie = dialogCallbacks.onDismissMovie,
-            onDismissComments = { showCommentsForActivity = null }
-        ),
-        dialogCallbacks = dialogCallbacks
-    )
+@Stable
+private class FeedScreenState {
+    var selectedMovie by mutableStateOf<com.cpen321.movietier.data.model.Movie?>(null)
+    var showCommentsForActivity by mutableStateOf<String?>(null)
+    var dialogState by mutableStateOf(MovieDialogState())
+    lateinit var dialogCallbacks: MovieDialogCallbacks
+    var country by mutableStateOf("CA")
+    var currentUserId by mutableStateOf<String?>(null)
+}
+
+@Composable
+private fun rememberFeedScreenState(context: android.content.Context): FeedScreenState {
+    val tokenManager = remember { com.cpen321.movietier.data.local.TokenManager(context) }
+    val currentUserId by tokenManager.userId.collectAsState(initial = null)
+
+    val state = remember { FeedScreenState() }
+
+    state.currentUserId = currentUserId
+
+    state.dialogCallbacks = remember(state) {
+        MovieDialogCallbacks(
+            onTrailerKeyUpdate = { state.dialogState = state.dialogState.copy(trailerKey = it) },
+            onDismissMovie = { state.selectedMovie = null; state.dialogState = state.dialogState.copy(trailerKey = null) },
+            onShowTrailer = { title -> state.dialogState = state.dialogState.copy(trailerMovieTitle = title, showTrailerDialog = true) },
+            onDismissTrailer = { state.dialogState = state.dialogState.copy(showTrailerDialog = it) }
+        )
+    }
+
+    return state
+}
+
+@Composable
+private fun rememberFeedCallbacks(feedState: FeedScreenState): DismissCallbacks {
+    return remember {
+        DismissCallbacks(
+            onDismissMovie = feedState.dialogCallbacks.onDismissMovie,
+            onDismissComments = { feedState.showCommentsForActivity = null }
+        )
+    }
 }
 
 private enum class FeedState {
