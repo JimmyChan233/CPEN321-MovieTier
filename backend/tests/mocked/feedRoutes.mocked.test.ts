@@ -210,6 +210,35 @@ describe('Feed Routes - Mocked Error Tests', () => {
       expect(mockRes.setHeader).not.toHaveBeenCalled();
     });
 
+    it('should execute userId validation in actual route handler', async () => {
+      // Temporarily replace the authenticate middleware module
+      jest.isolateModules(() => {
+        // Mock the auth module to export a middleware that doesn't set userId
+        jest.doMock('../../src/middleware/auth', () => ({
+          authenticate: (req: any, res: any, next: any) => {
+            req.userId = undefined; // Edge case: auth passes but userId not set
+            next();
+          },
+          AuthRequest: {}
+        }));
+
+        const express = require('express');
+        const testApp = express();
+        testApp.use(express.json());
+
+        // Now import feedRoutes with the mocked auth
+        const feedRoutes = require('../../src/routes/feedRoutes').default;
+        testApp.use('/api/feed', feedRoutes);
+
+        request(testApp)
+          .get('/api/feed/stream')
+          .expect(401)
+          .end((err: any, res: any) => {
+            if (err) throw err;
+          });
+      });
+    });
+
     it('should handle SSE setup errors gracefully', async () => {
       const { sseService } = require('../../src/services/sse/sseService');
       sseService.addClient.mockImplementationOnce(() => {
