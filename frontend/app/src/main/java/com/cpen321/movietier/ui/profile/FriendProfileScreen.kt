@@ -58,17 +58,11 @@ fun FriendProfileScreen(
     val ui by vm.uiState.collectAsState()
     val compareState by rankingViewModel.compareState.collectAsState()
     LaunchedEffect(userId) { vm.load(userId) }
-
-    val commonContext = CommonContext(
-        context = LocalContext.current,
-        scope = rememberCoroutineScope(),
-        snackbarHostState = remember { SnackbarHostState() }
-    )
+    val commonContext = CommonContext(LocalContext.current, rememberCoroutineScope(), remember { SnackbarHostState() })
     var country by remember { mutableStateOf("CA") }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
     var dialogState by remember { mutableStateOf(MovieDialogState()) }
     var movieDetailsMap by remember { mutableStateOf<Map<Int, Movie>>(emptyMap()) }
-
     val dialogCallbacks = remember {
         MovieDialogCallbacks(
             onTrailerKeyUpdate = { dialogState = dialogState.copy(trailerKey = it) },
@@ -77,7 +71,6 @@ fun FriendProfileScreen(
             onDismissTrailer = { dialogState = dialogState.copy(showTrailerDialog = it) }
         )
     }
-
     FPSideEffects(
         userId = userId,
         data = FriendProfileSideEffectData(
@@ -116,228 +109,6 @@ fun FriendProfileScreen(
                 commonContext = commonContext,
                 callbacks = dialogCallbacks
             )
-        }
-    }
-}
-
-@Composable
-fun RankedMovieCard(
-    rankedMovie: RankedMovie,
-    movieDetails: Movie?,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            RankBadgeAndPoster(rankedMovie)
-            MovieInfoColumn(rankedMovie, movieDetails)
-        }
-    }
-}
-
-@Composable
-private fun RankBadgeAndPoster(rankedMovie: RankedMovie) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.primaryContainer
-        ) {
-            Text(
-                text = "#${rankedMovie.rank}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-            )
-        }
-
-        rankedMovie.movie.posterPath?.let { poster ->
-            AsyncImage(
-                model = "https://image.tmdb.org/t/p/w185$poster",
-                contentDescription = rankedMovie.movie.title,
-                modifier = Modifier
-                    .height(140.dp)
-                    .aspectRatio(2f / 3f)
-                    .clip(MaterialTheme.shapes.small),
-                contentScale = ContentScale.Crop
-            )
-        }
-    }
-}
-
-@Composable
-private fun RowScope.MovieInfoColumn(rankedMovie: RankedMovie, movieDetails: Movie?) {
-    Column(modifier = Modifier.weight(1f)) {
-        Text(
-            text = rankedMovie.movie.title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-
-        MovieMetadata(rankedMovie, movieDetails)
-        MovieCastInfo(movieDetails)
-        MovieOverview(rankedMovie, movieDetails)
-    }
-}
-
-@Composable
-private fun MovieMetadata(rankedMovie: RankedMovie, movieDetails: Movie?) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val year = (movieDetails?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
-        if (!year.isNullOrBlank()) {
-            Text(
-                text = year,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        val rating = (movieDetails?.voteAverage ?: rankedMovie.movie.voteAverage)
-        rating?.let {
-            StarRating(rating = it, starSize = 14.dp)
-        }
-    }
-}
-
-@Composable
-private fun MovieCastInfo(movieDetails: Movie?) {
-    movieDetails?.cast?.take(3)?.let { cast ->
-        if (cast.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = cast.joinToString(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-private fun MovieOverview(rankedMovie: RankedMovie, movieDetails: Movie?) {
-    (movieDetails?.overview ?: rankedMovie.movie.overview)?.let { overview ->
-        if (overview.isNotBlank()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = overview,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-private fun WatchItemCard(
-    item: WatchlistItem,
-    releaseDate: String?,
-    voteAverage: Double?,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            WatchItemPoster(item)
-            WatchItemInfo(item, releaseDate, voteAverage)
-        }
-    }
-}
-
-@Composable
-private fun WatchItemPoster(item: WatchlistItem) {
-    AsyncImage(
-        model = item.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-        contentDescription = "Poster: ${item.title}",
-        modifier = Modifier
-            .width(90.dp)
-            .aspectRatio(2f / 3f),
-        contentScale = ContentScale.Crop
-    )
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.WatchItemInfo(
-    item: WatchlistItem,
-    releaseDate: String?,
-    voteAverage: Double?
-) {
-    Column(modifier = Modifier.weight(1f)) {
-        Text(
-            text = item.title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        Spacer(Modifier.height(6.dp))
-
-        item.overview?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        WatchItemMetadata(releaseDate, voteAverage)
-    }
-}
-
-@Composable
-private fun WatchItemMetadata(
-    releaseDate: String?,
-    voteAverage: Double?
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        releaseDate?.take(4)?.let { year ->
-            Text(
-                text = year,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        voteAverage?.let { rating ->
-            StarRating(rating = rating, starSize = 14.dp)
         }
     }
 }
@@ -487,10 +258,14 @@ private fun FpRankingsList(
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(rankings, key = { it.id }) { rankedMovie ->
             val movieDetails = movieDetailsMap[rankedMovie.movie.id]
-            RankedMovieCard(rankedMovie, movieDetails) {
-                // Use full movieDetails if available, otherwise fall back to rankedMovie.movie
-                onMovieSelect(movieDetails ?: rankedMovie.movie)
-            }
+            RankedMovieCard(
+                rankedMovie = rankedMovie,
+                movieDetails = movieDetails,
+                onMovieClick = {
+                    // Use full movieDetails if available, otherwise fall back to rankedMovie.movie
+                    onMovieSelect(movieDetails ?: rankedMovie.movie)
+                }
+            )
         }
     }
 }
@@ -504,9 +279,13 @@ private fun FpWatchlist(
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(watchlist, key = { it.id }) { item ->
             val movieDetails = movieDetailsMap[item.movieId]
-            WatchItemCard(item, movieDetails?.releaseDate, movieDetails?.voteAverage) {
-                onMovieSelect(movieDetails ?: Movie(item.movieId, item.title, item.overview, item.posterPath, null, null))
-            }
+            WatchItemCard(
+                item = item,
+                movieDetails = movieDetails,
+                onItemClick = {
+                    onMovieSelect(movieDetails ?: Movie(item.movieId, item.title, item.overview, item.posterPath, null, null))
+                }
+            )
         }
     }
 }
