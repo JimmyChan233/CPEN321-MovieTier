@@ -187,6 +187,7 @@ describe('Feed Routes - Mocked Error Tests', () => {
       expect(res.body.success).toBe(false);
     });
 
+
     it('should handle SSE setup errors gracefully', async () => {
       const { sseService } = require('../../src/services/sse/sseService');
       sseService.addClient.mockImplementationOnce(() => {
