@@ -216,9 +216,14 @@ export const getRecommendations = async (req: Request, res: Response) => {
       score += (movie.voteAverage ?? 5) * 10;
 
       // Genre match bonus (high weight)
-      const genreMatches = (movie.genreIds ?? []).filter((gid) =>
-        preferences.topGenres.includes(gid)
-      ).length;
+      let genreMatches = 0;
+      if (movie.genreIds) {
+        for (const gid of movie.genreIds) {
+          if (preferences.topGenres.includes(gid)) {
+            genreMatches++;
+          }
+        }
+      }
       score += genreMatches * 15;
 
       // Language match bonus (very high for matching user's languages)

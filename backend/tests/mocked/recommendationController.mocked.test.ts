@@ -1485,5 +1485,102 @@ describe('Recommendation Controller - Mocked Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
     });
+
+    it('should handle scoring when movie genreIds do not match preferences', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      // User likes Action (28)
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      // Return movie with genre_ids that don't match user preferences
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 6000,
+            title: 'Romance Movie',
+            overview: 'Overview',
+            poster_path: '/poster.jpg',
+            release_date: '2023-01-01',
+            vote_average: 7.0,
+            genre_ids: [10749, 18],  // Romance and Drama - no Action
+            original_language: 'en'
+          }]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle scoring when movie has empty genreIds array', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      // Return movie with empty genre_ids array
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 7000,
+            title: 'Empty Genre Array Movie',
+            overview: 'Overview',
+            poster_path: '/poster.jpg',
+            release_date: '2023-01-01',
+            vote_average: 7.0,
+            genre_ids: [],  // Explicitly empty array
+            original_language: 'en'
+          }]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
   });
 });
