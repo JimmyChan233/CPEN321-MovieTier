@@ -59,10 +59,18 @@ fun YouTubePlayerDialog(
     var customView by remember { mutableStateOf<View?>(null) }
     var rootContainer by remember { mutableStateOf<FrameLayout?>(null) }
 
-    YouTubePlayerCleanup(activity)
+    YouTubePlayerCleanup(activity, isFullscreen)
 
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            // Ensure fullscreen mode is exited before dismissing
+            if (isFullscreen) {
+                isFullscreen = false
+                customView = null
+                activity?.let { exitFullscreenMode(it) }
+            }
+            onDismiss()
+        },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = false
@@ -94,15 +102,20 @@ fun YouTubePlayerDialog(
 }
 
 @Composable
-private fun YouTubePlayerCleanup(activity: Activity?) {
+private fun YouTubePlayerCleanup(activity: Activity?, isFullscreen: Boolean) {
     val originalOrientation = remember { activity?.requestedOrientation }
-    DisposableEffect(Unit) {
+
+    DisposableEffect(isFullscreen) {
         onDispose {
             activity?.let {
+                // Restore window insets and orientation on cleanup
+                if (isFullscreen) {
+                    exitFullscreenMode(it)
+                }
+                // Restore original orientation
                 originalOrientation?.let { orientation ->
                     it.requestedOrientation = orientation
                 }
-                exitFullscreenMode(it)
             }
         }
     }
@@ -298,8 +311,14 @@ private fun enterFullscreenMode(activity: Activity) {
 }
 
 private fun exitFullscreenMode(activity: Activity) {
-    WindowCompat.setDecorFitsSystemWindows(activity.window, true)
-    WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
-        show(WindowInsetsCompat.Type.systemBars())
+    try {
+        // Only show system bars without modifying decorFitsSystemWindows
+        // This prevents affecting the bottom navigation layout
+        WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
+            show(WindowInsetsCompat.Type.systemBars())
+        }
+    } catch (e: Exception) {
+        // Handle any exceptions during window bar restoration
+        e.printStackTrace()
     }
 }
