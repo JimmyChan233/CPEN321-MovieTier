@@ -4,7 +4,6 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
-| 2025-11-04 (Post-M4) | 2.1.2, 5.1 (Commit Hashes) | **YouTube Player Improvements & Code Quality Enhancements**: Updated commit hash to `2b17078c2c5f2ad9a214c09c582b926f2e079001` reflecting post-M4 improvements: (1) Fixed YouTube trailer player fullscreen transitions to preserve video playing state during orientation changes, (2) Resolved edge-to-edge layout issues where top bar became longer after exiting fullscreen by preserving `decorFitsSystemWindows = false` throughout app lifecycle, (3) Improved code organization by extracting FeedComponents.kt (7 UI components) to reduce FeedScreen.kt function count from 23 to 15, (4) Reduced parameter counts using data classes (YouTubePlayerState, FeedSideEffectsParams) to meet Codacy 8-parameter threshold, (5) Increased video player size from 40% to 70% screen height for better portrait viewing experience. All improvements maintain 100% test coverage and zero Codacy issues. |
 | 2025-11-04 (Final Documentation Fix) | 2.1.1 (API Table) | **Added Missing Endpoint Documentation**: Added 5 additional endpoints that were implemented and tested but missing from the API table: (1) GET /api/movies/:movieId/details - fetch movie details with cast, (2) GET /api/friends/stream - SSE stream for real-time friend events, (3) DELETE /api/friends/requests/:requestId - cancel pending friend request, (4) DELETE /api/feed/:activityId/comments/:commentId - delete comment, (5) GET /api/users/:userId/watchlist - view friend's watchlist. These endpoints are fully implemented with both unmocked and mocked test coverage. Updated table to reflect complete API documentation for all 35 implemented endpoints. |
 | 2025-11-04 (Final) | 2.3 (Unmocked Coverage), 2.4 (Mocked Coverage), 3.2 (NFR Test Logs), 5.2-5.4 (Codacy Zero Issues) | **Final M4 Updates - Removed All Placeholders**: Replaced all placeholder sections with actual test results. (1) Section 2.3: Added actual unmocked test coverage (75.15% statements, 49.06% branches) with analysis explaining focus on happy paths. (2) Section 2.4: Added actual mocked test coverage (87.87% statements, 86.01% branches) demonstrating comprehensive error handling coverage. (3) Section 3.2: Added real NFR performance test logs showing all 5 tests passed with excellent response times (48ms, 37ms, 141ms, 189ms, 312ms - all well below targets). (4) Sections 5.2-5.4: Confirmed zero (0) Codacy issues in main branch across all categories and code patterns, added detailed tables and achievement metrics. All documentation now contains actual data with no placeholders remaining. |
 | 2025-11-04 | 2.1.2 (Commit Hash), 2.5 (Coverage Results), 2.6 (Uncovered Lines), 4.1 (Frontend Test Locations), 4.2 (Test Specifications), 5 (Codacy Results) | **M4 Documentation Finalization**: Updated commit hash to latest main branch commit (16ea7a1). Documented 100% code coverage achievement across all metrics (statements, branches, functions, lines). Updated frontend test specifications with actual test implementations for all three main features (Send Friend Request, View Recommendations, Compare Movies). Documented Codacy integration and issue resolution status. Removed placeholder sections and added comprehensive test logs for all frontend tests. |
@@ -64,7 +63,7 @@
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`2b17078c2c5f2ad9a214c09c582b926f2e079001` (Latest commit on main branch)
+`f65a338aee2fa6039bb82d0a5414671e97ba1035` (Latest commit on main branch)
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -345,7 +344,7 @@ Lines        : 100% ( 1395/1395 )
 
 ### 5.1. Commit Hash Where Codacy Ran
 
-`2b17078c2c5f2ad9a214c09c582b926f2e079001` (Latest commit on main branch)
+`f65a338aee2fa6039bb82d0a5414671e97ba1035` (Latest commit on main branch)
 
 **Note:** Codacy has been integrated with the repository. The following commits demonstrate Codacy issues have been actively addressed:
 - `25d3eb6` - Remove comments from private functions per Codacy guidelines
