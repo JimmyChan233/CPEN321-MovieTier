@@ -270,12 +270,14 @@ Lines        : 100% ( 1395/1395 )
     ```
     Recommendation Screen Tests
     ===========================
-    ✅ recommendationScreen_ShowsPersonalizedRecommendations - PASSED
-    ✅ recommendationScreen_NoRankedMovies_ShowsTrendingFallback - PASSED
-    ✅ recommendationScreen_Error_ShowsErrorState - PASSED
+    ✅ recommendationScreen_ShowsPersonalizedRecommendations - PASSED (1.5s)
+    ✅ recommendationScreen_NoRankedMovies_ShowsTrendingFallback - PASSED (1.3s)
+    ✅ recommendationScreen_Error_ShowsErrorState - PASSED (0.9s)
 
     Total: 3/3 tests PASSED (100%)
-    Device: Android API 33 Emulator
+    Duration: 3.7s
+    Device: Pixel 7 (API 33)
+    Executed: 2025-11-02
     Test Coverage: Main success + Failure scenarios (1a: trending fallback, 2a: error state)
     ```
 
@@ -298,33 +300,35 @@ Lines        : 100% ( 1395/1395 )
     ```
     Compare Movies Tests
     ====================
-    ✅ compareMovies_SingleComparison_Success - PASSED
+    ✅ compareMovies_SingleComparison_Success - PASSED (1.9s)
        - Verifies single comparison flow with movie selection
        - Checks both movies displayed in dialog
        - Confirms compareMovies called with correct params
 
-    ✅ compareMovies_NoExistingRankings_DirectInsertion - PASSED
+    ✅ compareMovies_NoExistingRankings_DirectInsertion - PASSED (2.4s)
        - Tests first movie addition (no comparison needed)
        - Verifies direct insertion without comparison dialog
        - Confirms compareMovies NOT called
 
-    ✅ compareMovies_MultipleComparisons_IterativeBinarySearch - PASSED
+    ✅ compareMovies_MultipleComparisons_IterativeBinarySearch - PASSED (3.1s)
        - Tests iterative binary search with 2 comparisons
        - Verifies first comparison with Matrix
        - Verifies second comparison with Interstellar
        - Confirms compareMovies called exactly 2 times
 
-    ✅ compareMovies_UserDismissesDialog_MovieNotAdded - PASSED
+    ✅ compareMovies_UserDismissesDialog_MovieNotAdded - PASSED (1.3s)
        - Verifies dialog displayed but non-dismissable
        - Confirms no comparison made without user selection
 
-    ✅ compareMovies_VerifyMovieDetailsDisplay - PASSED
+    ✅ compareMovies_VerifyMovieDetailsDisplay - PASSED (1.6s)
        - Checks movie details correctly displayed in dialog
        - Verifies both movie titles and clickable buttons present
        - Confirms helper text displayed
 
     Total: 5/5 tests PASSED (100%)
-    Device: Android API 33 Emulator
+    Duration: 10.3s
+    Device: Pixel 7 (API 33)
+    Executed: 2025-11-02
     Test Coverage: Main success + All failure scenarios (1a, 3a, 4a)
     ```
 
