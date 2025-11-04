@@ -150,3 +150,20 @@ data class WatchlistContentData(
     val movieDetails: Map<Int, com.cpen321.movietier.data.model.Movie>,
     val country: String
 )
+
+/**
+ * Groups data for friend profile side effects
+ */
+data class FriendProfileSideEffectData(
+    val watchlist: List<com.cpen321.movietier.data.model.WatchlistItem>,
+    val rankings: List<com.cpen321.movietier.data.model.RankedMovie>,
+    val movieDetailsMap: Map<Int, com.cpen321.movietier.data.model.Movie>
+)
+
+/**
+ * Groups ViewModels for friend profile side effects
+ */
+data class FriendProfileViewModels(
+    val vm: com.cpen321.movietier.ui.viewmodels.FriendProfileViewModel,
+    val rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel
+)

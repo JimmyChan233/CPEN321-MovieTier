@@ -44,6 +44,8 @@ import com.cpen321.movietier.ui.common.MovieDialogState
 import com.cpen321.movietier.ui.common.MovieDialogCallbacks
 import com.cpen321.movietier.ui.common.DialogViewModels
 import com.cpen321.movietier.ui.common.SideEffectCallbacks
+import com.cpen321.movietier.ui.common.FriendProfileSideEffectData
+import com.cpen321.movietier.ui.common.FriendProfileViewModels
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,12 +80,16 @@ fun FriendProfileScreen(
 
     FPSideEffects(
         userId = userId,
-        watchlist = ui.watchlist,
-        rankings = ui.rankings,
+        data = FriendProfileSideEffectData(
+            watchlist = ui.watchlist,
+            rankings = ui.rankings,
+            movieDetailsMap = movieDetailsMap
+        ),
         commonContext = commonContext,
-        vm = vm,
-        rankingViewModel = rankingViewModel,
-        movieDetailsMap = movieDetailsMap,
+        viewModels = FriendProfileViewModels(
+            vm = vm,
+            rankingViewModel = rankingViewModel
+        ),
         callbacks = SideEffectCallbacks(
             onCountryChanged = { country = it },
             onMovieDetailsUpdated = { movieDetailsMap = it },
@@ -133,95 +139,112 @@ fun RankedMovieCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Rank Badge and Poster
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = "#${rankedMovie.rank}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
-                }
+            RankBadgeAndPoster(rankedMovie)
+            MovieInfoColumn(rankedMovie, movieDetails)
+        }
+    }
+}
 
-                rankedMovie.movie.posterPath?.let { poster ->
-                    AsyncImage(
-                        model = "https://image.tmdb.org/t/p/w185$poster",
-                        contentDescription = rankedMovie.movie.title,
-                        modifier = Modifier
-                            .height(140.dp)
-                            .aspectRatio(2f / 3f)
-                            .clip(MaterialTheme.shapes.small),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
+@Composable
+private fun RankBadgeAndPoster(rankedMovie: RankedMovie) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            Text(
+                text = "#${rankedMovie.rank}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+            )
+        }
 
-            // Movie Info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = rankedMovie.movie.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+        rankedMovie.movie.posterPath?.let { poster ->
+            AsyncImage(
+                model = "https://image.tmdb.org/t/p/w185$poster",
+                contentDescription = rankedMovie.movie.title,
+                modifier = Modifier
+                    .height(140.dp)
+                    .aspectRatio(2f / 3f)
+                    .clip(MaterialTheme.shapes.small),
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
+}
 
-                // Metadata (Year + Rating)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val year = (movieDetails?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
-                    if (!year.isNullOrBlank()) {
-                        Text(
-                            text = year,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    val rating = (movieDetails?.voteAverage ?: rankedMovie.movie.voteAverage)
-                    rating?.let {
-                        StarRating(rating = it, starSize = 14.dp)
-                    }
-                }
+@Composable
+private fun RowScope.MovieInfoColumn(rankedMovie: RankedMovie, movieDetails: Movie?) {
+    Column(modifier = Modifier.weight(1f)) {
+        Text(
+            text = rankedMovie.movie.title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(4.dp))
 
-                // Cast
-                movieDetails?.cast?.take(3)?.let { cast ->
-                    if (cast.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = cast.joinToString(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
+        MovieMetadata(rankedMovie, movieDetails)
+        MovieCastInfo(movieDetails)
+        MovieOverview(rankedMovie, movieDetails)
+    }
+}
 
-                // Overview
-                (movieDetails?.overview ?: rankedMovie.movie.overview)?.let { overview ->
-                    if (overview.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = overview,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 4,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
+@Composable
+private fun MovieMetadata(rankedMovie: RankedMovie, movieDetails: Movie?) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val year = (movieDetails?.releaseDate ?: rankedMovie.movie.releaseDate)?.take(4)
+        if (!year.isNullOrBlank()) {
+            Text(
+                text = year,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        val rating = (movieDetails?.voteAverage ?: rankedMovie.movie.voteAverage)
+        rating?.let {
+            StarRating(rating = it, starSize = 14.dp)
+        }
+    }
+}
+
+@Composable
+private fun MovieCastInfo(movieDetails: Movie?) {
+    movieDetails?.cast?.take(3)?.let { cast ->
+        if (cast.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = cast.joinToString(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun MovieOverview(rankedMovie: RankedMovie, movieDetails: Movie?) {
+    (movieDetails?.overview ?: rankedMovie.movie.overview)?.let { overview ->
+        if (overview.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = overview,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -322,14 +345,16 @@ private fun WatchItemMetadata(
 @Composable
 private fun FPSideEffects(
     userId: String,
-    watchlist: List<WatchlistItem>,
-    rankings: List<com.cpen321.movietier.data.model.RankedMovie>,
+    data: FriendProfileSideEffectData,
     commonContext: CommonContext,
-    vm: FriendProfileViewModel,
-    rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
-    movieDetailsMap: Map<Int, Movie>,
+    viewModels: FriendProfileViewModels,
     callbacks: SideEffectCallbacks
 ) {
+    val watchlist = data.watchlist
+    val rankings = data.rankings
+    val movieDetailsMap = data.movieDetailsMap
+    val vm = viewModels.vm
+    val rankingViewModel = viewModels.rankingViewModel
     LaunchedEffect(userId) { vm.load(userId) }
 
     // Fetch details for all movies (rankings and watchlist)
