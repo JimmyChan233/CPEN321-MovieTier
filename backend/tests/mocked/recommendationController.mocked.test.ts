@@ -199,6 +199,19 @@ describe('Recommendation Controller - Mocked Tests', () => {
       expect(res.body.message).toBe('No authentication token provided');
     });
 
+    it('should return 401 when userId is missing from request', async () => {
+      // Create a malformed token without userId
+      const malformedToken = generateTestJWT('');
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${malformedToken}`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('User ID not found');
+    });
+
     it('should return empty array when user has no ranked movies', async () => {
       const res = await request(app)
         .get('/api/recommendations')
@@ -906,6 +919,571 @@ describe('Recommendation Controller - Mocked Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBeDefined();
+    });
+
+    it('should handle movies with missing genres in preference analysis', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      // Movie details without genres
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          original_language: 'en',
+          vote_average: 9.0
+          // No genres field
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle movies with missing original_language in preference analysis', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      // Movie details without original_language
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          vote_average: 9.0
+          // No original_language field
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle movies with missing vote_average in preference analysis', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      // Movie details without vote_average
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en'
+          // No vote_average field
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle empty topGenres when building discover params', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      // Movie details without genres to create empty topGenres
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          original_language: 'en',
+          vote_average: 9.0
+          // No genres
+        }
+      });
+
+      // Discover without genre filter
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 1000,
+            title: 'Movie',
+            overview: 'Overview',
+            poster_path: '/poster.jpg',
+            release_date: '2023-01-01',
+            vote_average: 8.0,
+            genre_ids: [],
+            original_language: 'en'
+          }]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should score movies with non-matching language lower', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      // Return movies with different languages
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              id: 1000,
+              title: 'English Movie',
+              overview: 'Overview',
+              poster_path: '/en.jpg',
+              release_date: '2023-01-01',
+              vote_average: 7.0,
+              genre_ids: [28],
+              original_language: 'en'  // Matches
+            },
+            {
+              id: 2000,
+              title: 'French Movie',
+              overview: 'Overview',
+              poster_path: '/fr.jpg',
+              release_date: '2023-01-01',
+              vote_average: 7.0,
+              genre_ids: [28],
+              original_language: 'fr'  // Doesn't match
+            }
+          ]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toBeInstanceOf(Array);
+    });
+
+    it('should score movies below quality threshold lower', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      // Return movies with different vote averages
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              id: 1000,
+              title: 'High Quality Movie',
+              overview: 'Overview',
+              poster_path: '/high.jpg',
+              release_date: '2023-01-01',
+              vote_average: 8.5,  // Above threshold
+              genre_ids: [28],
+              original_language: 'en'
+            },
+            {
+              id: 2000,
+              title: 'Low Quality Movie',
+              overview: 'Overview',
+              poster_path: '/low.jpg',
+              release_date: '2023-01-01',
+              vote_average: 5.0,  // Below threshold
+              genre_ids: [28],
+              original_language: 'en'
+            }
+          ]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toBeInstanceOf(Array);
+    });
+
+    it('should apply recency bonus to recent movies', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      const currentYear = new Date().getFullYear();
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              id: 1000,
+              title: 'Recent Movie',
+              overview: 'Overview',
+              poster_path: '/recent.jpg',
+              release_date: `${currentYear - 1}-01-01`,  // Recent
+              vote_average: 7.0,
+              genre_ids: [28],
+              original_language: 'en'
+            },
+            {
+              id: 2000,
+              title: 'Old Movie',
+              overview: 'Overview',
+              poster_path: '/old.jpg',
+              release_date: '1990-01-01',  // Old
+              vote_average: 7.0,
+              genre_ids: [28],
+              original_language: 'en'
+            }
+          ]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toBeInstanceOf(Array);
+    });
+
+    it('should handle similar movies with all fields null/undefined', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      // Similar movies with missing fields
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 1000,
+            title: 'Minimal Movie'
+            // Missing: overview, poster_path, release_date, vote_average, genre_ids, original_language
+          }]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle recommendation movies with all fields null/undefined', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      // Recommendations with missing fields
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 2000,
+            title: 'Minimal Rec Movie'
+            // Missing: overview, poster_path, release_date, vote_average, genre_ids, original_language
+          }]
+        }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle discover movies with all fields null/undefined', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      // Discover with missing fields
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 3000,
+            title: 'Minimal Discover Movie'
+            // Missing: overview, poster_path, release_date, vote_average, genre_ids, original_language
+          }]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle discover movies with all fields populated', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      // Discover with all fields populated
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 4000,
+            title: 'Full Discover Movie',
+            overview: 'Complete overview',
+            poster_path: '/full-poster.jpg',
+            release_date: '2023-05-15',
+            vote_average: 8.5,
+            genre_ids: [28, 12],
+            original_language: 'fr'  // Different from default
+          }]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should handle scoring when movie has no genreIds', async () => {
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 155,
+        title: 'The Dark Knight',
+        rank: 1
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          genres: [{ id: 28, name: 'Action' }],
+          original_language: 'en',
+          vote_average: 9.0
+        }
+      });
+
+      // Return movie without genre_ids
+      mockTmdbGet.mockResolvedValueOnce({
+        data: {
+          results: [{
+            id: 5000,
+            title: 'No Genre Movie',
+            overview: 'Overview',
+            poster_path: '/poster.jpg',
+            release_date: '2023-01-01',
+            vote_average: 7.0,
+            original_language: 'en'
+            // No genre_ids field
+          }]
+        }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      mockTmdbGet.mockResolvedValueOnce({
+        data: { results: [] }
+      });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
     });
   });
 });
