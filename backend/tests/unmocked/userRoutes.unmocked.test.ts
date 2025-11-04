@@ -10,6 +10,7 @@ import express from 'express';
 import userRoutes from '../../src/routes/userRoutes';
 import User from '../../src/models/user/User';
 import WatchlistItem from '../../src/models/watch/WatchlistItem';
+import { Friendship } from '../../src/models/friend/Friend';
 import { generateTestJWT, mockUsers } from '../utils/test-fixtures';
 
 describe('User Routes - Unmocked Tests', () => {
@@ -38,6 +39,7 @@ describe('User Routes - Unmocked Tests', () => {
   beforeEach(async () => {
     await User.deleteMany({});
     await WatchlistItem.deleteMany({});
+    await Friendship.deleteMany({});
 
     user1 = await User.create({
       ...mockUsers.validUser,
@@ -56,6 +58,28 @@ describe('User Routes - Unmocked Tests', () => {
 
     token1 = generateTestJWT((user1 as any)._id.toString());
     token2 = generateTestJWT((user2 as any)._id.toString());
+
+    // Create friendships for watchlist access tests
+    await Friendship.create({
+      userId: (user1 as any)._id,
+      friendId: (user2 as any)._id,
+      status: 'accepted'
+    });
+    await Friendship.create({
+      userId: (user2 as any)._id,
+      friendId: (user1 as any)._id,
+      status: 'accepted'
+    });
+    await Friendship.create({
+      userId: (user1 as any)._id,
+      friendId: (user3 as any)._id,
+      status: 'accepted'
+    });
+    await Friendship.create({
+      userId: (user3 as any)._id,
+      friendId: (user1 as any)._id,
+      status: 'accepted'
+    });
   });
 
   // ==================== GET /search Tests ====================
@@ -74,16 +98,16 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.data[0].name).toContain('Bob');
     });
 
-    it('should search users by email', async () => {
+    it('should search users by partial name match', async () => {
       const res = await request(app)
-        .get('/search?query=bob@example')
+        .get('/search?query=Smith')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBeInstanceOf(Array);
       expect(res.body.data.length).toBeGreaterThan(0);
-      expect(res.body.data[0].email).toContain('bob@example');
+      expect(res.body.data[0].name).toContain('Smith');
     });
 
     it('should exclude current user from search results', async () => {
@@ -222,6 +246,37 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.name).toBe('Alice Trimmed');
+    });
+
+    it('should update user profile image URL successfully', async () => {
+      const imageUrl = 'https://example.com/profile-image.jpg';
+      const res = await request(app)
+        .put('/profile')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({ profileImageUrl: imageUrl });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.profileImageUrl).toBe(imageUrl);
+
+      // Verify database was updated
+      const updated = await User.findById((user1 as any)._id);
+      expect(updated?.profileImageUrl).toBe(imageUrl);
+    });
+
+    it('should update both name and profileImageUrl', async () => {
+      const res = await request(app)
+        .put('/profile')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({
+          name: 'Alice Updated',
+          profileImageUrl: 'https://example.com/new-image.jpg'
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.name).toBe('Alice Updated');
+      expect(res.body.data.profileImageUrl).toBe('https://example.com/new-image.jpg');
     });
 
     it('should reject missing name', async () => {
@@ -502,7 +557,19 @@ describe('User Routes - Unmocked Tests', () => {
       ]);
     });
 
-    it('should get user watchlist successfully', async () => {
+    it('should get own watchlist successfully', async () => {
+      const res = await request(app)
+        .get(`/${(user1 as any)._id}/watchlist`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeInstanceOf(Array);
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.data[0].title).toBe('The Dark Knight');
+    });
+
+    it('should get friend watchlist successfully', async () => {
       const res = await request(app)
         .get(`/${(user2 as any)._id}/watchlist`)
         .set('Authorization', `Bearer ${token1}`);
@@ -539,6 +606,23 @@ describe('User Routes - Unmocked Tests', () => {
       }
     });
 
+    it('should reject access to non-friend watchlist', async () => {
+      // Create a new user who is not friends with user1
+      const user4 = await User.create({
+        email: 'notfriend@example.com',
+        name: 'Not Friend',
+        googleId: 'google-notfriend'
+      });
+
+      const res = await request(app)
+        .get(`/${(user4 as any)._id}/watchlist`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('must be friends');
+    });
+
     it('should reject invalid user ID format', async () => {
       const res = await request(app)
         .get('/invalid-id/watchlist')
@@ -549,16 +633,17 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('Invalid user id');
     });
 
-    it('should return watchlist even for non-existent user (empty array)', async () => {
+    it('should reject access to non-existent user watchlist (not friends)', async () => {
       const nonExistentId = new mongoose.Types.ObjectId();
 
       const res = await request(app)
         .get(`/${nonExistentId}/watchlist`)
         .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toEqual([]);
+      // Non-existent users can't be friends, so should get 403
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('must be friends');
     });
 
     it('should handle database error gracefully', async () => {
