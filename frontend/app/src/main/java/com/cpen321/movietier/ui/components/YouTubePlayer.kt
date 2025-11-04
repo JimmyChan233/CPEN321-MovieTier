@@ -141,7 +141,7 @@ private fun YouTubePlayerNormalView(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(16f / 9f),
+            .fillMaxHeight(0.4f),
         horizontalAlignment = Alignment.End
     ) {
         YouTubePlayerCloseButton(onDismiss)
