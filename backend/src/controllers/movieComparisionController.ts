@@ -187,7 +187,13 @@ export const addMovie = async (req: Request, res: Response) => {
 export const compareMovies = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
-    const userId = authReq.userId!;
+    const userId = authReq.userId;
+
+    // Validate authentication
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
     const { preferredMovieId } = req.body as {
       preferredMovieId: number;
     };
