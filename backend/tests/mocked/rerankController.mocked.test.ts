@@ -134,4 +134,62 @@ describe('startRerank (mocked)', () => {
   });
 });
 
+  it('should send SSE notifications to friends when reranking (coverage for line 31)', async () => {
+    const userId = new mongoose.Types.ObjectId();
+    const friendId = new mongoose.Types.ObjectId();
+
+    // Mock Friendship.find to return a friendship
+    const { Friendship } = require('../../src/models/friend/Friend');
+    (Friendship.find as jest.Mock).mockResolvedValueOnce([{ friendId }]);
+
+    const mockDoc = {
+      _id: 'x',
+      userId,
+      rank: 2,
+      movieId: 123,
+      title: 'Test Movie',
+      posterPath: '/x.jpg',
+      deleteOne: jest.fn().mockResolvedValue({})
+    };
+
+    (RankedMovieModel.findOne as any).mockResolvedValue(mockDoc);
+    (RankedMovieModel.updateMany as any).mockResolvedValue({});
+
+    // Mock find to return remaining movies for comparison
+    const mockArray = [
+      { movieId: 456, title: 'Compare Movie', posterPath: '/y.jpg' }
+    ];
+    mockArray.at = jest.fn().mockReturnValue(mockArray[0]);
+    Object.defineProperty(mockArray, 'length', { value: 1 });
+
+    const mockQuery = {
+      sort: jest.fn().mockResolvedValue(mockArray)
+    };
+    (RankedMovieModel.find as any).mockReturnValue(mockQuery);
+
+    const req = mockReq(
+      { rankedId: new mongoose.Types.ObjectId().toString() },
+      userId.toString()
+    );
+    const res = mockRes();
+
+    const { sseService } = require('../../src/services/sse/sseService');
+
+    await startRerank(req as any, res as any);
+
+    // Verify SSE notification was sent to friend
+    expect(sseService.send).toHaveBeenCalledWith(
+      String(friendId),
+      'ranking_changed',
+      { userId }
+    );
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        status: 'compare'
+      })
+    );
+  });
+
 });

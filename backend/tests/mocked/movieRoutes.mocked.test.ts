@@ -646,6 +646,41 @@ describe('Movie Routes - Mocked Tests', () => {
       expect(activities).toHaveLength(0);
     });
 
+    it('should send SSE notifications to friends when deleting ranked movie (coverage for line 314)', async () => {
+      // Create a friend
+      const friend = await User.create({
+        name: 'Friend User',
+        email: 'friend@test.com',
+        googleId: 'friend-google-123'
+      });
+
+      // Create friendship
+      await Friendship.create({
+        userId: (user as any)._id,
+        friendId: (friend as any)._id
+      });
+
+      const movie = await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 550,
+        title: 'Fight Club',
+        rank: 1
+      });
+
+      const { sseService } = require('../../src/services/sse/sseService');
+
+      await request(app)
+        .delete(`/api/movies/ranked/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      // Verify SSE notification was sent to friend
+      expect(sseService.send).toHaveBeenCalledWith(
+        String((friend as any)._id),
+        'ranking_changed',
+        { userId: String((user as any)._id) }
+      );
+    });
+
     it('should handle database error gracefully', async () => {
       const movie = await RankedMovie.create({
         userId: (user as any)._id,

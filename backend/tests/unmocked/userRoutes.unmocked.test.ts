@@ -747,6 +747,30 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.data[0].movie.title).toBe('Fight Club');
     });
 
+    it('should handle null posterPath correctly (coverage for line 177)', async () => {
+      // Create a ranked movie without posterPath
+      await RankedMovie.create({
+        userId: (user1 as any)._id,
+        movieId: 999,
+        title: 'Movie Without Poster',
+        rank: 1
+        // posterPath is intentionally omitted/undefined
+      });
+
+      const res = await request(app)
+        .get(`/${(user1 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data.length).toBeGreaterThan(0);
+      // Verify that posterPath is null when undefined
+      const movieWithoutPoster = res.body.data.find((m: any) => m.movie.id === 999);
+      expect(movieWithoutPoster).toBeDefined();
+      expect(movieWithoutPoster.movie.posterPath).toBeNull();
+    });
+
     it('should reject invalid user ID format', async () => {
       const res = await request(app)
         .get('/invalid-id/rankings')
