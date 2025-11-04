@@ -30,6 +30,18 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
+@Stable
+private data class YouTubePlayerState(
+    val videoKey: String,
+    val activity: Activity?,
+    val isFullscreen: Boolean,
+    val customView: View?,
+    val rootContainer: FrameLayout?,
+    val onRootContainerChanged: (FrameLayout) -> Unit,
+    val onFullscreenChanged: (Boolean, View?) -> Unit,
+    val onDismiss: () -> Unit
+)
+
 /**
  * Displays a YouTube video in a popup dialog with fullscreen support
  * Uses WebView to load full YouTube mobile page with improved fullscreen handling
@@ -57,24 +69,26 @@ fun YouTubePlayerDialog(
         )
     ) {
         YouTubePlayerContent(
-            videoKey = videoKey,
-            activity = activity,
-            isFullscreen = isFullscreen,
-            customView = customView,
-            rootContainer = rootContainer,
-            onRootContainerChanged = { rootContainer = it },
-            onFullscreenChanged = { fullscreen, view ->
-                isFullscreen = fullscreen
-                customView = view
-                activity?.let {
-                    if (fullscreen) {
-                        hideSystemUI(it)
-                    } else {
-                        showSystemUI(it)
+            state = YouTubePlayerState(
+                videoKey = videoKey,
+                activity = activity,
+                isFullscreen = isFullscreen,
+                customView = customView,
+                rootContainer = rootContainer,
+                onRootContainerChanged = { rootContainer = it },
+                onFullscreenChanged = { fullscreen, view ->
+                    isFullscreen = fullscreen
+                    customView = view
+                    activity?.let {
+                        if (fullscreen) {
+                            enterFullscreenMode(it)
+                        } else {
+                            exitFullscreenMode(it)
+                        }
                     }
-                }
-            },
-            onDismiss = onDismiss
+                },
+                onDismiss = onDismiss
+            )
         )
     }
 }
@@ -88,23 +102,14 @@ private fun YouTubePlayerCleanup(activity: Activity?) {
                 originalOrientation?.let { orientation ->
                     it.requestedOrientation = orientation
                 }
-                showSystemUI(it)
+                exitFullscreenMode(it)
             }
         }
     }
 }
 
 @Composable
-private fun YouTubePlayerContent(
-    videoKey: String,
-    activity: Activity?,
-    isFullscreen: Boolean,
-    customView: View?,
-    rootContainer: FrameLayout?,
-    onRootContainerChanged: (FrameLayout) -> Unit,
-    onFullscreenChanged: (Boolean, View?) -> Unit,
-    onDismiss: () -> Unit
-) {
+private fun YouTubePlayerContent(state: YouTubePlayerState) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -113,19 +118,19 @@ private fun YouTubePlayerContent(
     ) {
         // Always render the WebView to preserve state
         YouTubePlayerNormalView(
-            videoKey = videoKey,
-            activity = activity,
-            rootContainer = rootContainer,
-            onRootContainerChanged = onRootContainerChanged,
-            onFullscreenChanged = onFullscreenChanged,
-            onDismiss = onDismiss,
-            visible = !isFullscreen
+            videoKey = state.videoKey,
+            activity = state.activity,
+            rootContainer = state.rootContainer,
+            onRootContainerChanged = state.onRootContainerChanged,
+            onFullscreenChanged = state.onFullscreenChanged,
+            onDismiss = state.onDismiss,
+            visible = !state.isFullscreen
         )
 
         // Overlay fullscreen custom view on top when in fullscreen
-        if (isFullscreen && customView != null) {
+        if (state.isFullscreen && state.customView != null) {
             AndroidView(
-                factory = { customView },
+                factory = { state.customView },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -284,10 +289,7 @@ private fun createWebChromeClient(
     }
 }
 
-/**
- * Hides system UI (status bar and navigation bar) for immersive fullscreen experience
- */
-private fun hideSystemUI(activity: Activity) {
+private fun enterFullscreenMode(activity: Activity) {
     WindowCompat.setDecorFitsSystemWindows(activity.window, false)
     WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
         hide(WindowInsetsCompat.Type.systemBars())
@@ -295,10 +297,7 @@ private fun hideSystemUI(activity: Activity) {
     }
 }
 
-/**
- * Shows system UI (status bar and navigation bar)
- */
-private fun showSystemUI(activity: Activity) {
+private fun exitFullscreenMode(activity: Activity) {
     WindowCompat.setDecorFitsSystemWindows(activity.window, true)
     WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
         show(WindowInsetsCompat.Type.systemBars())

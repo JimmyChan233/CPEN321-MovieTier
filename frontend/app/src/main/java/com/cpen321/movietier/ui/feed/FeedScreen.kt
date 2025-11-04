@@ -81,19 +81,21 @@ fun FeedScreen(
     )
 
     FeedSideEffects(
-        selectedMovie = feedState.selectedMovie,
-        dialogState = feedState.dialogState,
-        compareState = compareState,
-        commentsState = CommentsState(
-            showCommentsForActivity = feedState.showCommentsForActivity,
-            commentsData = commentsState,
-            currentUserId = feedState.currentUserId
-        ),
-        feedViewModel = feedViewModel,
-        country = feedState.country,
-        commonContext = commonContext,
-        callbacks = callbacks,
-        dialogCallbacks = feedState.dialogCallbacks
+        params = FeedSideEffectsParams(
+            selectedMovie = feedState.selectedMovie,
+            dialogState = feedState.dialogState,
+            compareState = compareState,
+            commentsState = CommentsState(
+                showCommentsForActivity = feedState.showCommentsForActivity,
+                commentsData = commentsState,
+                currentUserId = feedState.currentUserId
+            ),
+            feedViewModel = feedViewModel,
+            country = feedState.country,
+            commonContext = commonContext,
+            callbacks = callbacks,
+            dialogCallbacks = feedState.dialogCallbacks
+        )
     )
 }
 
@@ -182,87 +184,6 @@ private enum class FeedState {
 }
 
 @Composable
-private fun ShimmerFeedCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Avatar shimmer
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .shimmerPlaceholder(visible = true, shape = MaterialTheme.shapes.small)
-            )
-
-            Column(modifier = Modifier.weight(1f)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(16.dp)
-                        .shimmerPlaceholder(visible = true)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.4f)
-                        .height(12.dp)
-                        .shimmerPlaceholder(visible = true)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FilterToggleFab(
-    label: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
-    }
-    val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    FloatingActionButton(
-        onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        containerColor = containerColor,
-        contentColor = contentColor,
-        elevation = FloatingActionButtonDefaults.elevation(
-            defaultElevation = 6.dp,
-            pressedElevation = 8.dp
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(imageVector = icon, contentDescription = label, modifier = Modifier.size(18.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = contentColor
-            )
-        }
-    }
-}
-
-@Composable
 private fun FeedLocationHandler(
     context: android.content.Context,
     scope: kotlinx.coroutines.CoroutineScope,
@@ -285,55 +206,6 @@ private fun FeedLocationHandler(
         } else {
             locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FeedTopBar(onRefresh: () -> Unit) {
-    TopAppBar(
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.in_app_icon),
-                    contentDescription = "MovieTier",
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("MovieTier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-        },
-        actions = {
-            IconButton(onClick = onRefresh, modifier = Modifier.testTag("refresh_button")) {
-                Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-            }
-        },
-        windowInsets = WindowInsets(0, 0, 0, 0)
-    )
-}
-
-@Composable
-private fun FeedFilterBar(
-    currentFilter: com.cpen321.movietier.ui.viewmodels.FeedFilter,
-    onFilterSelected: (com.cpen321.movietier.ui.viewmodels.FeedFilter) -> Unit
-) {
-    Row(
-        modifier = Modifier.testTag("feed_filter_bar").fillMaxWidth().padding(bottom = 0.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        FilterToggleFab(
-            label = "Friends",
-            icon = Icons.Filled.People,
-            selected = currentFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS,
-            onClick = { onFilterSelected(com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS) }
-        )
-        FilterToggleFab(
-            label = "My Activities",
-            icon = Icons.Filled.History,
-            selected = currentFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE,
-            onClick = { onFilterSelected(com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE) }
-        )
     }
 }
 
@@ -362,36 +234,6 @@ private fun FeedMainContent(
                 FeedState.CONTENT -> FeedContentState(uiState, feedViewModel, country, onMovieSelected, onShowComments)
             }
         }
-    }
-}
-
-@Composable
-private fun FeedLoadingState() {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().testTag("feed_loading"),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 112.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(5) { ShimmerFeedCard() }
-    }
-}
-
-@Composable
-private fun FeedEmptyState(navController: NavController) {
-    Box(modifier = Modifier.fillMaxSize().testTag("feed_empty")) {
-        EmptyState(
-            icon = Icons.Default.Person,
-            title = "No activity yet",
-            message = "Add friends to see their rankings",
-            primaryCta = {
-                Button(
-                    onClick = { navController.navigate(NavRoutes.FRIENDS) { popUpTo(NavRoutes.FEED) } },
-                    modifier = Modifier.testTag("go_to_friends_button")
-                ) {
-                    Text("Add Friends")
-                }
-            }
-        )
     }
 }
 
@@ -449,56 +291,59 @@ private fun FeedActivityItem(
     )
 }
 
+@Stable
+private data class FeedSideEffectsParams(
+    val selectedMovie: com.cpen321.movietier.data.model.Movie?,
+    val dialogState: MovieDialogState,
+    val compareState: com.cpen321.movietier.ui.viewmodels.FeedCompareState?,
+    val commentsState: CommentsState,
+    val feedViewModel: FeedViewModel,
+    val country: String,
+    val commonContext: CommonContext,
+    val callbacks: DismissCallbacks,
+    val dialogCallbacks: MovieDialogCallbacks
+)
+
 @Composable
-private fun FeedSideEffects(
-    selectedMovie: com.cpen321.movietier.data.model.Movie?,
-    dialogState: MovieDialogState,
-    compareState: com.cpen321.movietier.ui.viewmodels.FeedCompareState?,
-    commentsState: CommentsState,
-    feedViewModel: FeedViewModel,
-    country: String,
-    commonContext: CommonContext,
-    callbacks: DismissCallbacks,
-    dialogCallbacks: MovieDialogCallbacks
-) {
-    selectedMovie?.let { movie ->
+private fun FeedSideEffects(params: FeedSideEffectsParams) {
+    params.selectedMovie?.let { movie ->
         FeedMovieDetailSheet(
             movie = movie,
-            dialogState = dialogState,
-            feedViewModel = feedViewModel,
-            country = country,
-            commonContext = commonContext,
+            dialogState = params.dialogState,
+            feedViewModel = params.feedViewModel,
+            country = params.country,
+            commonContext = params.commonContext,
             callbacks = MovieActionCallbacks(
-                onAddToRanking = feedViewModel::addToRanking,
-                onAddToWatchlist = feedViewModel::addToWatchlist,
-                onDismiss = callbacks.onDismissMovie
+                onAddToRanking = params.feedViewModel::addToRanking,
+                onAddToWatchlist = params.feedViewModel::addToWatchlist,
+                onDismiss = params.callbacks.onDismissMovie
             ),
-            dialogCallbacks = dialogCallbacks
+            dialogCallbacks = params.dialogCallbacks
         )
     }
 
-    if (dialogState.showTrailerDialog && dialogState.trailerKey != null) {
-        YouTubePlayerDialog(dialogState.trailerKey!!, dialogState.trailerMovieTitle) {
-            dialogCallbacks.onDismissTrailer(false)
+    if (params.dialogState.showTrailerDialog && params.dialogState.trailerKey != null) {
+        YouTubePlayerDialog(params.dialogState.trailerKey!!, params.dialogState.trailerMovieTitle) {
+            params.dialogCallbacks.onDismissTrailer(false)
         }
     }
 
-    compareState?.let {
-        FeedComparisonDialog(it, feedViewModel)
+    params.compareState?.let {
+        FeedComparisonDialog(it, params.feedViewModel)
     }
 
-    commentsState.showCommentsForActivity?.let { activityId ->
-        val comments = commentsState.commentsData[activityId] ?: emptyList()
+    params.commentsState.showCommentsForActivity?.let { activityId ->
+        val comments = params.commentsState.commentsData[activityId] ?: emptyList()
         CommentBottomSheet(
             comments = comments,
-            currentUserId = commentsState.currentUserId,
-            onDismiss = callbacks.onDismissComments,
-            onAddComment = { text -> feedViewModel.addComment(activityId, text) },
-            onDeleteComment = { commentId -> feedViewModel.deleteComment(activityId, commentId) }
+            currentUserId = params.commentsState.currentUserId,
+            onDismiss = params.callbacks.onDismissComments,
+            onAddComment = { text -> params.feedViewModel.addComment(activityId, text) },
+            onDeleteComment = { commentId -> params.feedViewModel.deleteComment(activityId, commentId) }
         )
     }
 
-    FeedEventHandler(feedViewModel, commonContext.scope, commonContext.snackbarHostState, callbacks.onDismissMovie)
+    FeedEventHandler(params.feedViewModel, params.commonContext.scope, params.commonContext.snackbarHostState, params.callbacks.onDismissMovie)
 }
 
 @Composable
@@ -578,30 +423,6 @@ private fun FeedComparisonDialog(
         confirmButton = {},
         dismissButton = {}
     )
-}
-
-@Composable
-private fun FeedComparisonOption(
-    newMovie: com.cpen321.movietier.data.model.Movie,
-    compareWith: com.cpen321.movietier.data.model.Movie,
-    preferred: com.cpen321.movietier.data.model.Movie,
-    feedViewModel: FeedViewModel,
-    modifier: Modifier
-) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        AsyncImage(
-            model = preferred.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
-            contentDescription = preferred.title,
-            modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(MaterialTheme.shapes.medium),
-            contentScale = ContentScale.Crop
-        )
-        Button(
-            onClick = { feedViewModel.choosePreferred(newMovie, compareWith, preferred) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(preferred.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
-        }
-    }
 }
 
 @Composable
