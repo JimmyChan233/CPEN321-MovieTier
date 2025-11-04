@@ -329,6 +329,55 @@ describe('GET /stream SSE authorization and error handling', () => {
 
     jest.restoreAllMocks();
   });
+
+  it('should trigger close handler when SSE connection is terminated', async () => {
+    const { EventEmitter } = require('events');
+    const removeClientSpy = jest.spyOn(sseService, 'removeClient');
+
+    // Capture the request object when addClient is called
+    let capturedReq: any = null;
+    jest.spyOn(sseService, 'addClient').mockImplementation((userId, res) => {
+      // The request object is available in the current scope when addClient is called
+      // We'll capture it through a different method
+    });
+
+    // We need to spy on the request's 'on' method to capture the close handler
+    let closeHandler: Function | null = null;
+    const originalOn = EventEmitter.prototype.on;
+    const onSpy = jest.spyOn(EventEmitter.prototype, 'on').mockImplementation(function(this: any, event: string, handler: Function) {
+      if (event === 'close' && this.userId) {
+        // This is our SSE request's close handler
+        closeHandler = handler;
+      }
+      return originalOn.call(this, event, handler);
+    });
+
+    // Make the request to trigger the route handler
+    const agent = request(app)
+      .get('/api/friends/stream')
+      .set('Authorization', `Bearer ${token1}`)
+      .buffer(false) // Don't buffer the response
+      .parse(() => {}) // Custom parser that does nothing
+      .end(() => {});
+
+    // Wait for the handler to set up
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // The close handler should have been registered
+    expect(closeHandler).toBeTruthy();
+
+    // Trigger the close handler if it was captured
+    if (closeHandler) {
+      (closeHandler as Function)();
+
+      // Verify removeClient was called
+      expect(removeClientSpy).toHaveBeenCalled();
+    }
+
+    // Cleanup
+    onSpy.mockRestore();
+    jest.restoreAllMocks();
+  });
 });
 
   // ==================== GET /requests Error Tests ====================
@@ -448,6 +497,23 @@ describe('GET /stream SSE authorization and error handling', () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
     });
+
+    it('should reject request when already friends with user', async () => {
+      // Create a friendship between user1 and user2
+      await Friendship.create({
+        userId: (user1 as any)._id,
+        friendId: (user2 as any)._id
+      });
+
+      const res = await request(app)
+        .post('/api/friends/request')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({ email: 'user2@example.com' });
+
+      expect(res.status).toBe(409);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Already friends');
+    });
   });
 
   // ==================== POST /respond Error Tests ====================
@@ -549,6 +615,16 @@ describe('GET /stream SSE authorization and error handling', () => {
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Friendship not found');
+    });
+
+    it('should reject when user tries to remove themselves', async () => {
+      const res = await request(app)
+        .delete(`/api/friends/${(user1 as any)._id}`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Cannot remove yourself');
     });
     // ==================== DELETE /:friendId Validation Tests ====================
 
