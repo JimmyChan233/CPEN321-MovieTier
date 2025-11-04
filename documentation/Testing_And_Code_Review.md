@@ -63,7 +63,7 @@
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`f65a338aee2fa6039bb82d0a5414671e97ba1035` (Latest commit on main branch)
+`5c4748f4d814e57b6dacfdbd75dbb9ee63a6f4d9` (Latest commit on main branch)
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -344,7 +344,7 @@ Lines        : 100% ( 1395/1395 )
 
 ### 5.1. Commit Hash Where Codacy Ran
 
-`f65a338aee2fa6039bb82d0a5414671e97ba1035` (Latest commit on main branch)
+`5c4748f4d814e57b6dacfdbd75dbb9ee63a6f4d9` (Latest commit on main branch)
 
 **Note:** Codacy has been integrated with the repository. The following commits demonstrate Codacy issues have been actively addressed:
 - `25d3eb6` - Remove comments from private functions per Codacy guidelines
