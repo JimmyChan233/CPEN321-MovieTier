@@ -111,19 +111,22 @@ private fun YouTubePlayerContent(
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
+        // Always render the WebView to preserve state
+        YouTubePlayerNormalView(
+            videoKey = videoKey,
+            activity = activity,
+            rootContainer = rootContainer,
+            onRootContainerChanged = onRootContainerChanged,
+            onFullscreenChanged = onFullscreenChanged,
+            onDismiss = onDismiss,
+            visible = !isFullscreen
+        )
+
+        // Overlay fullscreen custom view on top when in fullscreen
         if (isFullscreen && customView != null) {
             AndroidView(
                 factory = { customView },
                 modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            YouTubePlayerNormalView(
-                videoKey = videoKey,
-                activity = activity,
-                rootContainer = rootContainer,
-                onRootContainerChanged = onRootContainerChanged,
-                onFullscreenChanged = onFullscreenChanged,
-                onDismiss = onDismiss
             )
         }
     }
@@ -136,15 +139,19 @@ private fun YouTubePlayerNormalView(
     rootContainer: FrameLayout?,
     onRootContainerChanged: (FrameLayout) -> Unit,
     onFullscreenChanged: (Boolean, View?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    visible: Boolean = true
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.4f),
+            .fillMaxHeight(0.7f)
+            .then(if (!visible) Modifier.size(0.dp) else Modifier),
         horizontalAlignment = Alignment.End
     ) {
-        YouTubePlayerCloseButton(onDismiss)
+        if (visible) {
+            YouTubePlayerCloseButton(onDismiss)
+        }
         YouTubePlayerWebView(
             videoKey = videoKey,
             activity = activity,
@@ -253,10 +260,13 @@ private fun createWebChromeClient(
     activity: Activity?,
     onFullscreenChanged: (Boolean, View?) -> Unit
 ): WebChromeClient {
+    var customViewCallback: WebChromeClient.CustomViewCallback? = null
+
     return object : WebChromeClient() {
         override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
             super.onShowCustomView(view, callback)
             if (view != null) {
+                customViewCallback = callback
                 onFullscreenChanged(true, view)
                 // Allow landscape orientation in fullscreen
                 activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -265,6 +275,8 @@ private fun createWebChromeClient(
 
         override fun onHideCustomView() {
             super.onHideCustomView()
+            customViewCallback?.onCustomViewHidden()
+            customViewCallback = null
             onFullscreenChanged(false, null)
             // Restore portrait orientation
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
