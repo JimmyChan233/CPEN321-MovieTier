@@ -731,6 +731,46 @@ describe('TMDB Tagline Service Tests', () => {
     });
   });
 
+  // Test Case 26: Handle response with undefined results (coverage for || [])
+  it('should handle search response with undefined results', async () => {
+    mockClient.get.mockResolvedValueOnce({
+      data: {
+        results: undefined
+      }
+    });
+
+    const tagline = await fetchMovieTagline('Undefined Results', 2024);
+
+    expect(tagline).toBeNull();
+    expect(mockClient.get).toHaveBeenCalledTimes(1);
+  });
+
+  // Test Case 27: Handle response with null results (coverage for || [])
+  it('should handle search response with null results', async () => {
+    mockClient.get.mockResolvedValueOnce({
+      data: {
+        results: null
+      }
+    });
+
+    const tagline = await fetchMovieTagline('Null Results', 2024);
+
+    expect(tagline).toBeNull();
+    expect(mockClient.get).toHaveBeenCalledTimes(1);
+  });
+
+  // Test Case 28: Handle response with undefined data (coverage for || [])
+  it('should handle search response with undefined data', async () => {
+    mockClient.get.mockResolvedValueOnce({
+      data: undefined
+    });
+
+    const tagline = await fetchMovieTagline('Undefined Data', 2024);
+
+    expect(tagline).toBeNull();
+    expect(mockClient.get).toHaveBeenCalledTimes(1);
+  });
+
 });
 describe('TMDB Client - Response Interceptor', () => {
   let consoleOutput: string[] = [];
