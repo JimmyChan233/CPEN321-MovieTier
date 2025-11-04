@@ -125,15 +125,8 @@ export const getRecommendations = async (req: Request, res: Response) => {
     const allRecs: MovieRecommendation[] = [];
 
     // 3a. Use TMDB discover with user's preferred genres and languages
-    try {
-      const discoverResults = await fetchDiscoverRecommendations(tmdb, preferences, seenMovieIds);
-      allRecs.push(...discoverResults);
-    } catch (err) {
-      logger.warn('Discover recommendations failed', {
-        userId,
-        error: (err as Error).message,
-      });
-    }
+    const discoverResults = await fetchDiscoverRecommendations(tmdb, preferences, seenMovieIds);
+    allRecs.push(...discoverResults);
 
     // 3b. Get similar movies for top 30% (max 10) of ranked movies
     const similarCount = Math.min(10, Math.max(3, Math.ceil(rankedMovies.length * 0.3)));
