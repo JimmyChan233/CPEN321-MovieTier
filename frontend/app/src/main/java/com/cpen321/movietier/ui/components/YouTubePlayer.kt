@@ -303,7 +303,7 @@ private fun createWebChromeClient(
 }
 
 private fun enterFullscreenMode(activity: Activity) {
-    WindowCompat.setDecorFitsSystemWindows(activity.window, false)
+    // App already uses edge-to-edge (decorFitsSystemWindows = false), so no need to change it
     WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
         hide(WindowInsetsCompat.Type.systemBars())
         systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -311,8 +311,9 @@ private fun enterFullscreenMode(activity: Activity) {
 }
 
 private fun exitFullscreenMode(activity: Activity) {
-    WindowCompat.setDecorFitsSystemWindows(activity.window, true)
+    // Restore system bars without changing decorFitsSystemWindows (keep edge-to-edge)
     WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
         show(WindowInsetsCompat.Type.systemBars())
+        systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
     }
 }
