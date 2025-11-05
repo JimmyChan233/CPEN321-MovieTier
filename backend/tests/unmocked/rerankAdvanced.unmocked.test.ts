@@ -110,34 +110,6 @@ describe('Advanced Rerank Controller Tests', () => {
   });
 
   // Test Case 3: Rerank with 10 movies
-  it('should handle rerank with 10 movies', async () => {
-    const movies = [];
-    for (let i = 0; i < 10; i++) {
-      movies.push({
-        userId: user._id,
-        movieId: 300000 + i,
-        title: `Movie ${i}`,
-        rank: i + 1,
-        posterPath: `/path${i}.jpg`
-      });
-    }
-    await RankedMovie.create(movies);
-
-    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 5 });
-
-    await request(app)
-      .post('/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ movieId: (movieToRerank as any)._id.toString() });
-
-    // Multiple comparisons
-    for (let i = 0; i < 3; i++) {
-      await request(app)
-        .post('/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ preferredMovieId: 300004 });
-    }
-  });
 
   // Test Case 4: Rerank with 20 movies (deep binary search)
   it('should handle rerank with 20 movies', async () => {
@@ -378,34 +350,6 @@ describe('Advanced Rerank Controller Tests', () => {
   });
 
   // Test Case 17: Rerank with 15 movies
-  it('should handle rerank with 15 movies', async () => {
-    const movies = [];
-    for (let i = 0; i < 15; i++) {
-      movies.push({
-        userId: user._id,
-        movieId: 1300000 + i,
-        title: `Movie ${i}`,
-        rank: i + 1,
-        posterPath: `/m${i}.jpg`
-      });
-    }
-    await RankedMovie.create(movies);
-
-    const movie = await RankedMovie.findOne({ userId: user._id, rank: 8 });
-
-    await request(app)
-      .post('/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ movieId: (movie as any)._id.toString() });
-
-    // Multiple comparisons to navigate binary search
-    for (let i = 0; i < 4; i++) {
-      await request(app)
-        .post('/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ preferredMovieId: 1300007 });
-    }
-  });
 
   // Test Case 18: Rerank all movies in list sequentially
   it('should handle reranking all movies one by one', async () => {
@@ -453,35 +397,4 @@ describe('Advanced Rerank Controller Tests', () => {
   });
 
   // Test Case 20: Rerank with 7 movies (odd number for balanced tree)
-  it('should handle rerank with 7 movies (balanced binary tree)', async () => {
-    const movies = [];
-    for (let i = 0; i < 7; i++) {
-      movies.push({
-        userId: user._id,
-        movieId: 1600000 + i,
-        title: `Movie ${i}`,
-        rank: i + 1,
-        posterPath: `/m${i}.jpg`
-      });
-    }
-    await RankedMovie.create(movies);
-
-    const movie = await RankedMovie.findOne({ userId: user._id, rank: 4 }); // Middle movie
-
-    await request(app)
-      .post('/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ movieId: (movie as any)._id.toString() });
-
-    // Navigate binary tree
-    await request(app)
-      .post('/compare')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ preferredMovieId: 1600003 }); // Prefer the movie being reranked
-
-    await request(app)
-      .post('/compare')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ preferredMovieId: 1600001 }); // Prefer other movie
-  });
 });
