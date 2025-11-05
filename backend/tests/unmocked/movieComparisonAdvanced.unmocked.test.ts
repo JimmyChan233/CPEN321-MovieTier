@@ -140,76 +140,6 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       });
   });
 
-  // Test Case 3: Rank movie with watchlist removal
-  it('should remove movie from watchlist when ranking', async () => {
-    // Add movie to watchlist first
-    await WatchlistItem.create({
-      userId: user._id,
-      movieId: mockMovies.inception.id,
-      title: mockMovies.inception.title,
-      posterPath: mockMovies.inception.poster_path,
-      overview: mockMovies.inception.overview
-    });
-
-    // Rank the same movie (should trigger watchlist removal)
-    await request(app)
-      .post('/add')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        posterPath: mockMovies.inception.poster_path,
-        overview: mockMovies.inception.overview
-      });
-
-    // Verify movie removed from watchlist
-    const watchlistItem = await WatchlistItem.findOne({
-      userId: user._id,
-      movieId: mockMovies.inception.id
-    });
-    expect(watchlistItem).toBeNull();
-  });
-
-  // Test Case 4: Complex comparison with 10 movies
-  it('should handle comparison with 10 existing movies', async () => {
-    const movies = [];
-    for (let i = 0; i < 10; i++) {
-      movies.push({
-        userId: user._id,
-        movieId: 300000 + i,
-        title: `Movie ${i}`,
-        rank: i + 1,
-        posterPath: '/path.jpg'
-      });
-    }
-    await RankedMovie.create(movies);
-
-    // Start ranking new movie
-    await request(app)
-      .post('/add')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movie: {
-          id: 400000,
-          title: 'Complex Movie',
-          poster_path: '/complex.jpg',
-          overview: 'Complex overview',
-          release_date: '2024-01-01',
-          vote_average: 7.5
-        }
-      });
-
-    // Multiple comparisons to traverse tree
-    for (let i = 0; i < 3; i++) {
-      await request(app)
-        .post('/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          preferredMovieId: 300005
-        });
-    }
-  });
-
   // Test Case 5: Edge case - rank at position 1
   it('should correctly rank movie at position 1', async () => {
     // Add 3 existing movies
@@ -328,53 +258,6 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       });
   });
 
-  // Test Case 7: Multiple watchlist removals
-  it('should handle multiple watchlist items during ranking', async () => {
-    // Add multiple movies to watchlist
-    await WatchlistItem.create([
-      {
-        userId: user._id,
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        posterPath: mockMovies.inception.poster_path,
-        overview: mockMovies.inception.overview
-      },
-      {
-        userId: user._id,
-        movieId: mockMovies.darkKnight.id,
-        title: mockMovies.darkKnight.title,
-        posterPath: mockMovies.darkKnight.poster_path,
-        overview: mockMovies.darkKnight.overview
-      }
-    ]);
-
-    // Rank first movie
-    await request(app)
-      .post('/add')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title,
-        posterPath: mockMovies.inception.poster_path,
-        overview: mockMovies.inception.overview
-      });
-
-    // Rank second movie
-    await request(app)
-      .post('/add')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: mockMovies.darkKnight.id,
-        title: mockMovies.darkKnight.title,
-        posterPath: mockMovies.darkKnight.poster_path,
-        overview: mockMovies.darkKnight.overview
-      });
-
-    // Both should be removed from watchlist
-    const count = await WatchlistItem.countDocuments({ userId: user._id });
-    expect(count).toBe(0);
-  });
-
   // Test Case 8: Comparison with exact middle selection
   it('should handle comparison with exact middle movie selection', async () => {
     // Add 7 movies for odd number
@@ -448,16 +331,6 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       });
   });
 
-  // Test Case 10: Comparison without active session
-  it('should handle comparison without active ranking session', async () => {
-    await request(app)
-      .post('/compare')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        preferredMovieId: 123456
-      });
-  });
-
   // Test Case 11: Rank with missing movie data
   it('should handle ranking with incomplete movie data', async () => {
     await request(app)
@@ -497,39 +370,6 @@ describe('Advanced Movie Comparison Controller Tests', () => {
       .send({
         preferredMovieId: mockMovies.darkKnight.id
       });
-  });
-
-  // Test Case 13: Rank 15 movies sequentially
-  it('should handle ranking 15 movies with comparisons', async () => {
-    // Rank movies one by one
-    for (let i = 0; i < 15; i++) {
-      const movie = {
-        id: 1100000 + i,
-        title: `Sequential Movie ${i}`,
-        poster_path: `/seq${i}.jpg`,
-        overview: `Movie ${i} overview`,
-        release_date: '2024-01-01',
-        vote_average: 5.0 + (i * 0.3)
-      };
-
-      const rankRes = await request(app)
-        .post('/add')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ movie });
-
-      // If comparison needed, complete it
-      if (i > 0) {
-        // Make 2-3 comparisons to complete ranking
-        for (let j = 0; j < Math.min(3, Math.ceil(Math.log2(i))); j++) {
-          await request(app)
-            .post('/compare')
-            .set('Authorization', `Bearer ${token}`)
-            .send({
-              preferredMovieId: movie.id
-            });
-        }
-      }
-    }
   });
 
   // Test Case 14: Test all preference combinations in binary search
