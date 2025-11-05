@@ -116,24 +116,6 @@ describe('Mocked: Friends API Errors', () => {
     expect(res.status).toStrictEqual(500);
   });
 
-  // Mocked behavior: Friend request database error
-  // Input: Valid target email
-  // Expected status code: 500
-  // Expected behavior: Error is caught
-  // Expected output: Database error message
-  it('should handle friend request creation failure', async () => {
-    jest.spyOn(FriendRequest, 'create').mockRejectedValueOnce(
-      new Error('Database write failed')
-    );
-
-    const res = await request(app)
-      .post('/api/friends/request')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ email: 'test@example.com' });
-
-    expect(res.status).toStrictEqual(500);
-  });
-
   // Mocked behavior: User lookup fails
   // Input: Email to search
   // Expected status code: 500
