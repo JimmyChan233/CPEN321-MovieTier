@@ -286,3 +286,122 @@ describe('Unmocked: DELETE /movies/ranked/:id', () => {
     expect(res.status).toStrictEqual(400);
   });
 });
+
+describe('Unmocked: POST /movies/rank', () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user: any;
+  let token: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use('/', movieRoutes);
+
+    user = await User.create(mockUsers.validUser);
+    token = generateTestJWT(user._id.toString());
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  beforeEach(async () => {
+    await RankedMovie.deleteMany({});
+  });
+
+  // Input: Valid movieId and title
+  // Expected status code: 200
+  // Expected behavior: Movie is added to ranked list
+  // Expected output: Created ranked movie with rank 1
+  it('should rank a new movie successfully', async () => {
+    const res = await request(app)
+      .post('/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 278,
+        title: 'The Shawshank Redemption',
+        posterPath: '/test.jpg',
+        overview: 'A movie about redemption'
+      });
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.rank).toBe(1);
+  });
+
+  // Input: Missing movieId
+  // Expected status code: 400
+  // Expected behavior: Request is rejected
+  // Expected output: Validation error
+  it('should reject ranking without movieId', async () => {
+    const res = await request(app)
+      .post('/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'The Shawshank Redemption'
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/movieId|required/i);
+  });
+
+  // Input: Missing title
+  // Expected status code: 400
+  // Expected behavior: Request is rejected
+  // Expected output: Validation error
+  it('should reject ranking without title', async () => {
+    const res = await request(app)
+      .post('/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 278
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/title|required/i);
+  });
+
+  // Input: Already ranked movie
+  // Expected status code: 400
+  // Expected behavior: Request is rejected
+  // Expected output: Duplicate error
+  it('should reject ranking duplicate movie', async () => {
+    await RankedMovie.create({
+      userId: user._id,
+      movieId: 278,
+      title: 'The Shawshank Redemption',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .post('/rank')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movieId: 278,
+        title: 'The Shawshank Redemption'
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.message).toMatch(/already|ranked/i);
+  });
+
+  // Input: No authentication token
+  // Expected status code: 401
+  // Expected behavior: Request is rejected
+  // Expected output: Unauthorized error
+  it('should reject unauthenticated rank request', async () => {
+    const res = await request(app)
+      .post('/rank')
+      .send({
+        movieId: 278,
+        title: 'The Shawshank Redemption'
+      });
+
+    expect(res.status).toStrictEqual(401);
+  });
+});
