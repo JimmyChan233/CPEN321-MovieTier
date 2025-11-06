@@ -13,6 +13,27 @@ import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
+/**
+ * Check if an activity needs TMDB enrichment for missing metadata
+ * @param activity Activity object to check
+ * @returns true if activity is missing overview or posterPath AND has a movieId
+ */
+function needsEnrichment(activity: unknown): boolean {
+  const a = activity as { overview?: string; posterPath?: string; movieId?: unknown };
+
+  // Check if movieId exists
+  if (a.movieId === undefined || a.movieId === null) {
+    return false;
+  }
+
+  // Check if missing overview or posterPath
+  if (!a.overview || !a.posterPath) {
+    return true;
+  }
+
+  return false;
+}
+
 router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   try {
     const friendships = await Friendship.find({ userId: req.userId });
@@ -27,10 +48,7 @@ router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
 
     // Enrich missing overview/poster for first few items to avoid burst calls
     const tmdb = getTmdbClient();
-    const toEnrich = activities.filter((a: unknown) => {
-      const activity = a as { overview?: string; posterPath?: string; movieId?: unknown };
-      return (!activity.overview || !activity.posterPath) && activity.movieId;
-    }).slice(0, 8);
+    const toEnrich = activities.filter(needsEnrichment).slice(0, 8);
     await Promise.all(toEnrich.map(async (a: unknown) => {
       try {
         const activity = a as { movieId: number; overview?: string; posterPath?: string; releaseDate?: string; voteAverage?: number; save: () => Promise<void> };

@@ -112,7 +112,10 @@ export const addMovie = async (req: Request, res: Response) => {
 
     // Get user info for notifications
     const user = await User.findById(userId).select('name');
-    const userName = user?.name ?? 'A friend';
+    let userName = 'A friend';
+    if (user && user.name) {
+      userName = user.name;
+    }
 
     // Notify friends via SSE and FCM
     const friendships = await Friendship.find({ userId });
@@ -294,7 +297,10 @@ export const compareMovies = async (req: Request, res: Response) => {
 
       // Get user info for notifications
       const user = await User.findById(userId).select('name');
-      const userName = user?.name ?? 'A friend';
+      let userName = 'A friend';
+      if (user && user.name) {
+        userName = user.name;
+      }
 
       // Notify friends via SSE and FCM
       const friendships = await Friendship.find({ userId });

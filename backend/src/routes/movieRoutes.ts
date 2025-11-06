@@ -206,7 +206,12 @@ router.post('/rank', authenticate, asyncHandler(async (req: AuthRequest, res) =>
     let finalPoster = posterPath;
     try {
       if ((!finalOverview || !finalPoster) && movieId) {
-        const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
+        let apiKey: string | undefined;
+        if (process.env.TMDB_API_KEY) {
+          apiKey = process.env.TMDB_API_KEY;
+        } else if (process.env.TMDB_KEY) {
+          apiKey = process.env.TMDB_KEY;
+        }
         if (apiKey) {
           const tmdb = getTmdbClient();
           const { data } = await tmdb.get(`/movie/${movieId}`, {

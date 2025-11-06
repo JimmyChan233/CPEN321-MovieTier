@@ -60,7 +60,7 @@ export const startRerank = async (req: Request, res: Response) => {
           id: cmp.movieId,
           title: cmp.title,
           overview: null,
-          posterPath: cmp.posterPath ?? null,
+          posterPath: cmp.posterPath,
           releaseDate: null,
           voteAverage: null
         }

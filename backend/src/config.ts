@@ -36,16 +36,36 @@ if (process.env.NODE_ENV === 'production') {
   console.warn('Warning: JWT_SECRET not set. Using development default (NOT SECURE for production)');
 }
 
-export default {
-  port: parseInt(process.env.PORT ?? '3000', 10),
-  nodeEnv: process.env.NODE_ENV ?? 'development',
-  mongodbUri: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/movietier',
+// Build config object with explicit defaults
+const config = {
+  port: 3000,
+  nodeEnv: 'development',
+  mongodbUri: 'mongodb://localhost:27017/movietier',
   googleClientId: process.env.GOOGLE_CLIENT_ID,
-  jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-key-change-in-production',
+  jwtSecret: 'dev-secret-key-change-in-production',
   tmdbApiKey: process.env.TMDB_API_KEY,
-  tmdbBaseUrl: process.env.TMDB_BASE_URL ?? 'https://api.themoviedb.org/3',
+  tmdbBaseUrl: 'https://api.themoviedb.org/3',
   firebaseServiceAccountPath: process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
   firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
   firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,
 };
+
+// Override with environment variables if provided
+if (process.env.PORT) {
+  config.port = parseInt(process.env.PORT, 10);
+}
+if (process.env.NODE_ENV) {
+  config.nodeEnv = process.env.NODE_ENV;
+}
+if (process.env.MONGODB_URI) {
+  config.mongodbUri = process.env.MONGODB_URI;
+}
+if (process.env.JWT_SECRET) {
+  config.jwtSecret = process.env.JWT_SECRET;
+}
+if (process.env.TMDB_BASE_URL) {
+  config.tmdbBaseUrl = process.env.TMDB_BASE_URL;
+}
+
+export default config;

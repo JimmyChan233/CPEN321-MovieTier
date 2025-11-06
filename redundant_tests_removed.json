@@ -1,0 +1,504 @@
+{
+  "baselineCoverage": 100,
+  "finalCoverage": 100,
+  "totalRemoved": 328,
+  "totalKept": 252,
+  "results": {
+    "auth.test.ts": {
+      "removed": [
+        "should return 401 if no token is provided",
+        "should return 401 if the token is invalid",
+        "should call next() and attach userId if the token is valid"
+      ],
+      "kept": 1
+    },
+    "config.test.ts": {
+      "removed": [
+        "should use default values when no env variables are set",
+        "should use env variables when they are set",
+        "should throw an error if JWT_SECRET is not set",
+        "should throw an error if GOOGLE_CLIENT_ID is not set",
+        "should throw an error if TMDB_API_KEY is not set",
+        "should not warn if JWT_SECRET is set"
+      ],
+      "kept": 2
+    },
+    "friendRoutes.test.js": {
+      "removed": [
+        "allows up to RATE_LIMIT_MAX within window",
+        "resets after window passes"
+      ],
+      "kept": 0
+    },
+    "mocked/apis.mocked.test.ts": {
+      "removed": [
+        "should handle feed fetch failure",
+        "should handle like creation failure",
+        "should handle friends list fetch failure",
+        "should handle trending movies fetch failure"
+      ],
+      "kept": 8
+    },
+    "mocked/auth.mocked.test.ts": {
+      "removed": [
+        "should handle Google token verification error",
+        "should handle database error during signin",
+        "should handle JWT generation failure",
+        "should handle database duplicate key error",
+        "should handle database write failure",
+        "should reject invalid Google token during signup",
+        "should reject signout with tampered JWT",
+        "should handle cascading delete failure",
+        "should reject deletion with invalid token signature"
+      ],
+      "kept": 7
+    },
+    "mocked/authService.mocked.test.ts": {
+      "removed": [
+        "should verify valid Google token successfully",
+        "should throw error when token payload missing email",
+        "should throw error when token payload missing sub",
+        "should throw error when token payload is null",
+        "should throw error when token verification fails",
+        "should use email as name when name is missing",
+        "should sign in existing user successfully",
+        "should fail signin when Google token is invalid",
+        "should fail signup when Google token is invalid",
+        "should generate valid JWT token",
+        "should generate unique tokens for different users",
+        "should set token expiration to 30 days",
+        "should handle signup without picture",
+        "should return JWT token on successful signin",
+        "should create user with all Google profile fields",
+        "should handle empty token string",
+        "should use default secret when JWT_SECRET not provided"
+      ],
+      "kept": 5
+    },
+    "mocked/feedRoutes.mocked.test.ts": {
+      "removed": [
+        "should handle TMDB enrichment errors gracefully",
+        "should handle TMDB enrichment errors gracefully",
+        "should handle database error gracefully",
+        "should return 401 when userId is missing",
+        "should validate userId and return 401 when undefined",
+        "should execute userId validation in actual route handler",
+        "should handle duplicate like error",
+        "should enrich activity with TMDB data when fields are missing",
+        "should not overwrite existing overview and posterPath",
+        "should handle partial TMDB data (some fields missing)",
+        "should enrich user own activities with TMDB data",
+        "should fetch current ranks from RankedMovie collection",
+        "should fetch and include like counts in response",
+        "should return empty array when user has no activities",
+        "should handle RankedMovie lookup errors gracefully",
+        "should handle database errors gracefully on /me",
+        "should handle Like aggregation errors gracefully",
+        "should successfully delete user own comment",
+        "should return 404 when comment not found",
+        "should return 403 when trying to delete another users comment",
+        "should handle database error gracefully",
+        "should handle deletion error gracefully",
+        "should reject unauthorized deletion attempts"
+      ],
+      "kept": 17
+    },
+    "mocked/friendRoutes.mocked.test.ts": {
+      "removed": [
+        "should handle database error when canceling friend request",
+        "should handle missing friendId in params object",
+        "should return 401 when userId is not set in request",
+        "should validate userId and return 401 when undefined",
+        "should setup close handler for SSE cleanup",
+        "should handle notification service failure gracefully",
+        "should handle database error when finding friend request",
+        "should handle notification failure when accepting request",
+        "should return 400 when friendId is empty or missing",
+        "should validate friendId before processing delete",
+        "should handle case where friendId param is not provided",
+        "should handle missing accept field in respond request"
+      ],
+      "kept": 25
+    },
+    "mocked/movie.mocked.test.ts": {
+      "removed": [
+        "should handle TMDB API server error",
+        "should handle TMDB API timeout",
+        "should return empty array for no matching results",
+        "should handle ranking creation database error"
+      ],
+      "kept": 4
+    },
+    "mocked/movieComparisionController.mocked.test.ts": {
+      "removed": [
+        "should return 400 when title is missing",
+        "should add first movie without comparison",
+        "should remove from watchlist when adding first movie",
+        "should enrich missing poster and overview from TMDB",
+        "should create feed activity when adding first movie",
+        "should notify friends via SSE when adding first movie",
+        "should send FCM notification to friends with tokens",
+        "should handle TMDB enrichment failure gracefully",
+        "should use provided posterPath and overview instead of TMDB data",
+        "should use default user name when user has no name field",
+        "should reject duplicate movie",
+        "should start comparison session for second movie",
+        "should remove from watchlist when starting comparison",
+        "should use middle index for first comparison",
+        "should handle database errors gracefully",
+        "should return 401 Unauthorized when no token is provided",
+        "should continue comparison when not finished",
+        "should insert movie when comparison finishes (prefer new)",
+        "should remove from watchlist when finalizing insert",
+        "should enrich with TMDB data when finalizing",
+        "should notify friends when finalizing",
+        "should handle TMDB enrichment failure when finalizing",
+        "should handle case when next comparison movie cannot be found",
+        "should use provided posterPath and TMDB overview when finalizing",
+        "should use default user name when finalizing without user name",
+        "should return 401 when userId is missing",
+        "should return 401 when userId is missing in compareMovies",
+        "should return 401 when userId is undefined in addMovie",
+        "should return 401 when userId is undefined in compareMovies"
+      ],
+      "kept": 18
+    },
+    "mocked/movieRoutes.mocked.test.ts": {
+      "removed": [
+        "should search movies successfully",
+        "should reject query shorter than 2 characters",
+        "should search with includeCast parameter",
+        "should handle Chinese characters and fallback to zh-CN",
+        "should handle CJK search when detail fetch fails",
+        "should handle CJK search when zh-CN search fails",
+        "should handle empty results",
+        "should handle TMDB API errors",
+        "should get ranked movies",
+        "should return empty array when no ranked movies",
+        "should handle database error gracefully",
+        "should rank movie successfully",
+        "should enrich missing overview and poster from TMDB",
+        "should create feed activity when ranking",
+        "should handle TMDB enrichment failure gracefully",
+        "should handle watchlist deletion error gracefully",
+        "should delete ranked movie and resequence ranks",
+        "should reject invalid ID format",
+        "should delete related feed activities",
+        "should handle database error gracefully",
+        "should get watch providers successfully",
+        "should get movie details with cast",
+        "should get official trailer",
+        "should fallback to non-official trailer",
+        "should fallback to teaser when no trailer available",
+        "should return null when no videos available",
+        "should handle missing optional fields in search results",
+        "should handle missing zh results data structure",
+        "should handle CJK search with missing optional fields in zh results",
+        "should handle CJK search detail fetch with all optional fields missing",
+        "should handle undefined data.results in search",
+        "should handle missing optional fields in movie details",
+        "should handle undefined detailsResp.data",
+        "should handle non-array cast data",
+        "should handle undefined creditsResp.data",
+        "should use TMDB_KEY as fallback when TMDB_API_KEY not set",
+        "should not enrich when overview exists but poster missing",
+        "should skip TMDB enrichment when no API key available",
+        "should handle missing country data in results",
+        "should handle undefined data.results",
+        "should handle null data.results",
+        "should handle non-array video results",
+        "should handle undefined data.results",
+        "should fallback to first YouTube video when no trailer or teaser",
+        "should handle cast array with undefined/null names when filtering",
+        "should filter out invalid names within first 3 cast members",
+        "should handle non-array credits.cast",
+        "should handle undefined credits.cast",
+        "should handle failed detail fetch and return fallback with nullish coalescing",
+        "should apply nullish coalescing when zh result has undefined fields",
+        "should handle multiple detail fetch failures with fallback",
+        "should handle zh results with explicit null fields",
+        "should NOT use fallback when detail fetch succeeds"
+      ],
+      "kept": 25
+    },
+    "mocked/notificationService.mocked.test.ts": {
+      "removed": [
+        "should send feed notification successfully",
+        "should handle invalid registration token error",
+        "should handle registration token not registered error",
+        "should send friend request accepted notification",
+        "should send comment notification",
+        "should send multicast notification to multiple tokens",
+        "should handle multicast with partial failures",
+        "should handle invalid token error in sendLikeNotification",
+        "should handle token not registered error in sendLikeNotification",
+        "should handle invalid token error in sendCommentNotification",
+        "should handle token not registered error in sendCommentNotification",
+        "should handle errors in sendFriendRequestNotification",
+        "should handle token not registered in sendFriendRequestNotification",
+        "should handle invalid token in sendFriendRequestAcceptedNotification",
+        "should handle token not registered in sendFriendRequestAcceptedNotification",
+        "should handle multicast with all failures",
+        "should include data payload in multicast notification",
+        "should return false and warn when Firebase not initialized in sendFeedNotification",
+        "should return 0 and warn when Firebase not initialized in sendMulticastNotification",
+        "should initialize with a service account file",
+        "should handle service account file not found",
+        "should accept file with .json extension",
+        "should handle invalid JSON in service account file",
+        "should handle fs.readFileSync errors gracefully",
+        "should handle Firebase already initialized",
+        "should warn when no Firebase credentials provided",
+        "should call admin.credential.cert with service account",
+        "should handle Firebase initialization errors",
+        "should set initialized flag to true on successful initialization"
+      ],
+      "kept": 28
+    },
+    "mocked/recommendationController.mocked.test.ts": {
+      "removed": [
+        "should return trending movies successfully",
+        "should return empty array when no trending movies",
+        "should limit results to 20 movies",
+        "should return 401 Unauthorized when no token is provided",
+        "should analyze preferences and return recommendations",
+        "should handle discover API failure gracefully",
+        "should handle similar movies API failure gracefully",
+        "should handle recommendations API failure gracefully",
+        "should deduplicate recommendations from multiple sources",
+        "should score movies based on genre matching",
+        "should limit final recommendations to 20 movies",
+        "should handle database error gracefully",
+        "should calculate top 50% of ranked movies for preferences",
+        "should handle discover recommendations failure gracefully",
+        "should handle movies with missing genres in preference analysis",
+        "should handle movies with missing original_language in preference analysis",
+        "should handle movies with missing vote_average in preference analysis",
+        "should handle empty topGenres when building discover params",
+        "should score movies with non-matching language lower",
+        "should score movies below quality threshold lower",
+        "should handle similar movies with all fields null/undefined",
+        "should handle recommendation movies with all fields null/undefined",
+        "should handle discover movies with all fields null/undefined",
+        "should handle discover movies with all fields populated",
+        "should handle scoring when movie has no genreIds",
+        "should handle scoring when movie genreIds do not match preferences",
+        "should handle scoring when movie has empty genreIds array"
+      ],
+      "kept": 9
+    },
+    "mocked/rerankController.mocked.test.ts": {
+      "removed": [
+        "returns 500 if cmp undefined (compareWith missing)"
+      ],
+      "kept": 6
+    },
+    "mocked/sseAuth.edge.test.ts": {
+      "removed": [],
+      "kept": 2
+    },
+    "mocked/tmdbServices.mocked.test.ts": {
+      "removed": [
+        "should create axios instance with correct baseURL",
+        "should add API key to request params",
+        "should use TMDB_KEY environment variable as fallback",
+        "should handle request with no existing params",
+        "should log outgoing request",
+        "should redact API key in request logs",
+        "should handle undefined params in redactParams",
+        "should log successful response",
+        "should calculate and log response time",
+        "should log successful response without start time",
+        "should log error response",
+        "should handle error without config",
+        "should fetch tagline successfully",
+        "should return cached tagline on cache hit",
+        "should refetch after cache expires",
+        "should search without year parameter",
+        "should return null when no search results",
+        "should return null when movie has no tagline",
+        "should treat titles as case-insensitive for caching",
+        "should create different cache entries for same title with different years",
+        "should handle year as string parameter",
+        "should include year in search query",
+        "should send correct search parameters",
+        "should handle search response with undefined results",
+        "should handle search response with null results",
+        "should use GET as fallback when response config method is undefined",
+        "should handle empty method string in response config",
+        "should use empty string as fallback when response config url is undefined",
+        "should use empty string as fallback when response config url is null",
+        "should use empty string when error message is undefined",
+        "should use empty string when error message is null",
+        "should use GET as fallback when error config method is undefined",
+        "should use empty string when error config url is undefined",
+        "should handle error when __start is undefined in error config",
+        "should log GET when response method is missing",
+        "should use empty string when response url is missing",
+        "should use empty string when error message is missing",
+        "should use empty config when error config is missing"
+      ],
+      "kept": 9
+    },
+    "mocked/watchlistRoutes.mocked.test.ts": {
+      "removed": [
+        "should enrich missing poster and overview from TMDB",
+        "should enrich missing poster from TMDB when poster_path exists",
+        "should enrich missing overview from TMDB when overview exists",
+        "should set poster to undefined when TMDB has no poster_path",
+        "should set overview to undefined when TMDB has no overview",
+        "should not override provided poster with TMDB data",
+        "should enrich both missing poster and overview from TMDB",
+        "should set both to undefined when TMDB has no poster or overview",
+        "should handle empty TMDB response data",
+        "should save movie even if TMDB enrichment fails"
+      ],
+      "kept": 1
+    },
+    "nfr/performance.test.ts": {
+      "removed": [
+        "should respond to GET /movies/ranked within acceptable time",
+        "should limit feed results to prevent memory bloat"
+      ],
+      "kept": 3
+    },
+    "unit/asyncHandler.test.ts": {
+      "removed": [],
+      "kept": 1
+    },
+    "unit/comparisonSession.unit.test.ts": {
+      "removed": [
+        "should create a new session with correct initial values",
+        "should overwrite existing session for same user",
+        "should handle movie without posterPath",
+        "should return session for existing user",
+        "should return undefined for non-existent user",
+        "should update session low and high values",
+        "should not affect newMovie when updating",
+        "should handle non-existent session gracefully",
+        "should delete existing session",
+        "should handle deleting non-existent session gracefully",
+        "should only delete specified user session",
+        "should handle complete comparison workflow",
+        "should handle multiple concurrent users"
+      ],
+      "kept": 2
+    },
+    "unit/errorHandler.test.ts": {
+      "removed": [
+        "should return 500 status code",
+        "should return error message in response",
+        "should log error with request details",
+        "should use default message when error message is empty",
+        "should include stack trace in development mode",
+        "should exclude stack trace in production mode",
+        "should exclude stack trace when NODE_ENV is not set",
+        "should handle different HTTP methods",
+        "should handle different URL paths",
+        "should handle errors with complex messages",
+        "should always return success: false",
+        "should return correct JSON structure",
+        "should handle error with null message",
+        "should handle missing request URL"
+      ],
+      "kept": 1
+    },
+    "unit/logger.unit.test.ts": {
+      "removed": [
+        "should log info message",
+        "should log info message with arguments",
+        "should handle multiple arguments",
+        "should log success message",
+        "should log success with object data",
+        "should log warning message",
+        "should log warning with details",
+        "should log error message",
+        "should log error with error object",
+        "should log debug message in development mode",
+        "should NOT log debug message in production mode",
+        "should NOT log debug message when NODE_ENV is test",
+        "should log HTTP request with all parameters",
+        "should log HTTP request without status code",
+        "should log HTTP request without duration",
+        "should handle successful status codes (200-399)",
+        "should handle error status codes (400+)",
+        "should handle server error status codes (500+)",
+        "should include ISO timestamp in all log messages",
+        "should format string arguments",
+        "should format number arguments",
+        "should format object arguments as JSON",
+        "should format array arguments",
+        "should handle empty object",
+        "should handle empty array",
+        "should handle rapid sequential log calls",
+        "should handle complex nested objects"
+      ],
+      "kept": 4
+    },
+    "unmocked/auth.unmocked.test.ts": {
+      "removed": [],
+      "kept": 4
+    },
+    "unmocked/feed.unmocked.test.ts": {
+      "removed": [],
+      "kept": 4
+    },
+    "unmocked/feedRouteHandlers.unmocked.test.ts": {
+      "removed": [],
+      "kept": 9
+    },
+    "unmocked/friendRoutesAdvanced.unmocked.test.ts": {
+      "removed": [],
+      "kept": 13
+    },
+    "unmocked/movie.unmocked.test.ts": {
+      "removed": [],
+      "kept": 4
+    },
+    "unmocked/movieComparisonController.unmocked.test.ts": {
+      "removed": [],
+      "kept": 1
+    },
+    "unmocked/quote.unmocked.test.ts": {
+      "removed": [],
+      "kept": 2
+    },
+    "unmocked/quoteRoutes.unmocked.test.ts": {
+      "removed": [],
+      "kept": 2
+    },
+    "unmocked/recommendations.unmocked.test.ts": {
+      "removed": [],
+      "kept": 2
+    },
+    "unmocked/rerankController.unmocked.test.ts": {
+      "removed": [
+        "should handle rerank with comparison movie having no posterPath"
+      ],
+      "kept": 1
+    },
+    "unmocked/sseService.unmocked.test.ts": {
+      "removed": [],
+      "kept": 3
+    },
+    "unmocked/userProfile.unmocked.test.ts": {
+      "removed": [],
+      "kept": 3
+    },
+    "unmocked/userRoutes.unmocked.test.ts": {
+      "removed": [
+        "should update user profile name successfully",
+        "should trim whitespace from name",
+        "should allow user to view own rankings without friendship check"
+      ],
+      "kept": 21
+    },
+    "unmocked/watchlistRoutes.unmocked.test.ts": {
+      "removed": [
+        "should handle very long movie titles"
+      ],
+      "kept": 5
+    }
+  },
+  "timestamp": "2025-11-06T04:18:52.681Z"
+}
