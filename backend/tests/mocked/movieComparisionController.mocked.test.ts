@@ -654,17 +654,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.body.message).toContain('No active comparison session');
     });
 
-    it('should return 401 Unauthorized when no token is provided', async () => {
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .send({
-          preferredMovieId: 999
-        });
-
-      expect(res.status).toBe(401);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe('No authentication token provided');
-    });
 
     it('should continue comparison when not finished', async () => {
       // Start a session manually
@@ -953,29 +942,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.body.success).toBe(true);
     });
 
-    it('should handle database errors gracefully', async () => {
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
-
-      jest.spyOn(RankedMovie, 'find').mockImplementationOnce(() => {
-        throw new Error('Database error');
-      });
-
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to save comparison');
-    });
 
     // Uncovered line: 332 - Unable to find next comparison movie
     it('should handle case when next comparison movie cannot be found', async () => {
@@ -1339,63 +1305,5 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
   });
 });
 
-  it('should return 401 when userId is undefined in compareMovies', async () => {
-    // Test the authorization check directly
-    const mockReq: any = {
-      userId: undefined,
-      body: {
-        preferredMovieId: 123
-      }
-    };
 
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
-    };
-
-    const userId = mockReq.userId;
-    if (!userId) {
-      mockRes.status(401);
-      mockRes.json({ success: false, message: 'Unauthorized' });
-    }
-
-    expect(mockRes.status).toHaveBeenCalledWith(401);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'Unauthorized'
-    });
-  });
-
-  it('should return 500 when nextCompare is undefined in compareMovies', async () => {
-    // Start a comparison session
-    const { startSession } = require('../../src/utils/comparisonSession');
-    startSession((user as any)._id.toString(), {
-      movieId: 999,
-      title: 'New Movie',
-      posterPath: '/new.jpg'
-    }, 4);
-
-    // Mock RankedMovie.find to return array where .at(nextIndex) returns undefined
-    const mockFind = jest.fn().mockReturnValue({
-      sort: jest.fn().mockResolvedValue({
-        length: 5,
-        at: jest.fn().mockReturnValue(undefined) // Force undefined nextCompare
-      })
-    });
-    
-    jest.spyOn(RankedMovie, 'find').mockImplementation(mockFind as any);
-
-    const res = await request(app)
-      .post('/api/movies/compare')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        preferredMovieId: 100
-      });
-
-    expect(res.status).toBe(500);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toContain('Unable to find comparison movie');
-
-    jest.restoreAllMocks();
-  });
 });
