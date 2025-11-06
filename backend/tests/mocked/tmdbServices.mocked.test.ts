@@ -4,7 +4,7 @@
  */
 
 import axios from 'axios';
-import { getTmdbClient } from '../../src/services/tmdb/tmdbClient';
+import { getTmdbClient, resetTmdbClient } from '../../src/services/tmdb/tmdbClient';
 import { fetchMovieTagline, cache } from '../../src/services/tmdb/tmdbTaglineService';
 
 // Mock axios
@@ -26,6 +26,7 @@ describe('TMDB Client Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetTmdbClient();  // Reset singleton for each test
     stdoutWriteSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
     process.env.TMDB_API_KEY = 'test-api-key';
   });

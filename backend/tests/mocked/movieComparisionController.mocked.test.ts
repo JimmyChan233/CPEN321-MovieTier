@@ -497,19 +497,12 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
   // Add these tests to your mocked test file
 
   describe('Mocked: Edge cases and error handling', () => {
-  it('should log warning when watchlist removal fails with string userId', async () => {
+  it('should log warning when watchlist removal fails', async () => {
   const loggerSpy = jest.spyOn(require('../../src/utils/logger').logger, 'warn');
-  
-  // Mock to fail on second call (string userId path)
-  let callCount = 0;
-  jest.spyOn(WatchlistItem, 'deleteOne').mockImplementation((filter: any) => {
-    callCount++;
-    if (callCount === 2) {
-      // Second call (string userId) should fail
-      return Promise.reject(new Error('Database error on string userId')) as any;
-    }
-    // First call succeeds
-    return Promise.resolve({ deletedCount: 0 }) as any;
+
+  // Mock to fail watchlist removal
+  jest.spyOn(WatchlistItem, 'deleteOne').mockImplementation(() => {
+    return Promise.reject(new Error('Database error on watchlist removal')) as any;
   });
 
   const res = await request(app)
@@ -522,9 +515,10 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
     });
 
   expect(res.status).toBe(200);
+  // Logger should be called with the simplified message format
   expect(loggerSpy).toHaveBeenCalledWith(
-    'Failed to remove watchlist item (string)',
-    { error: 'Database error on string userId' }
+    'Failed to remove watchlist item',
+    expect.objectContaining({ error: 'Database error on watchlist removal' })
   );
 
   loggerSpy.mockRestore();

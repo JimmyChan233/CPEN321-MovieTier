@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticate, AuthRequest } from '../src/middleware/auth';
+import config from '../src/config';
 
 // Mock the jsonwebtoken library
 jest.mock('jsonwebtoken');
@@ -22,22 +23,15 @@ describe('Auth Middleware', () => {
     nextFunction = jest.fn();
   });
 
-
-
-
-  it('should use default secret if JWT_SECRET is not in environment', () => {
-    const originalSecret = process.env.JWT_SECRET;
-    delete process.env.JWT_SECRET;
-
+  it('should use configured JWT secret from config', () => {
     const userId = '12345';
     mockRequest.headers = { authorization: 'Bearer validtoken' };
     (mockedJwt.verify as jest.Mock).mockReturnValue({ userId });
 
     authenticate(mockRequest as AuthRequest, mockResponse as Response, nextFunction);
 
-    expect(mockedJwt.verify).toHaveBeenCalledWith('validtoken', 'default_secret');
+    // Middleware now uses the validated config instead of process.env
+    expect(mockedJwt.verify).toHaveBeenCalledWith('validtoken', config.jwtSecret);
     expect(nextFunction).toHaveBeenCalled();
-
-    process.env.JWT_SECRET = originalSecret; // Restore for other tests
   });
 });

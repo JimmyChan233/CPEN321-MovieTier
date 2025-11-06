@@ -53,15 +53,25 @@ export function handleTmdbResponseError(error: any): never {
   throw error;
 }
 
+// Singleton instance - created once at startup
+let tmdbClientInstance: AxiosInstance | null = null;
+
 export function getTmdbClient(): AxiosInstance {
-  const client = axios.create({
-    baseURL: 'https://api.themoviedb.org/3',
-    timeout: 15_000
-  });
+  if (!tmdbClientInstance) {
+    tmdbClientInstance = axios.create({
+      baseURL: 'https://api.themoviedb.org/3',
+      timeout: 15_000
+    });
 
-  client.interceptors.request.use(handleTmdbRequestIntercept);
-  client.interceptors.response.use(handleTmdbResponseSuccess, handleTmdbResponseError);
+    tmdbClientInstance.interceptors.request.use(handleTmdbRequestIntercept);
+    tmdbClientInstance.interceptors.response.use(handleTmdbResponseSuccess, handleTmdbResponseError);
+  }
 
-  return client;
+  return tmdbClientInstance;
+}
+
+// Reset client for testing purposes
+export function resetTmdbClient(): void {
+  tmdbClientInstance = null;
 }
 

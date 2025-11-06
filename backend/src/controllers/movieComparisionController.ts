@@ -18,12 +18,18 @@ import { logger } from '../utils/logger';
 
 const RankedMovie = RankedMovieModel;
 
-async function removeFromWatchlistAll(userIdObj: mongoose.Types.ObjectId, userIdStr: string, movieId: number) {
-  try { await WatchlistItem.deleteOne({ userId: userIdObj, movieId }); } catch (err) {
-    logger.warn('Failed to remove watchlist item (ObjectId)', { error: (err as Error).message });
-  }
-  try { await WatchlistItem.deleteOne({ userId: userIdStr as unknown as mongoose.Types.ObjectId, movieId }); } catch (err) {
-    logger.warn('Failed to remove watchlist item (string)', { error: (err as Error).message });
+/**
+ * Remove a movie from user's watchlist if present
+ * Safely ignores errors if item doesn't exist
+ */
+async function removeFromWatchlist(userId: string, movieId: number): Promise<void> {
+  try {
+    await WatchlistItem.deleteOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      movieId
+    });
+  } catch (err) {
+    logger.warn('Failed to remove watchlist item', { userId, movieId, error: (err as Error).message });
   }
 }
 
@@ -66,7 +72,7 @@ export const addMovie = async (req: Request, res: Response) => {
       await rankedMovie.save();
 
       // Remove from watchlist if present
-      await removeFromWatchlistAll(userObjectId, userId, movieId)
+      await removeFromWatchlist(userId, movieId)
 
     //   // Optional: add feed activity
     //   const activity = new FeedActivity({
@@ -150,7 +156,7 @@ export const addMovie = async (req: Request, res: Response) => {
 
     // Case 2: Duplicate movie
     if (rankedMovies.some((m: IRankedMovie) => m.movieId === movieId)) {
-      await removeFromWatchlistAll(userObjectId, userId, movieId)
+      await removeFromWatchlist(userId, movieId)
       return res.status(400).json({
         success: false,
         message: 'Movie already ranked'
@@ -168,7 +174,7 @@ export const addMovie = async (req: Request, res: Response) => {
     startSession(userId, { movieId, title, posterPath }, high);
 
     // Remove from watchlist immediately when starting comparison
-    await removeFromWatchlistAll(userObjectId, userId, movieId)
+    await removeFromWatchlist(userId, movieId)
 
     return res.json({
       success: true,
@@ -244,7 +250,7 @@ export const compareMovies = async (req: Request, res: Response) => {
       await movie.save();
 
       // Remove from watchlist if present
-      await removeFromWatchlistAll(userObjectId, userId, movie.movieId)
+      await removeFromWatchlist(userId, movie.movieId)
       endSession(userId);
 
     //   // Optional: feed update
