@@ -242,28 +242,35 @@ describe('Advanced Friend Routes Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
   });
 
-  // Test Case 13: Send request to non-existent user
-  it('should handle request to non-existent email', async () => {
-    await request(app)
-      .post('/request')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({ email: 'nonexistent@example.com' });
-  });
+  // Test Cases 13-15: Friend request validation (parameterized)
+  describe('Friend Request Validation', () => {
+    const validationTests = [
+      {
+        name: 'should handle request to non-existent email',
+        email: 'nonexistent@example.com'
+      },
+      {
+        name: 'should reject invalid email format',
+        email: 'not-an-email'
+      },
+      {
+        name: 'should reject request without email',
+        email: undefined
+      }
+    ];
 
-  // Test Case 14: Invalid email format
-  it('should reject invalid email format', async () => {
-    await request(app)
-      .post('/request')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({ email: 'not-an-email' });
-  });
-
-  // Test Case 15: Missing email field
-  it('should reject request without email', async () => {
-    await request(app)
-      .post('/request')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({});
+    validationTests.forEach(test => {
+      it(test.name, async () => {
+        const body: any = {};
+        if (test.email !== undefined) {
+          body.email = test.email;
+        }
+        await request(app)
+          .post('/request')
+          .set('Authorization', `Bearer ${token1}`)
+          .send(body);
+      });
+    });
   });
 
   // Test Case 16: Respond to non-existent request
@@ -331,51 +338,47 @@ describe('Advanced Friend Routes Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
   });
 
-  // Test Case 22: Unauthorized access to friends list
-  it('should reject unauthorized access to friends list', async () => {
-    await request(app)
-      .get('/');
-  });
-
-  // Test Case 23: Unauthorized access to pending requests
-  it('should reject unauthorized access to pending requests', async () => {
-    await request(app)
-      .get('/requests');
-  });
-
-  // Test Case 24: Unauthorized send friend request
-  it('should reject unauthorized friend request', async () => {
-    const res = await request(app)
-      .post('/request')
-      .send({ email: user2.email });
-
-    expect(res.status).toStrictEqual(401);
-  });
-
-  // Test Case 25: Unauthorized respond to friend request
-  it('should reject unauthorized respond', async () => {
-    const friendReq = await FriendRequest.create({
-      senderId: user2._id,
-      receiverId: user1._id,
-      status: 'pending'
+  // Test Cases 22-26: Unauthorized access tests (parameterized)
+  describe('Unauthorized Access Tests', () => {
+    it('should reject unauthorized access to friends list', async () => {
+      await request(app).get('/');
     });
 
-    const res = await request(app)
-      .post('/respond')
-      .send({
-        requestId: (friendReq as any)._id.toString(),
-        accept: true
+    it('should reject unauthorized access to pending requests', async () => {
+      await request(app).get('/requests');
+    });
+
+    it('should reject unauthorized friend request', async () => {
+      const res = await request(app)
+        .post('/request')
+        .send({ email: user2.email });
+
+      expect(res.status).toStrictEqual(401);
+    });
+
+    it('should reject unauthorized respond', async () => {
+      const friendReq = await FriendRequest.create({
+        senderId: user2._id,
+        receiverId: user1._id,
+        status: 'pending'
       });
 
-    expect(res.status).toStrictEqual(401);
-  });
+      const res = await request(app)
+        .post('/respond')
+        .send({
+          requestId: (friendReq as any)._id.toString(),
+          accept: true
+        });
 
-  // Test Case 26: Unauthorized delete friendship
-  it('should reject unauthorized delete friendship', async () => {
-    const res = await request(app)
-      .delete(`/${(user2 as any)._id.toString()}`);
+      expect(res.status).toStrictEqual(401);
+    });
 
-    expect(res.status).toStrictEqual(401);
+    it('should reject unauthorized delete friendship', async () => {
+      const res = await request(app)
+        .delete(`/${(user2 as any)._id.toString()}`);
+
+      expect(res.status).toStrictEqual(401);
+    });
   });
 
   // Test Case 27: Multiple rapid friend requests (rate limiting test)
@@ -407,44 +410,29 @@ describe('Advanced Friend Routes Tests', () => {
     expect(res.status).toStrictEqual(429); // Rate limited
   });
 
-  // Test Case 29: Get empty friends list
-  it('should get empty friends list when no friends', async () => {
-    const res = await request(app)
-      .get('/')
-      .set('Authorization', `Bearer ${token1}`);
+  // Test Cases 29-33: Empty state endpoint tests (parameterized)
+  describe('Empty State Endpoints', () => {
+    const emptyStateTests = [
+      { endpoint: '/', description: 'get empty friends list when no friends' },
+      { endpoint: '/requests', description: 'get empty pending requests when none exist' },
+      { endpoint: '/requests/detailed', description: 'get empty detailed requests when none exist' },
+      { endpoint: '/requests/outgoing', description: 'get empty outgoing requests when none exist' },
+      { endpoint: '/requests/outgoing/detailed', description: 'get empty detailed outgoing requests when none exist' }
+    ];
 
-    expect(res.status).toStrictEqual(200);
+    emptyStateTests.forEach(test => {
+      it(`should ${test.description}`, async () => {
+        const res = await request(app)
+          .get(test.endpoint)
+          .set('Authorization', `Bearer ${token1}`);
+
+        expect(res.status).toStrictEqual(200);
+      });
+    });
   });
 
-  // Test Case 30: Get empty pending requests
-  it('should get empty pending requests when none exist', async () => {
-    const res = await request(app)
-      .get('/requests')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toStrictEqual(200);
-  });
-
-  // Test Case 31: Get empty detailed requests
-  it('should get empty detailed requests when none exist', async () => {
-    const res = await request(app)
-      .get('/requests/detailed')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toStrictEqual(200);
-  });
-
-  // Test Case 32: Get empty outgoing requests
-  it('should get empty outgoing requests when none exist', async () => {
-    const res = await request(app)
-      .get('/requests/outgoing')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toStrictEqual(200);
-  });
-
-  // Test Case 33: Get empty detailed outgoing requests
-  it('should get empty detailed outgoing requests when none exist', async () => {
+  // Test Case 34: Get empty response details (removed duplicate)
+  it('should get empty response details', async () => {
     const res = await request(app)
       .get('/requests/outgoing/detailed')
       .set('Authorization', `Bearer ${token1}`);
