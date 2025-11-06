@@ -95,6 +95,8 @@ describe('TMDB Tagline Service Tests', () => {
   let mockClient: any;
 
   beforeEach(() => {
+    // Reset singleton BEFORE clearing mocks so fresh instance uses mocked axios
+    resetTmdbClient();
     jest.clearAllMocks();
     jest.clearAllTimers();
     jest.useFakeTimers();
@@ -110,6 +112,7 @@ describe('TMDB Tagline Service Tests', () => {
       }
     };
 
+    // Mock axios.create BEFORE getTmdbClient is called
     mockedAxios.create = jest.fn().mockReturnValue(mockClient);
   });
 
@@ -223,6 +226,7 @@ describe('TMDB Client - Response Interceptor', () => {
   const originalWrite = process.stdout.write;
 
   beforeEach(() => {
+    resetTmdbClient();
     consoleOutput = [];
     // Mock process.stdout.write to capture logs
     (process.stdout.write as any) = jest.fn((msg: string) => {
