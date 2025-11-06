@@ -94,4 +94,35 @@ describe('Rerank Controller - Complete Coverage', () => {
 
     expect(res.status).toBe(200);
   });
+
+  it('should handle rerank with comparison movie having no posterPath', async () => {
+    // Create multiple ranked movies
+    const movie1 = await RankedMovie.create({
+      userId: user._id,
+      movieId: 550,
+      title: 'Fight Club',
+      rank: 1,
+      posterPath: '/poster1.jpg'
+    });
+
+    // Movie without posterPath
+    const movie2 = await RankedMovie.create({
+      userId: user._id,
+      movieId: 680,
+      title: 'Pulp Fiction',
+      rank: 2
+      // No posterPath - will be undefined
+    });
+
+    const res = await request(app)
+      .post('/rerank/start')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rankedId: (movie1 as any)._id.toString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.status).toBe('compare');
+    // Verify that posterPath is null when undefined
+    expect(res.body.data.compareWith.posterPath).toBeNull();
+  });
 });

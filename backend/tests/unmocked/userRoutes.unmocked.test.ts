@@ -465,5 +465,26 @@ describe('User Routes - Unmocked Tests', () => {
 
       await mongoose.connect(mongoServer.getUri());
     });
+
+    it('should return rankings with null posterPath when movie has no posterPath', async () => {
+      // Add a ranked movie without posterPath
+      await RankedMovie.create({
+        userId: (user2 as any)._id,
+        movieId: 278,
+        title: 'The Shawshank Redemption',
+        // No posterPath - will be undefined
+        rank: 3
+      });
+
+      const res = await request(app)
+        .get(`/${(user2 as any)._id}/rankings`)
+        .set('Authorization', `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      const movieWithoutPoster = res.body.data.find((m: any) => m.movie.title === 'The Shawshank Redemption');
+      expect(movieWithoutPoster).toBeDefined();
+      expect(movieWithoutPoster.movie.posterPath).toBeNull();
+    });
   });
 });
