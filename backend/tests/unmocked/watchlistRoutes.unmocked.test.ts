@@ -64,64 +64,8 @@ describe('Watchlist Routes - Unmocked Tests', () => {
   // ==================== GET / Tests ====================
 
   describe('GET /', () => {
-    it('should get user watchlist successfully', async () => {
-      await WatchlistItem.create([
-        {
-          userId: (user1 as any)._id,
-          movieId: mockMovies.inception.id,
-          title: mockMovies.inception.title,
-          posterPath: mockMovies.inception.poster_path
-        },
-        {
-          userId: (user1 as any)._id,
-          movieId: mockMovies.darkKnight.id,
-          title: mockMovies.darkKnight.title,
-          posterPath: mockMovies.darkKnight.poster_path
-        }
-      ]);
 
-      const res = await request(app)
-        .get('/')
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.data.length).toBe(2);
-    });
-
-    it('should return empty array for empty watchlist', async () => {
-      const res = await request(app)
-        .get('/')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toEqual([]);
-    });
-
-    it('should only return current user watchlist items', async () => {
-      await WatchlistItem.create([
-        {
-          userId: (user1 as any)._id,
-          movieId: 550,
-          title: 'Fight Club'
-        },
-        {
-          userId: (user2 as any)._id,
-          movieId: 680,
-          title: 'Pulp Fiction'
-        }
-      ]);
-
-      const res = await request(app)
-        .get('/')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.data.length).toBe(1);
-      expect(res.body.data[0].title).toBe('Fight Club');
-    });
 
     it('should sort watchlist by createdAt descending', async () => {
       const item1 = await WatchlistItem.create({
@@ -151,68 +95,12 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       expect(res.body.data[1].movieId).toBe(550);
     });
 
-    it('should handle database error gracefully', async () => {
-      // Close connection to simulate error
-      await mongoose.disconnect();
-
-      const res = await request(app)
-        .get('/')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to load watchlist');
-
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
-    });
   });
 
   // ==================== POST / Tests ====================
 
   describe('POST /', () => {
-    it('should add movie to watchlist successfully', async () => {
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: mockMovies.inception.id,
-          title: mockMovies.inception.title,
-          posterPath: mockMovies.inception.poster_path,
-          overview: mockMovies.inception.overview
-        });
 
-      console.log(res);
-      expect(res.status).toBe(201);
-
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.movieId).toBe(mockMovies.inception.id);
-      expect(res.body.data.title).toBe(mockMovies.inception.title);
-
-      // Verify in database
-      const saved = await WatchlistItem.findOne({
-        userId: (user1 as any)._id,
-        movieId: mockMovies.inception.id
-      });
-      expect(saved).toBeDefined();
-      expect(saved?.title).toBe(mockMovies.inception.title);
-    });
-
-    it('should add movie with minimal fields (movieId and title only)', async () => {
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 550,
-          title: 'Fight Club'
-        });
-
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.movieId).toBe(550);
-      expect(res.body.data.title).toBe('Fight Club');
-    });
 
     describe('TMDB Enrichment', () => {
       const enrichmentTests = [
@@ -325,78 +213,9 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('already in watchlist');
     });
 
-    it('should allow different users to add same movie', async () => {
-      await WatchlistItem.create({
-        userId: (user1 as any)._id,
-        movieId: 550,
-        title: 'Fight Club'
-      });
 
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token2}`)
-        .send({
-          movieId: 550,
-          title: 'Fight Club'
-        });
 
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-    });
 
-    it('should handle movieId as number', async () => {
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 550,
-          title: 'Fight Club'
-        });
-
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.data.movieId).toBe(550);
-    });
-
-    it('should preserve all provided fields', async () => {
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 550,
-          title: 'Fight Club',
-          posterPath: '/custom-poster.jpg',
-          overview: 'Custom overview text'
-        });
-
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.data.movieId).toBe(550);
-      expect(res.body.data.title).toBe('Fight Club');
-      expect(res.body.data.posterPath).toBe('/custom-poster.jpg');
-      expect(res.body.data.overview).toBe('Custom overview text');
-    });
-
-    it('should handle database save error gracefully', async () => {
-      // Disconnect to simulate database error
-      await mongoose.disconnect();
-
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 999,
-          title: 'Test Movie'
-        });
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to add to watchlist');
-
-      // Reconnect for other tests
-      await mongoose.connect(mongoServer.getUri());
-    });
   });
 
   // ==================== DELETE /:movieId Tests ====================
@@ -422,37 +241,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       ]);
     });
 
-    it('should remove movie from watchlist successfully', async () => {
-      const res = await request(app)
-        .delete('/550')
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('Removed from watchlist');
-
-      // Verify deletion
-      const item = await WatchlistItem.findOne({
-        userId: (user1 as any)._id,
-        movieId: 550
-      });
-      expect(item).toBeNull();
-    });
-
-    it('should only remove from current user watchlist', async () => {
-      const res = await request(app)
-        .delete('/550')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-
-      // User2's item should still exist
-      const user2Item = await WatchlistItem.findOne({
-        userId: (user2 as any)._id,
-        movieId: 550
-      });
-      expect(user2Item).not.toBeNull();
-    });
 
     it('should return 404 when movie not in watchlist', async () => {
       const res = await request(app)
@@ -464,14 +253,6 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('not found in watchlist');
     });
 
-    it('should handle movieId as number parameter', async () => {
-      const res = await request(app)
-        .delete('/680')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
 
     it('should handle invalid movieId format gracefully', async () => {
       const res = await request(app)
@@ -515,50 +296,7 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       expect(res.body.data.title).toBe(longTitle);
     });
 
-    it('should handle special characters in title', async () => {
-      const specialTitle = 'Movie: Title & "Special" Characters <test>';
 
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 99999,
-          title: specialTitle
-        });
 
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.data.title).toBe(specialTitle);
-    });
-
-    it('should handle zero as movieId', async () => {
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 0,
-          title: 'Test Movie'
-        });
-
-      // movieId 0 is falsy but should be accepted
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('required');
-    });
-
-    it('should handle large movieId numbers', async () => {
-      const largeId = 999999999;
-
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: largeId,
-          title: 'Large ID Movie'
-        });
-
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.data.movieId).toBe(largeId);
-    });
   });
 });

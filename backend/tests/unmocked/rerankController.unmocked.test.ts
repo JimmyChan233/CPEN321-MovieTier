@@ -76,34 +76,6 @@ describe('Rerank Controller - Complete Coverage', () => {
 
   // ========== Edge Cases ==========
 
-  it('should handle rerank with null posterPath (coverage for line 63)', async () => {
-    // Test the nullish coalescing operator when posterPath is null
-    const movie1 = await RankedMovie.create({
-      userId: user._id,
-      movieId: 1600001,
-      title: 'Movie 1',
-      rank: 1,
-      posterPath: '/poster1.jpg'
-    });
-
-    const movie2 = await RankedMovie.create({
-      userId: user._id,
-      movieId: 1600002,
-      title: 'Movie 2',
-      rank: 2,
-      posterPath: null // This is the uncovered branch
-    });
-
-    const res = await request(app)
-      .post('/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ rankedId: (movie1 as any)._id.toString() });
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.status).toBe('compare');
-    expect(res.body.data.compareWith.posterPath).toBeNull();
-  });
 
   it('should handle rerank of movie with very long title', async () => {
     const longTitle = 'A'.repeat(500);

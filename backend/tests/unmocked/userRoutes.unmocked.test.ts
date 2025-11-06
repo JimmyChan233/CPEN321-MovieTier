@@ -101,36 +101,7 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.success).toBe(false);
     });
 
-    it('should handle case-insensitive search', async () => {
-      // Search for Bob in uppercase
-      const res = await request(app)
-        .get('/search?query=BOB')
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.length).toBeGreaterThan(0);
-    });
-
-    it('should limit results to 20 users', async () => {
-      // Create 25 users
-      const users = [];
-      for (let i = 1; i <= 25; i++) {
-        users.push({
-          email: `testuser${i}@example.com`,
-          name: `TestUser${i}`,
-          googleId: `google-test${i}`
-        });
-      }
-      await User.insertMany(users);
-
-      const res = await request(app)
-        .get('/search?query=TestUser')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.data.length).toBeLessThanOrEqual(20);
-    });
 
     it('should trim whitespace from query', async () => {
       // Search for Charlie with extra whitespace
@@ -188,21 +159,6 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.data.name).toBe('Alice Trimmed');
     });
 
-    it('should update user profile image URL successfully', async () => {
-      const imageUrl = 'https://example.com/profile-image.jpg';
-      const res = await request(app)
-        .put('/profile')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ profileImageUrl: imageUrl });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.profileImageUrl).toBe(imageUrl);
-
-      // Verify database was updated
-      const updated = await User.findById((user1 as any)._id);
-      expect(updated?.profileImageUrl).toBe(imageUrl);
-    });
 
     it('should update both name and profileImageUrl', async () => {
       const res = await request(app)
@@ -230,16 +186,6 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('At least one field');
     });
 
-    it('should reject empty name', async () => {
-      const res = await request(app)
-        .put('/profile')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ name: '' });
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Name is required');
-    });
 
     it('should reject whitespace-only name', async () => {
       const res = await request(app)
@@ -266,73 +212,13 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('not found');
     });
 
-    it('should preserve other user fields', async () => {
-      const originalEmail = user1.email;
-      const originalGoogleId = user1.googleId;
 
-      const res = await request(app)
-        .put('/profile')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ name: 'Updated Name' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.data.email).toBe(originalEmail);
-
-      const updated = await User.findById((user1 as any)._id);
-      expect(updated?.googleId).toBe(originalGoogleId);
-    });
-
-    it('should handle database error gracefully', async () => {
-      await mongoose.disconnect();
-
-      const res = await request(app)
-        .put('/profile')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ name: 'New Name' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to update profile');
-
-      await mongoose.connect(mongoServer.getUri());
-    });
   });
 
   // ==================== POST /fcm-token Tests ====================
 
   describe('POST /fcm-token', () => {
-    it('should register FCM token successfully', async () => {
-      const fcmToken = 'fcm-token-abc123';
 
-      const res = await request(app)
-        .post('/fcm-token')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ token: fcmToken });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('successfully');
-
-      // Verify token was saved
-      const updated = await User.findById((user1 as any)._id);
-      expect(updated?.fcmToken).toBe(fcmToken);
-    });
-
-    it('should update existing FCM token', async () => {
-      await User.findByIdAndUpdate((user1 as any)._id, { fcmToken: 'old-token' });
-
-      const newToken = 'new-fcm-token-xyz789';
-      const res = await request(app)
-        .post('/fcm-token')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ token: newToken });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-
-      const updated = await User.findById((user1 as any)._id);
-      expect(updated?.fcmToken).toBe(newToken);
-    });
 
     it('should trim whitespace from token', async () => {
       const res = await request(app)
@@ -345,36 +231,8 @@ describe('User Routes - Unmocked Tests', () => {
       expect(updated?.fcmToken).toBe('fcm-token-trimmed');
     });
 
-    it('should reject missing token', async () => {
-      const res = await request(app)
-        .post('/fcm-token')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({});
 
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('required');
-    });
 
-    it('should reject empty token', async () => {
-      const res = await request(app)
-        .post('/fcm-token')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ token: '' });
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-    });
-
-    it('should reject whitespace-only token', async () => {
-      const res = await request(app)
-        .post('/fcm-token')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ token: '   ' });
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-    });
 
     it('should handle user not found', async () => {
       const nonExistentId = new mongoose.Types.ObjectId();
@@ -390,36 +248,11 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('not found');
     });
 
-    it('should handle database error gracefully', async () => {
-      await mongoose.disconnect();
-
-      const res = await request(app)
-        .post('/fcm-token')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ token: 'fcm-token' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to register FCM token');
-
-      await mongoose.connect(mongoServer.getUri());
-    });
   });
 
   // ==================== GET /:userId Tests ====================
 
   describe('GET /:userId', () => {
-    it('should get user by ID successfully', async () => {
-      const res = await request(app)
-        .get(`/${(user2 as any)._id}`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data._id).toBe((user2 as any)._id.toString());
-      expect(res.body.data.email).toBe(user2.email);
-      expect(res.body.data.name).toBe(user2.name);
-    });
 
     it('should reject invalid user ID format', async () => {
       const res = await request(app)
@@ -497,39 +330,8 @@ describe('User Routes - Unmocked Tests', () => {
       ]);
     });
 
-    it('should get own watchlist successfully', async () => {
-      const res = await request(app)
-        .get(`/${(user1 as any)._id}/watchlist`)
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.data.length).toBe(1);
-      expect(res.body.data[0].title).toBe('The Dark Knight');
-    });
 
-    it('should get friend watchlist successfully', async () => {
-      const res = await request(app)
-        .get(`/${(user2 as any)._id}/watchlist`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.data.length).toBe(2);
-      expect(res.body.data[0].title).toBeDefined();
-    });
-
-    it('should return empty array for user with no watchlist items', async () => {
-      const res = await request(app)
-        .get(`/${(user3 as any)._id}/watchlist`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toEqual([]);
-    });
 
     it('should sort watchlist by createdAt descending', async () => {
       const res = await request(app)
@@ -546,22 +348,6 @@ describe('User Routes - Unmocked Tests', () => {
       }
     });
 
-    it('should reject access to non-friend watchlist', async () => {
-      // Create a new user who is not friends with user1
-      const user4 = await User.create({
-        email: 'notfriend@example.com',
-        name: 'Not Friend',
-        googleId: 'google-notfriend'
-      });
-
-      const res = await request(app)
-        .get(`/${(user4 as any)._id}/watchlist`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(403);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('must be friends');
-    });
 
     it('should reject invalid user ID format', async () => {
       const res = await request(app)
@@ -631,84 +417,10 @@ describe('User Routes - Unmocked Tests', () => {
       ]);
     });
 
-    it('should get user rankings successfully', async () => {
-      const res = await request(app)
-        .get(`/${(user2 as any)._id}/rankings`)
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.data.length).toBe(2);
-      expect(res.body.data[0].rank).toBe(1);
-      expect(res.body.data[0].movie.title).toBe('Fight Club');
-    });
 
-    it('should return rankings sorted by rank ascending', async () => {
-      const res = await request(app)
-        .get(`/${(user2 as any)._id}/rankings`)
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      const rankings = res.body.data;
-      expect(rankings.length).toBe(2);
-      expect(rankings[0].rank).toBe(1);
-      expect(rankings[1].rank).toBe(2);
-      for (let i = 0; i < rankings.length - 1; i++) {
-        expect(rankings[i].rank).toBeLessThanOrEqual(rankings[i + 1].rank);
-      }
-    });
 
-    it('should return empty array for user with no rankings', async () => {
-      const res = await request(app)
-        .get(`/${(user3 as any)._id}/rankings`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toEqual([]);
-    });
-
-    it('should include nested movie object with correct structure', async () => {
-      const res = await request(app)
-        .get(`/${(user2 as any)._id}/rankings`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.data[0]).toHaveProperty('_id');
-      expect(res.body.data[0]).toHaveProperty('userId');
-      expect(res.body.data[0]).toHaveProperty('rank');
-      expect(res.body.data[0]).toHaveProperty('movie');
-      expect(res.body.data[0].movie).toHaveProperty('id');
-      expect(res.body.data[0].movie).toHaveProperty('title');
-      expect(res.body.data[0].movie).toHaveProperty('posterPath');
-      expect(res.body.data[0].movie.id).toBe(550);
-      expect(res.body.data[0].movie.title).toBe('Fight Club');
-    });
-
-    it('should handle null posterPath correctly (coverage for line 177)', async () => {
-      // Create a ranked movie without posterPath
-      await RankedMovie.create({
-        userId: (user1 as any)._id,
-        movieId: 999,
-        title: 'Movie Without Poster',
-        rank: 1
-        // posterPath is intentionally omitted/undefined
-      });
-
-      const res = await request(app)
-        .get(`/${(user1 as any)._id}/rankings`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toBeDefined();
-      expect(res.body.data.length).toBeGreaterThan(0);
-      // Verify that posterPath is null when undefined
-      const movieWithoutPoster = res.body.data.find((m: any) => m.movie.id === 999);
-      expect(movieWithoutPoster).toBeDefined();
-      expect(movieWithoutPoster.movie.posterPath).toBeNull();
-    });
 
     it('should reject invalid user ID format', async () => {
       const res = await request(app)

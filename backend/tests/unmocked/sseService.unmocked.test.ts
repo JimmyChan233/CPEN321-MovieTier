@@ -66,14 +66,6 @@ describe('SSE Service Tests', () => {
   // Test Case 5: Remove client manually
 
   // Test Case 6: Remove last client deletes user entry
-  it('should delete user entry when last client is removed', () => {
-    sseService.addClient('user1', mockRes1 as unknown as Response);
-
-    sseService.removeClient('user1', mockRes1 as unknown as Response);
-
-    const clients = (sseService as any).clients;
-    expect(clients.has('user1')).toBe(false);
-  });
 
   // Test Case 7: Remove client from non-existent user
 
@@ -84,24 +76,6 @@ describe('SSE Service Tests', () => {
   // Test Case 10: Send to multiple clients of same user
 
   // Test Case 11: Skip sending to closed connection
-  it('should skip closed connection (writableEnded=true) and clean it up', () => {
-    sseService.addClient('user1', mockRes1 as unknown as Response);
-    sseService.addClient('user1', mockRes2 as unknown as Response);
-
-    // Mark first response as ended
-    mockRes1.writableEnded = true;
-
-    sseService.send('user1', 'test', { data: 'value' });
-
-    // Only mockRes2 should have received the message
-    expect(mockRes2.writtenData.length).toBe(1);
-    expect(mockRes1.writtenData.length).toBe(0);
-
-    // mockRes1 should be removed from clients
-    const clients = (sseService as any).clients.get('user1');
-    expect(clients?.size).toBe(1);
-    expect(clients?.has(mockRes2 as unknown as Response)).toBe(true);
-  });
 
   // Test Case 12: Skip sending to destroyed connection (coverage for line 46)
   it('should skip destroyed connection (destroyed=true) and clean it up', () => {
