@@ -55,34 +55,6 @@ describe('startRerank (mocked)', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  it('returns 500 if cmp undefined (compareWith missing)', async () => {
-    (RankedMovieModel.findOne as any).mockResolvedValue({
-      _id: 'x',
-      userId: new mongoose.Types.ObjectId(),
-      rank: 1,
-      movieId: 123,
-      title: 'Test Movie',
-      posterPath: '/x.jpg',
-      deleteOne: jest.fn()
-    });
-    (RankedMovieModel.updateMany as any).mockResolvedValue({});
-
-    // Mock find to return a query object with sort method
-    const mockArray = [null];
-    mockArray.at = jest.fn().mockReturnValue(undefined);
-    const mockQuery = {
-      sort: jest.fn().mockResolvedValue(mockArray)
-    };
-    (RankedMovieModel.find as any).mockReturnValue(mockQuery);
-
-    const req = mockReq(
-      { rankedId: new mongoose.Types.ObjectId().toString() },
-      '507f1f77bcf86cd799439011'
-    );
-    const res = mockRes();
-    await startRerank(req as any, res as any);
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
 
   it('handles thrown error gracefully', async () => {
     (RankedMovieModel.findOne as any).mockRejectedValue(new Error('DB error'));

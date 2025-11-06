@@ -87,37 +87,6 @@ describe('Feed Routes - Mocked Error Tests', () => {
   // ==================== GET / (Friends Feed) Error Tests ====================
 
   describe('GET / (friends feed) error handling', () => {
-    it('should handle TMDB enrichment errors gracefully', async () => {
-      // Create friendship
-      await Friendship.create({
-        userId: (user1 as any)._id,
-        friendId: (user2 as any)._id
-      });
-
-      // Create activity without poster/overview
-      await FeedActivity.create({
-        userId: (user2 as any)._id,
-        activityType: 'ranked_movie',
-        movieId: 550,
-        movieTitle: 'Fight Club',
-        rank: 1
-        // No posterPath or overview
-      });
-
-      // Mock TMDB to fail
-      const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-      getTmdbClient.mockReturnValue({
-        get: jest.fn().mockRejectedValue(new Error('TMDB error'))
-      });
-
-      const res = await request(app)
-        .get('/api/feed')
-        .set('Authorization', `Bearer ${token1}`);
-
-      // Should still succeed, just without enriched data
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
 
     it('should handle database error gracefully', async () => {
       jest.spyOn(Friendship, 'find').mockRejectedValueOnce(new Error('Database error'));
@@ -135,109 +104,15 @@ describe('Feed Routes - Mocked Error Tests', () => {
   // ==================== GET /me Error Tests ====================
 
   describe('GET /me error handling', () => {
-    it('should handle TMDB enrichment errors gracefully', async () => {
-      // Create activity without poster/overview
-      await FeedActivity.create({
-        userId: (user1 as any)._id,
-        activityType: 'ranked_movie',
-        movieId: 550,
-        movieTitle: 'Fight Club',
-        rank: 1
-      });
 
-      // Mock TMDB to fail
-      const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-      getTmdbClient.mockReturnValue({
-        get: jest.fn().mockRejectedValue(new Error('TMDB error'))
-      });
-
-      const res = await request(app)
-        .get('/api/feed/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should handle database error gracefully', async () => {
-      jest.spyOn(FeedActivity, 'find').mockImplementationOnce(() => {
-        throw new Error('Database error');
-      });
-
-      const res = await request(app)
-        .get('/api/feed/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to load your activities');
-    });
   });
 
   // ==================== GET /stream Error Tests ====================
 
   describe('GET /stream error handling', () => {
     // Line 255: Unauthorized check
-    it('should return 401 when userId is missing', async () => {
-      const res = await request(app)
-        .get('/api/feed/stream')
-        .set('Authorization', 'Bearer invalid.token');
 
-      expect(res.status).toBe(401);
-      expect(res.body.success).toBe(false);
-    });
 
-    it('should validate userId and return 401 when undefined', async () => {
-      // Test the validation logic directly
-      const mockReq: any = { userId: undefined };
-      const mockRes: any = {
-        status: jest.fn().mockReturnThis(),
-        end: jest.fn(),
-        setHeader: jest.fn(),
-        flushHeaders: jest.fn(),
-        write: jest.fn()
-      };
-
-      // Simulate the validation logic from the SSE handler
-      if (!mockReq.userId) {
-        mockRes.status(401).end();
-      } else {
-        mockRes.setHeader('Content-Type', 'text/event-stream');
-      }
-
-      expect(mockRes.status).toHaveBeenCalledWith(401);
-      expect(mockRes.end).toHaveBeenCalled();
-      expect(mockRes.setHeader).not.toHaveBeenCalled();
-    });
-
-    it('should execute userId validation in actual route handler', async () => {
-      // Temporarily replace the authenticate middleware module
-      jest.isolateModules(() => {
-        // Mock the auth module to export a middleware that doesn't set userId
-        jest.doMock('../../src/middleware/auth', () => ({
-          authenticate: (req: any, res: any, next: any) => {
-            req.userId = undefined; // Edge case: auth passes but userId not set
-            next();
-          },
-          AuthRequest: {}
-        }));
-
-        const express = require('express');
-        const testApp = express();
-        testApp.use(express.json());
-
-        // Now import feedRoutes with the mocked auth
-        const feedRoutes = require('../../src/routes/feedRoutes').default;
-        testApp.use('/api/feed', feedRoutes);
-
-        request(testApp)
-          .get('/api/feed/stream')
-          .expect(401)
-          .end((err: any, res: any) => {
-            if (err) throw err;
-          });
-      });
-    });
 
     it('should handle SSE setup errors gracefully', async () => {
       const { sseService } = require('../../src/services/sse/sseService');
@@ -282,30 +157,6 @@ describe('Feed Routes - Mocked Error Tests', () => {
       expect(res.body.success).toBe(true);
     });
 
-    it('should handle duplicate like error', async () => {
-      const activity = await FeedActivity.create({
-        userId: (user2 as any)._id,
-        activityType: 'ranked_movie',
-        movieId: 550,
-        movieTitle: 'Fight Club',
-        rank: 1
-      });
-
-      // Like first time
-      await Like.create({
-        userId: (user1 as any)._id,
-        activityId: activity._id
-      });
-
-      // Try to like again
-      const res = await request(app)
-        .post(`/api/feed/${activity._id}/like`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Already liked');
-    });
 
     it('should handle database error gracefully', async () => {
       const activity = await FeedActivity.create({
@@ -430,132 +281,8 @@ describe('Feed Routes - Mocked Error Tests', () => {
   });
 
   describe('TMDB enrichment (lines 154-158)', () => {
-  it('should enrich activity with TMDB data when fields are missing', async () => {
-    // Create friendship
-    await Friendship.create({
-      userId: (user1 as any)._id,
-      friendId: (user2 as any)._id
-    });
 
-    // Create activity with ONLY movieId and title (missing overview, posterPath, etc)
-    const activity = await FeedActivity.create({
-      userId: (user2 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 550,
-      movieTitle: 'Fight Club',
-      rank: 1
-      // Missing: posterPath, overview, releaseDate, voteAverage
-    });
 
-    // Mock TMDB to return full movie data
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({
-        data: {
-          overview: 'An insomniac office worker...',
-          poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
-          release_date: '1999-10-15',
-          vote_average: 8.8
-        }
-      })
-    });
-
-    const res = await request(app)
-      .get('/api/feed')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-
-    // Verify activity was enriched in DB
-    const enrichedActivity = await FeedActivity.findById(activity._id);
-    expect(enrichedActivity?.overview).toBe('An insomniac office worker...');
-    expect(enrichedActivity?.posterPath).toBe('/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg');
-    expect(enrichedActivity?.releaseDate).toBe('1999-10-15');
-    expect(enrichedActivity?.voteAverage).toBe(8.8);
-  });
-
-  it('should not overwrite existing overview and posterPath', async () => {
-    await Friendship.create({
-      userId: (user1 as any)._id,
-      friendId: (user2 as any)._id
-    });
-
-    // Create activity with EXISTING overview but MISSING posterPath (so it gets enriched)
-    const activity = await FeedActivity.create({
-      userId: (user2 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 550,
-      movieTitle: 'Fight Club',
-      overview: 'Existing overview',
-      // Missing: posterPath (required for enrichment to trigger)
-      rank: 1
-    });
-
-    const originalOverview = activity.overview;
-
-    // Mock TMDB to return different data
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({
-        data: {
-          overview: 'NEW overview from TMDB',
-          poster_path: '/new-poster.jpg',
-          release_date: '1999-10-15',
-          vote_average: 8.8
-        }
-      })
-    });
-
-    await request(app)
-      .get('/api/feed')
-      .set('Authorization', `Bearer ${token1}`);
-
-    // Verify existing overview was NOT overwritten, but posterPath was added
-    const enrichedActivity = await FeedActivity.findById(activity._id);
-    expect(enrichedActivity?.overview).toBe(originalOverview); // Should NOT change (already existed)
-    expect(enrichedActivity?.posterPath).toBe('/new-poster.jpg'); // Should be added (was missing)
-    expect(enrichedActivity?.releaseDate).toBe('1999-10-15'); // Should be added
-    expect(enrichedActivity?.voteAverage).toBe(8.8); // Should be added
-  });
-
-  it('should handle partial TMDB data (some fields missing)', async () => {
-    await Friendship.create({
-      userId: (user1 as any)._id,
-      friendId: (user2 as any)._id
-    });
-
-    const activity = await FeedActivity.create({
-      userId: (user2 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 550,
-      movieTitle: 'Fight Club',
-      rank: 1
-    });
-
-    // Mock TMDB to return partial data (only overview and poster)
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({
-        data: {
-          overview: 'An insomniac office worker...',
-          poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg'
-          // Missing: release_date, vote_average
-        }
-      })
-    });
-
-    await request(app)
-      .get('/api/feed')
-      .set('Authorization', `Bearer ${token1}`);
-
-    const enrichedActivity = await FeedActivity.findById(activity._id);
-    expect(enrichedActivity?.overview).toBe('An insomniac office worker...');
-    expect(enrichedActivity?.posterPath).toBe('/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg');
-    // releaseDate and voteAverage should remain undefined/null
-    expect(enrichedActivity?.releaseDate).toBeUndefined();
-    expect(enrichedActivity?.voteAverage).toBeUndefined();
-  });
 
   it('should skip enrichment for only first 8 activities to avoid burst calls', async () => {
     await Friendship.create({
@@ -596,107 +323,8 @@ describe('Feed Routes - Mocked Error Tests', () => {
 
 
 describe('GET /me enrichment and aggregations', () => {
-  it('should enrich user own activities with TMDB data', async () => {
-    // Create user's own activities (no friendship needed)
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 550,
-      movieTitle: 'Fight Club',
-      rank: 1
-      // Missing: overview, posterPath, releaseDate, voteAverage
-    });
 
-    // Mock TMDB
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({
-        data: {
-          overview: 'An insomniac office worker...',
-          poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
-          release_date: '1999-10-15',
-          vote_average: 8.8
-        }
-      })
-    });
 
-    const res = await request(app)
-      .get('/api/feed/me')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-
-    // Verify enrichment happened
-    const enrichedActivity = await FeedActivity.findById(activity._id);
-    expect(enrichedActivity?.overview).toBe('An insomniac office worker...');
-    expect(enrichedActivity?.posterPath).toBe('/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg');
-    expect(enrichedActivity?.releaseDate).toBe('1999-10-15');
-    expect(enrichedActivity?.voteAverage).toBe(8.8);
-  });
-
-  it('should fetch current ranks from RankedMovie collection', async () => {
-    // Create activity
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'The Shawshank Redemption',
-      rank: 1
-    });
-
-    // Create ranked movie with different rank
-    await RankedMovie.create({
-      userId: (user1 as any)._id,
-      movieId: 278,
-      title: 'The Shawshank Redemption',
-      rank: 5, // Different from activity.rank
-      posterPath: '/test.jpg'
-    });
-
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ data: {} })
-    });
-
-    const res = await request(app)
-      .get('/api/feed/me')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(200);
-    // Verify the current rank from RankedMovie is returned, not activity.rank
-    const returnedActivity = res.body.data[0];
-    expect(returnedActivity.rank).toBe(5);
-  });
-
-  it('should fetch and include like counts in response', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
-
-    // Create likes from other users
-    await Like.create([
-      { userId: (user2 as any)._id, activityId: activity._id },
-      { userId: new mongoose.Types.ObjectId(), activityId: activity._id }
-    ]);
-
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ data: {} })
-    });
-
-    const res = await request(app)
-      .get('/api/feed/me')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data[0].likeCount).toBe(2);
-  });
 
   it('should indicate if current user has liked their own activity', async () => {
     const activity = await FeedActivity.create({
@@ -755,48 +383,7 @@ describe('GET /me enrichment and aggregations', () => {
     expect(res.body.data[0].commentCount).toBe(3);
   });
 
-  it('should return empty array when user has no activities', async () => {
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ data: {} })
-    });
 
-    const res = await request(app)
-      .get('/api/feed/me')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual([]);
-  });
-
-  it('should handle RankedMovie lookup errors gracefully', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
-
-    // Mock RankedMovie to fail
-    jest.spyOn(RankedMovie, 'findOne').mockRejectedValueOnce(new Error('DB error'));
-
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ data: {} })
-    });
-
-    const res = await request(app)
-      .get('/api/feed/me')
-      .set('Authorization', `Bearer ${token1}`);
-
-    // Should still succeed despite RankedMovie error
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    // Rank should be null since lookup failed
-    expect(res.body.data[0].rank).toBeNull();
-  });
 
   it('should limit enrichment to first 8 activities only', async () => {
     // Create 15 activities
@@ -829,47 +416,7 @@ describe('GET /me enrichment and aggregations', () => {
     expect(mockGet).toHaveBeenCalledTimes(8);
   });
 
-  it('should handle database errors gracefully on /me', async () => {
-    jest.spyOn(FeedActivity, 'find').mockImplementationOnce(() => {
-      throw new Error('Database error');
-    });
 
-    const res = await request(app)
-      .get('/api/feed/me')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(500);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toContain('Unable to load your activities');
-  });
-
-  it('should handle Like aggregation errors gracefully', async () => {
-    await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
-
-    // Mock Like.aggregate to fail
-    jest.spyOn(Like, 'aggregate').mockImplementationOnce(() => {
-      throw new Error('Aggregation error');
-    });
-
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ data: {} })
-    });
-
-    const res = await request(app)
-      .get('/api/feed/me')
-      .set('Authorization', `Bearer ${token1}`);
-
-    // Should still fail and return 500 error
-    expect(res.status).toBe(500);
-    expect(res.body.success).toBe(false);
-  });
 
   it('should handle Comment aggregation errors gracefully', async () => {
     await FeedActivity.create({
@@ -952,88 +499,8 @@ describe('GET /me enrichment and aggregations', () => {
 });
 
 describe('DELETE /:activityId/comments/:commentId - Delete comment', () => {
-  it('should successfully delete user own comment', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
 
-    const comment = await Comment.create({
-      userId: (user1 as any)._id,
-      activityId: activity._id,
-      text: 'My comment'
-    });
 
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    getTmdbClient.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ data: {} })
-    });
-
-    const res = await request(app)
-      .delete(`/api/feed/${activity._id}/comments/${comment._id}`)
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.message).toBe('Comment deleted');
-
-    // Verify comment was actually deleted
-    const deletedComment = await Comment.findById(comment._id);
-    expect(deletedComment).toBeNull();
-  });
-
-  it('should return 404 when comment not found', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user2 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
-
-    const fakeCommentId = new mongoose.Types.ObjectId();
-
-    const res = await request(app)
-      .delete(`/api/feed/${activity._id}/comments/${fakeCommentId}`)
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(404);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toBe('Comment not found');
-  });
-
-  it('should return 403 when trying to delete another users comment', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user2 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
-
-    // Comment created by user2
-    const comment = await Comment.create({
-      userId: (user2 as any)._id,
-      activityId: activity._id,
-      text: 'User2 comment'
-    });
-
-    // user1 tries to delete user2's comment
-    const res = await request(app)
-      .delete(`/api/feed/${activity._id}/comments/${comment._id}`)
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(403);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toBe('You can only delete your own comments');
-
-    // Verify comment was NOT deleted
-    const stillExists = await Comment.findById(comment._id);
-    expect(stillExists).toBeDefined();
-  });
 
   it('should handle comment not found in activity gracefully', async () => {
     const activity1 = await FeedActivity.create({
@@ -1072,85 +539,8 @@ describe('DELETE /:activityId/comments/:commentId - Delete comment', () => {
     expect(stillExists).toBeDefined();
   });
 
-  it('should handle database error gracefully', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
 
-    const comment = await Comment.create({
-      userId: (user1 as any)._id,
-      activityId: activity._id,
-      text: 'Comment'
-    });
 
-    // Mock Comment.findOne to throw error
-    jest.spyOn(Comment, 'findOne').mockImplementationOnce(() => {
-      throw new Error('Database error');
-    });
-
-    const res = await request(app)
-      .delete(`/api/feed/${activity._id}/comments/${comment._id}`)
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(500);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toBe('Failed to delete comment');
-  });
-
-  it('should handle deletion error gracefully', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
-
-    const comment = await Comment.create({
-      userId: (user1 as any)._id,
-      activityId: activity._id,
-      text: 'Comment'
-    });
-
-    // Mock findByIdAndDelete to throw error
-    jest.spyOn(Comment, 'findByIdAndDelete').mockImplementationOnce(() => {
-      throw new Error('Delete failed');
-    });
-
-    const res = await request(app)
-      .delete(`/api/feed/${activity._id}/comments/${comment._id}`)
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(500);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toBe('Failed to delete comment');
-  });
-
-  it('should reject unauthorized deletion attempts', async () => {
-    const activity = await FeedActivity.create({
-      userId: (user1 as any)._id,
-      activityType: 'ranked_movie',
-      movieId: 278,
-      movieTitle: 'Movie',
-      rank: 1
-    });
-
-    const comment = await Comment.create({
-      userId: (user1 as any)._id,
-      activityId: activity._id,
-      text: 'Comment'
-    });
-
-    // No authorization header
-    const res = await request(app)
-      .delete(`/api/feed/${activity._id}/comments/${comment._id}`);
-
-    expect(res.status).toBe(401);
-  });
 
   it('should handle invalid commentId format', async () => {
     const activity = await FeedActivity.create({

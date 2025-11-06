@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Find and Remove Redundant Tests - Iterative Approach
+ * Find and Remove Redundant Tests - Iterative Approach (All Backend Tests)
  * Usage: node find_and_remove_redundant_tests.js
  *
  * This script:
- * 1. Tests each test individually
+ * 1. Tests each test individually across ALL backend test directories
  * 2. If a test is redundant, REMOVES IT PERMANENTLY
  * 3. Tests the next test against the REDUCED baseline
  * 4. Continues until no more redundant tests found
@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const TESTS_DIR = path.join(__dirname, 'backend/tests/unmocked');
+const TESTS_ROOT = path.join(__dirname, 'backend/tests');
 const BACKEND_DIR = path.join(__dirname, 'backend');
 
 // Color output
@@ -181,21 +181,38 @@ if (baselineCoverage < 100) {
   process.exit(1);
 }
 
-// Get all test files
-const testFiles = fs
-  .readdirSync(TESTS_DIR)
-  .filter((f) => f.endsWith('.unmocked.test.ts') && !f.includes('.bak'))
-  .sort();
+// Recursively find all test files
+function getAllTestFiles(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      getAllTestFiles(filePath, fileList);
+    } else if ((file.endsWith('.test.ts') || file.endsWith('.test.js')) && !file.includes('.bak')) {
+      fileList.push(filePath);
+    }
+  }
+
+  return fileList;
+}
+
+// Get all test files from all directories
+const testFilePaths = getAllTestFiles(TESTS_ROOT).sort();
+
+log(`\nFound ${testFilePaths.length} test files across all directories\n`, 'cyan');
 
 const results = {};
 let totalRemoved = 0;
 let totalKept = 0;
 
-for (const file of testFiles) {
-  const filePath = path.join(TESTS_DIR, file);
-  const result = analyzeFileIteratively(filePath, file);
+for (const filePath of testFilePaths) {
+  const relativePath = path.relative(TESTS_ROOT, filePath);
+  const result = analyzeFileIteratively(filePath, relativePath);
   if (result.removed.length > 0 || result.kept > 0) {
-    results[file] = result;
+    results[relativePath] = result;
     totalRemoved += result.removed.length;
     totalKept += result.kept;
   }

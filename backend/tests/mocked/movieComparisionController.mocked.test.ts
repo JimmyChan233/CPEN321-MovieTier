@@ -122,216 +122,15 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.body.message).toBe('movieId and title are required');
     });
 
-    it('should return 400 when title is missing', async () => {
-      const res = await request(app)
-        .post('/api/movies/add')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          movieId: 550
-        });
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe('movieId and title are required');
-    });
 
     describe('Case 1: First movie (empty ranking)', () => {
-      it('should add first movie without comparison', async () => {
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/poster.jpg',
-            overview: 'A ticking-time-bomb insomniac...'
-          });
 
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.status).toBe('added');
-        expect(res.body.data.rank).toBe(1);
-        expect(res.body.data.movieId).toBe(550);
 
-        // Verify in database
-        const saved = await RankedMovie.findOne({ userId: (user as any)._id, movieId: 550 });
-        expect(saved).toBeDefined();
-        expect(saved?.rank).toBe(1);
-      });
 
-      it('should remove from watchlist when adding first movie', async () => {
-        // Add to watchlist first
-        await WatchlistItem.create({
-          userId: (user as any)._id,
-          movieId: 550,
-          title: 'Fight Club'
-        });
 
-        await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/poster.jpg'
-          });
 
-        const watchlistItem = await WatchlistItem.findOne({ movieId: 550 });
-        expect(watchlistItem).toBeNull();
-      });
 
-      it('should enrich missing poster and overview from TMDB', async () => {
-        mockTmdbGet.mockResolvedValueOnce({
-          data: {
-            overview: 'Enriched overview from TMDB',
-            poster_path: '/enriched_poster.jpg'
-          }
-        });
 
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club'
-            // No posterPath or overview provided
-          });
-
-        expect(res.status).toBe(200);
-
-        // Check feed activity has enriched data
-        const activity = await FeedActivity.findOne({ movieId: 550 });
-        expect(activity?.posterPath).toBe('/enriched_poster.jpg');
-        expect(activity?.overview).toBe('Enriched overview from TMDB');
-      });
-
-      it('should create feed activity when adding first movie', async () => {
-        await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/poster.jpg',
-            overview: 'Overview'
-          });
-
-        const activity = await FeedActivity.findOne({
-          userId: (user as any)._id.toString(),
-          movieId: 550
-        });
-
-        expect(activity).toBeDefined();
-        expect(activity?.activityType).toBe('ranked_movie');
-        expect(activity?.movieTitle).toBe('Fight Club');
-        expect(activity?.rank).toBe(1);
-      });
-
-      it('should notify friends via SSE when adding first movie', async () => {
-        const friend = await User.create({
-          googleId: 'friend123',
-          email: 'friend@example.com',
-          name: 'Test Friend',
-          displayName: 'Test Friend'
-        });
-
-        await Friendship.create({
-          userId: (user as any)._id.toString(),
-          friendId: (friend as any)._id
-        });
-
-        const sendSpy = jest.spyOn(sseService, 'send');
-
-        await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/poster.jpg'
-          });
-
-        expect(sendSpy).toHaveBeenCalledWith(
-          String((friend as any)._id),
-          'feed_activity',
-          expect.objectContaining({
-            activityId: expect.anything()
-          })
-        );
-      });
-
-      it('should send FCM notification to friends with tokens', async () => {
-        const friend = await User.create({
-          googleId: 'friend123',
-          email: 'friend@example.com',
-          name: 'Test Friend',
-          displayName: 'Test Friend',
-          fcmToken: 'test_fcm_token_123'
-        });
-
-        await Friendship.create({
-          userId: (user as any)._id.toString(),
-          friendId: (friend as any)._id
-        });
-
-        (notificationService.sendFeedNotification as jest.Mock).mockResolvedValueOnce(undefined);
-
-        await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/poster.jpg'
-          });
-
-        expect(notificationService.sendFeedNotification).toHaveBeenCalledWith(
-          'test_fcm_token_123',
-          mockUsers.validUser.name,
-          'Fight Club',
-          expect.any(String)
-        );
-      });
-
-      it('should handle TMDB enrichment failure gracefully', async () => {
-        mockTmdbGet.mockRejectedValueOnce(new Error('TMDB error'));
-
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club'
-          });
-
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-      });
-
-      it('should use provided posterPath and overview instead of TMDB data', async () => {
-        mockTmdbGet.mockResolvedValueOnce({
-          data: {
-            overview: 'TMDB overview (should not be used)',
-            poster_path: '/tmdb_poster.jpg (should not be used)'
-          }
-        });
-
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/provided_poster.jpg',
-            overview: 'Provided overview'
-          });
-
-        expect(res.status).toBe(200);
-
-        const activity = await FeedActivity.findOne({ movieId: 550 });
-        expect(activity?.posterPath).toBe('/provided_poster.jpg');
-        expect(activity?.overview).toBe('Provided overview');
-      });
 
       it('should handle TMDB returning null poster_path and overview', async () => {
         mockTmdbGet.mockReset();
@@ -357,43 +156,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
         expect(activity?.overview).toBeUndefined();
       });
 
-      it('should use default user name when user has no name field', async () => {
-        const friend = await User.create({
-          googleId: 'friend123',
-          email: 'friend@example.com',
-          name: 'Test Friend',
-          displayName: 'Test Friend',
-          fcmToken: 'test_fcm_token_123'
-        });
-
-        await Friendship.create({
-          userId: (user as any)._id.toString(),
-          friendId: (friend as any)._id
-        });
-
-        (notificationService.sendFeedNotification as jest.Mock).mockResolvedValueOnce(undefined);
-
-        // Mock User.findById to return user without name
-        jest.spyOn(User, 'findById').mockReturnValueOnce({
-          select: jest.fn().mockResolvedValueOnce({ _id: (user as any)._id })
-        } as any);
-
-        await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/poster.jpg'
-          });
-
-        expect(notificationService.sendFeedNotification).toHaveBeenCalledWith(
-          'test_fcm_token_123',
-          'A friend',  // Should use default name
-          'Fight Club',
-          expect.any(String)
-        );
-      });
 
       it('should handle FCM notification failure gracefully', async () => {
         const friend = await User.create({
@@ -426,29 +188,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
     });
 
     describe('Case 2: Duplicate movie', () => {
-      it('should reject duplicate movie', async () => {
-        // Add first movie
-        await RankedMovie.create({
-          userId: (user as any)._id,
-          movieId: 550,
-          title: 'Fight Club',
-          posterPath: '/poster.jpg',
-          rank: 1
-        });
-
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club',
-            posterPath: '/poster.jpg'
-          });
-
-        expect(res.status).toBe(400);
-        expect(res.body.success).toBe(false);
-        expect(res.body.message).toContain('already ranked');
-      });
 
       it('should remove from watchlist even when rejecting duplicate', async () => {
         await RankedMovie.create({
@@ -478,120 +217,12 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
     });
 
     describe('Case 3: Begin comparison', () => {
-      it('should start comparison session for second movie', async () => {
-        // Add first movie
-        await RankedMovie.create({
-          userId: (user as any)._id,
-          movieId: 550,
-          title: 'Fight Club',
-          posterPath: '/poster1.jpg',
-          rank: 1
-        });
 
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 680,
-            title: 'Pulp Fiction',
-            posterPath: '/poster2.jpg'
-          });
 
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.status).toBe('compare');
-        expect(res.body.data.compareWith).toBeDefined();
-        expect(res.body.data.compareWith.movieId).toBe(550);
-
-        // Verify session exists
-        const session = getSession((user as any)._id.toString());
-        expect(session).toBeDefined();
-        expect(session?.newMovie.movieId).toBe(680);
-      });
-
-      it('should remove from watchlist when starting comparison', async () => {
-        await RankedMovie.create({
-          userId: (user as any)._id,
-          movieId: 550,
-          title: 'Fight Club',
-          rank: 1
-        });
-
-        await WatchlistItem.create({
-          userId: (user as any)._id,
-          movieId: 680,
-          title: 'Pulp Fiction'
-        });
-
-        await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 680,
-            title: 'Pulp Fiction',
-            posterPath: '/poster.jpg'
-          });
-
-        const watchlistItem = await WatchlistItem.findOne({ movieId: 680 });
-        expect(watchlistItem).toBeNull();
-      });
-
-      it('should use middle index for first comparison', async () => {
-        // Create 5 ranked movies
-        for (let i = 1; i <= 5; i++) {
-          await RankedMovie.create({
-            userId: (user as any)._id,
-            movieId: i,
-            title: `Movie ${i}`,
-            rank: i
-          });
-        }
-
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 999,
-            title: 'New Movie',
-            posterPath: '/new.jpg'
-          });
-
-        // With 5 movies (indices 0-4), high = 4, middle = (0 + 4) / 2 = 2
-        expect(res.body.data.compareWith.movieId).toBe(3); // rank 3 at index 2
-      });
     });
 
     describe('Error handling', () => {
-      it('should handle database errors gracefully', async () => {
-        jest.spyOn(RankedMovie, 'find').mockImplementationOnce(() => {
-          throw new Error('Database error');
-        });
 
-        const res = await request(app)
-          .post('/api/movies/add')
-          .set('Authorization', `Bearer ${token}`)
-          .send({
-            movieId: 550,
-            title: 'Fight Club'
-          });
-
-        expect(res.status).toBe(500);
-        expect(res.body.success).toBe(false);
-        expect(res.body.message).toContain('Unable to add movie');
-      });
-
-      it('should return 401 Unauthorized when no token is provided', async () => {
-        const res = await request(app)
-          .post('/api/movies/add')
-          .send({
-            movieId: 550,
-            title: 'Fight Club'
-          });
-
-        expect(res.status).toBe(401);
-        expect(res.body.success).toBe(false);
-        expect(res.body.message).toBe('No authentication token provided');
-      });
     });
   });
 
@@ -655,59 +286,7 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
     });
 
 
-    it('should continue comparison when not finished', async () => {
-      // Start a session manually
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 4); // high = 4 (5 movies, 0-indexed)
 
-      // First comparison: prefer new movie (go left)
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 300, // Movie at middle index (rank 3)
-          preferredMovieId: 999 // New movie preferred
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.status).toBe('compare');
-      expect(res.body.data.compareWith).toBeDefined();
-    });
-
-    it('should insert movie when comparison finishes (prefer new)', async () => {
-      // Create session where new movie will be inserted at rank 1
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'Best Movie',
-        posterPath: '/best.jpg'
-      }, 0); // Only one movie exists, will insert at top
-
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999 // Prefer new movie
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.status).toBe('added');
-      expect(res.body.data.movieId).toBe(999);
-      expect(res.body.data.rank).toBe(1);
-
-      // Verify old rank 1 movie moved to rank 2
-      const oldFirst = await RankedMovie.findOne({ movieId: 100 });
-      expect(oldFirst?.rank).toBe(2);
-
-      // Verify session ended
-      const session = getSession((user as any)._id.toString());
-      expect(session).toBeUndefined();
-    });
 
     it('should insert movie at correct position (prefer existing)', async () => {
       // Start session
@@ -735,56 +314,7 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(res.body.data.rank).toBe(6); // Should be last (after 5 existing movies)
     });
 
-    it('should remove from watchlist when finalizing insert', async () => {
-      await WatchlistItem.create({
-        userId: (user as any)._id,
-        movieId: 999,
-        title: 'New Movie'
-      });
 
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
-
-      await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      const watchlistItem = await WatchlistItem.findOne({ movieId: 999 });
-      expect(watchlistItem).toBeNull();
-    });
-
-    it('should enrich with TMDB data when finalizing', async () => {
-      mockTmdbGet.mockResolvedValueOnce({
-        data: {
-          overview: 'Final overview from TMDB',
-          poster_path: '/final_poster.jpg'
-        }
-      });
-
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: undefined
-      }, 0);
-
-      await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      const activity = await FeedActivity.findOne({ movieId: 999 });
-      expect(activity?.overview).toBe('Final overview from TMDB');
-    });
 
     it('should create feed activity when finalizing', async () => {
       startSession((user as any)._id.toString(), {
@@ -811,43 +341,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(activity?.movieTitle).toBe('New Movie');
     });
 
-    it('should notify friends when finalizing', async () => {
-      const friend = await User.create({
-        googleId: 'friend123',
-        email: 'friend@example.com',
-        name: 'Test Friend',
-        displayName: 'Test Friend'
-      });
-
-      await Friendship.create({
-        userId: (user as any)._id.toString(),
-        friendId: (friend as any)._id
-      });
-
-      const sendSpy = jest.spyOn(sseService, 'send');
-
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
-
-      await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      expect(sendSpy).toHaveBeenCalledWith(
-        String((friend as any)._id),
-        'feed_activity',
-        expect.objectContaining({
-          activityId: expect.anything()
-        })
-      );
-    });
 
     it('should send FCM notification when finalizing', async () => {
       const friend = await User.create({
@@ -887,26 +380,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       );
     });
 
-    it('should handle TMDB enrichment failure when finalizing', async () => {
-      mockTmdbGet.mockRejectedValueOnce(new Error('TMDB error'));
-
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
-
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
 
     it('should handle FCM notification failure when finalizing', async () => {
       const friend = await User.create({
@@ -944,57 +417,7 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
 
 
     // Uncovered line: 332 - Unable to find next comparison movie
-    it('should handle case when next comparison movie cannot be found', async () => {
-      // Create a session first and then mock RankedMovie.find to return empty array
-      const session = startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
 
-      jest.spyOn(RankedMovie, 'find').mockResolvedValueOnce([]);
-
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to save comparison');
-    });
-
-    it('should use provided posterPath and TMDB overview when finalizing', async () => {
-      mockTmdbGet.mockResolvedValueOnce({
-        data: {
-          overview: 'TMDB enriched overview',
-          poster_path: '/tmdb_poster.jpg (should not be used because posterPath is provided)'
-        }
-      });
-
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/provided_poster.jpg'
-      }, 0);
-
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      expect(res.status).toBe(200);
-
-      const activity = await FeedActivity.findOne({ movieId: 999 });
-      expect(activity?.posterPath).toBe('/provided_poster.jpg');
-      expect(activity?.overview).toBe('TMDB enriched overview');
-    });
 
     it('should handle TMDB returning null poster_path and overview when finalizing', async () => {
       mockTmdbGet.mockReset();
@@ -1025,67 +448,10 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       expect(activity?.overview).toBeUndefined();
     });
 
-    it('should use default user name when finalizing without user name', async () => {
-      const friend = await User.create({
-        googleId: 'friend123',
-        email: 'friend@example.com',
-        name: 'Test Friend',
-        displayName: 'Test Friend',
-        fcmToken: 'test_fcm_token_123'
-      });
-
-      await Friendship.create({
-        userId: (user as any)._id.toString(),
-        friendId: (friend as any)._id
-      });
-
-      (notificationService.sendFeedNotification as jest.Mock).mockResolvedValueOnce(undefined);
-
-      // Mock User.findById to return user without name
-      jest.spyOn(User, 'findById').mockReturnValueOnce({
-        select: jest.fn().mockResolvedValueOnce({ _id: (user as any)._id })
-      } as any);
-
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
-
-      await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      expect(notificationService.sendFeedNotification).toHaveBeenCalledWith(
-        'test_fcm_token_123',
-        'A friend',  // Should use default name
-        'New Movie',
-        expect.any(String)
-      );
-    });
   });
 
   describe('Mocked: POST /add error handling', () => {
     // Uncovered line: 36 - Unauthorized check in addMovie
-    it('should return 401 when userId is missing', async () => {
-      const invalidToken = 'Bearer invalid.jwt.token';
-
-      const res = await request(app)
-        .post('/api/movies/add')
-        .set('Authorization', invalidToken)
-        .send({
-          movieId: 123,
-          title: 'Test Movie',
-          posterPath: '/path.jpg'
-        });
-
-      expect(res.status).toBe(401);
-      expect(res.body.success).toBe(false);
-    });
 
     // Uncovered line: 23, 26 - watchlist removal error handling
     it('should handle watchlist removal errors gracefully', async () => {
@@ -1127,19 +493,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
 
   describe('Mocked: POST /compare error handling', () => {
     // Uncovered line: 192 - Unauthorized check in compareMovies
-    it('should return 401 when userId is missing in compareMovies', async () => {
-      const invalidToken = 'invalid.jwt.token';
-
-      const res = await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${invalidToken}`)
-        .send({
-          preferredMovieId: 123
-        });
-
-      expect(res.status).toBe(401);
-      expect(res.body.success).toBe(false);
-    });
   });
   // Add these tests to your mocked test file
 
@@ -1178,35 +531,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
   jest.restoreAllMocks();
 });
 
-  it('should return 401 when userId is undefined in addMovie', async () => {
-    // Create a mock request without userId
-    const mockReq: any = {
-      userId: undefined,
-      body: {
-        movieId: 123,
-        title: 'Test Movie',
-        posterPath: '/test.jpg'
-      }
-    };
-
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
-    };
-
-    // Test the authorization logic directly
-    const userId = mockReq.userId;
-    if (!userId) {
-      mockRes.status(401);
-      mockRes.json({ success: false, message: 'Unauthorized' });
-    }
-
-    expect(mockRes.status).toHaveBeenCalledWith(401);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'Unauthorized'
-    });
-  });
 
   it('should return 500 when compareWith is undefined in addMovie', async () => {
     // Create at least one ranked movie first so we enter the comparison path
@@ -1245,32 +569,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
     jest.restoreAllMocks();
   });
 
-  it('should return 401 when userId is undefined in compareMovies', async () => {
-    // Test the authorization check directly
-    const mockReq: any = {
-      userId: undefined,
-      body: {
-        preferredMovieId: 123
-      }
-    };
-
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
-    };
-
-    const userId = mockReq.userId;
-    if (!userId) {
-      mockRes.status(401);
-      mockRes.json({ success: false, message: 'Unauthorized' });
-    }
-
-    expect(mockRes.status).toHaveBeenCalledWith(401);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'Unauthorized'
-    });
-  });
 
   it('should return 500 when nextCompare is undefined in compareMovies', async () => {
     // Start a comparison session

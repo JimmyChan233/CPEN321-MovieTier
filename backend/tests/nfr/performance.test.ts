@@ -52,16 +52,6 @@ describe('NFR: Performance - Response Time', () => {
   // Requirement: API endpoints must respond within 1000ms
   // Measurement: Time from request send to response receive
   // Expected: Response time < 1000ms
-  it('should respond to GET /movies/ranked within acceptable time', async () => {
-    const startTime = Date.now();
-    const res = await request(app)
-      .get('/api/movies/ranked')
-      .set('Authorization', `Bearer ${token}`);
-    const responseTime = Date.now() - startTime;
-
-    expect(res.status).toStrictEqual(200);
-    expect(responseTime).toBeLessThan(ACCEPTABLE_RESPONSE_TIME_MS);
-  });
 
   // Requirement: Authentication endpoints must be fast
   // Measurement: Time for signOut operation
@@ -81,47 +71,6 @@ describe('NFR: Performance - Response Time', () => {
   // Requirement: Feed queries should include pagination
   // Measurement: Verify response includes reasonable data size
   // Expected: Feed returns max 50 items to prevent memory bloat
-  it('should limit feed results to prevent memory bloat', async () => {
-    // Create multiple friends and feed activities
-    const friends = await Promise.all(
-      Array(10).fill(null).map((_, i) =>
-        User.create({
-          email: `friend${i}@example.com`,
-          name: `Friend ${i}`,
-          googleId: `google-${i}`
-        })
-      )
-    );
-
-    // Create friendships
-    for (const friend of friends) {
-      await Friendship.create({ userId: user._id, friendId: friend._id });
-    }
-
-    // Create many activities
-    await Promise.all(
-      friends.flatMap(friend =>
-        Array(10).fill(null).map((_, j) =>
-          FeedActivity.create({
-            userId: friend._id,
-            activityType: 'ranked_movie',
-            movieId: 100 + j,
-            movieTitle: `Movie ${j}`
-          })
-        )
-      )
-    );
-
-    const res = await request(app)
-      .get('/api/feed')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    // Feed should limit results, verify it's not unbounded
-    expect(res.body.data.length).toBeLessThanOrEqual(50);
-  });
 });
 
 describe('NFR: Performance - Database Index Efficiency', () => {

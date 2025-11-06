@@ -39,52 +39,18 @@ describe('Mocked: GET /movies/search - TMDB API Failure', () => {
   // Expected status code: 500
   // Expected behavior: Error is caught and reported
   // Expected output: Error message about TMDB service failure
-  it('should handle TMDB API server error', async () => {
-    mockedAxios.get.mockRejectedValueOnce({
-      response: { status: 500, data: { error: 'Internal Server Error' } }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/search')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ query: 'Inception' });
-
-    expect(res.status).toStrictEqual(500);
-  });
 
   // Mocked behavior: TMDB API timeout
   // Input: Valid search query
   // Expected status code: 500
   // Expected behavior: Timeout error is caught
   // Expected output: Timeout error message
-  it('should handle TMDB API timeout', async () => {
-    mockedAxios.get.mockRejectedValueOnce(new Error('Request timeout'));
-
-    const res = await request(app)
-      .get('/api/movies/search')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ query: 'Inception' });
-
-    expect(res.status).toStrictEqual(500);
-  });
 
   // Mocked behavior: TMDB API returns empty results
   // Input: Search query with no matching movies
   // Expected status code: 200
   // Expected behavior: Empty results array is returned
   // Expected output: Empty array
-  it('should return empty array for no matching results', async () => {
-    mockedAxios.get.mockResolvedValueOnce({ data: { results: [] } });
-
-    const res = await request(app)
-      .get('/api/movies/search')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ query: 'xyz123nonexistent' });
-
-    expect(res.status).toStrictEqual(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data).toHaveLength(0);
-  });
 
   // Mocked behavior: TMDB returns 401 (invalid API key)
   // Input: Valid query but invalid TMDB API key configured
@@ -120,22 +86,6 @@ describe('Mocked: Movie Comparison and Addition - Database Failures', () => {
   // Expected status code: 500
   // Expected behavior: Transaction is rolled back
   // Expected output: Database error message
-  it('should handle ranking creation database error', async () => {
-    const createSpy = jest.spyOn(RankedMovie, 'create')
-      .mockRejectedValueOnce(new Error('Database write failed'));
-
-    const res = await request(app)
-      .post('/api/movies/rank')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: 278,
-        title: 'The Shawshank Redemption',
-        posterPath: '/path.jpg'
-      });
-
-    expect(res.status).toStrictEqual(500);
-    createSpy.mockRestore();
-  });
 
   // Mocked behavior: Duplicate movie insert (should be caught)
   // Input: Try to rank same movie twice

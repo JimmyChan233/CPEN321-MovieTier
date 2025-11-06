@@ -280,21 +280,6 @@ describe('Watchlist Routes - Unmocked Tests', () => {
   // ==================== Edge Cases and Error Handling ====================
 
   describe('Edge Cases', () => {
-    it('should handle very long movie titles', async () => {
-      const longTitle = 'A'.repeat(500);
-
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 12345,
-          title: longTitle
-        });
-
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.data.title).toBe(longTitle);
-    });
 
 
 

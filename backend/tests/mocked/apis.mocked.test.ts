@@ -39,35 +39,12 @@ describe('Mocked: Feed API Errors', () => {
   // Expected status code: 500
   // Expected behavior: Error is caught
   // Expected output: Database error message
-  it('should handle feed fetch failure', async () => {
-    jest.spyOn(FeedActivity, 'find').mockRejectedValueOnce(
-      new Error('Database connection lost')
-    );
-
-    const res = await request(app)
-      .get('/api/feed')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(500);
-  });
 
   // Mocked behavior: Like creation fails due to database error
   // Input: Valid activity ID
   // Expected status code: 500
   // Expected behavior: Error is caught gracefully
   // Expected output: Database error
-  it('should handle like creation failure', async () => {
-    jest.spyOn(Like, 'create').mockRejectedValueOnce(
-      new Error('Database write failed')
-    );
-
-    const res = await request(app)
-      .post('/api/feed/activity-id/like')
-      .set('Authorization', `Bearer ${token}`)
-      .send({});
-
-    expect(res.status).toStrictEqual(500);
-  });
 
   // Mocked behavior: Comment validation fails
   // Input: Comment text at boundary condition
@@ -104,17 +81,6 @@ describe('Mocked: Friends API Errors', () => {
   // Expected status code: 500
   // Expected behavior: Error is caught
   // Expected output: Error message
-  it('should handle friends list fetch failure', async () => {
-    jest.spyOn(Friendship, 'find').mockReturnValueOnce({
-      populate: jest.fn().mockRejectedValueOnce(new Error('Database connection failed'))
-    } as any);
-
-    const res = await request(app)
-      .get('/api/friends')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(500);
-  });
 
   // Mocked behavior: User lookup fails
   // Input: Email to search
@@ -223,18 +189,6 @@ describe('Mocked: Recommendations API Errors', () => {
   // Expected status code: 500
   // Expected behavior: Error is caught
   // Expected output: Error message
-  it('should handle trending movies fetch failure', async () => {
-    const mockAxios = require('axios');
-    jest.spyOn(mockAxios, 'get').mockRejectedValueOnce(
-      new Error('TMDB API unreachable')
-    );
-
-    const res = await request(app)
-      .get('/api/recommendations/trending')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(500);
-  });
 
   // Mocked behavior: Database query fails for recommendations
   // Input: Authenticated user

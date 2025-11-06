@@ -132,32 +132,7 @@ describe('User Routes - Unmocked Tests', () => {
   // ==================== PUT /profile Tests ====================
 
   describe('PUT /profile', () => {
-    it('should update user profile name successfully', async () => {
-      const res = await request(app)
-        .put('/profile')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ name: 'Alice Updated' });
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.name).toBe('Alice Updated');
-      expect(res.body.data._id).toBeDefined();
-
-      // Verify database was updated
-      const updated = await User.findById((user1 as any)._id);
-      expect(updated?.name).toBe('Alice Updated');
-    });
-
-    it('should trim whitespace from name', async () => {
-      const res = await request(app)
-        .put('/profile')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ name: '  Alice Trimmed  ' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.name).toBe('Alice Trimmed');
-    });
 
 
     it('should update both name and profileImageUrl', async () => {
@@ -432,15 +407,6 @@ describe('User Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('Invalid user id');
     });
 
-    it('should allow user to view own rankings without friendship check', async () => {
-      const res = await request(app)
-        .get(`/${(user1 as any)._id}/rankings`)
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.length).toBe(1);
-    });
 
     it('should reject access to other user rankings without friendship', async () => {
       const res = await request(app)

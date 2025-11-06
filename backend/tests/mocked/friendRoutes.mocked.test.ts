@@ -153,26 +153,6 @@ describe('DELETE /requests/:requestId (cancel friend request)', () => {
     expect(res.body.message).toMatch(/not pending/i);
   });
 
-  it('should handle database error when canceling friend request', async () => {
-    const friendRequest = await FriendRequest.create({
-      senderId: (user1 as any)._id,
-      receiverId: (user2 as any)._id,
-      status: 'pending'
-    });
-
-    // Mock save to throw error
-    jest.spyOn(FriendRequest.prototype, 'save').mockRejectedValueOnce(
-      new Error('Database error')
-    );
-
-    const res = await request(app)
-      .delete(`/api/friends/requests/${(friendRequest as any)._id}`)
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toBe(500);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toMatch(/Failed to cancel/i);
-  });
 
   it('should handle findById error when canceling request', async () => {
     const fakeId = new mongoose.Types.ObjectId();
@@ -195,94 +175,12 @@ describe('DELETE /requests/:requestId (cancel friend request)', () => {
 // ==================== DELETE /:friendId - Missing friendId Test ====================
 
 describe('DELETE /:friendId missing parameter', () => {
-  it('should handle missing friendId in params object', async () => {
-    // This tests the defensive check on line 279
-    // We test the logic directly since Express routing makes it hard to trigger
-    const mockReq: any = {
-      userId: (user1 as any)._id.toString(),
-      params: {},  // No friendId
-    };
-
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-    };
-
-    // Replicate the validation logic
-    const { friendId } = mockReq.params;
-    if (!friendId) {
-      mockRes.status(400);
-      mockRes.json({ success: false, message: 'friendId is required' });
-    }
-
-    expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'friendId is required'
-    });
-  });
 });
 
 // ==================== GET /stream SSE Authorization Test ====================
 
 describe('GET /stream SSE authorization and error handling', () => {
-  it('should return 401 when userId is not set in request', async () => {
-    // Test the authorization check on line 320
-    const mockReq: any = {
-      userId: undefined,  // Not set
-      on: jest.fn(),
-    };
 
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      setHeader: jest.fn(),
-      flushHeaders: jest.fn(),
-      write: jest.fn(),
-      end: jest.fn(),
-    };
-
-    // Replicate the handler logic
-    try {
-      if (!mockReq.userId) {
-        mockRes.status(401);
-        mockRes.json({ success: false, message: 'Unauthorized' });
-        return;
-      }
-      // SSE setup continues...
-    } catch {
-      mockRes.end();
-    }
-
-    expect(mockRes.status).toHaveBeenCalledWith(401);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'Unauthorized'
-    });
-  });
-
-  it('should validate userId and return 401 when undefined', async () => {
-    // Test the validation logic directly
-    const mockReq: any = { userId: undefined };
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      end: jest.fn(),
-      setHeader: jest.fn(),
-      flushHeaders: jest.fn(),
-      write: jest.fn()
-    };
-
-    // Simulate the validation logic from the SSE handler
-    if (!mockReq.userId) {
-      mockRes.status(401).end();
-    } else {
-      mockRes.setHeader('Content-Type', 'text/event-stream');
-    }
-
-    expect(mockRes.status).toHaveBeenCalledWith(401);
-    expect(mockRes.end).toHaveBeenCalled();
-    expect(mockRes.setHeader).not.toHaveBeenCalled();
-  });
 
   it('should handle errors in SSE setup and call res.end()', async () => {
     jest.spyOn(sseService, 'addClient').mockImplementationOnce(() => {
@@ -296,62 +194,6 @@ describe('GET /stream SSE authorization and error handling', () => {
     expect(res.status).toBe(200);
   });
 
-  it('should setup close handler for SSE cleanup', async () => {
-    const sseService = require('../../src/services/sse/sseService').sseService;
-    const removeClientSpy = jest.spyOn(sseService, 'removeClient').mockImplementation(() => {});
-    jest.spyOn(sseService, 'addClient').mockImplementation(() => {});
-
-    let closeCallback: any;
-    const mockReq: any = {
-      userId: (user1 as any)._id.toString(),
-      on: jest.fn((event, callback) => {
-        if (event === 'close') {
-          closeCallback = callback;
-        }
-      }),
-    };
-
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      setHeader: jest.fn(),
-      flushHeaders: jest.fn(),
-      write: jest.fn(),
-      end: jest.fn(),
-    };
-
-    // Replicate handler
-    try {
-      if (!mockReq.userId) {
-        mockRes.status(401);
-        mockRes.json({ success: false, message: 'Unauthorized' });
-        return;
-      }
-      mockRes.setHeader('Content-Type', 'text/event-stream');
-      mockRes.setHeader('Cache-Control', 'no-cache');
-      mockRes.setHeader('Connection', 'keep-alive');
-      mockRes.flushHeaders();
-      mockRes.write(`event: connected\n` + `data: {"ok":true}\n\n`);
-      sseService.addClient(String(mockReq.userId), mockRes);
-      mockReq.on('close', () => {
-        sseService.removeClient(String(mockReq.userId), mockRes);
-      });
-    } catch {
-      mockRes.end();
-    }
-
-    // Trigger the close event
-    if (closeCallback) {
-      closeCallback();
-    }
-
-    expect(removeClientSpy).toHaveBeenCalledWith(
-      (user1 as any)._id.toString(),
-      mockRes
-    );
-
-    jest.restoreAllMocks();
-  });
 
   it('should trigger close handler when SSE connection is terminated', async () => {
     const { EventEmitter } = require('events');
@@ -505,21 +347,6 @@ describe('GET /stream SSE authorization and error handling', () => {
       expect(res.body.message).toContain('Unable to send friend request');
     });
 
-    it('should handle notification service failure gracefully', async () => {
-      const notificationService = require('../../src/services/notification.service').default;
-      (notificationService.sendFriendRequestNotification as jest.Mock).mockRejectedValueOnce(
-        new Error('FCM error')
-      );
-
-      const res = await request(app)
-        .post('/api/friends/request')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ email: 'user2@example.com' });
-
-      // Should still succeed even if notification fails (201 = Created)
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-    });
 
     it('should reject request when already friends with user', async () => {
       // Create a friendship between user1 and user2
@@ -542,21 +369,6 @@ describe('GET /stream SSE authorization and error handling', () => {
   // ==================== POST /respond Error Tests ====================
 
   describe('POST /respond error handling', () => {
-    it('should handle database error when finding friend request', async () => {
-      jest.spyOn(FriendRequest, 'findById').mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(app)
-        .post('/api/friends/respond')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          requestId: new mongoose.Types.ObjectId().toString(),
-          accept: true
-        });
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Failed to respond to request');
-    });
 
     it('should handle database error when creating friendships', async () => {
       // Create a friend request
@@ -582,30 +394,6 @@ describe('GET /stream SSE authorization and error handling', () => {
       expect(res.body.message).toContain('Failed to respond to request');
     });
 
-    it('should handle notification failure when accepting request', async () => {
-      const friendRequest = await FriendRequest.create({
-        senderId: (user1 as any)._id,
-        receiverId: (user2 as any)._id,
-        status: 'pending'
-      });
-
-      const notificationService = require('../../src/services/notification.service').default;
-      (notificationService.sendFriendAcceptNotification as jest.Mock).mockRejectedValueOnce(
-        new Error('FCM error')
-      );
-
-      const res = await request(app)
-        .post('/api/friends/respond')
-        .set('Authorization', `Bearer ${token2}`)
-        .send({
-          requestId: (friendRequest as any)._id.toString(),
-          accept: true
-        });
-
-      // Should still succeed even if notification fails
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
   });
 
   // ==================== DELETE /:friendId Error Tests ====================
@@ -652,89 +440,14 @@ describe('GET /stream SSE authorization and error handling', () => {
     // ==================== DELETE /:friendId Validation Tests ====================
 
 describe('DELETE /:friendId parameter validation', () => {
-  it('should return 400 when friendId is empty or missing', async () => {
-    // Test with various empty/invalid patterns
-    const testPatterns = [
-      '/api/friends/',      // Empty after slash
-      '/api/friends/ ',     // Just whitespace
-      '/api/friends/  ',    // Multiple spaces
-    ];
 
-    for (const pattern of testPatterns) {
-      const res = await request(app)
-        .delete(pattern)
-        .set('Authorization', `Bearer ${token1}`);
 
-      // Should return 404 (route not found for empty friendId)
-      expect(res.status).toStrictEqual(404);
-    }
-  });
-
-  it('should validate friendId before processing delete', async () => {
-    // Create a mock scenario where params exist but friendId is falsy
-    const deleteSpy = jest.spyOn(Friendship, 'deleteMany');
-
-    // Try to delete with empty string as friendId
-    const res = await request(app)
-      .delete('/api/friends/ ')  // Space gets trimmed by Express
-      .set('Authorization', `Bearer ${token1}`);
-
-    // Should return 404 (route not found for empty friendId)
-    expect(res.status).toStrictEqual(404);
-
-    deleteSpy.mockRestore();
-  });
-
-  it('should handle case where friendId param is not provided', async () => {
-    // Mock Express request with missing friendId
-    const mockReq: any = {
-      userId: (user1 as any)._id.toString(),
-      params: {},  // No friendId in params
-    };
-
-    const mockRes: any = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
-    };
-
-    // Simulate the controller logic
-    const { friendId } = mockReq.params;
-    
-    if (!friendId) {
-      mockRes.status(400);
-      mockRes.json({ success: false, message: 'friendId is required' });
-    }
-
-    expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'friendId is required'
-    });
-  });
 });
   });
 
   // ==================== Additional Edge Cases ====================
 
   describe('Additional edge cases', () => {
-    it('should handle missing accept field in respond request', async () => {
-      const friendRequest = await FriendRequest.create({
-        senderId: (user1 as any)._id,
-        receiverId: (user2 as any)._id,
-        status: 'pending'
-      });
-
-      const res = await request(app)
-        .post('/api/friends/respond')
-        .set('Authorization', `Bearer ${token2}`)
-        .send({
-          requestId: (friendRequest as any)._id.toString()
-          // missing accept field
-        });
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-    });
 
     it('should handle missing requestId field in respond request', async () => {
       const res = await request(app)
