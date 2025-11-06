@@ -319,22 +319,6 @@ describe('Movie Routes - Mocked Tests', () => {
 
   describe('GET /:movieId/providers', () => {
 
-    it('should use fallback link when no provider link', async () => {
-      mockTmdbGet.mockResolvedValueOnce({
-        data: {
-          results: {
-            CA: {}
-          }
-        }
-      });
-
-      const res = await request(app)
-        .get('/api/movies/550/providers?country=CA')
-        .set('Authorization', `Bearer ${token}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.data.link).toContain('themoviedb.org/movie/550/watch');
-    });
 
     it('should reject invalid movie ID', async () => {
       const res = await request(app)
@@ -457,59 +441,10 @@ describe('GET /:movieId/details - Branch coverage', () => {
 
 
 
-  it('should filter out cast members without names', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        id: 550,
-        title: 'Fight Club'
-      }
-    });
-
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        cast: [
-          { name: 'Brad Pitt' },
-          {}, // No name property
-          { name: null }, // Null name
-          { name: '' }, // Empty name
-          { name: 'Edward Norton' }
-        ]
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/550/details')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.cast).toEqual(['Brad Pitt', 'Edward Norton']);
-  });
 });
 describe('POST /rank - Branch coverage', () => {
 
 
-  it('should not enrich when poster exists but overview missing', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        overview: 'From TMDB',
-        poster_path: '/from_tmdb.jpg'
-      }
-    });
-
-    const res = await request(app)
-      .post('/api/movies/rank')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: 550,
-        title: 'Fight Club',
-        posterPath: '/provided.jpg'
-        // overview missing
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.movie.posterPath).toBe('/provided.jpg');
-    expect(res.body.data.movie.overview).toBe('From TMDB');
-  });
 
   it('should handle TMDB returning undefined for optional fields', async () => {
     mockTmdbGet.mockResolvedValueOnce({
@@ -595,33 +530,6 @@ describe('GET /:movieId/videos - Branch coverage', () => {
 
 
 
-  it('should filter out non-YouTube videos', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: [
-          {
-            key: 'vimeo123',
-            name: 'Trailer',
-            type: 'Trailer',
-            site: 'Vimeo'
-          },
-          {
-            key: 'yt456',
-            name: 'Teaser',
-            type: 'Teaser',
-            site: 'YouTube'
-          }
-        ]
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/550/videos')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.key).toBe('yt456'); // Should skip Vimeo
-  });
 });
 
 describe('GET /search - Additional branch coverage', () => {

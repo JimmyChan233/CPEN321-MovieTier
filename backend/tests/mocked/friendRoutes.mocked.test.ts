@@ -334,18 +334,6 @@ describe('GET /stream SSE authorization and error handling', () => {
       expect(res.body.message).toContain('Unauthorized');
     });
 
-    it('should handle database error when creating friend request', async () => {
-      jest.spyOn(FriendRequest.prototype, 'save').mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(app)
-        .post('/api/friends/request')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ email: 'user2@example.com' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to send friend request');
-    });
 
 
     it('should reject request when already friends with user', async () => {

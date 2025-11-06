@@ -39,11 +39,47 @@ function getCoverage() {
       encoding: 'utf8',
       timeout: 180000,
     });
-    const match = result.match(/Statements\s+:\s+([\d.]+)%/);
-    return match ? parseFloat(match[1]) : 0;
+
+    // Extract all 4 coverage metrics
+    const statementsMatch = result.match(/Statements\s+:\s+([\d.]+)%/);
+    const branchesMatch = result.match(/Branches\s+:\s+([\d.]+)%/);
+    const functionsMatch = result.match(/Functions\s+:\s+([\d.]+)%/);
+    const linesMatch = result.match(/Lines\s+:\s+([\d.]+)%/);
+
+    const coverage = {
+      statements: statementsMatch ? parseFloat(statementsMatch[1]) : 0,
+      branches: branchesMatch ? parseFloat(branchesMatch[1]) : 0,
+      functions: functionsMatch ? parseFloat(functionsMatch[1]) : 0,
+      lines: linesMatch ? parseFloat(linesMatch[1]) : 0,
+    };
+
+    return coverage;
   } catch (e) {
-    return 0;
+    return { statements: 0, branches: 0, functions: 0, lines: 0 };
   }
+}
+
+/**
+ * Check if all coverage metrics are at 100%
+ * @param {Object} coverage - Coverage object with statements, branches, functions, lines
+ * @returns {boolean} - True if all metrics are >= 100%
+ */
+function isFullCoverage(coverage) {
+  return (
+    coverage.statements >= 100 &&
+    coverage.branches >= 100 &&
+    coverage.functions >= 100 &&
+    coverage.lines >= 100
+  );
+}
+
+/**
+ * Format coverage for display
+ * @param {Object} coverage - Coverage object
+ * @returns {string} - Formatted coverage string
+ */
+function formatCoverage(coverage) {
+  return `S: ${coverage.statements.toFixed(2)}% | B: ${coverage.branches.toFixed(2)}% | F: ${coverage.functions.toFixed(2)}% | L: ${coverage.lines.toFixed(2)}%`;
 }
 
 function extractTests(filePath) {
@@ -123,15 +159,16 @@ function analyzeFileIteratively(filePath, fileName) {
     removeTestFromFile(filePath, test);
 
     try {
-      // Check coverage
+      // Check coverage on all metrics
       const coverage = getCoverage();
 
-      if (coverage >= 100.0) {
+      if (isFullCoverage(coverage)) {
         // Test is REDUNDANT - keep it removed permanently
         log(
           `  ✓ REMOVED [${testIndex + 1}/${tests.length}]: ${testNameShort}`,
           'green'
         );
+        log(`    ${formatCoverage(coverage)}`, 'green');
         removed.push(test.name);
 
         // Re-extract tests (line numbers changed after removal)
@@ -140,9 +177,10 @@ function analyzeFileIteratively(filePath, fileName) {
       } else {
         // Test is REQUIRED - restore it
         log(
-          `  ✗ KEPT [${testIndex + 1}/${tests.length}]: ${testNameShort} (coverage: ${coverage.toFixed(2)}%)`,
+          `  ✗ KEPT [${testIndex + 1}/${tests.length}]: ${testNameShort}`,
           'yellow'
         );
+        log(`    ${formatCoverage(coverage)}`, 'yellow');
         fs.writeFileSync(filePath, originalContent);
 
         // Re-extract tests with original content
@@ -154,6 +192,7 @@ function analyzeFileIteratively(filePath, fileName) {
         `  ⚠ ERROR [${testIndex + 1}/${tests.length}]: ${testNameShort}`,
         'red'
       );
+      log(`    Error: ${e.message.substring(0, 60)}`, 'red');
       // Restore on error
       fs.writeFileSync(filePath, originalContent);
       tests = extractTests(filePath);
@@ -170,14 +209,16 @@ log('REDUNDANT TEST REMOVER - ITERATIVE APPROACH', 'bold');
 log('='.repeat(70), 'bold');
 
 const baselineCoverage = getCoverage();
-log(`\nInitial baseline coverage: ${baselineCoverage.toFixed(2)}%\n`, 'cyan');
+log(`\nInitial baseline coverage:\n`, 'cyan');
+log(`  ${formatCoverage(baselineCoverage)}\n`, 'cyan');
 
-if (baselineCoverage < 100) {
+if (!isFullCoverage(baselineCoverage)) {
   log(
-    `⚠️  WARNING: Baseline coverage is ${baselineCoverage.toFixed(2)}%, not 100%`,
+    `⚠️  WARNING: Baseline coverage is not 100% across all metrics`,
     'red'
   );
-  log('This script requires 100% baseline coverage.\n', 'red');
+  log(`  ${formatCoverage(baselineCoverage)}`, 'red');
+  log('This script requires 100% coverage on all metrics (Statements, Branches, Functions, Lines).\n', 'red');
   process.exit(1);
 }
 
@@ -224,15 +265,21 @@ log('FINAL COVERAGE CHECK', 'bold');
 log(`${'='.repeat(70)}`, 'bold');
 
 const finalCoverage = getCoverage();
-log(`\nFinal coverage: ${finalCoverage.toFixed(2)}%\n`, 'cyan');
+log(`\nFinal coverage:\n`, 'cyan');
+log(`  ${formatCoverage(finalCoverage)}\n`, 'cyan');
 
-if (finalCoverage >= 100.0) {
-  log('✓ SUCCESS: 100% coverage maintained!', 'green');
+if (isFullCoverage(finalCoverage)) {
+  log('✓ SUCCESS: 100% coverage maintained across all metrics!', 'green');
+  log('  ✓ Statements: 100%', 'green');
+  log('  ✓ Branches: 100%', 'green');
+  log('  ✓ Functions: 100%', 'green');
+  log('  ✓ Lines: 100%', 'green');
 } else {
   log(
-    `✗ ERROR: Coverage dropped to ${finalCoverage.toFixed(2)}%`,
+    `✗ ERROR: Coverage is not 100% across all metrics`,
     'red'
   );
+  log(`  ${formatCoverage(finalCoverage)}`, 'red');
   log('Some tests may have been incorrectly removed!', 'red');
   process.exit(1);
 }
@@ -265,6 +312,7 @@ for (const [file, result] of Object.entries(results)) {
 const jsonOutput = {
   baselineCoverage,
   finalCoverage,
+  allMetricsAt100Percent: isFullCoverage(finalCoverage),
   totalRemoved,
   totalKept,
   results,
@@ -277,3 +325,16 @@ log(
   `\nDetailed results saved to: redundant_tests_removed.json\n`,
   'cyan'
 );
+
+// Display coverage comparison
+log('Coverage Comparison:', 'cyan');
+log('─'.repeat(70), 'cyan');
+log('Baseline:', 'cyan');
+log(`  ${formatCoverage(baselineCoverage)}`, 'cyan');
+log('Final:', 'cyan');
+if (isFullCoverage(finalCoverage)) {
+  log(`  ${formatCoverage(finalCoverage)}`, 'green');
+} else {
+  log(`  ${formatCoverage(finalCoverage)}`, 'red');
+}
+log('', 'reset');

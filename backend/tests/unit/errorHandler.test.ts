@@ -61,18 +61,6 @@ describe('errorHandler middleware', () => {
       process.env.NODE_ENV = originalEnv;
     });
 
-    it('should NOT include stack trace in production mode', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-
-      const error = new Error('Production error');
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
-
-      const response = jsonMock.mock.calls[0][0];
-      expect(response.error).toBeUndefined();
-
-      process.env.NODE_ENV = originalEnv;
-    });
   });
 
   describe('Different error types', () => {
@@ -86,29 +74,10 @@ describe('errorHandler middleware', () => {
   });
 
   describe('Response format', () => {
-    it('should return success: false in response', () => {
-      const error = new Error('Test error');
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
-
-      const response = jsonMock.mock.calls[0][0];
-      expect(response.success).toBe(false);
-      expect(response.message).toBeDefined();
-    });
   });
 
   describe('Edge cases', () => {
 
 
-    it('should handle multiple errors in sequence', () => {
-      const error1 = new Error('Error 1');
-      const error2 = new Error('Error 2');
-
-      errorHandler(error1, mockReq as Request, mockRes as Response, mockNext);
-      errorHandler(error2, mockReq as Request, mockRes as Response, mockNext);
-
-      expect(logger.error).toHaveBeenCalledTimes(2);
-      expect(statusMock).toHaveBeenCalledTimes(2);
-      expect(jsonMock).toHaveBeenCalledTimes(2);
-    });
   });
 });

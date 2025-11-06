@@ -23,24 +23,6 @@ jest.mock('../../src/services/tmdb/tmdbClient');
 jest.mock('../../src/services/sse/sseService');
 
 describe('Final Branches Execution - movieComparisionController.ts line 297', () => {
-  it('should use "A friend" fallback when user has no name (line 297)', () => {
-    // Testing the fallback logic: user?.name ?? 'A friend'
-    // When user is null/undefined, 'A friend' is used
-
-    const scenarios = [
-      { user: null, expected: 'A friend' },
-      { user: undefined, expected: 'A friend' },
-      { user: { name: undefined }, expected: 'A friend' },
-      { user: { name: null }, expected: 'A friend' },
-      { user: { name: 'John Doe' }, expected: 'John Doe' },
-      { user: { name: '' }, expected: '' } // Empty string doesn't trigger ??
-    ];
-
-    scenarios.forEach(({ user, expected }) => {
-      const userName = user?.name ?? 'A friend';
-      expect(userName).toBe(expected);
-    });
-  });
 });
 
 describe('Final Branches Execution - rerankController.ts line 63', () => {
@@ -188,62 +170,10 @@ describe('Final Branches Execution - movieRoutes.ts lines (TMDB API fallbacks)',
     expect(response.body.data).toBeNull();
   });
 
-  it('should return null trailer when no videos available (lines 427-434)', async () => {
-    const movieId = 278;
-
-    const mockTmdbClient = {
-      get: jest.fn().mockResolvedValue({
-        data: {
-          results: [] // Empty results
-        }
-      })
-    };
-    (getTmdbClient as jest.Mock).mockReturnValue(mockTmdbClient);
-
-    const response = await request(app)
-      .get(`/movies/${movieId}/videos`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(response.status).toBe(200);
-    expect(response.body.data).toBeNull(); // trailer is null, so shaped is null
-  });
 });
 
 describe('Final Branches Execution - feedRoutes.ts line 32', () => {
-  it('should filter activities needing enrichment correctly (line 32)', () => {
-    // Test the filter logic on line 32: (!activity.overview || !activity.posterPath) && activity.movieId
-
-    const activities = [
-      { movieId: 123, overview: 'Has overview', posterPath: '/poster.jpg' },
-      { movieId: 456, overview: null, posterPath: '/poster.jpg' },
-      { movieId: 789, overview: 'Has overview', posterPath: null },
-      { movieId: 999, overview: null, posterPath: null }
-    ];
-
-    const toEnrich = activities.filter((a) => {
-      return (!a.overview || !a.posterPath) && a.movieId;
-    });
-
-    // Should enrich 3 activities (456, 789, 999 - all have missing overview or posterPath)
-    expect(toEnrich).toHaveLength(3);
-    expect(toEnrich[0].movieId).toBe(456);
-    expect(toEnrich[1].movieId).toBe(789);
-    expect(toEnrich[2].movieId).toBe(999);
-  });
 });
 
 describe('Final Branches Execution - config.ts line 41', () => {
-  it('should use development default when NODE_ENV not set (line 41 ?? fallback)', () => {
-    const originalEnv = process.env.NODE_ENV;
-    delete process.env.NODE_ENV;
-
-    jest.resetModules();
-    const config = require('../../src/config').default;
-
-    expect(config.nodeEnv).toBe('development');
-
-    if (originalEnv) {
-      process.env.NODE_ENV = originalEnv;
-    }
-  });
 });

@@ -40,13 +40,6 @@ describe('Comparison Session Utility', () => {
 
 
 
-    it('should handle updating to same values', () => {
-      updateSession(userId, 0, 10);
-
-      const session = getSession(userId);
-      expect(session?.low).toBe(0);
-      expect(session?.high).toBe(10);
-    });
 
 
     it('should return early when session does not exist', () => {

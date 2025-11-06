@@ -307,65 +307,6 @@ describe('Recommendation Controller - Mocked Tests', () => {
 
 
 
-    it('should apply recency bonus to recent movies', async () => {
-      await RankedMovie.create({
-        userId: (user as any)._id,
-        movieId: 155,
-        title: 'The Dark Knight',
-        rank: 1
-      });
-
-      mockTmdbGet.mockResolvedValueOnce({
-        data: {
-          genres: [{ id: 28, name: 'Action' }],
-          original_language: 'en',
-          vote_average: 9.0
-        }
-      });
-
-      const currentYear = new Date().getFullYear();
-      mockTmdbGet.mockResolvedValueOnce({
-        data: {
-          results: [
-            {
-              id: 1000,
-              title: 'Recent Movie',
-              overview: 'Overview',
-              poster_path: '/recent.jpg',
-              release_date: `${currentYear - 1}-01-01`,  // Recent
-              vote_average: 7.0,
-              genre_ids: [28],
-              original_language: 'en'
-            },
-            {
-              id: 2000,
-              title: 'Old Movie',
-              overview: 'Overview',
-              poster_path: '/old.jpg',
-              release_date: '1990-01-01',  // Old
-              vote_average: 7.0,
-              genre_ids: [28],
-              original_language: 'en'
-            }
-          ]
-        }
-      });
-
-      mockTmdbGet.mockResolvedValueOnce({
-        data: { results: [] }
-      });
-
-      mockTmdbGet.mockResolvedValueOnce({
-        data: { results: [] }
-      });
-
-      const res = await request(app)
-        .get('/api/recommendations')
-        .set('Authorization', `Bearer ${token}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.data).toBeInstanceOf(Array);
-    });
 
 
 

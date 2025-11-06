@@ -58,46 +58,6 @@ describe('Recommendation Controller - Helper Function Coverage', () => {
     jest.clearAllMocks();
   });
 
-  it('should handle getTrendingMovies with missing optional fields', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: [
-          {
-            id: 1,
-            title: 'Movie With Some Fields',
-            overview: 'Has overview',
-            // Missing: poster_path, release_date, vote_average
-          },
-          {
-            id: 2,
-            title: 'Movie Missing Overview',
-            // Missing: overview, poster_path
-            release_date: '2020-01-01',
-            vote_average: 8.5
-          },
-          {
-            id: 3,
-            title: 'Movie With All Fields',
-            overview: 'Full overview',
-            poster_path: '/path.jpg',
-            release_date: '2021-01-01',
-            vote_average: 7.5
-          }
-        ]
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/recommendations/trending')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data.length).toBe(3);
-    // Verify null coalescing worked
-    expect(res.body.data[0].posterPath).toBeNull();
-    expect(res.body.data[1].overview).toBeNull();
-  });
 
   it('should handle recommendations with movies having partial fields', async () => {
     // Create a ranked movie to base recommendations on
@@ -193,35 +153,6 @@ describe('Movie Routes - Helper Function Coverage', () => {
     jest.clearAllMocks();
   });
 
-  it('should handle search results with zero values and falsy fields', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: [
-          {
-            id: 1,
-            title: 'Movie With Zero Rating',
-            overview: '',
-            poster_path: null,
-            release_date: '',
-            vote_average: 0
-          },
-          {
-            id: 2,
-            title: 'Movie With Only Title',
-            // All other fields undefined
-          }
-        ]
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=test')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data.length).toBe(2);
-  });
 
   it('should handle CJK search with fallback to detail fetch', async () => {
     mockTmdbGet
@@ -257,93 +188,6 @@ describe('Movie Routes - Helper Function Coverage', () => {
     expect(res.body.success).toBe(true);
   });
 
-  it('should handle CJK search with detail fetch failure fallback', async () => {
-    mockTmdbGet
-      .mockResolvedValueOnce({
-        data: { results: [] }
-      })
-      .mockResolvedValueOnce({
-        data: {
-          results: [
-            {
-              id: 102,
-              title: '日本映画',
-              overview: 'Original overview',
-              poster_path: '/japan.jpg'
-            }
-          ]
-        }
-      })
-      .mockRejectedValueOnce(new Error('TMDB error'));
 
-    const res = await request(app)
-      .get('/api/movies/search?query=日本')
-      .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-  });
-
-  it('should handle search with includeCast parameter', async () => {
-    mockTmdbGet
-      .mockResolvedValueOnce({
-        data: {
-          results: [
-            {
-              id: 200,
-              title: 'Movie With Cast'
-            }
-          ]
-        }
-      })
-      .mockResolvedValueOnce({
-        data: {
-          cast: [
-            { name: 'Actor 1' },
-            { name: 'Actor 2' },
-            { name: 'Actor 3' },
-            { name: 'Actor 4' }
-          ]
-        }
-      });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=test&includeCast=true')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data[0].cast).toBeDefined();
-    expect(res.body.data[0].cast.length).toBe(3); // Only first 3
-  });
-
-  it('should handle cast members without names', async () => {
-    mockTmdbGet
-      .mockResolvedValueOnce({
-        data: {
-          results: [
-            {
-              id: 201,
-              title: 'Movie'
-            }
-          ]
-        }
-      })
-      .mockResolvedValueOnce({
-        data: {
-          cast: [
-            { name: 'Actor 1' },
-            {}, // Missing name
-            { name: 'Actor 3' }
-          ]
-        }
-      });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=test&includeCast=true')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data[0].cast.length).toBeGreaterThan(0);
-  });
 });

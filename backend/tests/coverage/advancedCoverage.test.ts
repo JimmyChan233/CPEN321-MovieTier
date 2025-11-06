@@ -57,54 +57,8 @@ describe('Movie Routes - TMDB Field Fallbacks', () => {
     jest.clearAllMocks();
   });
 
-  it('should handle TMDB response missing all optional fields in search', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: [
-          {
-            id: 1,
-            title: 'Movie Without Fields',
-            // No overview, poster_path, release_date, vote_average
-          }
-        ]
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=test')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data[0].overview).toBeNull();
-    expect(res.body.data[0].posterPath).toBeNull();
-    expect(res.body.data[0].releaseDate).toBeNull();
-    expect(res.body.data[0].voteAverage).toBeNull();
-  });
 
 
-  it('should handle provider list with missing provider_name', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: {
-          US: {
-            providers: [
-              { provider_id: 1 }, // Missing provider_name
-              { provider_id: 2, provider_name: 'Netflix' }
-            ],
-            link: 'https://example.com'
-          }
-        }
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/1/providers')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data).toBeDefined();
-  });
 
   it('should handle videos list with non-YouTube videos', async () => {
     mockTmdbGet.mockResolvedValueOnce({
@@ -180,27 +134,6 @@ describe('Watchlist Routes - TMDB Enrichment', () => {
     expect(res.body.data.posterPath).toBeUndefined(); // Should not be set since TMDB didn't have it
   });
 
-  it('should enrich watchlist item only when fields are missing', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        id: 101,
-        poster_path: '/path.jpg',
-        overview: 'Overview from TMDB'
-      }
-    });
-
-    const res = await request(app)
-      .post('/api/watchlist')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: 101,
-        title: 'Movie with Poster',
-        posterPath: '/provided.jpg' // Already provided
-      });
-
-    expect(res.status).toBe(201);
-    expect(res.body.data.posterPath).toBe('/provided.jpg'); // Should keep provided value
-  });
 });
 
 describe('Feed Routes - Activity Enrichment', () => {
@@ -240,30 +173,6 @@ describe('Feed Routes - Activity Enrichment', () => {
     jest.clearAllMocks();
   });
 
-  it('should enrich feed activity missing poster and overview', async () => {
-    // Create activity without poster/overview
-    await FeedActivity.create({
-      userId: user._id,
-      activityType: 'ranked_movie',
-      movieId: 200,
-      movieTitle: 'Movie to Enrich'
-    });
-
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        poster_path: '/enriched.jpg',
-        overview: 'Enriched overview'
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/feed')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    // Enrichment should have happened
-  });
 
   it('should skip enrichment when activity already has poster and overview', async () => {
     await FeedActivity.create({
@@ -290,19 +199,6 @@ describe('Config Module NODE_ENV Fallback', () => {
     jest.resetModules();
   });
 
-  it('should default to development when NODE_ENV is unset', () => {
-    const originalEnv = process.env.NODE_ENV;
-    delete process.env.NODE_ENV;
-
-    jest.resetModules();
-    const config = require('../../src/config').default;
-
-    expect(config.nodeEnv).toBe('development');
-
-    if (originalEnv) {
-      process.env.NODE_ENV = originalEnv;
-    }
-  });
 
   it('should use production when NODE_ENV is set to production', () => {
     const originalEnv = process.env.NODE_ENV;

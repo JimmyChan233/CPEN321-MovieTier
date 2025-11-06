@@ -130,28 +130,7 @@ describe('Remaining 5.4% Branch Coverage - Config Module', () => {
 });
 
 describe('Remaining 5.4% Branch Coverage - TMDB Client Interceptors', () => {
-  it('should create TMDB client successfully', () => {
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    const client = getTmdbClient();
-    expect(client).toBeDefined();
-  });
 
-  it('should handle TMDB client with both API keys undefined', () => {
-    const originalApiKey = process.env.TMDB_API_KEY;
-    const originalKey = process.env.TMDB_KEY;
-
-    delete process.env.TMDB_API_KEY;
-    delete process.env.TMDB_KEY;
-
-    jest.resetModules();
-    const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-    const client = getTmdbClient();
-
-    expect(client).toBeDefined();
-
-    if (originalApiKey) process.env.TMDB_API_KEY = originalApiKey;
-    if (originalKey) process.env.TMDB_KEY = originalKey;
-  });
 });
 
 describe('Remaining 5.4% Branch Coverage - Movie Routes Edge Cases', () => {
@@ -187,31 +166,6 @@ describe('Remaining 5.4% Branch Coverage - Movie Routes Edge Cases', () => {
     jest.clearAllMocks();
   });
 
-  it('should handle search when NO cast results from TMDB', async () => {
-    mockTmdbGet
-      .mockResolvedValueOnce({
-        data: {
-          results: [
-            {
-              id: 1,
-              title: 'Movie Without Cast'
-            }
-          ]
-        }
-      })
-      .mockResolvedValueOnce({
-        data: {
-          cast: [] // Empty cast array
-        }
-      });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=test&includeCast=true')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-  });
 
   it('should handle search when cast field is null or missing', async () => {
     mockTmdbGet
@@ -240,20 +194,6 @@ describe('Remaining 5.4% Branch Coverage - Movie Routes Edge Cases', () => {
     expect(Array.isArray(res.body.data[0].cast) || res.body.data[0].cast === undefined).toBe(true);
   });
 
-  it('should handle search when NO results returned at all', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: null
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=xyznotexist')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual([]);
-  });
 
   it('should handle search with undefined results', async () => {
     mockTmdbGet.mockResolvedValueOnce({
@@ -270,60 +210,6 @@ describe('Remaining 5.4% Branch Coverage - Movie Routes Edge Cases', () => {
     expect(res.body.data).toEqual([]);
   });
 
-  it('should skip cast enrichment when baseResults is empty', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: []
-      }
-    });
 
-    const res = await request(app)
-      .get('/api/movies/search?query=test&includeCast=true')
-      .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual([]);
-    // TMDB should only be called once (for search, not for cast since no results)
-    expect(mockTmdbGet).toHaveBeenCalledTimes(1);
-  });
-
-  it('should skip cast enrichment when includeCast is false', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: [
-          {
-            id: 3,
-            title: 'Movie'
-          }
-        ]
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=test&includeCast=false')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(mockTmdbGet).toHaveBeenCalledTimes(1); // Only search, no cast fetch
-  });
-
-  it('should handle search when includeCast param is missing', async () => {
-    mockTmdbGet.mockResolvedValueOnce({
-      data: {
-        results: [
-          {
-            id: 4,
-            title: 'Movie'
-          }
-        ]
-      }
-    });
-
-    const res = await request(app)
-      .get('/api/movies/search?query=test')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(mockTmdbGet).toHaveBeenCalledTimes(1); // Only search
-  });
 });

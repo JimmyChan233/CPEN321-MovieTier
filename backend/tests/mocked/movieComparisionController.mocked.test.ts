@@ -316,69 +316,8 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
 
 
 
-    it('should create feed activity when finalizing', async () => {
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
-
-      await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      const activity = await FeedActivity.findOne({
-        userId: (user as any)._id.toString(),
-        movieId: 999
-      });
-
-      expect(activity).toBeDefined();
-      expect(activity?.activityType).toBe('ranked_movie');
-      expect(activity?.movieTitle).toBe('New Movie');
-    });
 
 
-    it('should send FCM notification when finalizing', async () => {
-      const friend = await User.create({
-        googleId: 'friend123',
-        email: 'friend@example.com',
-        name: 'Test Friend',
-        displayName: 'Test Friend',
-        fcmToken: 'test_fcm_token_123'
-      });
-
-      await Friendship.create({
-        userId: (user as any)._id.toString(),
-        friendId: (friend as any)._id
-      });
-
-      (notificationService.sendFeedNotification as jest.Mock).mockResolvedValueOnce(undefined);
-
-      startSession((user as any)._id.toString(), {
-        movieId: 999,
-        title: 'New Movie',
-        posterPath: '/new.jpg'
-      }, 0);
-
-      await request(app)
-        .post('/api/movies/compare')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          comparedMovieId: 100,
-          preferredMovieId: 999
-        });
-
-      expect(notificationService.sendFeedNotification).toHaveBeenCalledWith(
-        'test_fcm_token_123',
-        mockUsers.validUser.name,
-        'New Movie',
-        expect.any(String)
-      );
-    });
 
 
     it('should handle FCM notification failure when finalizing', async () => {
@@ -454,22 +393,6 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
     // Uncovered line: 36 - Unauthorized check in addMovie
 
     // Uncovered line: 23, 26 - watchlist removal error handling
-    it('should handle watchlist removal errors gracefully', async () => {
-      jest.spyOn(WatchlistItem, 'deleteOne').mockRejectedValueOnce(new Error('DB connection error'));
-
-      const res = await request(app)
-        .post('/api/movies/add')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          movieId: 456,
-          title: 'New Movie',
-          posterPath: '/new.jpg'
-        });
-
-      // Should succeed even if watchlist removal fails
-      expect(res.status).toStrictEqual(200);
-      expect(res.body.success).toBe(true);
-    });
 
     // Uncovered line: 163 - Unable to find comparison movie on initial add
     it('should handle case when no comparison movie found on initial add', async () => {

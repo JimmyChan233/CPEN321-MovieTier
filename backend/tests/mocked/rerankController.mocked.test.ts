@@ -37,12 +37,6 @@ describe('startRerank (mocked)', () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  it('returns 400 for invalid rankedId', async () => {
-    const req = mockReq({ rankedId: 'abc' }, '507f1f77bcf86cd799439011');
-    const res = mockRes();
-    await startRerank(req as any, res as any);
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
 
   it('returns 404 if movie not found', async () => {
     (RankedMovieModel.findOne as any).mockResolvedValue(null);

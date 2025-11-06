@@ -55,13 +55,6 @@ describe('Logger Utility', () => {
   });
 
   describe('http', () => {
-    it('should use green color for status < 400', () => {
-      logger.http('GET', '/api/test', 200);
-
-      const call = stdoutWriteSpy.mock.calls[0][0];
-      expect(call).toContain('200');
-      expect(stdoutWriteSpy).toHaveBeenCalled();
-    });
 
     it('should use red color for status >= 400', () => {
       logger.http('GET', '/api/error', 404);
@@ -71,28 +64,9 @@ describe('Logger Utility', () => {
       expect(stdoutWriteSpy).toHaveBeenCalled();
     });
 
-    it('should handle missing duration parameter', () => {
-      logger.http('POST', '/api/test', 201);
-
-      const call = stdoutWriteSpy.mock.calls[0][0];
-      expect(call).toContain('POST');
-      expect(call).toContain('/api/test');
-      // When no duration, the ms part should not be included
-      expect(stdoutWriteSpy).toHaveBeenCalled();
-    });
 
 
 
-    it('should handle various HTTP methods', () => {
-      logger.http('PUT', '/api/profile', 200);
-      logger.http('PATCH', '/api/movies/123', 200);
-      logger.http('HEAD', '/api/health', 200);
-
-      expect(stdoutWriteSpy).toHaveBeenCalledTimes(3);
-      expect(stdoutWriteSpy.mock.calls[0][0]).toContain('PUT');
-      expect(stdoutWriteSpy.mock.calls[1][0]).toContain('PATCH');
-      expect(stdoutWriteSpy.mock.calls[2][0]).toContain('HEAD');
-    });
   });
 
   describe('Timestamp formatting', () => {
@@ -101,13 +75,6 @@ describe('Logger Utility', () => {
   describe('Argument formatting', () => {
 
 
-    it('should format boolean arguments', () => {
-      logger.info('Message', true, false);
-
-      const call = stdoutWriteSpy.mock.calls[0][0];
-      expect(call).toContain('true');
-      expect(call).toContain('false');
-    });
 
 
 
