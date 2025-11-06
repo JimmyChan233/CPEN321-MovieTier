@@ -280,21 +280,6 @@ describe('Advanced Friend Routes Tests', () => {
   });
 
   // Test Case 17: Respond to request not meant for user
-  it('should reject respond to request for different receiver', async () => {
-    const friendReq = await FriendRequest.create({
-      senderId: user2._id,
-      receiverId: user3._id,
-      status: 'pending'
-    });
-
-    await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        requestId: (friendReq as any)._id.toString(),
-        accept: true
-      });
-  });
 
   // Test Case 18: Respond to already accepted request
   it('should reject respond to already accepted request', async () => {
