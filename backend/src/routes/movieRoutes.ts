@@ -12,6 +12,7 @@ import { startRerank } from '../controllers/rerankController';
 import { getTmdbClient } from '../services/tmdb/tmdbClient';
 import mongoose from 'mongoose';
 import { asyncHandler } from '../utils/asyncHandler';
+import { normalizeMovieDetails, normalizeCastArray, findBestTrailer, filterYoutubeVideos } from '../utils/tmdbResponseHelpers';
 
 const router = Router();
 
@@ -49,17 +50,20 @@ router.get('/search', authenticate, asyncHandler(async (req, res) => {
       cast?: string[];
     }
 
-    let baseResults: MovieResult[] = (data.results ?? []).map((m: unknown) => {
+    // Helper to convert TMDB movie to MovieResult
+    const convertToMovieResult = (m: unknown): MovieResult => {
       const movie = m as { id: number; title: string; overview?: string; poster_path?: string; release_date?: string; vote_average?: number };
       return {
         id: movie.id,
         title: movie.title,
-        overview: movie.overview ?? null,
-        posterPath: movie.poster_path ?? null,
-        releaseDate: movie.release_date ?? null,
-        voteAverage: movie.vote_average ?? null
+        overview: movie.overview || null,
+        posterPath: movie.poster_path || null,
+        releaseDate: movie.release_date || null,
+        voteAverage: movie.vote_average || null
       };
-    });
+    };
+
+    let baseResults: MovieResult[] = (data.results ?? []).map(convertToMovieResult);
 
     // If no results and query likely Chinese, search zh-CN and return English titles via detail fetch
     const hasCjk = /[\u3400-\u9FBF\uF900-\uFAFF]/.test(query);
@@ -75,23 +79,16 @@ router.get('/search', authenticate, asyncHandler(async (req, res) => {
             const movie = m as { id: number; title: string; overview?: string; poster_path?: string; release_date?: string; vote_average?: number };
             try {
               const { data: det } = await tmdb.get(`/movie/${movie.id}`, { params: { language: 'en-US' } });
-              return {
-                id: det.id ?? movie.id,
-                title: det.title ?? movie.title,
-                overview: det.overview ?? movie.overview ?? null,
-                posterPath: det.poster_path ?? movie.poster_path ?? null,
-                releaseDate: det.release_date ?? movie.release_date ?? null,
-                voteAverage: det.vote_average ?? movie.vote_average ?? null
-              };
+              return convertToMovieResult({
+                id: det.id || movie.id,
+                title: det.title || movie.title,
+                overview: det.overview || movie.overview,
+                poster_path: det.poster_path || movie.poster_path,
+                release_date: det.release_date || movie.release_date,
+                vote_average: det.vote_average || movie.vote_average
+              });
             } catch {
-              return {
-                id: movie.id,
-                title: movie.title,
-                overview: movie.overview ?? null,
-                posterPath: movie.poster_path ?? null,
-                releaseDate: movie.release_date ?? null,
-                voteAverage: movie.vote_average ?? null
-              };
+              return convertToMovieResult(movie);
             }
           })
         );
@@ -397,19 +394,9 @@ router.get('/:movieId/details', authenticate, asyncHandler(async (req, res) => {
       tmdb.get(`/movie/${movieId}/credits`, { params: { language: 'en-US' } })
     ]);
     const d = detailsResp.data ?? {};
-    const cast = Array.isArray(creditsResp.data?.cast)
-      ? creditsResp.data.cast.slice(0, 5).map((c: unknown) => {
-          const castMember = c as { name?: string };
-          return castMember.name;
-        }).filter(Boolean)
-      : [];
+    const cast = normalizeCastArray(creditsResp.data?.cast);
     const shaped = {
-      id: d.id,
-      title: d.title,
-      overview: d.overview ?? null,
-      posterPath: d.poster_path ?? null,
-      releaseDate: d.release_date ?? null,
-      voteAverage: d.vote_average ?? null,
+      ...normalizeMovieDetails(d),
       cast
     };
     res.json({ success: true, data: shaped });
@@ -432,27 +419,10 @@ router.get('/:movieId/videos', authenticate, asyncHandler(async (req, res) => {
     const tmdb = getTmdbClient();
     const { data } = await tmdb.get(`/movie/${movieId}/videos`, { params: { language: 'en-US' } });
 
-    // Filter for YouTube trailers, prioritize official trailers
+    // Filter for YouTube videos and find the best trailer
     const videos = Array.isArray(data?.results) ? data.results : [];
-    const youtubeVideos = videos.filter((v: unknown) => {
-      const video = v as { site?: string };
-      return video.site === 'YouTube';
-    });
-
-    // Prioritize: Official Trailer > Trailer > Teaser
-    const trailer = youtubeVideos.find((v: unknown) => {
-      const video = v as { type?: string; official?: boolean };
-      return video.type === 'Trailer' && video.official;
-    })
-      ?? youtubeVideos.find((v: unknown) => {
-        const video = v as { type?: string };
-        return video.type === 'Trailer';
-      })
-      ?? youtubeVideos.find((v: unknown) => {
-        const video = v as { type?: string };
-        return video.type === 'Teaser';
-      })
-      ?? youtubeVideos[0];
+    const youtubeVideos = filterYoutubeVideos(videos);
+    const trailer = findBestTrailer(youtubeVideos);
 
     const shaped = trailer
       ? {

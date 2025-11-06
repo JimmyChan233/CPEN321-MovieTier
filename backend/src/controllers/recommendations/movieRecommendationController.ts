@@ -66,6 +66,20 @@ interface RankedMovieDoc {
   userId: mongoose.Types.ObjectId;
 }
 
+// Helper function to convert TMDB movie to MovieRecommendation
+function convertTmdbMovie(movie: TmdbMovie, fallbackLanguage = 'en'): MovieRecommendation {
+  return {
+    id: movie.id,
+    title: movie.title,
+    overview: movie.overview || null,
+    posterPath: movie.poster_path || null,
+    releaseDate: movie.release_date || null,
+    voteAverage: movie.vote_average || null,
+    genreIds: movie.genre_ids || [],
+    originalLanguage: movie.original_language || fallbackLanguage
+  };
+}
+
 export const getTrendingMovies = async (req: Request, res: Response) => {
   try {
     const tmdb = getTmdbClient();
@@ -144,16 +158,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
           const similar = tmdbResults
             .filter((r) => !seenMovieIds.has(r.id))
             .slice(0, 8)
-            .map((r): MovieRecommendation => ({
-              id: r.id,
-              title: r.title,
-              overview: r.overview ?? null,
-              posterPath: r.poster_path ?? null,
-              releaseDate: r.release_date ?? null,
-              voteAverage: r.vote_average ?? null,
-              genreIds: r.genre_ids ?? [],
-              originalLanguage: r.original_language ?? 'en'
-            }));
+            .map((r) => convertTmdbMovie(r));
           allRecs.push(...similar);
         }
       } catch (err) {
@@ -178,16 +183,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
           const recs = tmdbResults
             .filter((r) => !seenMovieIds.has(r.id))
             .slice(0, 8)
-            .map((r): MovieRecommendation => ({
-              id: r.id,
-              title: r.title,
-              overview: r.overview ?? null,
-              posterPath: r.poster_path ?? null,
-              releaseDate: r.release_date ?? null,
-              voteAverage: r.vote_average ?? null,
-              genreIds: r.genre_ids ?? [],
-              originalLanguage: r.original_language ?? 'en'
-            }));
+            .map((r) => convertTmdbMovie(r));
           allRecs.push(...recs);
         }
       } catch (err) {
@@ -378,16 +374,7 @@ async function fetchDiscoverRecommendations(
         const discovered = tmdbResults
           .filter((r) => !seenMovieIds.has(r.id))
           .slice(0, 10)
-          .map((r): MovieRecommendation => ({
-            id: r.id,
-            title: r.title,
-            overview: r.overview ?? null,
-            posterPath: r.poster_path ?? null,
-            releaseDate: r.release_date ?? null,
-            voteAverage: r.vote_average ?? null,
-            genreIds: r.genre_ids ?? [],
-            originalLanguage: r.original_language ?? language
-          }));
+          .map((r) => convertTmdbMovie(r, language));
         results.push(...discovered);
       }
     } catch (err) {
