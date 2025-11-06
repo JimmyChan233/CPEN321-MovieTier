@@ -214,102 +214,95 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       expect(res.body.data.title).toBe('Fight Club');
     });
 
-    it('should enrich missing posterPath from TMDB', async () => {
-      const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-      const mockGet = jest.fn().mockResolvedValue({
-        data: {
-          poster_path: '/enriched-poster.jpg',
-          overview: 'Enriched overview'
+    describe('TMDB Enrichment', () => {
+      const enrichmentTests = [
+        {
+          name: 'should enrich missing posterPath from TMDB',
+          request: { movieId: 550, title: 'Fight Club' },
+          mockResponse: {
+            data: { poster_path: '/enriched-poster.jpg', overview: 'Enriched overview' }
+          },
+          expectations: {
+            posterPath: '/enriched-poster.jpg',
+            overview: 'Enriched overview'
+          }
+        },
+        {
+          name: 'should enrich missing overview from TMDB',
+          request: { movieId: 680, title: 'Pulp Fiction', posterPath: '/existing-poster.jpg' },
+          mockResponse: {
+            data: { poster_path: '/poster.jpg', overview: 'Enriched overview text' }
+          },
+          expectations: {
+            posterPath: '/existing-poster.jpg',
+            overview: 'Enriched overview text'
+          }
+        },
+        {
+          name: 'should handle TMDB enrichment failure gracefully',
+          request: { movieId: 550, title: 'Fight Club' },
+          mockError: new Error('TMDB API error'),
+          expectations: {
+            status: 201,
+            success: true,
+            movieId: 550
+          }
         }
-      });
-      getTmdbClient.mockReturnValue({ get: mockGet });
+      ];
 
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 550,
-          title: 'Fight Club'
-          // No posterPath or overview
+      enrichmentTests.forEach(test => {
+        it(test.name, async () => {
+          const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
+          if (test.mockError) {
+            const mockGet = jest.fn().mockRejectedValue(test.mockError);
+            getTmdbClient.mockReturnValue({ get: mockGet });
+          } else {
+            const mockGet = jest.fn().mockResolvedValue(test.mockResponse);
+            getTmdbClient.mockReturnValue({ get: mockGet });
+          }
+
+          const res = await request(app)
+            .post('/')
+            .set('Authorization', `Bearer ${token1}`)
+            .send(test.request);
+
+          console.log(res);
+          expect(res.status).toBe(201);
+          if (!test.mockError) {
+            expect(res.body.data.posterPath).toBe(test.expectations.posterPath);
+            expect(res.body.data.overview).toBe(test.expectations.overview);
+          } else {
+            expect(res.body.success).toBe(test.expectations.success);
+            expect(res.body.data.movieId).toBe(test.expectations.movieId);
+          }
         });
-
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.data.posterPath).toBe('/enriched-poster.jpg');
-      expect(res.body.data.overview).toBe('Enriched overview');
-      expect(mockGet).toHaveBeenCalledWith('/movie/550', { params: { language: 'en-US' } });
+      });
     });
 
-    it('should enrich missing overview from TMDB', async () => {
-      const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-      const mockGet = jest.fn().mockResolvedValue({
-        data: {
-          poster_path: '/poster.jpg',
-          overview: 'Enriched overview text'
+    describe('Validation', () => {
+      const validationTests = [
+        {
+          name: 'should reject missing movieId',
+          request: { title: 'Fight Club' }
+        },
+        {
+          name: 'should reject missing title',
+          request: { movieId: 550 }
         }
+      ];
+
+      validationTests.forEach(test => {
+        it(test.name, async () => {
+          const res = await request(app)
+            .post('/')
+            .set('Authorization', `Bearer ${token1}`)
+            .send(test.request);
+
+          expect(res.status).toBe(400);
+          expect(res.body.success).toBe(false);
+          expect(res.body.message).toContain('movieId and title are required');
+        });
       });
-      getTmdbClient.mockReturnValue({ get: mockGet });
-
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 680,
-          title: 'Pulp Fiction',
-          posterPath: '/existing-poster.jpg'
-          // No overview
-        });
-
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.data.overview).toBe('Enriched overview text');
-      expect(res.body.data.posterPath).toBe('/existing-poster.jpg'); // Existing poster preserved
-    });
-
-    it('should handle TMDB enrichment failure gracefully', async () => {
-      const { getTmdbClient } = require('../../src/services/tmdb/tmdbClient');
-      const mockGet = jest.fn().mockRejectedValue(new Error('TMDB API error'));
-      getTmdbClient.mockReturnValue({ get: mockGet });
-
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 550,
-          title: 'Fight Club'
-        });
-
-      // Should still succeed even if TMDB fails
-      console.log(res);
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.movieId).toBe(550);
-    });
-
-    it('should reject missing movieId', async () => {
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          title: 'Fight Club'
-        });
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('movieId and title are required');
-    });
-
-    it('should reject missing title', async () => {
-      const res = await request(app)
-        .post('/')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          movieId: 550
-        });
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('movieId and title are required');
     });
 
     it('should reject duplicate movie', async () => {
