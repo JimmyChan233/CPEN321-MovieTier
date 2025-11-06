@@ -190,4 +190,38 @@ describe('AuthService - Mocked Tests', () => {
     await expect(authService.verifyGoogleToken('token'))
       .rejects.toThrow('Invalid Google token');
   });
+
+  // Test Case 23: verifyGoogleToken uses email as fallback when name is missing
+  it('should use email as fallback when payload.name is missing', async () => {
+    mockVerifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        email: 'test@example.com',
+        sub: 'google-123',
+        // name is intentionally missing/undefined
+      })
+    });
+
+    const result = await authService.verifyGoogleToken('token');
+
+    expect(result.email).toBe('test@example.com');
+    expect(result.name).toBe('test@example.com'); // Should use email as fallback
+    expect(result.googleId).toBe('google-123');
+  });
+
+  // Test Case 24: generateToken uses default secret when JWT_SECRET not set
+  it('should use default secret when JWT_SECRET is not set', () => {
+    const originalSecret = process.env.JWT_SECRET;
+    delete process.env.JWT_SECRET;
+
+    const authServiceWithoutSecret = new AuthService();
+    const token = authServiceWithoutSecret.generateToken('user-123');
+
+    expect(token).toBeDefined();
+    expect(typeof token).toBe('string');
+
+    // Restore original
+    if (originalSecret) {
+      process.env.JWT_SECRET = originalSecret;
+    }
+  });
 });

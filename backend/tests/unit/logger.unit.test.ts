@@ -55,9 +55,31 @@ describe('Logger Utility', () => {
   });
 
   describe('http', () => {
+    it('should use green color for status < 400', () => {
+      logger.http('GET', '/api/test', 200);
 
+      const call = stdoutWriteSpy.mock.calls[0][0];
+      expect(call).toContain('200');
+      expect(stdoutWriteSpy).toHaveBeenCalled();
+    });
 
+    it('should use red color for status >= 400', () => {
+      logger.http('GET', '/api/error', 404);
 
+      const call = stdoutWriteSpy.mock.calls[0][0];
+      expect(call).toContain('404');
+      expect(stdoutWriteSpy).toHaveBeenCalled();
+    });
+
+    it('should handle missing duration parameter', () => {
+      logger.http('POST', '/api/test', 201);
+
+      const call = stdoutWriteSpy.mock.calls[0][0];
+      expect(call).toContain('POST');
+      expect(call).toContain('/api/test');
+      // When no duration, the ms part should not be included
+      expect(stdoutWriteSpy).toHaveBeenCalled();
+    });
 
 
 

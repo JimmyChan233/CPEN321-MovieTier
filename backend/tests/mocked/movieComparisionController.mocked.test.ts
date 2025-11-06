@@ -583,7 +583,7 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
       length: 5,
       at: jest.fn(() => undefined)
     };
-    
+
     jest.spyOn(RankedMovie, 'find').mockReturnValue({
       sort: jest.fn().mockResolvedValue(mockArray)
     } as any);
@@ -601,6 +601,7 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
 
     jest.restoreAllMocks();
   });
+
 });
 
 
