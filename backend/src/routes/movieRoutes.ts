@@ -202,24 +202,17 @@ router.post('/rank', authenticate, asyncHandler(async (req: AuthRequest, res) =>
     }
 
     // Determine overview/poster via TMDB if not provided
+    // Note: getTmdbClient already handles TMDB_API_KEY ?? TMDB_KEY fallback in its request interceptor
     let finalOverview = overview;
     let finalPoster = posterPath;
     try {
       if ((!finalOverview || !finalPoster) && movieId) {
-        let apiKey: string | undefined;
-        if (process.env.TMDB_API_KEY) {
-          apiKey = process.env.TMDB_API_KEY;
-        } else if (process.env.TMDB_KEY) {
-          apiKey = process.env.TMDB_KEY;
-        }
-        if (apiKey) {
-          const tmdb = getTmdbClient();
-          const { data } = await tmdb.get(`/movie/${movieId}`, {
-            params: { language: 'en-US' }
-          });
-          if (!finalOverview) finalOverview = data.overview ?? undefined;
-          if (!finalPoster) finalPoster = data.poster_path ?? undefined;
-        }
+        const tmdb = getTmdbClient();
+        const { data } = await tmdb.get(`/movie/${movieId}`, {
+          params: { language: 'en-US' }
+        });
+        if (!finalOverview) finalOverview = data.overview ?? undefined;
+        if (!finalPoster) finalPoster = data.poster_path ?? undefined;
       }
     } catch {
       // ignore TMDB fetch errors; proceed without

@@ -405,21 +405,21 @@ describe('TMDB Client - Real Interceptor Behavior', () => {
    * Covers: const ms = start ? Date.now() - start : undefined
    */
   it('should handle timing gracefully when __start is missing', async () => {
-    const mockAxiosInstance = {
+    let responseSuccessHandler: any;
+
+    const mockInstance = {
       interceptors: {
         request: { use: jest.fn() },
-        response: { use: jest.fn() }
+        response: { use: jest.fn((success, error) => { responseSuccessHandler = success; }) }
       }
     };
 
-    jest.spyOn(axios, 'create').mockReturnValue(mockAxiosInstance as any);
+    mockedAxios.create = jest.fn().mockReturnValue(mockInstance);
+    resetTmdbClient();
 
-    const client = getTmdbClient();
-    
-    const responseInterceptorCall = mockAxiosInstance.interceptors.response.use.mock.calls[0];
-    const successHandler = responseInterceptorCall[0];
-    
-    successHandler({
+    getTmdbClient();
+
+    const result = responseSuccessHandler({
       config: {
         method: 'GET',
         url: '/movie/550',
@@ -429,6 +429,7 @@ describe('TMDB Client - Real Interceptor Behavior', () => {
       data: {}
     });
 
+    expect(result).toBeDefined();
     expect(consoleOutput.length).toBeGreaterThan(0);
   });
 });

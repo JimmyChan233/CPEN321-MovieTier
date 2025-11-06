@@ -302,4 +302,30 @@ describe('Feed Route Handlers - Inline Handlers', () => {
   // Test Case 29: Unauthorized like
 
   // Test Case 30: Unauthorized comment
+
+  // Test Case 31: GET /feed with activity having both overview and posterPath (needsEnrichment returns false)
+  it('should handle activity with complete metadata (no enrichment needed)', async () => {
+    await Friendship.create({ userId: user1._id, friendId: user2._id });
+
+    await FeedActivity.create({
+      userId: user2._id,
+      activityType: 'ranked_movie',
+      movieId: 550,
+      movieTitle: 'The Fight Club',
+      overview: 'An insomniac office worker and a devil-may-care soapmaker form an underground fight club...',
+      posterPath: '/path/to/poster.jpg',
+      rank: 1
+    });
+
+    const res = await request(app)
+      .get('/api/feed')
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].movie.overview).toBe('An insomniac office worker and a devil-may-care soapmaker form an underground fight club...');
+    expect(res.body.data[0].movie.posterPath).toBe('/path/to/poster.jpg');
+  });
 });

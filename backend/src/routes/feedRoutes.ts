@@ -15,16 +15,12 @@ const router = Router();
 
 /**
  * Check if an activity needs TMDB enrichment for missing metadata
+ * Note: movieId is always present due to schema validation (required field)
  * @param activity Activity object to check
- * @returns true if activity is missing overview or posterPath AND has a movieId
+ * @returns true if activity is missing overview or posterPath
  */
 function needsEnrichment(activity: unknown): boolean {
-  const a = activity as { overview?: string; posterPath?: string; movieId?: unknown };
-
-  // Check if movieId exists
-  if (a.movieId === undefined || a.movieId === null) {
-    return false;
-  }
+  const a = activity as { overview?: string; posterPath?: string };
 
   // Check if missing overview or posterPath
   if (!a.overview || !a.posterPath) {
