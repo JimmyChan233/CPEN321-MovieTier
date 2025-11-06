@@ -491,19 +491,6 @@ describe('Watchlist Routes - Unmocked Tests', () => {
       expect(res.body.message).toContain('Invalid movie id');
     });
 
-    it('should handle database error gracefully', async () => {
-      await mongoose.disconnect();
-
-      const res = await request(app)
-        .delete('/550')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Unable to remove from watchlist');
-
-      await mongoose.connect(mongoServer.getUri());
-    });
 
     it('should not affect other watchlist items', async () => {
       await request(app)

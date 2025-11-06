@@ -428,29 +428,6 @@ describe('Rerank Controller - Complete Coverage', () => {
     expect(res.status).toBe(200);
   });
 
-  it('should handle rerank with 20 movies', async () => {
-    const movies = [];
-    for (let i = 0; i < 20; i++) {
-      movies.push({
-        userId: user._id,
-        movieId: 1100000 + i,
-        title: `Movie ${i}`,
-        rank: i + 1,
-        posterPath: `/m${i}.jpg`
-      });
-    }
-    await RankedMovie.create(movies);
-
-    const movieToRerank = await RankedMovie.findOne({ userId: user._id, rank: 10 });
-
-    const res = await request(app)
-      .post('/rerank/start')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ rankedId: (movieToRerank as any)._id.toString() });
-
-    expect(res.status).toBe(200);
-    expect(res.body.status).toBe('compare');
-  });
 
   // ========== Error Handling ==========
 

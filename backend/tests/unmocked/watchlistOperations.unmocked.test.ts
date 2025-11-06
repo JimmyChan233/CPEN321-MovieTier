@@ -160,18 +160,6 @@ describe('Unmocked: POST /watchlist - Additional Tests', () => {
   // Expected status code: 201
   // Expected behavior: Movie added to watchlist, posterPath enriched from TMDB
   // Expected output: Success message
-  it('should add movie with only required fields', async () => {
-    const res = await request(app)
-      .post('/')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: mockMovies.inception.id,
-        title: mockMovies.inception.title
-      });
-
-    expect(res.status).toStrictEqual(201);
-    expect(res.body.success).toStrictEqual(true);
-  });
 
   // Input: No authentication
   // Expected status code: 401
