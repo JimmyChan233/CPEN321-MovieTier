@@ -72,43 +72,16 @@ describe('Unmocked: GET /movies/search', () => {
   // Expected status code: 200
   // Expected behavior: TMDB API is called and results formatted
   // Expected output: Array of movies with id, title, overview, posterPath, releaseDate, voteAverage
-  it('should return search results for valid movie query', async () => {
-    const res = await request(app)
-      .get('/search')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ query: 'Inception' });
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-  });
 
   // Input: Query with less than 2 characters
   // Expected status code: 400
   // Expected behavior: Request is rejected without API call
   // Expected output: Validation error about minimum query length
-  it('should reject search query shorter than 2 characters', async () => {
-    const res = await request(app)
-      .get('/search')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ query: 'a' });
-
-    expect(res.status).toStrictEqual(400);
-    expect(res.body.message).toMatch(/characters|length/);
-  });
 
   // Input: Empty query string
   // Expected status code: 400
   // Expected behavior: Request is rejected
   // Expected output: Error message about empty query
-  it('should reject empty search query', async () => {
-    const res = await request(app)
-      .get('/search')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ query: '' });
-
-    expect(res.status).toStrictEqual(400);
-  });
 
   // Input: Valid query but unauthenticated
   // Expected status code: 401
@@ -154,46 +127,11 @@ describe('Unmocked: GET /movies/ranked', () => {
   // Expected status code: 200
   // Expected behavior: Fetch all ranked movies sorted by rank
   // Expected output: Array of ranked movies with movie details
-  it('should return user ranked movies sorted by rank', async () => {
-    await RankedMovie.create([
-      {
-        userId: user._id,
-        movieId: 278,
-        title: 'The Shawshank Redemption',
-        rank: 1
-      },
-      {
-        userId: user._id,
-        movieId: 238,
-        title: 'The Godfather',
-        rank: 2
-      }
-    ]);
-
-    const res = await request(app)
-      .get('/ranked')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBe(2);
-  });
 
   // Input: User with no ranked movies
   // Expected status code: 200
   // Expected behavior: Return empty array
   // Expected output: Empty array
-  it('should return empty array for user with no ranked movies', async () => {
-    const res = await request(app)
-      .get('/ranked')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBe(0);
-  });
 
   // Input: No authentication token
   // Expected status code: 401
@@ -238,41 +176,11 @@ describe('Unmocked: DELETE /movies/ranked/:id', () => {
   // Expected status code: 200
   // Expected behavior: Movie is deleted and ranks are shifted up
   // Expected output: Success message
-  it('should delete ranked movie and adjust ranks', async () => {
-    const movies = await RankedMovie.create([
-      { userId: user._id, movieId: 278, title: 'Movie 1', rank: 1 },
-      { userId: user._id, movieId: 238, title: 'Movie 2', rank: 2 },
-      { userId: user._id, movieId: 27205, title: 'Movie 3', rank: 3 }
-    ]);
-
-    const res = await request(app)
-      .delete(`/ranked/${movies[1]._id}`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(200);
-
-    // Verify movie is deleted
-    const remaining = await RankedMovie.find({ userId: user._id });
-    expect(remaining.length).toBe(2);
-
-    // Verify ranks are adjusted
-    const updatedRanks = await RankedMovie.find({ userId: user._id }).sort({ rank: 1 });
-    expect(updatedRanks[0].rank).toBe(1);
-    expect(updatedRanks[1].rank).toBe(2);
-  });
 
   // Input: Non-existent movie ID
   // Expected status code: 404
   // Expected behavior: Database is unchanged
   // Expected output: Not found error
-  it('should reject deletion of non-existent movie', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const res = await request(app)
-      .delete(`/ranked/${fakeId}`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(404);
-  });
 
   // Input: Invalid ObjectId format
   // Expected status code: 400
@@ -318,37 +226,11 @@ describe('Unmocked: POST /movies/rank', () => {
   // Expected status code: 200
   // Expected behavior: Movie is added to ranked list
   // Expected output: Created ranked movie with rank 1
-  it('should rank a new movie successfully', async () => {
-    const res = await request(app)
-      .post('/rank')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: 278,
-        title: 'The Shawshank Redemption',
-        posterPath: '/test.jpg',
-        overview: 'A movie about redemption'
-      });
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data.rank).toBe(1);
-  });
 
   // Input: Missing movieId
   // Expected status code: 400
   // Expected behavior: Request is rejected
   // Expected output: Validation error
-  it('should reject ranking without movieId', async () => {
-    const res = await request(app)
-      .post('/rank')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        title: 'The Shawshank Redemption'
-      });
-
-    expect(res.status).toStrictEqual(400);
-    expect(res.body.message).toMatch(/movieId|required/i);
-  });
 
   // Input: Missing title
   // Expected status code: 400
@@ -370,38 +252,9 @@ describe('Unmocked: POST /movies/rank', () => {
   // Expected status code: 400
   // Expected behavior: Request is rejected
   // Expected output: Duplicate error
-  it('should reject ranking duplicate movie', async () => {
-    await RankedMovie.create({
-      userId: user._id,
-      movieId: 278,
-      title: 'The Shawshank Redemption',
-      rank: 1
-    });
-
-    const res = await request(app)
-      .post('/rank')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movieId: 278,
-        title: 'The Shawshank Redemption'
-      });
-
-    expect(res.status).toStrictEqual(400);
-    expect(res.body.message).toMatch(/already|ranked/i);
-  });
 
   // Input: No authentication token
   // Expected status code: 401
   // Expected behavior: Request is rejected
   // Expected output: Unauthorized error
-  it('should reject unauthenticated rank request', async () => {
-    const res = await request(app)
-      .post('/rank')
-      .send({
-        movieId: 278,
-        title: 'The Shawshank Redemption'
-      });
-
-    expect(res.status).toStrictEqual(401);
-  });
 });

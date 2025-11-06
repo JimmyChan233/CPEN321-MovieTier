@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(pm2 restart:*)",
+      "Bash(pm2 logs:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

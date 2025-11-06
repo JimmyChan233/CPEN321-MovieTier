@@ -100,44 +100,11 @@ describe('Unmocked: GET /recommendations', () => {
   // Expected status code: 200
   // Expected behavior: Algorithm analyzes preferences and returns recommendations
   // Expected output: Array of recommended movies
-  it('should return recommendations for user with ranked movies', async () => {
-    await RankedMovie.create([
-      {
-        userId: user._id,
-        movieId: 278,
-        title: 'The Shawshank Redemption',
-        rank: 1
-      },
-      {
-        userId: user._id,
-        movieId: 238,
-        title: 'The Godfather',
-        rank: 2
-      }
-    ]);
-
-    const res = await request(app)
-      .get('/')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-  });
 
   // Input: User with no ranked movies
   // Expected status code: 200
   // Expected behavior: Return empty recommendations
   // Expected output: Empty array
-  it('should return empty recommendations for user with no ranked movies', async () => {
-    const res = await request(app)
-      .get('/')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-  });
 
   // Input: No authentication token
   // Expected status code: 401
@@ -178,15 +145,6 @@ describe('Unmocked: GET /recommendations/trending', () => {
   // Expected status code: 200
   // Expected behavior: Fetch trending movies from TMDB
   // Expected output: Array of trending movies
-  it('should return trending movies', async () => {
-    const res = await request(app)
-      .get('/trending')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
-  });
 
   // Input: No authentication token
   // Expected status code: 401

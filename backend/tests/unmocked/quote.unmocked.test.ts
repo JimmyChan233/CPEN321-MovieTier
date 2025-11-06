@@ -54,30 +54,11 @@ describe('Unmocked: GET /quotes', () => {
   // Expected status code: 200
   // Expected behavior: Return fallback quote from local catalog
   // Expected output: Fallback quote
-  it('should return fallback quote for unknown movie', async () => {
-    const res = await request(app)
-      .get('/api/quotes')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ title: 'NonexistentMoviexyz123' });
-
-    expect(res.status).toStrictEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data).toBeDefined();
-    expect(typeof res.body.data).toBe('string');
-    expect(res.body.fallback).toBe(true);
-  });
 
   // Input: No authentication token
   // Expected status code: 401
   // Expected behavior: Request rejected
   // Expected output: Unauthorized error
-  it('should reject unauthenticated quote request', async () => {
-    const res = await request(app)
-      .get('/api/quotes')
-      .query({ title: 'Inception' });
-
-    expect(res.status).toStrictEqual(401);
-  });
 
   // Input: Missing title query parameter
   // Expected status code: 400

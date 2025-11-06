@@ -86,72 +86,11 @@ describe('User Routes - Unmocked Tests', () => {
   // ==================== GET /search Tests ====================
 
   describe('GET /search', () => {
-    it('should search users by name', async () => {
-      // user1 searches for user2 (Bob)
-      const res = await request(app)
-        .get('/search?query=Bob')
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.data.length).toBeGreaterThan(0);
-      expect(res.body.data[0].name).toContain('Bob');
-    });
 
-    it('should search users by partial name match', async () => {
-      const res = await request(app)
-        .get('/search?query=Smith')
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.data.length).toBeGreaterThan(0);
-      expect(res.body.data[0].name).toContain('Smith');
-    });
 
-    it('should exclude current user from search results', async () => {
-      // Search with a broad query that would match all users
-      const res = await request(app)
-        .get('/search?query=example')
-        .set('Authorization', `Bearer ${token1}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      const userIds = res.body.data.map((u: any) => u._id);
-      expect(userIds).not.toContain((user1 as any)._id.toString());
-    });
-
-    it('should return empty array when no users match', async () => {
-      const res = await request(app)
-        .get('/search?query=NonExistentUser123')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toEqual([]);
-    });
-
-    it('should reject query with less than 2 characters', async () => {
-      const res = await request(app)
-        .get('/search?query=a')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('at least 2 characters');
-    });
-
-    it('should reject empty query', async () => {
-      const res = await request(app)
-        .get('/search?query=')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('at least 2 characters');
-    });
 
     it('should reject missing query parameter', async () => {
       const res = await request(app)

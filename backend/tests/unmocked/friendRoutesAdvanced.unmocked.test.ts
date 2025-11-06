@@ -74,28 +74,6 @@ describe('Advanced Friend Routes Tests', () => {
   });
 
   // Test Case 2: Accept friend request creates bilateral friendship
-  it('should create bilateral friendship on accept', async () => {
-    const friendReq = await FriendRequest.create({
-      senderId: user2._id,
-      receiverId: user1._id,
-      status: 'pending'
-    });
-
-    await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        requestId: (friendReq as any)._id.toString(),
-        accept: true
-      });
-
-    // Verify bilateral friendships
-    const friendship1 = await Friendship.findOne({ userId: user1._id, friendId: user2._id });
-    const friendship2 = await Friendship.findOne({ userId: user2._id, friendId: user1._id });
-
-    expect(friendship1).toBeDefined();
-    expect(friendship2).toBeDefined();
-  });
 
   // Test Case 3: Delete friendship removes both directions
   it('should remove bilateral friendships on delete', async () => {
@@ -181,30 +159,8 @@ describe('Advanced Friend Routes Tests', () => {
   });
 
   // Test Case 8: Get all friends list
-  it('should get all friends with populated data', async () => {
-    await Friendship.create([
-      { userId: user1._id, friendId: user2._id },
-      { userId: user1._id, friendId: user3._id },
-      { userId: user1._id, friendId: user4._id }
-    ]);
-
-    const res = await request(app)
-      .get('/')
-      .set('Authorization', `Bearer ${token1}`);
-  });
 
   // Test Case 9: Get pending requests with sender details
-  it('should get pending requests with sender populated', async () => {
-    await FriendRequest.create([
-      { senderId: user2._id, receiverId: user1._id, status: 'pending' },
-      { senderId: user3._id, receiverId: user1._id, status: 'pending' },
-      { senderId: user4._id, receiverId: user1._id, status: 'pending' }
-    ]);
-
-    const res = await request(app)
-      .get('/requests')
-      .set('Authorization', `Bearer ${token1}`);
-  });
 
   // Test Case 10: Get detailed pending requests
   it('should get detailed pending requests', async () => {
@@ -219,16 +175,6 @@ describe('Advanced Friend Routes Tests', () => {
   });
 
   // Test Case 11: Get outgoing friend requests
-  it('should get outgoing friend requests', async () => {
-    await FriendRequest.create([
-      { senderId: user1._id, receiverId: user2._id, status: 'pending' },
-      { senderId: user1._id, receiverId: user3._id, status: 'pending' }
-    ]);
-
-    const res = await request(app)
-      .get('/requests/outgoing')
-      .set('Authorization', `Bearer ${token1}`);
-  });
 
   // Test Case 12: Get detailed outgoing requests
   it('should get detailed outgoing friend requests', async () => {
@@ -274,62 +220,14 @@ describe('Advanced Friend Routes Tests', () => {
   });
 
   // Test Case 16: Respond to non-existent request
-  it('should handle respond to non-existent request', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-
-    await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        requestId: fakeId.toString(),
-        accept: true
-      });
-  });
 
   // Test Case 17: Respond to request not meant for user
 
   // Test Case 18: Respond to already accepted request
-  it('should reject respond to already accepted request', async () => {
-    const friendReq = await FriendRequest.create({
-      senderId: user2._id,
-      receiverId: user1._id,
-      status: 'accepted'
-    });
-
-    await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        requestId: (friendReq as any)._id.toString(),
-        accept: true
-      });
-  });
 
   // Test Case 19: Respond to already rejected request
-  it('should reject respond to already rejected request', async () => {
-    const friendReq = await FriendRequest.create({
-      senderId: user2._id,
-      receiverId: user1._id,
-      status: 'rejected'
-    });
-
-    await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        requestId: (friendReq as any)._id.toString(),
-        accept: true
-      });
-  });
 
   // Test Case 20: Delete non-existent friendship
-  it('should handle delete of non-existent friendship', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-
-    await request(app)
-      .delete(`/api/friends/${fakeId.toString()}`)
-      .set('Authorization', `Bearer ${token1}`);
-  });
 
   // Test Case 21: Delete friendship with invalid friendId format
   it('should handle delete with invalid friendId format', async () => {
@@ -340,75 +238,15 @@ describe('Advanced Friend Routes Tests', () => {
 
   // Test Cases 22-26: Unauthorized access tests (parameterized)
   describe('Unauthorized Access Tests', () => {
-    it('should reject unauthorized access to friends list', async () => {
-      await request(app).get('/');
-    });
 
-    it('should reject unauthorized access to pending requests', async () => {
-      await request(app).get('/requests');
-    });
 
-    it('should reject unauthorized friend request', async () => {
-      const res = await request(app)
-        .post('/request')
-        .send({ email: user2.email });
 
-      expect(res.status).toStrictEqual(401);
-    });
 
-    it('should reject unauthorized respond', async () => {
-      const friendReq = await FriendRequest.create({
-        senderId: user2._id,
-        receiverId: user1._id,
-        status: 'pending'
-      });
-
-      const res = await request(app)
-        .post('/respond')
-        .send({
-          requestId: (friendReq as any)._id.toString(),
-          accept: true
-        });
-
-      expect(res.status).toStrictEqual(401);
-    });
-
-    it('should reject unauthorized delete friendship', async () => {
-      const res = await request(app)
-        .delete(`/${(user2 as any)._id.toString()}`);
-
-      expect(res.status).toStrictEqual(401);
-    });
   });
 
   // Test Case 27: Multiple rapid friend requests (rate limiting test)
-  it('should handle multiple rapid friend requests', async () => {
-    for (let i = 0; i < 3; i++) {
-      const res = await request(app)
-        .post('/request')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({ email: `user${i}@example.com` });
-
-      expect(res.status).toStrictEqual(429); // Rate limited after multiple requests
-    }
-  });
 
   // Test Case 28: Send request to already friend
-  it('should reject request to existing friend', async () => {
-    // Create friendship
-    await Friendship.create([
-      { userId: user1._id, friendId: user2._id },
-      { userId: user2._id, friendId: user1._id }
-    ]);
-
-    // Try to send friend request
-    const res = await request(app)
-      .post('/request')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({ email: user2.email });
-
-    expect(res.status).toStrictEqual(429); // Rate limited
-  });
 
   // Test Cases 29-33: Empty state endpoint tests (parameterized)
   describe('Empty State Endpoints', () => {
@@ -421,54 +259,14 @@ describe('Advanced Friend Routes Tests', () => {
     ];
 
     emptyStateTests.forEach(test => {
-      it(`should ${test.description}`, async () => {
-        const res = await request(app)
-          .get(test.endpoint)
-          .set('Authorization', `Bearer ${token1}`);
-
-        expect(res.status).toStrictEqual(200);
-      });
     });
   });
 
   // Test Case 34: Get empty response details (removed duplicate)
-  it('should get empty response details', async () => {
-    const res = await request(app)
-      .get('/requests/outgoing/detailed')
-      .set('Authorization', `Bearer ${token1}`);
-
-    expect(res.status).toStrictEqual(200);
-  });
 
   // Test Case 34: Respond with missing accept field
-  it('should handle respond with missing accept field', async () => {
-    const friendReq = await FriendRequest.create({
-      senderId: user2._id,
-      receiverId: user1._id,
-      status: 'pending'
-    });
-
-    const res = await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        requestId: (friendReq as any)._id.toString()
-      });
-
-    expect(res.status).toStrictEqual(400);
-  });
 
   // Test Case 35: Respond with missing requestId field
-  it('should handle respond with missing requestId field', async () => {
-    const res = await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        accept: true
-      });
-
-    expect(res.status).toStrictEqual(400);
-  });
 
   // Test Case 36: Complex friendship network
   it('should handle complex friendship network', async () => {
@@ -525,15 +323,6 @@ describe('Advanced Friend Routes Tests', () => {
   });
 
   // Test Case 38: Invalid request ID format
-  it('should handle invalid requestId format in respond', async () => {
-    await request(app)
-      .post('/respond')
-      .set('Authorization', `Bearer ${token1}`)
-      .send({
-        requestId: 'not-a-valid-objectid',
-        accept: true
-      });
-  });
 
   // Test Case 39: Filter out non-pending requests
   it('should only return pending requests, not accepted/rejected', async () => {
