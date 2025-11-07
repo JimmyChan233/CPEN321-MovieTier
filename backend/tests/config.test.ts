@@ -50,4 +50,37 @@ describe('config', () => {
     });
 
   });
+
+  describe('environment variable overrides', () => {
+    it('should override PORT if provided', () => {
+      process.env.PORT = '4000';
+      process.env.NODE_ENV = 'development';
+      process.env.JWT_SECRET = 'test-secret';
+      const config = require('../src/config').default;
+      expect(config.port).toBe(4000);
+    });
+
+    it('should override NODE_ENV if provided', () => {
+      process.env.NODE_ENV = 'test';
+      process.env.JWT_SECRET = 'test-secret';
+      const config = require('../src/config').default;
+      expect(config.nodeEnv).toBe('test');
+    });
+
+    it('should override MONGODB_URI if provided', () => {
+      process.env.MONGODB_URI = 'mongodb://custom-host:27017/customdb';
+      process.env.NODE_ENV = 'development';
+      process.env.JWT_SECRET = 'test-secret';
+      const config = require('../src/config').default;
+      expect(config.mongodbUri).toBe('mongodb://custom-host:27017/customdb');
+    });
+
+    it('should override TMDB_BASE_URL if provided', () => {
+      process.env.TMDB_BASE_URL = 'https://custom-tmdb.api/v3';
+      process.env.NODE_ENV = 'development';
+      process.env.JWT_SECRET = 'test-secret';
+      const config = require('../src/config').default;
+      expect(config.tmdbBaseUrl).toBe('https://custom-tmdb.api/v3');
+    });
+  });
 });
