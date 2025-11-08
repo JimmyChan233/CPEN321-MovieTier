@@ -20,7 +20,9 @@ android {
         versionCode = 2
         versionName = "1.1"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.cpen321.movietier.ui.HiltTestRunner"  // ← Change this line
+
+        testInstrumentationRunnerArguments["useTestStorageService"] = "true"
     }
 
     buildTypes {
@@ -170,4 +172,16 @@ dependencies {
 
     // Coroutines Testing
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+
+    implementation("com.google.firebase:firebase-auth-ktx")
+    androidTestImplementation("com.google.firebase:firebase-auth-ktx")
+// Hilt testing (using KSP, not kapt)
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.48")
+    ksp("com.google.dagger:hilt-compiler:2.48")
+
+
+    // Compose testing (if not already present)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.0")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.0")
 }
+

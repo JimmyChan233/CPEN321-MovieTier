@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import com.cpen321.movietier.ui.viewmodels.AuthViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -67,6 +68,17 @@ fun MovieTierApp() {
 
     val showBottomBar = currentRoute != NavRoutes.AUTH
 
+    // Check if user is authenticated (cached credentials)
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val authState by authViewModel.uiState.collectAsState()
+
+    // Determine where to start: AUTH or RECOMMENDATION
+    val startDestination = if (authState.isAuthenticated) {
+        NavRoutes.RECOMMENDATION
+    } else {
+        NavRoutes.AUTH
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -83,7 +95,7 @@ fun MovieTierApp() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            NavGraph(navController = navController)
+            NavGraph(navController = navController, startDestination = startDestination)
         }
     }
 }
