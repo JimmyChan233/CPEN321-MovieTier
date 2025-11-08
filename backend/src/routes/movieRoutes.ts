@@ -56,10 +56,10 @@ router.get('/search', authenticate, asyncHandler(async (req, res) => {
       return {
         id: movie.id,
         title: movie.title,
-        overview: movie.overview || null,
-        posterPath: movie.poster_path || null,
-        releaseDate: movie.release_date || null,
-        voteAverage: movie.vote_average || null
+        overview: movie.overview ?? null,
+        posterPath: movie.poster_path ?? null,
+        releaseDate: movie.release_date ?? null,
+        voteAverage: movie.vote_average ?? null
       };
     };
 

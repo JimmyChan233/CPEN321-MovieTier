@@ -71,12 +71,12 @@ function convertTmdbMovie(movie: TmdbMovie, fallbackLanguage = 'en'): MovieRecom
   return {
     id: movie.id,
     title: movie.title,
-    overview: movie.overview || null,
-    posterPath: movie.poster_path || null,
-    releaseDate: movie.release_date || null,
-    voteAverage: movie.vote_average || null,
-    genreIds: movie.genre_ids || [],
-    originalLanguage: movie.original_language || fallbackLanguage
+    overview: movie.overview ?? null,
+    posterPath: movie.poster_path ?? null,
+    releaseDate: movie.release_date ?? null,
+    voteAverage: movie.vote_average ?? null,
+    genreIds: movie.genre_ids ?? [],
+    originalLanguage: movie.original_language ?? fallbackLanguage
   };
 }
 

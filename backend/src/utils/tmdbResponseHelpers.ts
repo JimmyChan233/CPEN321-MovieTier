@@ -2,16 +2,6 @@
  * Helper functions for normalizing and handling TMDB API responses
  */
 
-// Type definitions for TMDB responses
-interface TmdbMovie {
-  id: number;
-  title: string;
-  overview?: string;
-  poster_path?: string;
-  release_date?: string;
-  vote_average?: number;
-}
-
 interface TmdbVideo {
   key?: string;
   name?: string;
@@ -22,6 +12,15 @@ interface TmdbVideo {
 
 interface TmdbCastMember {
   name?: string;
+}
+
+interface TmdbMovieDetailsResponse {
+  id?: number;
+  title?: string;
+  overview?: string | null;
+  poster_path?: string | null;
+  release_date?: string | null;
+  vote_average?: number | null;
 }
 
 interface MovieDetails {
@@ -36,31 +35,39 @@ interface MovieDetails {
 /**
  * Normalize TMDB movie details response
  */
-export function normalizeMovieDetails(data: any): MovieDetails {
+export function normalizeMovieDetails(data: unknown): MovieDetails {
+  const details =
+    typeof data === 'object' && data !== null
+      ? (data as TmdbMovieDetailsResponse)
+      : undefined;
+
   return {
-    id: data?.id,
-    title: data?.title,
-    overview: data?.overview || null,
-    posterPath: data?.poster_path || null,
-    releaseDate: data?.release_date || null,
-    voteAverage: data?.vote_average || null
+    id: details?.id,
+    title: details?.title,
+    overview: details?.overview ?? null,
+    posterPath: details?.poster_path ?? null,
+    releaseDate: details?.release_date ?? null,
+    voteAverage: details?.vote_average ?? null
   };
 }
 
 /**
  * Normalize cast array from TMDB credits response
  */
-export function normalizeCastArray(castData: any[] | undefined): string[] {
+export function normalizeCastArray(castData: unknown): string[] {
   if (!Array.isArray(castData)) {
     return [];
   }
   return castData
     .slice(0, 5)
-    .map((c: unknown) => {
-      const castMember = c as TmdbCastMember;
-      return castMember.name;
+    .map((castMember) => {
+      if (typeof castMember !== 'object' || castMember === null) {
+        return undefined;
+      }
+      const { name } = castMember as TmdbCastMember;
+      return typeof name === 'string' ? name : undefined;
     })
-    .filter(Boolean) as string[];
+    .filter((name): name is string => Boolean(name));
 }
 
 /**
@@ -89,12 +96,17 @@ export function findBestTrailer(youtubeVideos: TmdbVideo[]): TmdbVideo | null {
 /**
  * Filter videos to only YouTube videos
  */
-export function filterYoutubeVideos(videos: any[]): TmdbVideo[] {
+export function filterYoutubeVideos(videos: unknown): TmdbVideo[] {
   if (!Array.isArray(videos)) {
     return [];
   }
-  return videos.filter((v: unknown) => {
-    const video = v as TmdbVideo;
-    return video.site === 'YouTube';
-  });
+  return videos.filter(isYoutubeVideo);
+}
+
+function isYoutubeVideo(video: unknown): video is TmdbVideo {
+  if (typeof video !== 'object' || video === null) {
+    return false;
+  }
+  const candidate = video as TmdbVideo;
+  return typeof candidate.site === 'string' && candidate.site === 'YouTube';
 }

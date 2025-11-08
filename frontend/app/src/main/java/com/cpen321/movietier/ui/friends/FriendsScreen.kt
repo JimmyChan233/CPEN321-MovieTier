@@ -501,7 +501,7 @@ private fun UserSearchResultsList(
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.heightIn(max = 200.dp)
+        modifier = Modifier.heightIn(max = 200.dp).testTag("user_search_results")
     ) {
         items(searchResults) { user ->
             val isFriend = friends.any { it.id == user.id || it.email == user.email }

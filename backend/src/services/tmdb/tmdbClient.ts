@@ -1,4 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+
+type TimedAxiosRequestConfig = InternalAxiosRequestConfig & { __start?: number };
 
 function sanitizeForLog(value: string): string {
   return value.replace(/[\r\n]/g, ' ');
@@ -16,41 +18,58 @@ function safeTmdbLog(...parts: string[]): void {
 }
 
 // Exported for testing
-export function handleTmdbRequestIntercept(config: any) {
+export function handleTmdbRequestIntercept(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
   const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
-  config.params = { ...(config.params ?? {}), api_key: apiKey };
-  const start = Date.now();
-  (config as unknown as { __start: number }).__start = start;
-  const { method, url, params } = config;
-  const typedParams = params as Record<string, unknown>;
-  const sanitizedMethod = sanitizeForLog(method?.toUpperCase() ?? 'GET');
-  const sanitizedUrl = sanitizeForLog(url ?? '');
-  safeTmdbLog('🌐 TMDB ➡️  ', sanitizedMethod, ' ', sanitizedUrl, ' params=', JSON.stringify(redactParams(typedParams)));
+  const existingParams = (config.params ?? {}) as Record<string, unknown>;
+  config.params = { ...existingParams, api_key: apiKey };
+
+  (config as TimedAxiosRequestConfig).__start = Date.now();
+
+  const sanitizedMethod = sanitizeForLog(
+    typeof config.method === 'string' ? config.method.toUpperCase() : 'GET'
+  );
+  const sanitizedUrl = sanitizeForLog(typeof config.url === 'string' ? config.url : '');
+  const paramsForLog = JSON.stringify(
+    redactParams(config.params as Record<string, unknown>)
+  );
+  safeTmdbLog('🌐 TMDB ➡️  ', sanitizedMethod, ' ', sanitizedUrl, ' params=', paramsForLog);
   return config;
 }
 
 // Exported for testing
-export function handleTmdbResponseSuccess(response: any) {
-  const start = (response.config as unknown as { __start?: number }).__start;
-  const ms = start ? Date.now() - start : undefined;
-  const sanitizedMethod = sanitizeForLog(response.config.method?.toUpperCase() ?? 'GET');
-  const sanitizedUrl = sanitizeForLog(response.config.url ?? '');
+export function handleTmdbResponseSuccess(response: AxiosResponse): AxiosResponse {
+  const start = (response.config as TimedAxiosRequestConfig).__start;
+  const ms = typeof start === 'number' ? Date.now() - start : undefined;
+  const sanitizedMethod = sanitizeForLog(
+    typeof response.config.method === 'string' ? response.config.method.toUpperCase() : 'GET'
+  );
+  const sanitizedUrl = sanitizeForLog(typeof response.config.url === 'string' ? response.config.url : '');
   const timing = ms !== undefined ? ' ' + String(ms) + 'ms' : '';
   safeTmdbLog('🌐 TMDB ⬅️  ', sanitizedMethod, ' ', sanitizedUrl, ' ', String(response.status), timing);
   return response;
 }
 
 // Exported for testing
-export function handleTmdbResponseError(error: any): never {
-  const cfg = error.config ?? {};
-  const start = (cfg as { __start?: number }).__start;
-  const ms = start ? Date.now() - start : undefined;
-  const sanitizedMethod = sanitizeForLog(String(cfg.method?.toUpperCase?.() ?? 'GET'));
-  const sanitizedUrl = sanitizeForLog(String(cfg.url ?? ''));
-  const sanitizedError = sanitizeForLog(String(error.message ?? ''));
-  const timing = ms !== undefined ? ' ' + String(ms) + 'ms' : '';
-  safeTmdbLog('🌐 TMDB ⬅️  ', sanitizedMethod, ' ', sanitizedUrl, ' ERROR', timing, ': ', sanitizedError);
-  throw error;
+export function handleTmdbResponseError(error: unknown): never {
+  if (axios.isAxiosError(error)) {
+    const cfg = (error.config ?? {}) as TimedAxiosRequestConfig;
+    const start = cfg.__start;
+    const ms = typeof start === 'number' ? Date.now() - start : undefined;
+    const sanitizedMethod = sanitizeForLog(
+      typeof cfg.method === 'string' ? cfg.method.toUpperCase() : 'GET'
+    );
+    const sanitizedUrl = sanitizeForLog(typeof cfg.url === 'string' ? cfg.url : '');
+    const sanitizedError = sanitizeForLog(error.message ?? 'Unknown TMDB error');
+    const timing = ms !== undefined ? ' ' + String(ms) + 'ms' : '';
+    safeTmdbLog('🌐 TMDB ⬅️  ', sanitizedMethod, ' ', sanitizedUrl, ' ERROR', timing, ': ', sanitizedError);
+    throw error;
+  }
+
+  const fallbackMessage = sanitizeForLog(
+    error instanceof Error ? error.message : String(error ?? 'Unknown TMDB error')
+  );
+  safeTmdbLog('🌐 TMDB ⬅️  UNKNOWN ERROR: ', fallbackMessage);
+  throw error instanceof Error ? error : new Error(fallbackMessage);
 }
 
 // Singleton instance - created once at startup
@@ -74,4 +93,3 @@ export function getTmdbClient(): AxiosInstance {
 export function resetTmdbClient(): void {
   tmdbClientInstance = null;
 }
-
