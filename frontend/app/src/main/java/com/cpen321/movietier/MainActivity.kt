@@ -68,17 +68,6 @@ fun MovieTierApp() {
 
     val showBottomBar = currentRoute != NavRoutes.AUTH
 
-    // Check if user is authenticated (cached credentials)
-    val authViewModel: AuthViewModel = hiltViewModel()
-    val authState by authViewModel.uiState.collectAsState()
-
-    // Determine where to start: AUTH or RECOMMENDATION
-    val startDestination = if (authState.isAuthenticated) {
-        NavRoutes.RECOMMENDATION
-    } else {
-        NavRoutes.AUTH
-    }
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -95,11 +84,10 @@ fun MovieTierApp() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            NavGraph(navController = navController, startDestination = startDestination)
+            NavGraph(navController = navController)  // Always start at AUTH
         }
     }
 }
-
 @Composable
 private fun MovieTierBottomNavigation(
     currentRoute: String?,

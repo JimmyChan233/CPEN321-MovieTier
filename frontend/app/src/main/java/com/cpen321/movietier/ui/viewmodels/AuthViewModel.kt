@@ -187,8 +187,12 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Sign in successful"
                 )
-                // Register FCM token after successful sign in
-                FcmHelper.initializeFcm(apiService, viewModelScope)
+//                try {
+//                    FcmHelper.initializeFcm(apiService, viewModelScope)
+//                } catch (e: Exception) {
+//                    Log.w(TAG, "FCM initialization failed: ${e.message}")
+//                }
+
             }
             is Result.Error -> {
                 // If sign in fails, try sign up
@@ -223,8 +227,11 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Account created successfully"
                 )
-                // Register FCM token after successful sign up
-                FcmHelper.initializeFcm(apiService, viewModelScope)
+//                try {
+//                    FcmHelper.initializeFcm(apiService, viewModelScope)
+//                } catch (e: Exception) {
+//                    Log.w(TAG, "FCM initialization failed: ${e.message}")
+//                }
             }
             is Result.Error -> {
                 Log.e(TAG, "Sign up failed: ${result.message}")

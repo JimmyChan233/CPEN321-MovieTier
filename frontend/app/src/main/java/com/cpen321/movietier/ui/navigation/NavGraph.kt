@@ -1,6 +1,9 @@
 package com.cpen321.movietier.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,6 +15,8 @@ import com.cpen321.movietier.ui.recommendation.RecommendationScreen
 import com.cpen321.movietier.ui.profile.ProfileScreen
 import com.cpen321.movietier.ui.profile.FriendProfileScreen
 import com.cpen321.movietier.ui.profile.EditProfileScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.cpen321.movietier.ui.viewmodels.AuthViewModel
 
 object NavRoutes {
     const val AUTH = "auth"
@@ -30,18 +35,24 @@ fun NavGraph(
     navController: NavHostController,
     startDestination: String = NavRoutes.AUTH
 ) {
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val authState = authViewModel.uiState.collectAsState()
+
+    // ✅ Navigate when auth state changes
+    LaunchedEffect(authState.value.isAuthenticated) {
+        if (authState.value.isAuthenticated) {
+            navController.navigate(NavRoutes.RECOMMENDATION) {
+                popUpTo(NavRoutes.AUTH) { inclusive = true }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
         composable(NavRoutes.AUTH) {
-            AuthScreen(
-                onAuthSuccess = {
-                    navController.navigate(NavRoutes.RECOMMENDATION) {
-                        popUpTo(NavRoutes.AUTH) { inclusive = true }
-                    }
-                }
-            )
+            AuthScreen()
         }
 
         composable(NavRoutes.FEED) {

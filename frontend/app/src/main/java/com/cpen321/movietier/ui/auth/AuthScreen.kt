@@ -21,19 +21,15 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun AuthScreen(
-    authViewModel: AuthViewModel = hiltViewModel(),
-    onAuthSuccess: () -> Unit
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState.isAuthenticated) {
-        if (uiState.isAuthenticated) {
-            onAuthSuccess()
-        }
-    }
+    // Remove the onAuthSuccess callback entirely
+    // The LaunchedEffect in MainActivity will handle navigation
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
@@ -72,7 +68,6 @@ fun AuthScreen(
         }
     }
 }
-
 @Composable
 private fun AuthHeader() {
     Icon(
@@ -145,7 +140,6 @@ private fun AuthScreenPreview() {
     MovieTierTheme {
         AuthScreen(
             authViewModel = hiltViewModel(),
-            onAuthSuccess = {}
         )
     }
 }
