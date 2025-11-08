@@ -59,7 +59,7 @@ export function handleTmdbResponseError(error: unknown): never {
       typeof cfg.method === 'string' ? cfg.method.toUpperCase() : 'GET'
     );
     const sanitizedUrl = sanitizeForLog(typeof cfg.url === 'string' ? cfg.url : '');
-    const sanitizedError = sanitizeForLog(error.message ?? 'Unknown TMDB error');
+    const sanitizedError = sanitizeForLog(error.message);
     const timing = ms !== undefined ? ' ' + String(ms) + 'ms' : '';
     safeTmdbLog('🌐 TMDB ⬅️  ', sanitizedMethod, ' ', sanitizedUrl, ' ERROR', timing, ': ', sanitizedError);
     throw error;
