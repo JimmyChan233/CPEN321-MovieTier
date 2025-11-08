@@ -616,6 +616,33 @@ describe('Notification Service Tests - Mocked', () => {
       // Should reject uppercase .JSON (case sensitive check)
       expect(logger.error).toHaveBeenCalled();
     });
+
+    it('should successfully initialize Firebase with service account file', () => {
+      process.env.FIREBASE_SERVICE_ACCOUNT_PATH = '/path/to/serviceAccount.json';
+
+      const fs = require('fs');
+      const validServiceAccount = JSON.stringify({
+        type: 'service_account',
+        project_id: 'test-project',
+        private_key_id: 'key-id',
+        private_key: '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----\n',
+        client_email: 'firebase@test.iam.gserviceaccount.com',
+        client_id: '123456',
+        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+        token_uri: 'https://oauth2.googleapis.com/token'
+      });
+
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(validServiceAccount);
+
+      const { logger } = require('../../src/utils/logger');
+
+      NotificationService = require('../../src/services/notification.service').default;
+
+      // Should initialize successfully
+      expect(mockAdmin.initializeApp).toHaveBeenCalled();
+      expect(logger.success).toHaveBeenCalledWith('Firebase Admin initialized with service account');
+    });
   });
 
   // Tests for error message nullish coalescing operator

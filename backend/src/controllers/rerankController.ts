@@ -57,12 +57,9 @@ export const startRerank = async (req: Request, res: Response) => {
       status: 'compare',
       data: {
         compareWith: {
-          id: cmp.movieId,
+          movieId: cmp.movieId,
           title: cmp.title,
-          overview: null,
-          posterPath: cmp.posterPath,
-          releaseDate: null,
-          voteAverage: null
+          posterPath: cmp.posterPath
         }
       }
     });
