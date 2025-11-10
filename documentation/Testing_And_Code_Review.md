@@ -4,7 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
-| 2025-11-10 | 2.1.2, 4.1, 4.2, 5.1 (Frontend Test Names & Commit Hash) | **Updated Frontend Test File Names and Methods**: Corrected all test file names in Section 4.1 to match actual implementations (RecommendationScreenE2ETest.kt, CompareMoviesE2ETest.kt). Updated Section 4.2 with actual test method names and signatures for all three E2E test suites. Updated commit hashes in sections 2.1.2 and 5.1 to latest commit (2f9fb35). All tests are E2E tests interacting with real backend. |
+| 2025-11-10 | 2.1.2, 4.1, 4.2, 5.1 (Frontend Test Names & Commit Hash) | **Updated Frontend Test File Names and Methods**: Corrected all test file names in Section 4.1 to match actual implementations (RecommendationScreenE2ETest.kt, CompareMoviesE2ETest.kt). Updated Section 4.2 with actual test method names and signatures for all three E2E test suites. Updated commit hashes in sections 2.1.2 and 5.1 to latest commit (d5f153b). All tests are E2E tests interacting with real backend. |
 | 2025-11-09 | 2.1.2 (Commit Hash), 2.3 (Unmocked Coverage), 2.4 (Mocked Coverage), 2.5 (Combined Coverage) | **Updated Test Results and Commit Hash**: Updated commit hash to latest main branch commit (5e350ba). Updated unmocked test coverage (49.76% statements, 27.51% branches; 14 test suites, 83 tests) and mocked test coverage (84.02% statements, 71.35% branches; 15 test suites, 160 tests). Combined coverage remains at 100% across all metrics (50 test suites, 315 tests). Note: Test structure has been refactored since last documentation update (2025-11-04), with 14+15=29 test suites in individual runs combining to 50 total test suites when run together, and individual test counts changing to optimize test organization while maintaining overall 100% code coverage. |
 | 2025-11-04 (Final Documentation Fix) | 2.1.1 (API Table) | **Added Missing Endpoint Documentation**: Added 5 additional endpoints that were implemented and tested but missing from the API table: (1) GET /api/movies/:movieId/details - fetch movie details with cast, (2) GET /api/friends/stream - SSE stream for real-time friend events, (3) DELETE /api/friends/requests/:requestId - cancel pending friend request, (4) DELETE /api/feed/:activityId/comments/:commentId - delete comment, (5) GET /api/users/:userId/watchlist - view friend's watchlist. These endpoints are fully implemented with both unmocked and mocked test coverage. Updated table to reflect complete API documentation for all 35 implemented endpoints. |
 | 2025-11-04 (Final) | 2.3 (Unmocked Coverage), 2.4 (Mocked Coverage), 3.2 (NFR Test Logs), 5.2-5.4 (Codacy Zero Issues) | **Final M4 Updates - Removed All Placeholders**: Replaced all placeholder sections with actual test results. (1) Section 2.3: Added actual unmocked test coverage (75.15% statements, 49.06% branches) with analysis explaining focus on happy paths. (2) Section 2.4: Added actual mocked test coverage (87.87% statements, 86.01% branches) demonstrating comprehensive error handling coverage. (3) Section 3.2: Added real NFR performance test logs showing all 5 tests passed with excellent response times (48ms, 37ms, 141ms, 189ms, 312ms - all well below targets). (4) Sections 5.2-5.4: Confirmed zero (0) Codacy issues in main branch across all categories and code patterns, added detailed tables and achievement metrics. All documentation now contains actual data with no placeholders remaining. |
@@ -65,7 +65,7 @@
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`2f9fb35` - Latest commit with frontend test documentation updates (main branch)
+`d5f153b` - Latest commit with frontend test documentation updates (main branch)
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -332,7 +332,7 @@ Test Summary:
 
 ### 5.1. Commit Hash Where Codacy Ran
 
-`2f9fb35` - Latest commit with frontend test documentation updates (main branch)
+`d5f153b` - Latest commit with frontend test documentation updates (main branch)
 
 **Note:** Codacy has been integrated with the repository. The following commits demonstrate Codacy issues have been actively addressed:
 - `25d3eb6` - Remove comments from private functions per Codacy guidelines
