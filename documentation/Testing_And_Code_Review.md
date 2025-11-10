@@ -348,6 +348,7 @@ Test Summary:
 ---
 
 ## 5. Automated Code Review Results
+<img width="3432" height="2336" alt="CPEN321-MovieTier-Codacy-Dashboard" src="https://github.com/user-attachments/assets/14559797-8655-48b9-9b4a-674eafbf463b" />
 
 ### 5.1. Commit Hash Where Codacy Ran
 
