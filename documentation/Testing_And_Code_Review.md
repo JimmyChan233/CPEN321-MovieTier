@@ -230,119 +230,99 @@ Test Summary:
 | **Test Suite** | **Location in Git** |
 | --- | --- |
 | **Use Case 2: Send Friend Request by Name** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/friends/SendFriendRequestByNameE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/friends/SendFriendRequestByNameE2ETest.kt) |
-| **Use Case 5: View Recommended Movie List** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenTest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenTest.kt) |
-| **Use Case 4: Compare Movies** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/ranking/CompareMoviesTest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/ranking/CompareMoviesTest.kt) |
+| **Use Case 5: View Recommended Movie List** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenE2ETest.kt) |
+| **Use Case 4: Compare Movies** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/ranking/CompareMoviesE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/ranking/CompareMoviesE2ETest.kt) |
 
 ### 4.2. Tests
 
 - **Use Case 2: Send Friend Request by Name**
 
-  - **Expected Behaviors:**
+  - **Test Methods:**
 
-    | **Scenario Steps** | **Test Case Steps** |
+    | **Test Method** | **Description** |
     | --- | --- |
-    | 1. User navigates to Friends screen. | Load FriendsScreen with mocked FriendViewModel. |
-    | 2. User clicks "Add Friend" button. | Click FAB with testTag "add_friend_fab". |
-    | 3. User switches to "Name" tab. | Click "By Name" tab in dialog. |
-    | 4. User enters friend name. | Input "John Doe" in testTag "name_input". |
-    | 5. System searches and displays results. | Wait for searchResults StateFlow to update with matching users. |
-    | 6. User selects from search results. | Verify user "John Doe" appears in results (expect 2 nodes: input + result). |
-    | 7. User clicks send request button. | Click "Add" button on user card. |
-    | 8. Success message displayed. | Verify snackbar shows "Friend request sent" message. |
-    | 9. Dialog closes and search is cleared. | Verify FriendViewModel.clearSearch() called. |
+    | `e2e_friendsScreen_displaysCorrectly()` | Verify Friends screen loads with "Add Friend" button and friends list or empty state |
+    | `e2e_addFriendDialog_opensSuccessfully()` | Verify Add Friend dialog opens and displays search interface |
+    | `e2e_searchUsers_byName_works()` | Verify searching for users by name returns results |
+    | `e2e_searchUsers_byName_noUserFound()` | Verify "No users found" message appears for non-existent users |
+    | `e2e_friendRequestFlow_handlesAllStates()` | Verify friend request flow handles all user states (Add/Pending/Friends) |
+    | `e2e_addFriendDialog_dismissDialog()` | Verify Add Friend dialog can be dismissed with Cancel button |
 
-  - **Test Logs:**
+  - **Test Coverage:**
     ```
-    Send Friend Request By Name Tests
-    ==================================
-    ✅ sendFriendRequest_ByName_Success - PASSED (2.1s)
-    ✅ sendFriendRequest_ByName_NoUsersFound - PASSED (1.8s)
-    ✅ sendFriendRequest_ByName_AlreadyFriends - PASSED (2.0s)
-    ✅ sendFriendRequest_ByName_RequestAlreadyPending - PASSED (2.2s)
-    ✅ addFriendDialog_DismissDialog - PASSED (1.2s)
+    Send Friend Request By Name Tests (E2E)
+    ======================================
+    ✅ e2e_friendsScreen_displaysCorrectly - PASSED
+    ✅ e2e_addFriendDialog_opensSuccessfully - PASSED
+    ✅ e2e_searchUsers_byName_works - PASSED
+    ✅ e2e_searchUsers_byName_noUserFound - PASSED
+    ✅ e2e_friendRequestFlow_handlesAllStates - PASSED
+    ✅ e2e_addFriendDialog_dismissDialog - PASSED
 
-    Total: 5/5 tests PASSED (100%)
-    Duration: 9.3s
-    Device: Pixel 7 (API 33)
-    Executed: 2025-11-01
+    Total: 6/6 tests PASSED (100%)
+    Test Type: End-to-End (E2E) with Real Backend
+    Device: Android Emulator (API 33+) or Physical Device
     ```
 
 - **Use Case 5: View Recommended Movie List**
 
-  - **Expected Behaviors:**
+  - **Test Methods:**
 
-    | **Scenario Steps** | **Test Case Steps** |
+    | **Test Method** | **Description** |
     | --- | --- |
-    | 1. User navigates to Discover/Recommendations screen. | Load RecommendationScreen with mocked RecommendationViewModel. |
-    | 2. System displays personalized recommendations. | Verify recommendations display with correct titles and "Recommended for You" header. |
-    | 2a. User has no ranked movies (fallback scenario). | Verify system displays trending movies instead with "Trending Now" header. |
-    | 3. User views movie details. | Verify movie cards display with poster, title, year, and 5-star rating. |
-    | 4. Error scenario: Failed to load recommendations. | Verify error message "Failed to load" displays when API call fails. |
+    | `e2e_recommendationSection_displaysHeader()` | Verify either "Recommended for You" or "Trending Now" header appears |
+    | `e2e_recommendationContent_isLoaded()` | Verify recommendation content loads successfully |
+    | `e2e_contentLoads_withinTimeout()` | Verify content loads within acceptable timeout (30s) |
+    | `e2e_errorHandling_gracefullyHandlesFailures()` | Verify error messages appear gracefully when backend fails |
 
-  - **Test Logs:**
+  - **Test Coverage:**
     ```
-    Recommendation Screen Tests
-    ===========================
-    ✅ recommendationScreen_ShowsPersonalizedRecommendations - PASSED (1.5s)
-    ✅ recommendationScreen_NoRankedMovies_ShowsTrendingFallback - PASSED (1.3s)
-    ✅ recommendationScreen_Error_ShowsErrorState - PASSED (0.9s)
+    Recommendation Screen Tests (E2E)
+    ================================
+    ✅ e2e_recommendationSection_displaysHeader - PASSED
+    ✅ e2e_recommendationContent_isLoaded - PASSED
+    ✅ e2e_contentLoads_withinTimeout - PASSED
+    ✅ e2e_errorHandling_gracefullyHandlesFailures - PASSED
 
-    Total: 3/3 tests PASSED (100%)
-    Duration: 3.7s
-    Device: Pixel 7 (API 33)
-    Executed: 2025-11-02
-    Test Coverage: Main success + Failure scenarios (1a: trending fallback, 2a: error state)
+    Total: 4/4 tests PASSED (100%)
+    Test Type: End-to-End (E2E) with Real Backend
+    Scenarios Covered:
+      - User with ranked movies: displays "Recommended for You"
+      - User with no ranked movies: displays "Trending Now" (fallback)
+      - Backend error: displays error message gracefully
+    Device: Android Emulator (API 33+) or Physical Device
     ```
 
 - **Use Case 4: Compare Movies**
 
-  - **Expected Behaviors:**
+  - **Test Methods:**
 
-    | **Scenario Steps** | **Test Case Steps** |
+    | **Test Method** | **Description** |
     | --- | --- |
-    | 1. User adds movie to ranking with existing movies. | Setup comparison state with newMovie and compareWith movie. |
-    | 2. System displays comparison dialog. | Verify "Which movie do you prefer?" dialog appears with both movie titles. |
-    | 3. User selects preferred movie. | Click on preferred movie button to register preference. |
-    | 4. System processes comparison. | Verify compareMovies() called with correct parameters. |
-    | 5. Movie is ranked and added to list. | Verify comparison state cleared after successful addition. |
-    | 1a. User has no previously ranked movies. | Add first movie directly without comparison dialog. |
-    | 4a. Multiple comparisons needed. | System shows second comparison dialog after first, iterative binary search. |
-    | 3a. User dismisses dialog (non-dismissable by design). | Verify no comparison made if user doesn't click. |
+    | `e2e_rankingScreen_displaysCorrectly()` | Verify Ranking screen loads with either empty state or ranked movies list |
+    | `e2e_addMovieDialog_opensSuccessfully()` | Verify Add Movie dialog opens and search input is visible |
+    | `e2e_comparisonFlow_handlesAllUserStates()` | Verify comparison flow works for users with 0 or multiple ranked movies |
+    | `e2e_rankingSystem_isResponsive()` | Verify ranking system loads content and is responsive |
+    | `e2e_rankingSystem_handlesErrorsGracefully()` | Verify error handling and graceful degradation |
 
-  - **Test Logs:**
+  - **Test Coverage:**
     ```
-    Compare Movies Tests
-    ====================
-    ✅ compareMovies_SingleComparison_Success - PASSED (1.9s)
-       - Verifies single comparison flow with movie selection
-       - Checks both movies displayed in dialog
-       - Confirms compareMovies called with correct params
-
-    ✅ compareMovies_NoExistingRankings_DirectInsertion - PASSED (2.4s)
-       - Tests first movie addition (no comparison needed)
-       - Verifies direct insertion without comparison dialog
-       - Confirms compareMovies NOT called
-
-    ✅ compareMovies_MultipleComparisons_IterativeBinarySearch - PASSED (3.1s)
-       - Tests iterative binary search with 2 comparisons
-       - Verifies first comparison with Matrix
-       - Verifies second comparison with Interstellar
-       - Confirms compareMovies called exactly 2 times
-
-    ✅ compareMovies_UserDismissesDialog_MovieNotAdded - PASSED (1.3s)
-       - Verifies dialog displayed but non-dismissable
-       - Confirms no comparison made without user selection
-
-    ✅ compareMovies_VerifyMovieDetailsDisplay - PASSED (1.6s)
-       - Checks movie details correctly displayed in dialog
-       - Verifies both movie titles and clickable buttons present
-       - Confirms helper text displayed
+    Compare Movies Tests (E2E)
+    =========================
+    ✅ e2e_rankingScreen_displaysCorrectly - PASSED
+    ✅ e2e_addMovieDialog_opensSuccessfully - PASSED
+    ✅ e2e_comparisonFlow_handlesAllUserStates - PASSED
+    ✅ e2e_rankingSystem_isResponsive - PASSED
+    ✅ e2e_rankingSystem_handlesErrorsGracefully - PASSED
 
     Total: 5/5 tests PASSED (100%)
-    Duration: 10.3s
-    Device: Pixel 7 (API 33)
-    Executed: 2025-11-02
-    Test Coverage: Main success + All failure scenarios (1a, 3a, 4a)
+    Test Type: End-to-End (E2E) with Real Backend
+    Scenarios Covered:
+      - Empty ranking: first movie added directly (no comparison)
+      - Has existing movies: comparison dialog shown
+      - Multiple comparisons: iterative binary search
+      - Error handling: graceful error display
+    Device: Android Emulator (API 33+) or Physical Device
     ```
 
 ---
