@@ -8,6 +8,7 @@ import {
   getWatchProviders,
   getMovieDetails,
   getMovieVideos,
+  getMovieQuote,
   addMovie,
   compareMovies,
   startRerank,
@@ -41,5 +42,8 @@ router.get('/:movieId/details', authenticate, asyncHandler(getMovieDetails));
 
 // Get movie videos/trailers from TMDB
 router.get('/:movieId/videos', authenticate, asyncHandler(getMovieVideos));
+
+// Get movie quote/tagline from TMDB
+router.get('/quote', authenticate, asyncHandler(getMovieQuote));
 
 export default router;

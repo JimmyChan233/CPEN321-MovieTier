@@ -92,12 +92,6 @@ interface MoviesApiService {
     @GET("movies/ranked")
     suspend fun getRankedMovies(): Response<ApiResponse<List<RankedMovie>>>
 
-//    @POST("movies/rank")
-//    suspend fun addMovie(@Body request: AddMovieRequest): Response<ApiResponse<RankedMovie>>
-
-//    @POST("movies/compare")
-//    suspend fun compareMovies(@Body request: CompareMoviesRequest): Response<ApiResponse<Unit>>
-
     @POST("movies/add")
     suspend fun addMovie(
         @Body body: AddMovieRequest
@@ -128,6 +122,12 @@ interface MoviesApiService {
     suspend fun getMovieDetails(
         @Path("movieId") movieId: Int
     ): Response<ApiResponse<Movie>>
+
+    @GET("movies/quotes")
+    suspend fun getQuote(
+        @Query("title") title: String,
+        @Query("year") year: String? = null
+    ): Response<ApiResponse<String>>
 
     @GET("movies/{movieId}/videos")
     suspend fun getMovieVideos(
@@ -198,16 +198,6 @@ interface RecommendationsApiService {
     suspend fun getTrendingMovies(): Response<ApiResponse<List<Movie>>>
 }
 
-/**
- * Quotes API endpoints
- */
-interface QuotesApiService {
-    @GET("quotes")
-    suspend fun getQuote(
-        @Query("title") title: String,
-        @Query("year") year: String? = null
-    ): Response<ApiResponse<String>>
-}
 
 /**
  * Main API service interface combining all sub-interfaces
@@ -219,5 +209,4 @@ interface ApiService :
     MoviesApiService,
     FeedApiService,
     WatchlistApiService,
-    RecommendationsApiService,
-    QuotesApiService
+    RecommendationsApiService

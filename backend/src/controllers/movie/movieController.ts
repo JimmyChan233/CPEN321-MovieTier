@@ -16,9 +16,23 @@ import notificationService from '../../services/notification.service';
 import { AuthRequest } from '../../middleware/auth';
 import { logger } from '../../utils/logger';
 import { getTmdbClient } from '../../services/tmdb/tmdbClient';
+import { fetchMovieTagline } from '../../services/tmdb/tmdbTaglineService';
+import { randomInt } from 'crypto';
 import { normalizeMovieDetails, normalizeCastArray, findBestTrailer, filterYoutubeVideos } from '../../utils/tmdbResponseHelpers';
 
 const RankedMovie = RankedMovieModel;
+
+// Fallback quotes for when TMDB doesn't have a tagline
+const fallbackQuotes = [
+  'Every story has a beginning.',
+  'The best movies are yet to come.',
+  'Cinema is a mirror of reality.',
+  'Great films inspire great moments.',
+  'Movies bring stories to life.',
+  'Where words fail, cinema speaks.',
+  'A journey through moving pictures.',
+  'Experience the magic of film.'
+];
 
 /**
  * Remove a movie from user's watchlist if present
@@ -725,5 +739,27 @@ export const startRerank = async (req: Request, res: Response) => {
     });
   } catch (e) {
     return res.status(500).json({ success: false, message: 'Unable to start rerank. Please try again' });
+  }
+};
+
+export const getMovieQuote = async (req: Request, res: Response) => {
+  try {
+    const title = String(req.query.title ?? '').trim();
+    const year = String(req.query.year ?? '').trim() || undefined;
+    if (!title) {
+      return res.status(400).json({ success: false, message: 'Missing title', data: null });
+    }
+
+    const tagline = await fetchMovieTagline(title, year);
+    if (tagline) {
+      return res.json({ success: true, data: tagline });
+    }
+    // Return fallback quote if no tagline found (still 200 status for frontend compatibility)
+    const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
+    return res.json({ success: true, data: randomQuote, fallback: true });
+  } catch (e: unknown) {
+    // On error, return fallback quote
+    const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
+    return res.json({ success: true, data: randomQuote, fallback: true });
   }
 };
