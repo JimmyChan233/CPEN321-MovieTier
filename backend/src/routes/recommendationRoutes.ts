@@ -6,10 +6,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
-// router.get('/', authenticate, async (req, res) => {
-//   res.json({ success: true, message: 'Recommendations route - placeholder', data: [] });
-// });
-
 // Get personalized movie recommendations
 router.get('/', authenticate, asyncHandler(getRecommendations));
 
