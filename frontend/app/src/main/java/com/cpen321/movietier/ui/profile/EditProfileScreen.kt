@@ -12,12 +12,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cpen321.movietier.ui.components.Avatar
 import com.cpen321.movietier.ui.viewmodels.AuthViewModel
+import com.cpen321.movietier.ui.viewmodels.UserViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     navController: NavController,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    UserViewModel: UserViewModel = hiltViewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsState()
     var name by remember { mutableStateOf(uiState.user?.name ?: "") }
@@ -40,7 +43,7 @@ fun EditProfileScreen(
                 userImageUrl = uiState.user?.profileImageUrl,
                 isLoading = uiState.isLoading,
                 onSaveClick = {
-                    handleEditProfileSave(name, uiState.user?.name, authViewModel) { msg -> snackbarMessage = msg; showSnackbar = true }
+                    handleEditProfileSave(name, uiState.user?.name, UserViewModel) { msg -> snackbarMessage = msg; showSnackbar = true }
                 }
             )
         }
@@ -95,13 +98,13 @@ private fun EditProfileSnackbar(message: String, onDismiss: () -> Unit) {
 private fun handleEditProfileSave(
     name: String,
     currentName: String?,
-    authViewModel: AuthViewModel,
+    UserViewModel: UserViewModel,
     onShowMessage: (String) -> Unit
 ) {
     when {
         name.isBlank() -> onShowMessage("Name cannot be empty")
         name == currentName -> onShowMessage("No changes to save")
-        else -> authViewModel.updateProfile(name = name)
+        else -> UserViewModel.updateProfile(name = name)
     }
 }
 

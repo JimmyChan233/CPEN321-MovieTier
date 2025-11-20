@@ -158,20 +158,6 @@ class RankingViewModel @Inject constructor(
         }
     }
 
-//    fun addMovieFromSearch(movie: Movie) {
-//        viewModelScope.launch {
-//            when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {
-//                is Result.Success -> {
-//                    _events.emit(RankingEvent.Message("Added '${movie.title}' to rankings"))
-//                    loadRankedMovies()
-//                }
-//                is Result.Error -> {
-//                    _events.emit(RankingEvent.Message(res.message ?: "Failed to add movie"))
-//                }
-//                else -> {}
-//            }
-//        }
-//    }
     fun addMovieFromSearch(movie: Movie) {
         viewModelScope.launch {
             when (val res = movieRepository.addMovie(movie.id, movie.title, movie.posterPath, movie.overview)) {

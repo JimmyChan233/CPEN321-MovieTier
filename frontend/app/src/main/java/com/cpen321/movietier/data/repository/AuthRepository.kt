@@ -128,47 +128,4 @@ class AuthRepository @Inject constructor(
             Result.Error(e, "Network error: ${e.message}")
         }
     }
-
-    suspend fun updateProfile(name: String?): Result<User> {
-        return try {
-            val request = UpdateProfileRequest(name = name, profilePicture = null)
-            val response = apiService.updateProfile(request)
-            handleUpdateProfileResponse(response)
-        } catch (e: IOException) {
-            Result.Error(e, "Network error: ${e.message}")
-        }
-    }
-
-    private suspend fun handleUpdateProfileResponse(response: retrofit2.Response<com.cpen321.movietier.data.model.ApiResponse<User>>): Result<User> {
-        if (!response.isSuccessful || response.body() == null) {
-            val errorMessage = parseUpdateProfileError(response.errorBody()?.string())
-            return Result.Error(Exception(errorMessage))
-        }
-
-        val apiResponse = response.body()!!
-        if (!apiResponse.success || apiResponse.data == null) {
-            return Result.Error(Exception(apiResponse.message))
-        }
-
-        val updatedUser = apiResponse.data
-        tokenManager.saveUserInfo(
-            updatedUser.id,
-            updatedUser.email,
-            updatedUser.name,
-            updatedUser.profileImageUrl
-        )
-        return Result.Success(updatedUser)
-    }
-
-    private fun parseUpdateProfileError(errorBody: String?): String {
-        if (errorBody == null) return "Failed to update profile"
-
-        return try {
-            val gson = com.google.gson.Gson()
-            val errorResponse = gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
-            errorResponse.message
-        } catch (e: IOException) {
-            "Failed to update profile"
-        }
-    }
 }

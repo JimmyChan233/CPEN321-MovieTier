@@ -84,45 +84,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-//    suspend fun signInWithGoogle(context: Context, googleClientId: String) {
-//        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-//        Log.d(TAG, "Google Client ID used: $googleClientId")
-//
-//
-//        try {
-//            val credentialManager = CredentialManager.create(context)
-//
-//            val googleIdOption = GetGoogleIdOption.Builder()
-//                .setFilterByAuthorizedAccounts(false)
-//                .setServerClientId(googleClientId)
-//                .build()
-//
-//            val request = GetCredentialRequest.Builder()
-//                .addCredentialOption(googleIdOption)
-//                .build()
-//
-//            val result = credentialManager.getCredential(context, request)
-//            val credential = result.credential
-//            Log.d(TAG, "Credential class: ${credential.javaClass.name}") // ← add this
-//
-//
-//            if (credential is GoogleIdTokenCredential) {
-//                val idToken = credential.idToken
-//                handleGoogleSignIn(idToken)
-//            } else {
-//                _uiState.value = _uiState.value.copy(
-//                    isLoading = false,
-//                    errorMessage = "Invalid credential type"
-//                )
-//            }
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Sign in error", e)
-//            _uiState.value = _uiState.value.copy(
-//                isLoading = false,
-//                errorMessage = e.message ?: "Sign in failed"
-//            )
-//        }
-//    }
 suspend fun signInWithGoogle(context: Context, googleClientId: String) {
     _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
@@ -187,12 +148,6 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Sign in successful"
                 )
-//                try {
-//                    FcmHelper.initializeFcm(apiService, viewModelScope)
-//                } catch (e: Exception) {
-//                    Log.w(TAG, "FCM initialization failed: ${e.message}")
-//                }
-
             }
             is Result.Error -> {
                 // If sign in fails, try sign up
@@ -227,11 +182,6 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Account created successfully"
                 )
-//                try {
-//                    FcmHelper.initializeFcm(apiService, viewModelScope)
-//                } catch (e: Exception) {
-//                    Log.w(TAG, "FCM initialization failed: ${e.message}")
-//                }
             }
             is Result.Error -> {
                 Log.e(TAG, "Sign up failed: ${result.message}")
@@ -297,27 +247,5 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
             errorMessage = null,
             successMessage = null
         )
-    }
-
-    fun updateProfile(name: String?) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            when (val result = authRepository.updateProfile(name)) {
-                is Result.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        user = result.data,
-                        successMessage = "Profile updated successfully"
-                    )
-                }
-                is Result.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = result.message ?: result.exception.message ?: "Failed to update profile"
-                    )
-                }
-                is Result.Loading -> {}
-            }
-        }
     }
 }
