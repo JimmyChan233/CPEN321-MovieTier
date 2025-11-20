@@ -9,6 +9,7 @@ import Like from "../../models/feed/Like";
 import Comment from "../../models/feed/Comment";
 import User from "../../models/user/User";
 import notificationService from "../../services/notification.service";
+import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
 
 /**
  * Check if an activity needs TMDB enrichment for missing metadata
@@ -203,12 +204,9 @@ export const getFeed = async (req: AuthRequest, res: Response) => {
       commentCountMap,
     );
 
-    res.json({ success: true, data: shaped });
+    return sendSuccess(res, shaped);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load feed. Please try again",
-    });
+    return sendError(res, ErrorMessages.FAILED_GET_FEED, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -239,11 +237,9 @@ export const getMyFeed = async (req: AuthRequest, res: Response) => {
       commentCountMap,
     );
 
-    res.json({ success: true, data: shaped });
+    return sendSuccess(res, shaped);
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Unable to load your activities" });
+    return sendError(res, "Unable to load your activities", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -309,15 +305,13 @@ export const likeActivity = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    res.status(201).json({ success: true, message: "Activity liked" });
+    return sendSuccess(res, { message: "Activity liked" }, HttpStatus.CREATED);
   } catch (error: unknown) {
     const err = error as { code?: number };
     if (err.code === 11000) {
-      return res.status(400).json({ success: false, message: "Already liked" });
+      return sendError(res, "Already liked", HttpStatus.BAD_REQUEST);
     }
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to like activity" });
+    return sendError(res, ErrorMessages.FAILED_LIKE, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -331,16 +325,12 @@ export const unlikeActivity = async (req: AuthRequest, res: Response) => {
     });
 
     if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Like not found" });
+      return sendError(res, "Like not found", HttpStatus.NOT_FOUND);
     }
 
-    res.json({ success: true, message: "Like removed" });
+    return sendSuccess(res, { message: "Like removed" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to unlike activity" });
+    return sendError(res, ErrorMessages.FAILED_UNLIKE, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -370,11 +360,9 @@ export const getComments = async (req: AuthRequest, res: Response) => {
       };
     });
 
-    res.json({ success: true, data: shaped });
+    return sendSuccess(res, shaped);
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to load comments" });
+    return sendError(res, "Failed to load comments", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -384,23 +372,16 @@ export const addComment = async (req: AuthRequest, res: Response) => {
     const { text } = req.body;
 
     if (!text || text.trim().length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Comment text is required" });
+      return sendError(res, "Comment text is required", HttpStatus.BAD_REQUEST);
     }
 
     if (text.length > 500) {
-      return res.status(400).json({
-        success: false,
-        message: "Comment must be 500 characters or less",
-      });
+      return sendError(res, "Comment must be 500 characters or less", HttpStatus.BAD_REQUEST);
     }
 
     const activity = await FeedActivity.findById(activityId).populate("userId");
     if (!activity) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Activity not found" });
+      return sendError(res, "Activity not found", HttpStatus.NOT_FOUND);
     }
 
     const comment = new Comment({
@@ -447,9 +428,9 @@ export const addComment = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    res.status(201).json({ success: true, data: shaped });
+    return sendSuccess(res, shaped, HttpStatus.CREATED);
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to add comment" });
+    return sendError(res, ErrorMessages.FAILED_COMMENT, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -463,24 +444,17 @@ export const deleteComment = async (req: AuthRequest, res: Response) => {
     });
 
     if (!comment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Comment not found" });
+      return sendError(res, "Comment not found", HttpStatus.NOT_FOUND);
     }
 
     if (String(comment.userId) !== String(req.userId)) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only delete your own comments",
-      });
+      return sendError(res, "You can only delete your own comments", HttpStatus.FORBIDDEN);
     }
 
     await Comment.findByIdAndDelete(commentId);
 
-    res.json({ success: true, message: "Comment deleted" });
+    return sendSuccess(res, { message: "Comment deleted" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to delete comment" });
+    return sendError(res, ErrorMessages.FAILED_DELETE_COMMENT, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
