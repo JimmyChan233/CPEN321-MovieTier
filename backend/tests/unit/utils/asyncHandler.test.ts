@@ -2,12 +2,12 @@
  * @unit Unit tests for async request handler wrapper
  */
 
-import { asyncHandler } from '../../../src/utils/asyncHandler';
-import { Request, Response, NextFunction } from 'express';
+import { asyncHandler } from "../../../src/utils/asyncHandler";
+import { Request, Response, NextFunction } from "express";
 
-describe('asyncHandler', () => {
-  it('should call next with an error if the async function rejects', async () => {
-    const errorMessage = 'Test error';
+describe("asyncHandler", () => {
+  it("should call next with an error if the async function rejects", async () => {
+    const errorMessage = "Test error";
     const asyncFn = async (req: Request, res: Response, next: NextFunction) => {
       throw new Error(errorMessage);
     };

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IRankedMovie extends Document {
   userId: mongoose.Types.ObjectId;
@@ -12,15 +12,15 @@ export interface IRankedMovie extends Document {
 
 const RankedMovieSchema: Schema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     movieId: { type: Number, required: true },
     title: { type: String, required: true },
     posterPath: { type: String },
-    rank: { type: Number, required: true }
+    rank: { type: Number, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 RankedMovieSchema.index({ userId: 1, rank: 1 });
 
-export default mongoose.model<IRankedMovie>('RankedMovie', RankedMovieSchema);
+export default mongoose.model<IRankedMovie>("RankedMovie", RankedMovieSchema);

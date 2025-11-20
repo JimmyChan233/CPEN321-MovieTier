@@ -8,15 +8,15 @@
  * Tests: GET /quotes
  */
 
-import request from 'supertest';
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import express from 'express';
-import quoteRoutes from '../../../src/routes/quoteRoutes';
-import User from '../../../src/models/user/User';
-import { generateTestJWT, mockUsers } from '../../utils/test-fixtures';
+import request from "supertest";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import express from "express";
+import quoteRoutes from "../../../src/routes/quoteRoutes";
+import User from "../../../src/models/user/User";
+import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
-describe('Unmocked: GET /quotes', () => {
+describe("Unmocked: GET /quotes", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;
@@ -28,7 +28,7 @@ describe('Unmocked: GET /quotes', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/quotes', quoteRoutes);
+    app.use("/api/quotes", quoteRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -43,26 +43,26 @@ describe('Unmocked: GET /quotes', () => {
   // Expected status code: 200
   // Expected behavior: Fetch quote from TMDB or local catalog
   // Expected output: Quote object or fallback quote
-  it('should return quote for movie', async () => {
+  it("should return quote for movie", async () => {
     const res = await request(app)
-      .get('/api/quotes')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ title: 'Inception' });
+      .get("/api/quotes")
+      .set("Authorization", `Bearer ${token}`)
+      .query({ title: "Inception" });
 
     expect(res.status).toStrictEqual(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toBeDefined();
-    expect(typeof res.body.data).toBe('string');
+    expect(typeof res.body.data).toBe("string");
   });
 
   // Input: Missing title query parameter
   // Expected status code: 400
   // Expected behavior: Request rejected
   // Expected output: Validation error
-  it('should reject quote request without title', async () => {
+  it("should reject quote request without title", async () => {
     const res = await request(app)
-      .get('/api/quotes')
-      .set('Authorization', `Bearer ${token}`);
+      .get("/api/quotes")
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);
   });

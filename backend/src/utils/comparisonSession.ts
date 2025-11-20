@@ -12,8 +12,8 @@ const sessionStore = new Map<string, CompareSession>();
 
 export const startSession = (
   userId: string,
-  movie: CompareSession['newMovie'],
-  maxIndex: number
+  movie: CompareSession["newMovie"],
+  maxIndex: number,
 ) => {
   sessionStore.set(userId, {
     newMovie: movie,

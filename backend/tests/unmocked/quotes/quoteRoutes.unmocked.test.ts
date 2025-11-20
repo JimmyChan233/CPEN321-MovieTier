@@ -8,23 +8,25 @@
  * Tests for movie tagline fetching endpoint
  */
 
-import request from 'supertest';
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import express from 'express';
-import quoteRoutes from '../../../src/routes/quoteRoutes';
-import User from '../../../src/models/user/User';
-import { generateTestJWT, mockUsers } from '../../utils/test-fixtures';
+import request from "supertest";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import express from "express";
+import quoteRoutes from "../../../src/routes/quoteRoutes";
+import User from "../../../src/models/user/User";
+import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
 // Mock TMDB tagline service
-jest.mock('../../../src/services/tmdb/tmdbTaglineService', () => ({
-  fetchMovieTagline: jest.fn()
+jest.mock("../../../src/services/tmdb/tmdbTaglineService", () => ({
+  fetchMovieTagline: jest.fn(),
 }));
 
-import { fetchMovieTagline } from '../../../src/services/tmdb/tmdbTaglineService';
-const mockFetchMovieTagline = fetchMovieTagline as jest.MockedFunction<typeof fetchMovieTagline>;
+import { fetchMovieTagline } from "../../../src/services/tmdb/tmdbTaglineService";
+const mockFetchMovieTagline = fetchMovieTagline as jest.MockedFunction<
+  typeof fetchMovieTagline
+>;
 
-describe('Quote Routes - Unmocked Tests', () => {
+describe("Quote Routes - Unmocked Tests", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;
@@ -36,7 +38,7 @@ describe('Quote Routes - Unmocked Tests', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/api/quotes', quoteRoutes);
+    app.use("/api/quotes", quoteRoutes);
   });
 
   afterAll(async () => {
@@ -51,38 +53,30 @@ describe('Quote Routes - Unmocked Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('GET /', () => {
-
-
-
-
-
-    it('should return fallback quote on service errors', async () => {
-      mockFetchMovieTagline.mockRejectedValueOnce(new Error('TMDB API error'));
+  describe("GET /", () => {
+    it("should return fallback quote on service errors", async () => {
+      mockFetchMovieTagline.mockRejectedValueOnce(new Error("TMDB API error"));
 
       const res = await request(app)
-        .get('/api/quotes?title=Test Movie')
-        .set('Authorization', `Bearer ${token}`);
+        .get("/api/quotes?title=Test Movie")
+        .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBeDefined();
-      expect(typeof res.body.data).toBe('string');
+      expect(typeof res.body.data).toBe("string");
       expect(res.body.fallback).toBe(true);
     });
 
-
-
-    it('should handle empty year parameter', async () => {
-      mockFetchMovieTagline.mockResolvedValueOnce('Tagline');
+    it("should handle empty year parameter", async () => {
+      mockFetchMovieTagline.mockResolvedValueOnce("Tagline");
 
       const res = await request(app)
-        .get('/api/quotes?title=Movie&year=')
-        .set('Authorization', `Bearer ${token}`);
+        .get("/api/quotes?title=Movie&year=")
+        .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);
-      expect(mockFetchMovieTagline).toHaveBeenCalledWith('Movie', undefined);
+      expect(mockFetchMovieTagline).toHaveBeenCalledWith("Movie", undefined);
     });
-
   });
 });

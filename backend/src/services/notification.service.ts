@@ -1,9 +1,9 @@
 // Load config first to ensure environment variables are available
-import '../config';
-import admin from 'firebase-admin';
-import { logger } from '../utils/logger';
-import * as fs from 'fs';
-import * as path from 'path';
+import "../config";
+import admin from "firebase-admin";
+import { logger } from "../utils/logger";
+import * as fs from "fs";
+import * as path from "path";
 
 class NotificationService {
   private initialized = false;
@@ -17,7 +17,7 @@ class NotificationService {
       // Check if Firebase is already initialized
       if (admin.apps.length > 0) {
         this.initialized = true;
-        logger.info('Firebase Admin already initialized');
+        logger.info("Firebase Admin already initialized");
         return;
       }
 
@@ -34,36 +34,38 @@ class NotificationService {
           throw new Error(`Service account file not found: ${resolvedPath}`);
         }
 
-        if (!resolvedPath.endsWith('.json')) {
-          throw new Error('Service account file must be a .json file');
+        if (!resolvedPath.endsWith(".json")) {
+          throw new Error("Service account file must be a .json file");
         }
 
         // Read and parse the service account file securely
         // eslint-disable-next-line security/detect-non-literal-fs-filename
-        const serviceAccountContent = fs.readFileSync(resolvedPath, 'utf8');
+        const serviceAccountContent = fs.readFileSync(resolvedPath, "utf8");
         const serviceAccount = JSON.parse(serviceAccountContent);
 
         admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount)
+          credential: admin.credential.cert(serviceAccount),
         });
         this.initialized = true;
-        logger.success('Firebase Admin initialized with service account');
+        logger.success("Firebase Admin initialized with service account");
       } else if (process.env.FIREBASE_PROJECT_ID) {
         // Fallback: Initialize with environment variables (for production)
         admin.initializeApp({
           credential: admin.credential.cert({
             projectId: process.env.FIREBASE_PROJECT_ID,
             clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-          })
+            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+          }),
         });
         this.initialized = true;
-        logger.success('Firebase Admin initialized with environment variables');
+        logger.success("Firebase Admin initialized with environment variables");
       } else {
-        logger.warn('Firebase credentials not found. Push notifications will be disabled.');
+        logger.warn(
+          "Firebase credentials not found. Push notifications will be disabled.",
+        );
       }
     } catch (error) {
-      logger.error('Failed to initialize Firebase Admin:', error);
+      logger.error("Failed to initialize Firebase Admin:", error);
       this.initialized = false;
     }
   }
@@ -75,10 +77,10 @@ class NotificationService {
     recipientToken: string,
     friendName: string,
     movieTitle: string,
-    activityId: string
+    activityId: string,
   ): Promise<boolean> {
     if (!this.initialized) {
-      logger.warn('Firebase not initialized, skipping notification');
+      logger.warn("Firebase not initialized, skipping notification");
       return false;
     }
 
@@ -90,20 +92,20 @@ class NotificationService {
           body: `${friendName} just ranked "${movieTitle}"`,
         },
         data: {
-          type: 'feed_activity',
+          type: "feed_activity",
           activityId,
           friendName,
-          movieTitle
+          movieTitle,
         },
         android: {
-          priority: 'high',
+          priority: "high",
           notification: {
-            channelId: 'feed_updates',
-            priority: 'high',
+            channelId: "feed_updates",
+            priority: "high",
             defaultSound: true,
-            defaultVibrateTimings: true
-          }
-        }
+            defaultVibrateTimings: true,
+          },
+        },
       };
 
       const response = await admin.messaging().send(message);
@@ -111,11 +113,15 @@ class NotificationService {
       return true;
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
-      if (err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for feed notification: ${err.message ?? 'Unknown error'}`);
+      if (
+        err.code === "messaging/invalid-registration-token" ||
+        err.code === "messaging/registration-token-not-registered"
+      ) {
+        logger.warn(
+          `Invalid FCM token for feed notification: ${err.message ?? "Unknown error"}`,
+        );
       } else {
-        logger.error('Error sending feed notification:', error);
+        logger.error("Error sending feed notification:", error);
       }
       return false;
     }
@@ -127,10 +133,10 @@ class NotificationService {
   async sendFriendRequestNotification(
     recipientToken: string,
     senderName: string,
-    requestId: string
+    requestId: string,
   ): Promise<boolean> {
     if (!this.initialized) {
-      logger.warn('Firebase not initialized, skipping notification');
+      logger.warn("Firebase not initialized, skipping notification");
       return false;
     }
 
@@ -138,23 +144,23 @@ class NotificationService {
       const message: admin.messaging.Message = {
         token: recipientToken,
         notification: {
-          title: 'New Friend Request',
+          title: "New Friend Request",
           body: `${senderName} sent you a friend request`,
         },
         data: {
-          type: 'friend_request',
+          type: "friend_request",
           requestId,
-          senderName
+          senderName,
         },
         android: {
-          priority: 'high',
+          priority: "high",
           notification: {
-            channelId: 'friend_requests',
-            priority: 'high',
+            channelId: "friend_requests",
+            priority: "high",
             defaultSound: true,
-            defaultVibrateTimings: true
-          }
-        }
+            defaultVibrateTimings: true,
+          },
+        },
       };
 
       const response = await admin.messaging().send(message);
@@ -162,11 +168,15 @@ class NotificationService {
       return true;
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
-      if (err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for friend request notification: ${err.message ?? 'Unknown error'}`);
+      if (
+        err.code === "messaging/invalid-registration-token" ||
+        err.code === "messaging/registration-token-not-registered"
+      ) {
+        logger.warn(
+          `Invalid FCM token for friend request notification: ${err.message ?? "Unknown error"}`,
+        );
       } else {
-        logger.error('Error sending friend request notification:', error);
+        logger.error("Error sending friend request notification:", error);
       }
       return false;
     }
@@ -177,10 +187,10 @@ class NotificationService {
    */
   async sendFriendRequestAcceptedNotification(
     recipientToken: string,
-    accepterName: string
+    accepterName: string,
   ): Promise<boolean> {
     if (!this.initialized) {
-      logger.warn('Firebase not initialized, skipping notification');
+      logger.warn("Firebase not initialized, skipping notification");
       return false;
     }
 
@@ -188,33 +198,42 @@ class NotificationService {
       const message: admin.messaging.Message = {
         token: recipientToken,
         notification: {
-          title: 'Friend Request Accepted',
+          title: "Friend Request Accepted",
           body: `${accepterName} accepted your friend request`,
         },
         data: {
-          type: 'friend_request_accepted',
-          accepterName
+          type: "friend_request_accepted",
+          accepterName,
         },
         android: {
-          priority: 'normal',
+          priority: "normal",
           notification: {
-            channelId: 'friend_requests',
-            priority: 'default',
-            defaultSound: true
-          }
-        }
+            channelId: "friend_requests",
+            priority: "default",
+            defaultSound: true,
+          },
+        },
       };
 
       const response = await admin.messaging().send(message);
-      logger.info(`Friend request accepted notification sent successfully: ${response}`);
+      logger.info(
+        `Friend request accepted notification sent successfully: ${response}`,
+      );
       return true;
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
-      if (err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for friend request accepted notification: ${err.message ?? 'Unknown error'}`);
+      if (
+        err.code === "messaging/invalid-registration-token" ||
+        err.code === "messaging/registration-token-not-registered"
+      ) {
+        logger.warn(
+          `Invalid FCM token for friend request accepted notification: ${err.message ?? "Unknown error"}`,
+        );
       } else {
-        logger.error('Error sending friend request accepted notification:', error);
+        logger.error(
+          "Error sending friend request accepted notification:",
+          error,
+        );
       }
       return false;
     }
@@ -227,10 +246,10 @@ class NotificationService {
     recipientToken: string,
     likerName: string,
     movieTitle: string,
-    activityId: string
+    activityId: string,
   ): Promise<boolean> {
     if (!this.initialized) {
-      logger.warn('Firebase not initialized, skipping notification');
+      logger.warn("Firebase not initialized, skipping notification");
       return false;
     }
 
@@ -242,19 +261,19 @@ class NotificationService {
           body: `${likerName} liked your ranking of "${movieTitle}"`,
         },
         data: {
-          type: 'activity_like',
+          type: "activity_like",
           activityId,
           likerName,
-          movieTitle
+          movieTitle,
         },
         android: {
-          priority: 'normal',
+          priority: "normal",
           notification: {
-            channelId: 'feed_updates',
-            priority: 'default',
-            defaultSound: true
-          }
-        }
+            channelId: "feed_updates",
+            priority: "default",
+            defaultSound: true,
+          },
+        },
       };
 
       const response = await admin.messaging().send(message);
@@ -262,11 +281,15 @@ class NotificationService {
       return true;
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
-      if (err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for like notification: ${err.message ?? 'Unknown error'}`);
+      if (
+        err.code === "messaging/invalid-registration-token" ||
+        err.code === "messaging/registration-token-not-registered"
+      ) {
+        logger.warn(
+          `Invalid FCM token for like notification: ${err.message ?? "Unknown error"}`,
+        );
       } else {
-        logger.error('Error sending like notification:', error);
+        logger.error("Error sending like notification:", error);
       }
       return false;
     }
@@ -280,17 +303,18 @@ class NotificationService {
     commenterName: string,
     commentText: string,
     movieTitle: string,
-    activityId: string
+    activityId: string,
   ): Promise<boolean> {
     if (!this.initialized) {
-      logger.warn('Firebase not initialized, skipping notification');
+      logger.warn("Firebase not initialized, skipping notification");
       return false;
     }
 
     try {
-      const truncatedComment = commentText.length > 50
-        ? commentText.substring(0, 50) + '...'
-        : commentText;
+      const truncatedComment =
+        commentText.length > 50
+          ? commentText.substring(0, 50) + "..."
+          : commentText;
 
       const message: admin.messaging.Message = {
         token: recipientToken,
@@ -299,21 +323,21 @@ class NotificationService {
           body: `${commenterName} on "${movieTitle}": ${truncatedComment}`,
         },
         data: {
-          type: 'activity_comment',
+          type: "activity_comment",
           activityId,
           commenterName,
           movieTitle,
-          commentText: truncatedComment
+          commentText: truncatedComment,
         },
         android: {
-          priority: 'high',
+          priority: "high",
           notification: {
-            channelId: 'feed_updates',
-            priority: 'high',
+            channelId: "feed_updates",
+            priority: "high",
             defaultSound: true,
-            defaultVibrateTimings: true
-          }
-        }
+            defaultVibrateTimings: true,
+          },
+        },
       };
 
       const response = await admin.messaging().send(message);
@@ -321,11 +345,15 @@ class NotificationService {
       return true;
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
-      if (err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered') {
-        logger.warn(`Invalid FCM token for comment notification: ${err.message ?? 'Unknown error'}`);
+      if (
+        err.code === "messaging/invalid-registration-token" ||
+        err.code === "messaging/registration-token-not-registered"
+      ) {
+        logger.warn(
+          `Invalid FCM token for comment notification: ${err.message ?? "Unknown error"}`,
+        );
       } else {
-        logger.error('Error sending comment notification:', error);
+        logger.error("Error sending comment notification:", error);
       }
       return false;
     }
@@ -338,10 +366,10 @@ class NotificationService {
     tokens: string[],
     title: string,
     body: string,
-    data: Record<string, string>
+    data: Record<string, string>,
   ): Promise<number> {
     if (!this.initialized) {
-      logger.warn('Firebase not initialized, skipping notification');
+      logger.warn("Firebase not initialized, skipping notification");
       return 0;
     }
 
@@ -354,35 +382,39 @@ class NotificationService {
         tokens,
         notification: {
           title,
-          body
+          body,
         },
         data,
         android: {
-          priority: 'high',
+          priority: "high",
           notification: {
-            priority: 'high',
+            priority: "high",
             defaultSound: true,
-            defaultVibrateTimings: true
-          }
-        }
+            defaultVibrateTimings: true,
+          },
+        },
       };
 
       const response = await admin.messaging().sendEachForMulticast(message);
-      logger.info(`Multicast notification: ${response.successCount} successful, ${response.failureCount} failed`);
+      logger.info(
+        `Multicast notification: ${response.successCount} successful, ${response.failureCount} failed`,
+      );
 
       // Log failed tokens for cleanup
       if (response.failureCount > 0) {
         response.responses.forEach((resp, idx: number) => {
           if (!resp.success) {
-            const token = String(tokens.at(idx) ?? 'unknown');
-            logger.warn(`Failed to send to token ${token}: ${resp.error?.message}`);
+            const token = String(tokens.at(idx) ?? "unknown");
+            logger.warn(
+              `Failed to send to token ${token}: ${resp.error?.message}`,
+            );
           }
         });
       }
 
       return Number(response.successCount);
     } catch (error) {
-      logger.error('Error sending multicast notification:', error);
+      logger.error("Error sending multicast notification:", error);
       return 0;
     }
   }

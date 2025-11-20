@@ -3,27 +3,27 @@
  * Tests TMDB response fallbacks, null handling, and enrichment logic
  */
 
-import request from 'supertest';
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import express, { Express } from 'express';
-import movieRoutes from '../../../../src/routes/movieRoutes';
-import watchlistRoutes from '../../../../src/routes/watchlistRoutes';
-import feedRoutes from '../../../../src/routes/feedRoutes';
-import { authenticate } from '../../../../src/middleware/auth';
-import User from '../../../../src/models/user/User';
-import WatchlistItem from '../../../../src/models/watch/WatchlistItem';
-import FeedActivity from '../../../../src/models/feed/FeedActivity';
-import { generateTestJWT } from '../../../utils/test-fixtures';
+import request from "supertest";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import express, { Express } from "express";
+import movieRoutes from "../../../../src/routes/movieRoutes";
+import watchlistRoutes from "../../../../src/routes/watchlistRoutes";
+import feedRoutes from "../../../../src/routes/feedRoutes";
+import { authenticate } from "../../../../src/middleware/auth";
+import User from "../../../../src/models/user/User";
+import WatchlistItem from "../../../../src/models/watch/WatchlistItem";
+import FeedActivity from "../../../../src/models/feed/FeedActivity";
+import { generateTestJWT } from "../../../utils/test-fixtures";
 
 const mockTmdbGet = jest.fn();
-jest.mock('../../../../src/services/tmdb/tmdbClient', () => ({
+jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
   getTmdbClient: () => ({
-    get: mockTmdbGet
-  })
+    get: mockTmdbGet,
+  }),
 }));
 
-describe('Movie Routes - TMDB Field Fallbacks', () => {
+describe("Movie Routes - TMDB Field Fallbacks", () => {
   let mongoServer: MongoMemoryServer;
   let app: Express;
   let token: string;
@@ -36,12 +36,12 @@ describe('Movie Routes - TMDB Field Fallbacks', () => {
     app = express();
     app.use(express.json());
     app.use(authenticate);
-    app.use('/api/movies', movieRoutes);
+    app.use("/api/movies", movieRoutes);
 
     user = await User.create({
-      email: 'test@example.com',
-      name: 'Test User',
-      googleId: 'google-123'
+      email: "test@example.com",
+      name: "Test User",
+      googleId: "google-123",
     });
 
     token = generateTestJWT(String(user._id));
@@ -56,73 +56,73 @@ describe('Movie Routes - TMDB Field Fallbacks', () => {
     jest.clearAllMocks();
   });
 
-  it('should handle videos list with non-YouTube videos', async () => {
+  it("should handle videos list with non-YouTube videos", async () => {
     mockTmdbGet.mockResolvedValueOnce({
       data: {
         results: [
-          { key: 'abc123', site: 'Vimeo' }, // Non-YouTube, should be filtered
-          { key: 'xyz789', site: 'YouTube' }
-        ]
-      }
+          { key: "abc123", site: "Vimeo" }, // Non-YouTube, should be filtered
+          { key: "xyz789", site: "YouTube" },
+        ],
+      },
     });
 
     const res = await request(app)
-      .get('/api/movies/1/videos')
-      .set('Authorization', `Bearer ${token}`);
+      .get("/api/movies/1/videos")
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data).toBeDefined();
   });
 
-  it('should handle null data.results in /providers endpoint', async () => {
+  it("should handle null data.results in /providers endpoint", async () => {
     const movieId = 278;
 
     mockTmdbGet.mockResolvedValue({
       data: {
-        results: null // Triggers ?? {} fallback
-      }
+        results: null, // Triggers ?? {} fallback
+      },
     });
 
     const res = await request(app)
       .get(`/api/movies/${movieId}/providers`)
-      .set('Authorization', `Bearer ${token}`);
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
 
-  it('should handle null detailsResp.data in /details endpoint', async () => {
+  it("should handle null detailsResp.data in /details endpoint", async () => {
     const movieId = 278;
 
     mockTmdbGet
       .mockResolvedValueOnce({
-        data: null // Triggers ?? {} fallback for detailsResp.data
+        data: null, // Triggers ?? {} fallback for detailsResp.data
       })
       .mockResolvedValueOnce({
         data: {
-          cast: []
-        }
+          cast: [],
+        },
       });
 
     const res = await request(app)
       .get(`/api/movies/${movieId}/details`)
-      .set('Authorization', `Bearer ${token}`);
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
   });
 
-  it('should handle non-array data.results in /videos endpoint', async () => {
+  it("should handle non-array data.results in /videos endpoint", async () => {
     const movieId = 278;
 
     mockTmdbGet.mockResolvedValue({
       data: {
-        results: 'not an array' // Triggers Array.isArray false branch
-      }
+        results: "not an array", // Triggers Array.isArray false branch
+      },
     });
 
     const res = await request(app)
       .get(`/api/movies/${movieId}/videos`)
-      .set('Authorization', `Bearer ${token}`);
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     // Should return null trailer when results isn't an array
@@ -130,7 +130,7 @@ describe('Movie Routes - TMDB Field Fallbacks', () => {
   });
 });
 
-describe('Watchlist Routes - TMDB Enrichment', () => {
+describe("Watchlist Routes - TMDB Enrichment", () => {
   let mongoServer: MongoMemoryServer;
   let app: Express;
   let token: string;
@@ -143,12 +143,12 @@ describe('Watchlist Routes - TMDB Enrichment', () => {
     app = express();
     app.use(express.json());
     app.use(authenticate);
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use("/api/watchlist", watchlistRoutes);
 
     user = await User.create({
-      email: 'watchlist@example.com',
-      name: 'Watchlist User',
-      googleId: 'google-watchlist'
+      email: "watchlist@example.com",
+      name: "Watchlist User",
+      googleId: "google-watchlist",
     });
 
     token = generateTestJWT(String(user._id));
@@ -163,21 +163,21 @@ describe('Watchlist Routes - TMDB Enrichment', () => {
     jest.clearAllMocks();
   });
 
-  it('should add watchlist item with missing fields from TMDB', async () => {
+  it("should add watchlist item with missing fields from TMDB", async () => {
     mockTmdbGet.mockResolvedValueOnce({
       data: {
         id: 100,
-        title: 'Test Movie',
+        title: "Test Movie",
         // Missing poster_path and overview
-      }
+      },
     });
 
     const res = await request(app)
-      .post('/api/watchlist')
-      .set('Authorization', `Bearer ${token}`)
+      .post("/api/watchlist")
+      .set("Authorization", `Bearer ${token}`)
       .send({
         movieId: 100,
-        title: 'Test Movie'
+        title: "Test Movie",
       });
 
     expect(res.status).toBe(201);
@@ -186,7 +186,7 @@ describe('Watchlist Routes - TMDB Enrichment', () => {
   });
 });
 
-describe('Feed Routes - Activity Enrichment', () => {
+describe("Feed Routes - Activity Enrichment", () => {
   let mongoServer: MongoMemoryServer;
   let app: Express;
   let token: string;
@@ -199,12 +199,12 @@ describe('Feed Routes - Activity Enrichment', () => {
     app = express();
     app.use(express.json());
     app.use(authenticate);
-    app.use('/api/feed', feedRoutes);
+    app.use("/api/feed", feedRoutes);
 
     user = await User.create({
-      email: 'feed@example.com',
-      name: 'Feed User',
-      googleId: 'google-feed'
+      email: "feed@example.com",
+      name: "Feed User",
+      googleId: "google-feed",
     });
 
     token = generateTestJWT(String(user._id));
@@ -223,19 +223,19 @@ describe('Feed Routes - Activity Enrichment', () => {
     jest.clearAllMocks();
   });
 
-  it('should skip enrichment when activity already has poster and overview', async () => {
+  it("should skip enrichment when activity already has poster and overview", async () => {
     await FeedActivity.create({
       userId: user._id,
-      activityType: 'ranked_movie',
+      activityType: "ranked_movie",
       movieId: 201,
-      movieTitle: 'Complete Movie',
-      posterPath: '/poster.jpg',
-      overview: 'Already has overview'
+      movieTitle: "Complete Movie",
+      posterPath: "/poster.jpg",
+      overview: "Already has overview",
     });
 
     const res = await request(app)
-      .get('/api/feed')
-      .set('Authorization', `Bearer ${token}`);
+      .get("/api/feed")
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     // TMDB should not be called since both fields are present
@@ -243,19 +243,19 @@ describe('Feed Routes - Activity Enrichment', () => {
   });
 });
 
-describe('Config Module NODE_ENV Fallback', () => {
+describe("Config Module NODE_ENV Fallback", () => {
   beforeEach(() => {
     jest.resetModules();
   });
 
-  it('should use production when NODE_ENV is set to production', () => {
+  it("should use production when NODE_ENV is set to production", () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    process.env.NODE_ENV = "production";
 
     jest.resetModules();
-    const config = require('../../../../src/config').default;
+    const config = require("../../../../src/config").default;
 
-    expect(config.nodeEnv).toBe('production');
+    expect(config.nodeEnv).toBe("production");
 
     if (originalEnv) {
       process.env.NODE_ENV = originalEnv;

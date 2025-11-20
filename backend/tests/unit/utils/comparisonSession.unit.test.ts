@@ -11,43 +11,34 @@ import {
   startSession,
   getSession,
   updateSession,
-  endSession
-} from '../../../src/utils/comparisonSession';
+  endSession,
+} from "../../../src/utils/comparisonSession";
 
-describe('Comparison Session Utility', () => {
-  const userId = 'user-123';
+describe("Comparison Session Utility", () => {
+  const userId = "user-123";
   const movie = {
     movieId: 550,
-    title: 'Fight Club',
-    posterPath: '/poster.jpg'
+    title: "Fight Club",
+    posterPath: "/poster.jpg",
   };
 
   afterEach(() => {
     // Clean up any existing sessions
     endSession(userId);
-    endSession('user-456');
+    endSession("user-456");
   });
 
-  describe('startSession', () => {
+  describe("startSession", () => {});
 
+  describe("getSession", () => {});
 
-  });
-
-  describe('getSession', () => {
-
-  });
-
-  describe('updateSession', () => {
+  describe("updateSession", () => {
     beforeEach(() => {
       startSession(userId, movie, 10);
     });
 
-
-
-
-
-    it('should return early when session does not exist', () => {
-      const nonExistentUserId = 'user-does-not-exist';
+    it("should return early when session does not exist", () => {
+      const nonExistentUserId = "user-does-not-exist";
 
       // This should hit the early return
       updateSession(nonExistentUserId, 5, 10);
@@ -58,12 +49,7 @@ describe('Comparison Session Utility', () => {
     });
   });
 
-  describe('endSession', () => {
+  describe("endSession", () => {});
 
-
-  });
-
-  describe('Integration scenarios', () => {
-
-  });
+  describe("Integration scenarios", () => {});
 });

@@ -1,19 +1,23 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IFriendRequest extends Document {
   senderId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   createdAt: Date;
 }
 
 const FriendRequestSchema: Schema = new Schema(
   {
-    senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    receiverId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' }
+    senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    receiverId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    status: {
+      type: String,
+      enum: ["pending", "accepted", "rejected"],
+      default: "pending",
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Optional indexes to reduce duplicates and speed lookups
@@ -27,14 +31,20 @@ export interface IFriendship extends Document {
 
 const FriendshipSchema: Schema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    friendId: { type: Schema.Types.ObjectId, ref: 'User', required: true }
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    friendId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Prevent duplicate friendships per direction
 FriendshipSchema.index({ userId: 1, friendId: 1 }, { unique: true });
 
-export const FriendRequest = mongoose.model<IFriendRequest>('FriendRequest', FriendRequestSchema);
-export const Friendship = mongoose.model<IFriendship>('Friendship', FriendshipSchema);
+export const FriendRequest = mongoose.model<IFriendRequest>(
+  "FriendRequest",
+  FriendRequestSchema,
+);
+export const Friendship = mongoose.model<IFriendship>(
+  "Friendship",
+  FriendshipSchema,
+);

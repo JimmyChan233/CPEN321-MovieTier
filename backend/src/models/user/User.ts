@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IUser extends Document {
   email: string;
@@ -18,9 +18,9 @@ const UserSchema: Schema = new Schema(
     googleId: { type: String, required: true, unique: true },
     profileImageUrl: { type: String },
     googlePictureUrl: { type: String },
-    fcmToken: { type: String }
+    fcmToken: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model<IUser>('User', UserSchema);
+export default mongoose.model<IUser>("User", UserSchema);

@@ -8,47 +8,58 @@
  * Tests for TMDB client and tagline service with mocked axios
  */
 
-import axios from 'axios';
-import { getTmdbClient, resetTmdbClient } from '../../../src/services/tmdb/tmdbClient';
-import { fetchMovieTagline, cache } from '../../../src/services/tmdb/tmdbTaglineService';
+import axios from "axios";
+import {
+  getTmdbClient,
+  resetTmdbClient,
+} from "../../../src/services/tmdb/tmdbClient";
+import {
+  fetchMovieTagline,
+  cache,
+} from "../../../src/services/tmdb/tmdbTaglineService";
 
 // Mock axios
-jest.mock('axios');
+jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock logger
-jest.mock('../../../src/utils/logger', () => ({
+jest.mock("../../../src/utils/logger", () => ({
   logger: {
     info: jest.fn(),
     success: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn()
-  }
+    error: jest.fn(),
+  },
 }));
 
-describe('TMDB Client Tests', () => {
+describe("TMDB Client Tests", () => {
   let stdoutWriteSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    resetTmdbClient();  // Reset singleton for each test
-    stdoutWriteSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    process.env.TMDB_API_KEY = 'test-api-key';
+    resetTmdbClient(); // Reset singleton for each test
+    stdoutWriteSpy = jest
+      .spyOn(process.stdout, "write")
+      .mockImplementation(() => true);
+    process.env.TMDB_API_KEY = "test-api-key";
   });
 
   afterEach(() => {
     stdoutWriteSpy.mockRestore();
   });
 
-
-  it('should log error response without start time', () => {
+  it("should log error response without start time", () => {
     let errorInterceptor: any;
 
     const mockInstance = {
       interceptors: {
         request: { use: jest.fn() },
-        response: { use: jest.fn((success, error) => { errorInterceptor = error; }) }
-      }
+        response: {
+          use: jest.fn((success, error) => {
+            errorInterceptor = error;
+          }),
+        },
+      },
     };
 
     mockedAxios.create = jest.fn().mockReturnValue(mockInstance);
@@ -56,26 +67,26 @@ describe('TMDB Client Tests', () => {
     getTmdbClient();
 
     const mockError = {
-      message: 'Network Error',
+      message: "Network Error",
       config: {
-        method: 'GET',
-        url: '/test'
+        method: "GET",
+        url: "/test",
         // No __start property
-      }
+      },
     };
 
     expect(() => errorInterceptor(mockError)).toThrow();
 
     expect(stdoutWriteSpy).toHaveBeenCalledWith(
-      expect.stringContaining('ERROR')
+      expect.stringContaining("ERROR"),
     );
     expect(stdoutWriteSpy).not.toHaveBeenCalledWith(
-      expect.stringMatching(/\d+ms/)
+      expect.stringMatching(/\d+ms/),
     );
   });
 });
 
-describe('TMDB Tagline Service Tests', () => {
+describe("TMDB Tagline Service Tests", () => {
   let mockClient: any;
 
   beforeEach(() => {
@@ -92,8 +103,8 @@ describe('TMDB Tagline Service Tests', () => {
       get: jest.fn(),
       interceptors: {
         request: { use: jest.fn() },
-        response: { use: jest.fn() }
-      }
+        response: { use: jest.fn() },
+      },
     };
 
     // Mock axios.create BEFORE getTmdbClient is called
@@ -104,82 +115,76 @@ describe('TMDB Tagline Service Tests', () => {
     jest.useRealTimers();
   });
 
-
-  it('should return null when result has no ID', async () => {
+  it("should return null when result has no ID", async () => {
     mockClient.get.mockResolvedValueOnce({
       data: {
-        results: [{ title: 'No ID Movie' }]
-      }
+        results: [{ title: "No ID Movie" }],
+      },
     });
 
-    const tagline = await fetchMovieTagline('No ID Movie', 2024);
+    const tagline = await fetchMovieTagline("No ID Movie", 2024);
 
     expect(tagline).toBeNull();
   });
 
-
-  it('should return null when movie has empty tagline', async () => {
+  it("should return null when movie has empty tagline", async () => {
     mockClient.get
       .mockResolvedValueOnce({
         data: {
-          results: [{ id: 999, title: 'Empty Tagline' }]
-        }
+          results: [{ id: 999, title: "Empty Tagline" }],
+        },
       })
       .mockResolvedValueOnce({
         data: {
-          tagline: '   '
-        }
+          tagline: "   ",
+        },
       });
 
-    const tagline = await fetchMovieTagline('Empty Tagline', 2024);
+    const tagline = await fetchMovieTagline("Empty Tagline", 2024);
 
     expect(tagline).toBeNull();
   });
 
+  it("should return null on API error", async () => {
+    mockClient.get.mockRejectedValueOnce(new Error("API Error"));
 
-  it('should return null on API error', async () => {
-    mockClient.get.mockRejectedValueOnce(new Error('API Error'));
-
-    const tagline = await fetchMovieTagline('Error Movie', 2024);
+    const tagline = await fetchMovieTagline("Error Movie", 2024);
 
     expect(tagline).toBeNull();
   });
 
-
-  it('should trim whitespace from title for cache key', async () => {
+  it("should trim whitespace from title for cache key", async () => {
     mockClient.get
       .mockResolvedValueOnce({
         data: {
-          results: [{ id: 555, title: 'Trimmed' }]
-        }
+          results: [{ id: 555, title: "Trimmed" }],
+        },
       })
       .mockResolvedValueOnce({
         data: {
-          tagline: 'Clean'
-        }
+          tagline: "Clean",
+        },
       });
 
-    await fetchMovieTagline('  Trimmed Movie  ', 2024);
-    const tagline = await fetchMovieTagline('Trimmed Movie', 2024);
+    await fetchMovieTagline("  Trimmed Movie  ", 2024);
+    const tagline = await fetchMovieTagline("Trimmed Movie", 2024);
 
-    expect(tagline).toBe('Clean');
+    expect(tagline).toBe("Clean");
     expect(mockClient.get).toHaveBeenCalledTimes(2);
   });
 
-
-  it('should handle search response with undefined data', async () => {
+  it("should handle search response with undefined data", async () => {
     mockClient.get.mockResolvedValueOnce({
-      data: undefined
+      data: undefined,
     });
 
-    const tagline = await fetchMovieTagline('Undefined Data', 2024);
+    const tagline = await fetchMovieTagline("Undefined Data", 2024);
 
     expect(tagline).toBeNull();
     expect(mockClient.get).toHaveBeenCalledTimes(1);
   });
-
 });
-describe('TMDB Client - Response Interceptor', () => {
+describe("TMDB Client - Response Interceptor", () => {
   let consoleOutput: string[] = [];
   const originalWrite = process.stdout.write;
 
@@ -191,7 +196,7 @@ describe('TMDB Client - Response Interceptor', () => {
       consoleOutput.push(msg);
       return true;
     });
-    process.env.TMDB_API_KEY = 'test-key';
+    process.env.TMDB_API_KEY = "test-key";
   });
 
   afterEach(() => {
@@ -199,26 +204,26 @@ describe('TMDB Client - Response Interceptor', () => {
     jest.restoreAllMocks();
   });
 
-  it('should handle response when __start is undefined in response config', async () => {
+  it("should handle response when __start is undefined in response config", async () => {
     const client = getTmdbClient();
 
-    jest.spyOn(axios, 'create').mockReturnValue({
+    jest.spyOn(axios, "create").mockReturnValue({
       interceptors: {
         request: { use: jest.fn() },
         response: {
           use: jest.fn((success) => {
             const mockResponse = {
               config: {
-                method: 'get',
-                url: 'https://api.themoviedb.org/3/search/movie',
+                method: "get",
+                url: "https://api.themoviedb.org/3/search/movie",
                 // __start is not set
               } as any,
-              status: 200
+              status: 200,
             } as any;
             success(mockResponse);
-          })
-        }
-      }
+          }),
+        },
+      },
     } as any);
 
     const testClient = getTmdbClient();
@@ -226,7 +231,7 @@ describe('TMDB Client - Response Interceptor', () => {
   });
 });
 
-describe('TMDB Client - Error Interceptor', () => {
+describe("TMDB Client - Error Interceptor", () => {
   let consoleOutput: string[] = [];
   const originalWrite = process.stdout.write;
 
@@ -236,7 +241,7 @@ describe('TMDB Client - Error Interceptor', () => {
       consoleOutput.push(msg);
       return true;
     });
-    process.env.TMDB_API_KEY = 'test-key';
+    process.env.TMDB_API_KEY = "test-key";
   });
 
   afterEach(() => {
@@ -244,22 +249,22 @@ describe('TMDB Client - Error Interceptor', () => {
     jest.restoreAllMocks();
   });
 
-  it('should use empty object when error has no config', async () => {
+  it("should use empty object when error has no config", async () => {
     const client = getTmdbClient();
 
-    jest.spyOn(axios, 'create').mockReturnValue({
+    jest.spyOn(axios, "create").mockReturnValue({
       interceptors: {
         request: { use: jest.fn() },
         response: {
           use: jest.fn((success, error) => {
             const mockError = {
-              message: 'Critical Error',
-              config: undefined
+              message: "Critical Error",
+              config: undefined,
             } as any;
             expect(() => error(mockError)).toThrow();
-          })
-        }
-      }
+          }),
+        },
+      },
     } as any);
 
     const testClient = getTmdbClient();
@@ -267,7 +272,7 @@ describe('TMDB Client - Error Interceptor', () => {
   });
 });
 
-describe('TMDB Client - Real Interceptor Behavior', () => {
+describe("TMDB Client - Real Interceptor Behavior", () => {
   let consoleOutput: string[] = [];
   const originalWrite = process.stdout.write;
 
@@ -277,7 +282,7 @@ describe('TMDB Client - Real Interceptor Behavior', () => {
       consoleOutput.push(msg);
       return true;
     });
-    process.env.TMDB_API_KEY = 'test-api-key-12345';
+    process.env.TMDB_API_KEY = "test-api-key-12345";
   });
 
   afterEach(() => {
@@ -285,14 +290,18 @@ describe('TMDB Client - Real Interceptor Behavior', () => {
     jest.restoreAllMocks();
   });
 
-  it('should handle timing gracefully when __start is missing', async () => {
+  it("should handle timing gracefully when __start is missing", async () => {
     let responseSuccessHandler: any;
 
     const mockInstance = {
       interceptors: {
         request: { use: jest.fn() },
-        response: { use: jest.fn((success, error) => { responseSuccessHandler = success; }) }
-      }
+        response: {
+          use: jest.fn((success, error) => {
+            responseSuccessHandler = success;
+          }),
+        },
+      },
     };
 
     mockedAxios.create = jest.fn().mockReturnValue(mockInstance);
@@ -302,12 +311,12 @@ describe('TMDB Client - Real Interceptor Behavior', () => {
 
     const result = responseSuccessHandler({
       config: {
-        method: 'GET',
-        url: '/movie/550',
+        method: "GET",
+        url: "/movie/550",
         // __start not set
       } as any,
       status: 200,
-      data: {}
+      data: {},
     });
 
     expect(result).toBeDefined();

@@ -11,55 +11,60 @@
  * Tests include: signIn, signUp, signOut, deleteAccount
  */
 
-import request from 'supertest';
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import express from 'express';
-import authRoutes from '../../../src/routes/authRoutes';
-import User from '../../../src/models/user/User';
-import { Friendship, FriendRequest } from '../../../src/models/friend/Friend';
-import { authenticate } from '../../../src/middleware/auth';
-import { generateTestJWT, mockUsers } from '../../utils/test-fixtures';
-import { AuthService } from '../../../src/services/auth/authService';
+import request from "supertest";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import express from "express";
+import authRoutes from "../../../src/routes/authRoutes";
+import User from "../../../src/models/user/User";
+import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
+import { authenticate } from "../../../src/middleware/auth";
+import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { AuthService } from "../../../src/services/auth/authService";
 
 // Mock the Google OAuth verification with different tokens for different scenarios
-const mockTokenMap: Record<string, { email: string; name: string; googleId: string; picture?: string }> = {
-  'mock-valid-token': {
-    email: 'test@example.com',
-    name: 'Test User',
-    googleId: 'google-123',
-    picture: 'https://example.com/image.jpg'
+const mockTokenMap: Record<
+  string,
+  { email: string; name: string; googleId: string; picture?: string }
+> = {
+  "mock-valid-token": {
+    email: "test@example.com",
+    name: "Test User",
+    googleId: "google-123",
+    picture: "https://example.com/image.jpg",
   },
-  'mock-nonexistent-token': {
-    email: 'nonexistent@example.com',
-    name: 'New User',
-    googleId: 'google-999',
-    picture: undefined
+  "mock-nonexistent-token": {
+    email: "nonexistent@example.com",
+    name: "New User",
+    googleId: "google-999",
+    picture: undefined,
   },
-  'mock-new-user-token': {
-    email: 'newuser@example.com',
-    name: 'New User',
-    googleId: 'google-new-123',
-    picture: 'https://example.com/new.jpg'
+  "mock-new-user-token": {
+    email: "newuser@example.com",
+    name: "New User",
+    googleId: "google-new-123",
+    picture: "https://example.com/new.jpg",
   },
-  'mock-existing-user-token': {
-    email: 'existing@example.com',
-    name: 'Different User',
-    googleId: 'google-different',
-    picture: undefined
-  }
+  "mock-existing-user-token": {
+    email: "existing@example.com",
+    name: "Different User",
+    googleId: "google-different",
+    picture: undefined,
+  },
 };
 
-jest.spyOn(AuthService.prototype, 'verifyGoogleToken').mockImplementation(async (idToken: string) => {
-  const mockData = mockTokenMap[idToken];
-  if (mockData) {
-    return mockData;
-  }
-  throw new Error('Invalid Google token');
-});
+jest
+  .spyOn(AuthService.prototype, "verifyGoogleToken")
+  .mockImplementation(async (idToken: string) => {
+    const mockData = mockTokenMap[idToken];
+    if (mockData) {
+      return mockData;
+    }
+    throw new Error("Invalid Google token");
+  });
 
 // Interface POST /auth/signin
-describe('Unmocked: POST /auth/signin', () => {
+describe("Unmocked: POST /auth/signin", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
 
@@ -69,7 +74,7 @@ describe('Unmocked: POST /auth/signin', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/', authRoutes);
+    app.use("/", authRoutes);
   });
 
   afterAll(async () => {
@@ -90,13 +95,11 @@ describe('Unmocked: POST /auth/signin', () => {
   // Expected status code: 400
   // Expected behavior: Request is rejected with validation error
   // Expected output: Error message indicating missing idToken
-  it('should reject signin without idToken', async () => {
-    const res = await request(app)
-      .post('/signin')
-      .send({
-        email: 'test@example.com',
-        name: 'Test User'
-      });
+  it("should reject signin without idToken", async () => {
+    const res = await request(app).post("/signin").send({
+      email: "test@example.com",
+      name: "Test User",
+    });
 
     expect(res.status).toStrictEqual(400);
     expect(res.body.message).toMatch(/idToken|required/i);
@@ -109,7 +112,7 @@ describe('Unmocked: POST /auth/signin', () => {
 });
 
 // Interface POST /auth/signup
-describe('Unmocked: POST /auth/signup', () => {
+describe("Unmocked: POST /auth/signup", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
 
@@ -119,7 +122,7 @@ describe('Unmocked: POST /auth/signup', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/', authRoutes);
+    app.use("/", authRoutes);
   });
 
   afterAll(async () => {
@@ -140,13 +143,11 @@ describe('Unmocked: POST /auth/signup', () => {
   // Expected status code: 400
   // Expected behavior: Database is unchanged
   // Expected output: Error message about missing idToken
-  it('should reject signup without idToken', async () => {
-    const res = await request(app)
-      .post('/signup')
-      .send({
-        email: 'newuser@example.com',
-        name: 'New User'
-      });
+  it("should reject signup without idToken", async () => {
+    const res = await request(app).post("/signup").send({
+      email: "newuser@example.com",
+      name: "New User",
+    });
 
     expect(res.status).toStrictEqual(400);
     expect(res.body.message).toMatch(/idToken|required/i);
@@ -159,7 +160,7 @@ describe('Unmocked: POST /auth/signup', () => {
 });
 
 // Interface POST /auth/signout
-describe('Unmocked: POST /auth/signout', () => {
+describe("Unmocked: POST /auth/signout", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
 
@@ -169,7 +170,7 @@ describe('Unmocked: POST /auth/signout', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/', authRoutes);
+    app.use("/", authRoutes);
   });
 
   afterAll(async () => {
@@ -195,10 +196,10 @@ describe('Unmocked: POST /auth/signout', () => {
   // Expected status code: 401
   // Expected behavior: Request is rejected
   // Expected output: Invalid token error
-  it('should reject signout with invalid token', async () => {
+  it("should reject signout with invalid token", async () => {
     const res = await request(app)
-      .post('/signout')
-      .set('Authorization', 'Bearer invalid.jwt.token')
+      .post("/signout")
+      .set("Authorization", "Bearer invalid.jwt.token")
       .send({});
 
     expect(res.status).toStrictEqual(401);
@@ -207,7 +208,7 @@ describe('Unmocked: POST /auth/signout', () => {
 });
 
 // Interface DELETE /auth/account
-describe('Unmocked: DELETE /auth/account', () => {
+describe("Unmocked: DELETE /auth/account", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
 
@@ -217,7 +218,7 @@ describe('Unmocked: DELETE /auth/account', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/', authRoutes);
+    app.use("/", authRoutes);
   });
 
   afterAll(async () => {
@@ -245,16 +246,16 @@ describe('Unmocked: DELETE /auth/account', () => {
   // Expected status code: 401
   // Expected behavior: Database is unchanged
   // Expected output: Invalid token error
-  it('should reject account deletion with invalid token', async () => {
+  it("should reject account deletion with invalid token", async () => {
     const user = await User.create({
-      email: 'secure@example.com',
-      name: 'Secure User',
-      googleId: 'google-secure'
+      email: "secure@example.com",
+      name: "Secure User",
+      googleId: "google-secure",
     });
 
     const res = await request(app)
-      .delete('/account')
-      .set('Authorization', 'Bearer invalid.token')
+      .delete("/account")
+      .set("Authorization", "Bearer invalid.token")
       .send({});
 
     expect(res.status).toStrictEqual(401);
