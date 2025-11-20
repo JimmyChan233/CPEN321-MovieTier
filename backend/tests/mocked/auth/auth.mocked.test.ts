@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for authentication API
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Authentication API Tests - Mocked
  *
  * These tests verify error handling and edge cases using mocks for external dependencies

@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for SSE service
+ * Tests with real MongoDB database
+ */
+
+/**
  * SSE Service Tests - Unmocked
  * Tests for Server-Sent Events service with mock Response objects
  */

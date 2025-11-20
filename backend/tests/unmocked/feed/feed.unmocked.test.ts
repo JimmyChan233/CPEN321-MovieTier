@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for feed operations
+ * Tests with real MongoDB database
+ */
+
+/**
  * Feed API Tests - Unmocked
  * Tests: GET /feed, POST /feed/:activityId/like, DELETE /feed/:activityId/like,
  *        GET /feed/:activityId/comments, POST /feed/:activityId/comments

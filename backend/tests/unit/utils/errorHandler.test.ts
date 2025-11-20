@@ -1,3 +1,7 @@
+/**
+ * @unit Unit tests for error handling and middleware
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import { logger } from '../../../src/utils/logger';

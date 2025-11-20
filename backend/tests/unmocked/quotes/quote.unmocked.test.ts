@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for quote feature
+ * Tests with real MongoDB database
+ */
+
+/**
  * Quote API Tests - Unmocked
  * Tests: GET /quotes
  */

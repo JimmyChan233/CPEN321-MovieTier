@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for user profile and routes
+ * Tests with real MongoDB database
+ */
+
+/**
  * User Profile API Tests - Unmocked
  * Tests: PUT /users/profile, POST /users/fcm-token, GET /users/profile
  */

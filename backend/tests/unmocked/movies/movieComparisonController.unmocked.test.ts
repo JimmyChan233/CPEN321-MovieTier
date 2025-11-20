@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for movie operations
+ * Tests with real MongoDB database
+ */
+
+/**
  * Movie Comparison Controller Complete Tests - Unmocked
  * Exhaustive tests covering ALL code paths in movieComparisionController.ts
  */

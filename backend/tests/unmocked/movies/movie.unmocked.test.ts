@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for movie operations
+ * Tests with real MongoDB database
+ */
+
+/**
  * Movie API Tests - Unmocked
  * Tests: GET /search, GET /ranked, POST /rank, POST /compare, POST /rerank/start, DELETE /ranked/:id
  */

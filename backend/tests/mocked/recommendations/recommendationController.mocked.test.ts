@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for recommendation API
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Recommendation Controller Tests - Mocked
  * Comprehensive tests with mocked TMDB responses to cover all code paths
  */

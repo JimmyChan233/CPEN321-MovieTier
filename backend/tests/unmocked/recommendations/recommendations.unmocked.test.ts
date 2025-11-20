@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for recommendations
+ * Tests with real MongoDB database
+ */
+
+/**
  * Recommendations API Tests - Unmocked
  * Tests: GET /recommendations, GET /recommendations/trending
  */

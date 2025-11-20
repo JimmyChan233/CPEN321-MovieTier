@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for watchlist operations
+ * Tests with real MongoDB database
+ */
+
+/**
  * Watchlist Routes Tests - Unmocked
  * Comprehensive tests for all watchlist route handlers
  */

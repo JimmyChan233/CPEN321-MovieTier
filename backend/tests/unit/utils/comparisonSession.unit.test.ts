@@ -1,4 +1,8 @@
 /**
+ * @unit Unit tests for comparison session management
+ */
+
+/**
  * Comparison Session Utility Tests
  * Unit tests for comparison session management
  */

@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for external services
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Notification Service Tests - Mocked
  * Tests notification service with mocked Firebase Admin
  */

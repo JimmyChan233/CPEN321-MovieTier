@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for external services
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * SSE Authentication Edge Case Tests
  * Tests the defensive userId validation in SSE stream handlers
  */

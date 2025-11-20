@@ -1,3 +1,7 @@
+/**
+ * @unit Unit tests for authentication middleware
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticate, AuthRequest } from '../../../src/middleware/auth';

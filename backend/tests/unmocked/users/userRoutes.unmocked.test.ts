@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for user profile and routes
+ * Tests with real MongoDB database
+ */
+
+/**
  * User Routes Tests - Unmocked
  * Comprehensive tests for all user route handlers
  */

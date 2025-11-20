@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for friend management
+ * Tests with real MongoDB database
+ */
+
+/**
  * Advanced Friend Routes Tests - Unmocked
  * Comprehensive tests for all friend management edge cases
  */

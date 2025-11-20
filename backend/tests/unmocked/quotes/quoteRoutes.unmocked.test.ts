@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for quote feature
+ * Tests with real MongoDB database
+ */
+
+/**
  * Quote Routes Tests - Unmocked
  * Tests for movie tagline fetching endpoint
  */

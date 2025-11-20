@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for feed operations
+ * Tests with real MongoDB database
+ */
+
+/**
  * Feed Route Handlers Tests - Unmocked
  * Comprehensive tests for inline handlers in feedRoutes.ts
  */

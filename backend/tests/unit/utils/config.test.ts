@@ -1,3 +1,7 @@
+/**
+ * @unit Unit tests for configuration module
+ */
+
 
 import dotenv from 'dotenv';
 

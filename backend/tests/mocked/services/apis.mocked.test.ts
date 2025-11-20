@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for external services
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Mocked Tests for Feed, Friends, Watchlist, Recommendations, User APIs
  * Tests error handling and edge cases
  */

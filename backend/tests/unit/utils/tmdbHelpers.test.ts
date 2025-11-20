@@ -1,4 +1,8 @@
 /**
+ * @unit Unit tests for TMDB response helper functions
+ */
+
+/**
  * Tests for TMDB response helpers and handlers
  * These tests achieve 100% branch coverage on extracted utility functions
  */

@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for movie operations
+ * Tests with real MongoDB database
+ */
+
+/**
  * Rerank Controller Complete Tests - Unmocked
  * Exhaustive tests covering ALL code paths in rerankController.ts
  */

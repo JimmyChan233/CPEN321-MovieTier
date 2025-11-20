@@ -1,4 +1,8 @@
 /**
+ * @unit Unit tests for logger utility
+ */
+
+/**
  * Logger Utility Tests
  * Unit tests for custom logger utility
  */

@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for movie routes and controllers
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Movie Comparison Controller Tests - Mocked
  * Tests for interactive movie ranking with binary search comparison
  */

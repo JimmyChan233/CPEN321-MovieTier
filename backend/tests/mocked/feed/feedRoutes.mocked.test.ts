@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for feed API
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Feed Routes Tests - Mocked
  * Tests for error handling and edge cases in feed routes
  */

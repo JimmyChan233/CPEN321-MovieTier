@@ -1,4 +1,9 @@
 /**
+ * @unmocked Integration tests for authentication
+ * Tests with real MongoDB database
+ */
+
+/**
  * Authentication API Tests - Unmocked
  *
  * These tests verify the authentication endpoints without mocking external dependencies.

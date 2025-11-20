@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for watchlist API
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Watchlist Routes Tests - Mocked
  * Tests for error handling and edge cases in watchlist routes
  */

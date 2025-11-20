@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for friend management API
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * Friend Routes Tests - Mocked
  * Tests for error handling and edge cases in friend routes
  */

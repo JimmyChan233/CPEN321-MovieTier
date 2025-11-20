@@ -1,3 +1,8 @@
+/**
+ * @mocked Mocked tests for movie routes and controllers
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
 import { startRerank } from '../../src/controllers/rerankController';
 import RankedMovieModel from '../../src/models/movie/RankedMovie';
 import { startSession } from '../../src/utils/comparisonSession';

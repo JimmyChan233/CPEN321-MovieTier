@@ -1,4 +1,9 @@
 /**
+ * @mocked Mocked tests for external services
+ * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ */
+
+/**
  * TMDB Services Tests - Mocked
  * Tests for TMDB client and tagline service with mocked axios
  */

@@ -1,3 +1,7 @@
+/**
+ * @unit Unit tests for async request handler wrapper
+ */
+
 import { asyncHandler } from '../../../src/utils/asyncHandler';
 import { Request, Response, NextFunction } from 'express';
 
