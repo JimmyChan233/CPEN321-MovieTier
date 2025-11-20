@@ -60,29 +60,7 @@ describe('SSE Service Tests', () => {
     (sseService as any).clients.clear();
   });
 
-  // Test Case 1: Add client for new user
-
-  // Test Case 2: Add multiple clients for same user
-
-  // Test Case 3: Add clients for different users
-
-  // Test Case 4: Auto-remove client on connection close
-
-  // Test Case 5: Remove client manually
-
-  // Test Case 6: Remove last client deletes user entry
-
-  // Test Case 7: Remove client from non-existent user
-
-  // Test Case 8: Send event to existing client
-
-  // Test Case 9: Send to non-existent user
-
-  // Test Case 10: Send to multiple clients of same user
-
-  // Test Case 11: Skip sending to closed connection
-
-  // Test Case 12: Skip sending to destroyed connection (coverage for line 46)
+  // Skip sending to destroyed connection (coverage for line 46)
   it('should skip destroyed connection (destroyed=true) and clean it up', () => {
     sseService.addClient('user1', mockRes1 as unknown as Response);
     sseService.addClient('user1', mockRes2 as unknown as Response);
@@ -116,15 +94,7 @@ describe('SSE Service Tests', () => {
     expect(clients.has('user1')).toBe(false);
   });
 
-  // Test Case 14: Remove only failed clients, keep working ones
-
-  // Test Case 15: Clear all connections
-
-  // Test Case 16: Clear handles already-closed connections
-
-  // Test Case 17: Clear handles destroyed connections
-
-  // Test Case 18: Clear handles write errors gracefully
+  // Clear handles write errors gracefully
   it('should handle errors during clear', () => {
     const errorRes = new MockResponse();
     sseService.addClient('user1', errorRes as unknown as Response);
@@ -140,18 +110,4 @@ describe('SSE Service Tests', () => {
     const clients = (sseService as any).clients;
     expect(clients.size).toBe(0);
   });
-
-  // Test Case 19: Send various data types
-
-  // Test Case 20: Event name formatting
-
-  // Test Case 21: Multiple sends to same client
-
-  // Test Case 22: Complex nested data
-
-  // Test Case 23: Concurrent operations
-
-  // Test Case 24: Empty event name
-
-  // Test Case 25: Special characters in data
 });

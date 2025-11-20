@@ -66,19 +66,8 @@ describe('Notification Service Tests - Mocked', () => {
     jest.dontMock('firebase-admin');
   });
 
-  // Note: Initialization tests are skipped because the service is a singleton
-  // that initializes on import with real environment variables. These tests
-  // are better suited for integration tests rather than unit tests.
 
-  // Test Case 4: Send feed notification successfully
-
-  // Test Case 5: Skipped - testing "not initialized" state is not feasible with singleton pattern
-
-  // Test Case 6: Handle invalid registration token error
-
-  // Test Case 7: Handle registration token not registered error
-
-  // Test Case 8: Handle generic sending error
+  // Handle generic sending error
   it('should handle generic sending error', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -99,7 +88,7 @@ describe('Notification Service Tests - Mocked', () => {
     expect(result).toBe(false);
   });
 
-  // Test Case 9: Send friend request notification
+  // Send friend request notification
   it('should send friend request notification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -133,9 +122,7 @@ describe('Notification Service Tests - Mocked', () => {
     );
   });
 
-  // Test Case 10: Send friend request accepted notification
-
-  // Test Case 11: Send like notification
+  // Send like notification
   it('should send like notification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -171,9 +158,7 @@ describe('Notification Service Tests - Mocked', () => {
     );
   });
 
-  // Test Case 12: Send comment notification
-
-  // Test Case 13: Truncate long comments
+  // Truncate long comments
   it('should truncate long comments in notification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -203,11 +188,7 @@ describe('Notification Service Tests - Mocked', () => {
     );
   });
 
-  // Test Case 14: Send multicast notification
-
-  // Test Case 15: Handle multicast with some failures
-
-  // Test Case 16: Handle multicast with empty token array
+  // Handle multicast with empty token array
   it('should handle multicast with empty token array', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -227,9 +208,8 @@ describe('Notification Service Tests - Mocked', () => {
     expect(mockMessaging.sendEachForMulticast).not.toHaveBeenCalled();
   });
 
-  // Test Case 17: Skipped - testing "not initialized" state is not feasible with singleton pattern
 
-  // Test Case 18: Handle multicast network error
+  // Handle multicast network error
   it('should handle multicast network error', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -250,7 +230,7 @@ describe('Notification Service Tests - Mocked', () => {
     expect(result).toBe(0);
   });
 
-  // Test Case 19: Verify Android-specific configuration in feed notification
+  // Verify Android-specific configuration in feed notification
   it('should include Android configuration in feed notification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -278,7 +258,7 @@ describe('Notification Service Tests - Mocked', () => {
     );
   });
 
-  // Test Case 20: Verify different priorities for different notification types
+  // Verify different priorities for different notification types
   it('should use normal priority for friend request accepted', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -303,13 +283,7 @@ describe('Notification Service Tests - Mocked', () => {
     );
   });
 
-  // Test Case 21: Skipped - testing "not initialized" state is not feasible with singleton pattern
-
-  // Test Case 22: Handle invalid token in sendLikeNotification
-
-  // Test Case 23: Handle token not registered in sendLikeNotification
-
-  // Test Case 24: Handle generic error in sendLikeNotification
+  // Handle generic error in sendLikeNotification
   it('should handle generic error in sendLikeNotification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -330,13 +304,7 @@ describe('Notification Service Tests - Mocked', () => {
     expect(result).toBe(false);
   });
 
-  // Test Case 25: Skipped - testing "not initialized" state is not feasible with singleton pattern
-
-  // Test Case 26: Handle invalid token in sendCommentNotification
-
-  // Test Case 27: Handle token not registered in sendCommentNotification
-
-  // Test Case 28: Handle generic error in sendCommentNotification
+  // Handle generic error in sendCommentNotification
   it('should handle generic error in sendCommentNotification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -358,13 +326,7 @@ describe('Notification Service Tests - Mocked', () => {
     expect(result).toBe(false);
   });
 
-  // Test Case 29: Skipped - testing "not initialized" state is not feasible with singleton pattern
-
-  // Test Case 30: Handle errors in sendFriendRequestNotification
-
-  // Test Case 30a: Handle token not registered in sendFriendRequestNotification
-
-  // Test Case 30b: Handle generic error in sendFriendRequestNotification
+  // Handle generic error in sendFriendRequestNotification
   it('should handle generic error in sendFriendRequestNotification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -384,9 +346,8 @@ describe('Notification Service Tests - Mocked', () => {
     expect(result).toBe(false);
   });
 
-  // Test Case 31: Skipped - testing "not initialized" state is not feasible with singleton pattern
 
-  // Test Case 32: Handle errors in sendFriendRequestAcceptedNotification
+  // Handle errors in sendFriendRequestAcceptedNotification
   it('should handle errors in sendFriendRequestAcceptedNotification', async () => {
     process.env.FIREBASE_PROJECT_ID = 'test-project';
     process.env.FIREBASE_CLIENT_EMAIL = 'test@test.com';
@@ -404,18 +365,6 @@ describe('Notification Service Tests - Mocked', () => {
 
     expect(result).toBe(false);
   });
-
-  // Test Case 32a: Handle invalid token in sendFriendRequestAcceptedNotification
-
-  // Test Case 32b: Handle token not registered in sendFriendRequestAcceptedNotification
-
-  // Test Case 33: Skipped - testing "already initialized" state is not feasible with singleton pattern
-
-  // Test Case 34: Handle multicast with all failures
-
-  // Test Case 35: Verify data payload in multicast
-
-  // ============== NOT INITIALIZED STATE TESTS ==============
 
 
   it('should return false and warn when Firebase not initialized in sendFriendRequestNotification', async () => {
@@ -562,11 +511,6 @@ describe('Notification Service Tests - Mocked', () => {
     expect(mockMessaging.sendEachForMulticast).not.toHaveBeenCalled();
   });
 
-  // Note: Testing "not initialized" state and certain initialization error paths
-  // is not feasible with the current singleton pattern without significant refactoring.
-  // Current coverage: 81.73% (improved from 80%)
-  // Uncovered lines are primarily initialization edge cases and "not initialized" state checks
-  // ============== INITIALIZATION TESTS ==============
 
   describe('Firebase Initialization', () => {
     // Reset mockAdmin.apps before each Firebase initialization test

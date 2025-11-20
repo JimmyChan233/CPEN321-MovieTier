@@ -68,15 +68,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     await Comment.deleteMany({});
   });
 
-  // Test Case 1: GET /feed with friends' activities
-
-  // Test Case 2: GET /feed with no friends
-
-  // Test Case 3: GET /feed with activities lacking overview/poster
-
-  // Test Case 4: GET /feed with like counts
-
-  // Test Case 5: GET /feed with comment counts
+  // GET /feed with comment counts
   it('should include comment counts in feed', async () => {
     await Friendship.create({ userId: user1._id, friendId: user2._id });
 
@@ -102,7 +94,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     expect(res.status).toBe(200);
   });
 
-  // Test Case 6: GET /feed with user's like status
+  // GET /feed with user's like status
   it('should mark activities liked by user', async () => {
     await Friendship.create({ userId: user1._id, friendId: user2._id });
 
@@ -124,7 +116,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     expect(res.status).toBe(200);
   });
 
-  // Test Case 7: GET /feed with current rank from RankedMovie
+  // GET /feed with current rank from RankedMovie
   it('should show current rank from RankedMovie collection', async () => {
     await Friendship.create({ userId: user1._id, friendId: user2._id });
 
@@ -152,15 +144,8 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     expect(res.status).toBe(200);
   });
 
-  // Test Case 8: GET /feed with multiple friends
 
-  // Test Case 9: GET /feed error handling
-
-  // Test Case 10: GET /me (own activities)
-
-  // Test Case 11: GET /me with no activities
-
-  // Test Case 12: GET /stream (SSE)
+  // Test Case: GET /stream (SSE)
   it('should establish SSE stream', (done) => {
     const req = request(app)
       .get('/api/feed/stream')
@@ -181,9 +166,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
       });
   });
 
-  // Test Case 13: POST /:activityId/like
-
-  // Test Case 14: POST /:activityId/like with non-existent activity
+  // POST /:activityId/like with non-existent activity
   it('should return 404 when liking non-existent activity', async () => {
     const fakeId = new mongoose.Types.ObjectId();
 
@@ -194,11 +177,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     expect(res.status).toBe(404);
   });
 
-  // Test Case 15: POST /:activityId/like own activity
-
-  // Test Case 16: POST /:activityId/like duplicate
-
-  // Test Case 17: DELETE /:activityId/like
+  // DELETE /:activityId/like
   it('should unlike an activity', async () => {
     const activity = await FeedActivity.create({
       userId: user2._id,
@@ -228,7 +207,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     expect(like).toBeNull();
   });
 
-  // Test Case 18: DELETE /:activityId/like when not liked
+  // DELETE /:activityId/like when not liked
   it('should handle unlike when not previously liked', async () => {
     const activity = await FeedActivity.create({
       userId: user2._id,
@@ -246,7 +225,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     expect(res.status).toStrictEqual(404);
   });
 
-  // Test Case 19: GET /:activityId/comments
+  // GET /:activityId/comments
   it('should get comments for an activity', async () => {
     const activity = await FeedActivity.create({
       userId: user2._id,
@@ -275,14 +254,8 @@ describe('Feed Route Handlers - Inline Handlers', () => {
 
     expect(res.status).toBe(200);
   });
-
-  // Test Case 20: GET /:activityId/comments with no comments
-
-  // Test Case 21: POST /:activityId/comments
-
-  // Test Case 22: POST /:activityId/comments with missing text
-
-  // Test Case 23: POST /:activityId/comments on non-existent activity
+  
+  // POST /:activityId/comments on non-existent activity
   it('should return 404 when commenting on non-existent activity', async () => {
     const fakeId = new mongoose.Types.ObjectId();
 
@@ -294,21 +267,7 @@ describe('Feed Route Handlers - Inline Handlers', () => {
     expect(res.status).toBe(404);
   });
 
-  // Test Case 24: POST /:activityId/comments sends notification
-
-  // Test Case 25: POST /:activityId/comments on own activity (no notification)
-
-  // Test Case 26: Unauthorized access to feed
-
-  // Test Case 27: Unauthorized access to /me
-
-  // Test Case 28: Unauthorized access to /stream
-
-  // Test Case 29: Unauthorized like
-
-  // Test Case 30: Unauthorized comment
-
-  // Test Case 31: GET /feed with activity having both overview and posterPath (needsEnrichment returns false)
+  // GET /feed with activity having both overview and posterPath (needsEnrichment returns false)
   it('should handle activity with complete metadata (no enrichment needed)', async () => {
     await Friendship.create({ userId: user1._id, friendId: user2._id });
 

@@ -31,23 +31,6 @@ describe('Mocked: POST /auth/signin', () => {
     jest.restoreAllMocks();
   });
 
-  // Mocked behavior: AuthService.verifyGoogleToken throws error
-  // Input: Valid Google idToken
-  // Expected status code: 400
-  // Expected behavior: Error is caught and handled gracefully
-  // Expected output: Error message
-
-  // Mocked behavior: User.findOne throws database error
-  // Input: Valid idToken but database fails
-  // Expected status code: 400
-  // Expected behavior: Database error is caught
-  // Expected output: Error message
-
-  // Mocked behavior: JWT generation fails
-  // Input: Valid user exists but JWT library throws error
-  // Expected status code: 400
-  // Expected behavior: Partial failure - user found but token generation failed
-  // Expected output: Error message about token generation
 
   it('should successfully sign in with valid credentials', async () => {
     const mockUser = {
@@ -104,23 +87,6 @@ describe('Mocked: POST /auth/signup', () => {
     jest.restoreAllMocks();
   });
 
-  // Mocked behavior: Database insert fails with duplicate key error
-  // Input: Email already exists in unique index
-  // Expected status code: 400
-  // Expected behavior: Duplicate error is caught and formatted
-  // Expected output: User-friendly duplicate email message
-
-  // Mocked behavior: Database connection fails during user creation
-  // Input: Valid Google idToken, new email
-  // Expected status code: 400
-  // Expected behavior: Error is caught gracefully
-  // Expected output: Error message
-
-  // Mocked behavior: Google OAuth verification fails
-  // Input: Invalid Google idToken format
-  // Expected status code: 400
-  // Expected behavior: Google verification fails before database interaction
-  // Expected output: Authentication error
 
   it('should successfully sign up with valid credentials', async () => {
     const mockUser = {
@@ -177,17 +143,7 @@ describe('Mocked: POST /auth/signout', () => {
     jest.restoreAllMocks();
   });
 
-  // Mocked behavior: JWT verification fails with invalid signature
-  // Input: Token with tampered signature
-  // Expected status code: 401
-  // Expected behavior: Middleware rejects request before reaching handler
-  // Expected output: Invalid token error
 
-  // Mocked behavior: Token is expired
-  // Input: Expired but otherwise valid JWT
-  // Expected status code: 401
-  // Expected behavior: Expired token is rejected
-  // Expected output: Token expired message
   it('should reject signout with expired token', async () => {
     const expiredToken = generateTestJWT('user-id');
     jest.useFakeTimers().setSystemTime(new Date().getTime() + 31 * 24 * 60 * 60 * 1000);
@@ -216,17 +172,7 @@ describe('Mocked: DELETE /auth/account', () => {
     jest.restoreAllMocks();
   });
 
-  // Mocked behavior: User deletion succeeds but friendship cleanup fails
-  // Input: Valid JWT, valid user exists
-  // Expected status code: 500
-  // Expected behavior: Transaction error is caught
-  // Expected output: Error message about deletion failure
 
-  // Mocked behavior: JWT token signature is invalid
-  // Input: Malformed Authorization header
-  // Expected status code: 401
-  // Expected behavior: Middleware rejects before handler executes
-  // Expected output: Invalid token error
   it('should reject deletion when userId is not set on request', async () => {
   // Import the controller directly
   const { deleteAccount } = require('../../../src/controllers/auth/authController');

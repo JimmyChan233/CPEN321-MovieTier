@@ -70,7 +70,7 @@ describe('Advanced Friend Routes Tests', () => {
     await Friendship.deleteMany({});
   });
 
-  // Test Case 1: Send friend request with email
+  // Send friend request with email
   it('should send friend request using email', async () => {
     await request(app)
       .post('/request')
@@ -78,9 +78,7 @@ describe('Advanced Friend Routes Tests', () => {
       .send({ email: user2.email });
   });
 
-  // Test Case 2: Accept friend request creates bilateral friendship
-
-  // Test Case 3: Delete friendship removes both directions
+  // Delete friendship removes both directions
   it('should remove bilateral friendships on delete', async () => {
     // Create bilateral friendships
     await Friendship.create([
@@ -103,7 +101,7 @@ describe('Advanced Friend Routes Tests', () => {
     expect(count2).toBe(0);
   });
 
-  // Test Case 4: Reject friend request
+  // Reject friend request
   it('should reject friend request with accept=false', async () => {
     const friendReq = await FriendRequest.create({
       senderId: user2._id,
@@ -124,7 +122,7 @@ describe('Advanced Friend Routes Tests', () => {
     expect(friendshipCount).toBe(0);
   });
 
-  // Test Case 5: Cannot send friend request to self
+  // Cannot send friend request to self
   it('should reject friend request to self', async () => {
     await request(app)
       .post('/request')
@@ -132,7 +130,7 @@ describe('Advanced Friend Routes Tests', () => {
       .send({ email: user1.email });
   });
 
-  // Test Case 6: Cannot send duplicate friend request
+  // Cannot send duplicate friend request
   it('should reject duplicate friend request', async () => {
     // Send first request
     await request(app)
@@ -147,7 +145,7 @@ describe('Advanced Friend Routes Tests', () => {
       .send({ email: user2.email });
   });
 
-  // Test Case 7: Reverse pending request scenario
+  // Reverse pending request scenario
   it('should handle reverse pending request', async () => {
     // User2 sends request to User1
     await FriendRequest.create({
@@ -163,11 +161,7 @@ describe('Advanced Friend Routes Tests', () => {
       .send({ email: user2.email });
   });
 
-  // Test Case 8: Get all friends list
-
-  // Test Case 9: Get pending requests with sender details
-
-  // Test Case 10: Get detailed pending requests
+  // Get detailed pending requests
   it('should get detailed pending requests', async () => {
     await FriendRequest.create([
       { senderId: user2._id, receiverId: user1._id, status: 'pending' },
@@ -179,9 +173,7 @@ describe('Advanced Friend Routes Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
   });
 
-  // Test Case 11: Get outgoing friend requests
-
-  // Test Case 12: Get detailed outgoing requests
+  // Get detailed outgoing requests
   it('should get detailed outgoing friend requests', async () => {
     await FriendRequest.create([
       { senderId: user1._id, receiverId: user2._id, status: 'pending' },
@@ -193,7 +185,7 @@ describe('Advanced Friend Routes Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
   });
 
-  // Test Cases 13-15: Friend request validation (parameterized)
+  // Friend request validation (parameterized)
   describe('Friend Request Validation', () => {
     const validationTests = [
       {
@@ -224,36 +216,16 @@ describe('Advanced Friend Routes Tests', () => {
     });
   });
 
-  // Test Case 16: Respond to non-existent request
 
-  // Test Case 17: Respond to request not meant for user
-
-  // Test Case 18: Respond to already accepted request
-
-  // Test Case 19: Respond to already rejected request
-
-  // Test Case 20: Delete non-existent friendship
-
-  // Test Case 21: Delete friendship with invalid friendId format
+  // Delete friendship with invalid friendId format
   it('should handle delete with invalid friendId format', async () => {
     await request(app)
       .delete('/invalid-id-format')
       .set('Authorization', `Bearer ${token1}`);
   });
 
-  // Test Cases 22-26: Unauthorized access tests (parameterized)
-  describe('Unauthorized Access Tests', () => {
 
-
-
-
-  });
-
-  // Test Case 27: Multiple rapid friend requests (rate limiting test)
-
-  // Test Case 28: Send request to already friend
-
-  // Test Cases 29-33: Empty state endpoint tests (parameterized)
+  // Empty state endpoint tests (parameterized)
   describe('Empty State Endpoints', () => {
     const emptyStateTests = [
       { endpoint: '/', description: 'get empty friends list when no friends' },
@@ -267,13 +239,7 @@ describe('Advanced Friend Routes Tests', () => {
     });
   });
 
-  // Test Case 34: Get empty response details (removed duplicate)
-
-  // Test Case 34: Respond with missing accept field
-
-  // Test Case 35: Respond with missing requestId field
-
-  // Test Case 36: Complex friendship network
+  // Complex friendship network
   it('should handle complex friendship network', async () => {
     // Create friendships: 1-2, 1-3, 1-4, 2-3, 2-4
     await Friendship.create([
@@ -327,9 +293,8 @@ describe('Advanced Friend Routes Tests', () => {
       });
   });
 
-  // Test Case 38: Invalid request ID format
 
-  // Test Case 39: Filter out non-pending requests
+  // Filter out non-pending requests
   it('should only return pending requests, not accepted/rejected', async () => {
     await FriendRequest.create([
       { senderId: user2._id, receiverId: user1._id, status: 'pending' },
@@ -342,7 +307,7 @@ describe('Advanced Friend Routes Tests', () => {
       .set('Authorization', `Bearer ${token1}`);
   });
 
-  // Test Case 40: Outgoing requests filter
+  // Outgoing requests filter
   it('should only return outgoing requests from user', async () => {
     await FriendRequest.create([
       { senderId: user1._id, receiverId: user2._id, status: 'pending' },

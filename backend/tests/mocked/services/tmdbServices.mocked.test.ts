@@ -40,27 +40,6 @@ describe('TMDB Client Tests', () => {
     stdoutWriteSpy.mockRestore();
   });
 
-  // Test Case 1: getTmdbClient creates axios instance
-
-  // Test Case 2: Request interceptor adds API key
-
-  // Test Case 3: Request interceptor uses TMDB_KEY as fallback
-
-  // Test Case 4: Request interceptor handles empty params
-
-  // Test Case 5: Request interceptor logs request
-
-  // Test Case 6: Request interceptor redacts API key in logs
-
-
-  // Test Case 7: Response interceptor logs successful response
-
-  // Test Case 8: Response interceptor calculates response time
-
-
-  // Test Case 9: Error interceptor logs error
-
-  // Test Case 10: Error interceptor handles missing config
 
   it('should log error response without start time', () => {
     let errorInterceptor: any;
@@ -125,17 +104,7 @@ describe('TMDB Tagline Service Tests', () => {
     jest.useRealTimers();
   });
 
-  // Test Case 11: fetchMovieTagline with successful search
 
-  // Test Case 12: Cache hit returns cached tagline
-
-  // Test Case 13: Cache expires after TTL
-
-  // Test Case 14: Search without year
-
-  // Test Case 15: No search results
-
-  // Test Case 16: Search returns result without ID
   it('should return null when result has no ID', async () => {
     mockClient.get.mockResolvedValueOnce({
       data: {
@@ -148,9 +117,7 @@ describe('TMDB Tagline Service Tests', () => {
     expect(tagline).toBeNull();
   });
 
-  // Test Case 17: Movie details have no tagline
 
-  // Test Case 18: Movie details have empty tagline
   it('should return null when movie has empty tagline', async () => {
     mockClient.get
       .mockResolvedValueOnce({
@@ -169,7 +136,7 @@ describe('TMDB Tagline Service Tests', () => {
     expect(tagline).toBeNull();
   });
 
-  // Test Case 19: Handle API error gracefully
+
   it('should return null on API error', async () => {
     mockClient.get.mockRejectedValueOnce(new Error('API Error'));
 
@@ -178,13 +145,7 @@ describe('TMDB Tagline Service Tests', () => {
     expect(tagline).toBeNull();
   });
 
-  // Test Case 20: Cache key is case-insensitive
 
-  // Test Case 21: Cache key includes year
-
-  // Test Case 22: Handle year as string
-
-  // Test Case 23: Trim whitespace from title
   it('should trim whitespace from title for cache key', async () => {
     mockClient.get
       .mockResolvedValueOnce({
@@ -205,15 +166,7 @@ describe('TMDB Tagline Service Tests', () => {
     expect(mockClient.get).toHaveBeenCalledTimes(2);
   });
 
-  // Test Case 24: Search includes year in query
 
-  // Test Case 25: Search parameters are correct
-
-  // Test Case 26: Handle response with undefined results (coverage for || [])
-
-  // Test Case 27: Handle response with null results (coverage for || [])
-
-  // Test Case 28: Handle response with undefined data (coverage for || [])
   it('should handle search response with undefined data', async () => {
     mockClient.get.mockResolvedValueOnce({
       data: undefined
@@ -246,30 +199,6 @@ describe('TMDB Client - Response Interceptor', () => {
     jest.restoreAllMocks();
   });
 
-  /**
-   * Coverage: response.config.method?.toUpperCase() ?? 'GET'
-   * Branch: when method is undefined, should use 'GET' as fallback
-   */
-
-  /**
-   * Coverage: response.config.method?.toUpperCase() ?? 'GET'
-   * Branch: when method exists but is empty string
-   */
-
-  /**
-   * Coverage: response.config.url ?? ''
-   * Branch: when url is undefined, should use empty string as fallback
-   */
-
-  /**
-   * Coverage: response.config.url ?? ''
-   * Branch: when url is null
-   */
-
-  /**
-   * Coverage: const ms = start ? Date.now() - start : undefined
-   * Branch: when start is undefined (no timing info)
-   */
   it('should handle response when __start is undefined in response config', async () => {
     const client = getTmdbClient();
 
@@ -315,35 +244,6 @@ describe('TMDB Client - Error Interceptor', () => {
     jest.restoreAllMocks();
   });
 
-  /**
-   * Coverage: error.message ?? ''
-   * Branch: when error.message is undefined, should use empty string
-   */
-
-  /**
-   * Coverage: error.message ?? ''
-   * Branch: when error.message is null
-   */
-
-  /**
-   * Coverage: cfg.method?.toUpperCase?.() ?? 'GET'
-   * Branch: when error.config.method is undefined
-   */
-
-  /**
-   * Coverage: String(cfg.url ?? '')
-   * Branch: when error.config.url is undefined
-   */
-
-  /**
-   * Coverage: const ms = start ? Date.now() - start : undefined
-   * Branch: when error.config.__start is undefined
-   */
-
-  /**
-   * Coverage: when error object has no config
-   * Branch: error.config ?? {}
-   */
   it('should use empty object when error has no config', async () => {
     const client = getTmdbClient();
 
@@ -385,30 +285,6 @@ describe('TMDB Client - Real Interceptor Behavior', () => {
     jest.restoreAllMocks();
   });
 
-  /**
-   * Integration test: Verify interceptors handle missing method gracefully
-   * Covers: response.config.method?.toUpperCase() ?? 'GET'
-   */
-
-  /**
-   * Integration test: Verify interceptors handle missing URL gracefully
-   * Covers: response.config.url ?? ''
-   */
-
-  /**
-   * Integration test: Verify error interceptor handles missing error message
-   * Covers: error.message ?? '' in error interceptor
-   */
-
-  /**
-   * Integration test: Verify error interceptor handles missing config
-   * Covers: const cfg = error.config ?? {}
-   */
-
-  /**
-   * Test: timing calculation when __start is missing
-   * Covers: const ms = start ? Date.now() - start : undefined
-   */
   it('should handle timing gracefully when __start is missing', async () => {
     let responseSuccessHandler: any;
 

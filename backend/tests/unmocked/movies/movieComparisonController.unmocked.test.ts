@@ -101,9 +101,6 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
   });
 
 
-
-
-
   // ========== addMovie: Case 2 - Duplicate Movie ==========
 
   it('should reject duplicate movie with 400 status', async () => {
@@ -291,10 +288,6 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
     expect(compareRes.status).toBe(200);
     expect(compareRes.body.success).toBe(true);
   });
-
-  // ========== compareMovies: Finalize Ranking (low > high) ==========
-  // Note: Finalization test skipped due to complex session management
-  // The 7 comparison tests above provide thorough coverage of the ranking algorithm
 
 
   // ========== compareMovies: Continue Comparison ==========

@@ -39,23 +39,7 @@ describe('Mocked: Feed API Errors', () => {
     jest.restoreAllMocks();
   });
 
-  // Mocked behavior: Database query fails
-  // Input: Authenticated request
-  // Expected status code: 500
-  // Expected behavior: Error is caught
-  // Expected output: Database error message
 
-  // Mocked behavior: Like creation fails due to database error
-  // Input: Valid activity ID
-  // Expected status code: 500
-  // Expected behavior: Error is caught gracefully
-  // Expected output: Database error
-
-  // Mocked behavior: Comment validation fails
-  // Input: Comment text at boundary condition
-  // Expected status code: 400
-  // Expected behavior: Validation catches the error
-  // Expected output: Validation error message
   it('should handle invalid comment text', async () => {
     const res = await request(app)
       .post('/api/feed/activity-id/comments')
@@ -81,17 +65,7 @@ describe('Mocked: Friends API Errors', () => {
     jest.restoreAllMocks();
   });
 
-  // Mocked behavior: Database query fails when fetching friends
-  // Input: Authenticated request
-  // Expected status code: 500
-  // Expected behavior: Error is caught
-  // Expected output: Error message
 
-  // Mocked behavior: User lookup fails
-  // Input: Email to search
-  // Expected status code: 500
-  // Expected behavior: Error is caught
-  // Expected output: Error message
   it('should handle user lookup failure', async () => {
     jest.spyOn(User, 'findOne').mockRejectedValueOnce(
       new Error('Database query failed')
@@ -189,11 +163,6 @@ describe('Mocked: Recommendations API Errors', () => {
     jest.restoreAllMocks();
   });
 
-  // Mocked behavior: TMDB API fails for trending
-  // Input: Authenticated request
-  // Expected status code: 500
-  // Expected behavior: Error is caught
-  // Expected output: Error message
 
   // Mocked behavior: Database query fails for recommendations
   // Input: Authenticated user

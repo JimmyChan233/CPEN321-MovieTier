@@ -39,35 +39,6 @@ describe('Unmocked: PUT /users/profile', () => {
     await mongoServer.stop();
   });
 
-  // Input: Valid name update
-  // Expected status code: 200
-  // Expected behavior: User name updated in database
-  // Expected output: Updated user profile
-
-  // Input: Valid profileImageUrl update
-  // Expected status code: 200
-  // Expected behavior: User profile image updated
-  // Expected output: Updated user profile
-
-  // Input: Update both name and profileImageUrl
-  // Expected status code: 200
-  // Expected behavior: Both fields updated
-  // Expected output: Updated user profile
-
-  // Input: Empty name string
-  // Expected status code: 400
-  // Expected behavior: Validation error
-  // Expected output: Error message
-
-  // Input: Whitespace-only name
-  // Expected status code: 400
-  // Expected behavior: Validation error
-  // Expected output: Error message
-
-  // Input: No authentication
-  // Expected status code: 401
-  // Expected behavior: Request rejected
-  // Expected output: Unauthorized error
 
   // Input: Invalid JWT token
   // Expected status code: 401
@@ -106,15 +77,6 @@ describe('Unmocked: POST /users/fcm-token', () => {
     await mongoServer.stop();
   });
 
-  // Input: Valid FCM token
-  // Expected status code: 200
-  // Expected behavior: FCM token stored in database
-  // Expected output: Success message
-
-  // Input: Update existing FCM token
-  // Expected status code: 200
-  // Expected behavior: FCM token replaced
-  // Expected output: Success message
 
   // Input: Missing token
   // Expected status code: 400
@@ -128,16 +90,6 @@ describe('Unmocked: POST /users/fcm-token', () => {
 
     expect(res.status).toStrictEqual(400);
   });
-
-  // Input: Empty token string
-  // Expected status code: 400
-  // Expected behavior: Validation error
-  // Expected output: Error message
-
-  // Input: No authentication
-  // Expected status code: 401
-  // Expected behavior: Request rejected
-  // Expected output: Unauthorized error
 });
 
 describe('Unmocked: GET /users/profile/:userId', () => {
@@ -168,26 +120,6 @@ describe('Unmocked: GET /users/profile/:userId', () => {
     await mongoose.disconnect();
     await mongoServer.stop();
   });
-
-  // Input: Valid user ID
-  // Expected status code: 200
-  // Expected behavior: Return user profile
-  // Expected output: User profile object
-
-  // Input: Own user ID
-  // Expected status code: 200
-  // Expected behavior: Return own profile
-  // Expected output: Own user profile
-
-  // Input: Non-existent user ID
-  // Expected status code: 404
-  // Expected behavior: User not found
-  // Expected output: Error message
-
-  // Input: Invalid user ID format
-  // Expected status code: 400
-  // Expected behavior: Validation error
-  // Expected output: Error message
 
   // Input: No authentication
   // Expected status code: 401

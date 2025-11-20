@@ -55,16 +55,6 @@ describe('Unmocked: GET /quotes', () => {
     expect(typeof res.body.data).toBe('string');
   });
 
-  // Input: Movie title not found in TMDB
-  // Expected status code: 200
-  // Expected behavior: Return fallback quote from local catalog
-  // Expected output: Fallback quote
-
-  // Input: No authentication token
-  // Expected status code: 401
-  // Expected behavior: Request rejected
-  // Expected output: Unauthorized error
-
   // Input: Missing title query parameter
   // Expected status code: 400
   // Expected behavior: Request rejected

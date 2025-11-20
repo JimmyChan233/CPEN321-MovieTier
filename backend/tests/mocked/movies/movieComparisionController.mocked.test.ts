@@ -360,7 +360,7 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
     });
 
 
-    // Uncovered line: 332 - Unable to find next comparison movie
+
 
 
     it('should handle TMDB returning null poster_path and overview when finalizing', async () => {
@@ -395,11 +395,8 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
   });
 
   describe('Mocked: POST /add error handling', () => {
-    // Uncovered line: 36 - Unauthorized check in addMovie
 
-    // Uncovered line: 23, 26 - watchlist removal error handling
 
-    // Uncovered line: 163 - Unable to find comparison movie on initial add
     it('should handle case when no comparison movie found on initial add', async () => {
       // Setup: create a ranked movie that gets deleted before comparison
       jest.spyOn(RankedMovie, 'find').mockResolvedValueOnce([]);
@@ -420,9 +417,9 @@ describe('Movie Comparison Controller - Mocked Tests', () => {
   });
 
   describe('Mocked: POST /compare error handling', () => {
-    // Uncovered line: 192 - Unauthorized check in compareMovies
+
   });
-  // Add these tests to your mocked test file
+
 
   describe('Mocked: Edge cases and error handling', () => {
   it('should log warning when watchlist removal fails', async () => {

@@ -101,16 +101,6 @@ describe('Unmocked: GET /recommendations', () => {
     await RankedMovie.deleteMany({});
   });
 
-  // Input: User with ranked movies
-  // Expected status code: 200
-  // Expected behavior: Algorithm analyzes preferences and returns recommendations
-  // Expected output: Array of recommended movies
-
-  // Input: User with no ranked movies
-  // Expected status code: 200
-  // Expected behavior: Return empty recommendations
-  // Expected output: Empty array
-
   // Input: No authentication token
   // Expected status code: 401
   // Expected behavior: Request rejected
@@ -145,11 +135,6 @@ describe('Unmocked: GET /recommendations/trending', () => {
     await mongoose.disconnect();
     await mongoServer.stop();
   });
-
-  // Input: Authenticated user request
-  // Expected status code: 200
-  // Expected behavior: Fetch trending movies from TMDB
-  // Expected output: Array of trending movies
 
   // Input: No authentication token
   // Expected status code: 401

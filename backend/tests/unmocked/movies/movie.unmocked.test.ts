@@ -73,21 +73,6 @@ describe('Unmocked: GET /movies/search', () => {
     await mongoServer.stop();
   });
 
-  // Input: Valid movie search query (e.g., "Inception")
-  // Expected status code: 200
-  // Expected behavior: TMDB API is called and results formatted
-  // Expected output: Array of movies with id, title, overview, posterPath, releaseDate, voteAverage
-
-  // Input: Query with less than 2 characters
-  // Expected status code: 400
-  // Expected behavior: Request is rejected without API call
-  // Expected output: Validation error about minimum query length
-
-  // Input: Empty query string
-  // Expected status code: 400
-  // Expected behavior: Request is rejected
-  // Expected output: Error message about empty query
-
   // Input: Valid query but unauthenticated
   // Expected status code: 401
   // Expected behavior: Request is rejected before API call
@@ -128,15 +113,6 @@ describe('Unmocked: GET /movies/ranked', () => {
     await RankedMovie.deleteMany({});
   });
 
-  // Input: User with ranked movies
-  // Expected status code: 200
-  // Expected behavior: Fetch all ranked movies sorted by rank
-  // Expected output: Array of ranked movies with movie details
-
-  // Input: User with no ranked movies
-  // Expected status code: 200
-  // Expected behavior: Return empty array
-  // Expected output: Empty array
 
   // Input: No authentication token
   // Expected status code: 401
@@ -176,16 +152,6 @@ describe('Unmocked: DELETE /movies/ranked/:id', () => {
   beforeEach(async () => {
     await RankedMovie.deleteMany({});
   });
-
-  // Input: Valid ranked movie ID
-  // Expected status code: 200
-  // Expected behavior: Movie is deleted and ranks are shifted up
-  // Expected output: Success message
-
-  // Input: Non-existent movie ID
-  // Expected status code: 404
-  // Expected behavior: Database is unchanged
-  // Expected output: Not found error
 
   // Input: Invalid ObjectId format
   // Expected status code: 400
@@ -227,16 +193,6 @@ describe('Unmocked: POST /movies/rank', () => {
     await RankedMovie.deleteMany({});
   });
 
-  // Input: Valid movieId and title
-  // Expected status code: 200
-  // Expected behavior: Movie is added to ranked list
-  // Expected output: Created ranked movie with rank 1
-
-  // Input: Missing movieId
-  // Expected status code: 400
-  // Expected behavior: Request is rejected
-  // Expected output: Validation error
-
   // Input: Missing title
   // Expected status code: 400
   // Expected behavior: Request is rejected
@@ -253,13 +209,4 @@ describe('Unmocked: POST /movies/rank', () => {
     expect(res.body.message).toMatch(/title|required/i);
   });
 
-  // Input: Already ranked movie
-  // Expected status code: 400
-  // Expected behavior: Request is rejected
-  // Expected output: Duplicate error
-
-  // Input: No authentication token
-  // Expected status code: 401
-  // Expected behavior: Request is rejected
-  // Expected output: Unauthorized error
 });

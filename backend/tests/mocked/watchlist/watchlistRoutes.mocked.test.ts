@@ -59,35 +59,6 @@ describe('Watchlist Routes - Mocked Tests', () => {
 
   describe('POST /', () => {
 
-    /**
-     * Coverage: if (!finalPoster) finalPoster = data?.poster_path || undefined
-     * Branch: When posterPath not provided and TMDB returns poster_path
-     */
-
-    /**
-     * Coverage: if (!finalOverview) finalOverview = data?.overview || undefined
-     * Branch: When overview not provided and TMDB returns overview
-     */
-
-    /**
-     * Coverage: if (!finalPoster) finalPoster = data?.poster_path || undefined
-     * Branch: When posterPath not provided and TMDB returns null/undefined for poster_path
-     */
-
-    /**
-     * Coverage: if (!finalOverview) finalOverview = data?.overview || undefined
-     * Branch: When overview not provided and TMDB returns null/undefined for overview
-     */
-
-    /**
-     * Coverage: if (!finalPoster) finalPoster = data?.poster_path || undefined
-     * Branch: When posterPath IS provided, TMDB enrichment should NOT override it
-     */
-
-    /**
-     * Coverage: if (!finalOverview) finalOverview = data?.overview || undefined
-     * Branch: When overview IS provided, TMDB enrichment should NOT override it
-     */
     it('should not override provided overview with TMDB data', async () => {
       mockTmdbGet.mockResolvedValueOnce({
         data: {
@@ -111,25 +82,6 @@ describe('Watchlist Routes - Mocked Tests', () => {
       expect(res.body.data.posterPath).toBe('/tmdb-poster.jpg');
     });
 
-    /**
-     * Coverage: if (!finalPoster) finalPoster = data?.poster_path || undefined
-     * if (!finalOverview) finalOverview = data?.overview || undefined
-     * Branch: Both poster AND overview are missing, both enriched from TMDB
-     */
 
-    /**
-     * Coverage: if (!finalPoster) finalPoster = data?.poster_path || undefined
-     * if (!finalOverview) finalOverview = data?.overview || undefined
-     * Branch: Both are missing and TMDB returns nothing for both
-     */
-
-    /**
-     * Coverage: Handling when TMDB data object is empty
-     * Branch: data?.poster_path and data?.overview both undefined
-     */
-
-    /**
-     * Coverage: TMDB enrichment fails (catch block), should still save with original values
-     */
   });
 });

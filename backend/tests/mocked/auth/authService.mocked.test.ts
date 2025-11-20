@@ -59,21 +59,7 @@ describe('AuthService - Mocked Tests', () => {
     jest.clearAllMocks();
   });
 
-  // Test Case 1: verifyGoogleToken with valid token
-
-  // Test Case 2: verifyGoogleToken with token missing email
-
-  // Test Case 3: verifyGoogleToken with token missing sub
-
-  // Test Case 4: verifyGoogleToken with null payload
-
-  // Test Case 5: verifyGoogleToken handles verification error
-
-  // Test Case 6: verifyGoogleToken with missing name (uses email as fallback)
-
-  // Test Case 7: signIn with existing user
-
-  // Test Case 8: signIn with non-existent user
+  // signIn with non-existent user
   it('should throw error when user not found', async () => {
     mockVerifyIdToken.mockResolvedValue({
       getPayload: () => ({
@@ -87,9 +73,7 @@ describe('AuthService - Mocked Tests', () => {
       .rejects.toThrow('User not found. Please sign up first.');
   });
 
-  // Test Case 9: signIn with invalid Google token
-
-  // Test Case 10: signUp with new user
+  // signUp with new user
   it('should create new user successfully', async () => {
     mockVerifyIdToken.mockResolvedValue({
       getPayload: () => ({
@@ -114,7 +98,7 @@ describe('AuthService - Mocked Tests', () => {
     expect(savedUser).toBeDefined();
   });
 
-  // Test Case 11: signUp with existing user
+  // signUp with existing user
   it('should throw error when user already exists', async () => {
     await User.create({
       email: 'existing@example.com',
@@ -134,19 +118,8 @@ describe('AuthService - Mocked Tests', () => {
       .rejects.toThrow('User already exists. Please sign in.');
   });
 
-  // Test Case 12: signUp with invalid Google token
 
-  // Test Case 13: generateToken creates valid JWT
-
-  // Test Case 14: generateToken with different userIds
-
-  // Test Case 15: generateToken sets expiration
-
-  // Test Case 16: signUp without picture
-
-  // Test Case 17: signIn returns correct token
-
-  // Test Case 18: Multiple signIns for same user
+  // Multiple signIns for same user
   it('should handle multiple signin attempts for same user', async () => {
     await User.create({
       email: 'multi@example.com',
@@ -176,13 +149,7 @@ describe('AuthService - Mocked Tests', () => {
     expect(result1.user.email).toBe(result2.user.email);
   });
 
-  // Test Case 19: signUp creates user with all fields
-
-  // Test Case 20: verifyGoogleToken with empty string token
-
-  // Test Case 21: generateToken uses default secret when JWT_SECRET not set
-
-  // Test Case 22: verifyGoogleToken with undefined payload fields
+  // verifyGoogleToken with undefined payload fields
   it('should handle undefined fields in payload gracefully', async () => {
     mockVerifyIdToken.mockResolvedValue({
       getPayload: () => ({
@@ -196,7 +163,7 @@ describe('AuthService - Mocked Tests', () => {
       .rejects.toThrow('Invalid Google token');
   });
 
-  // Test Case 23: verifyGoogleToken uses email as fallback when name is missing
+  // verifyGoogleToken uses email as fallback when name is missing
   it('should use email as fallback when payload.name is missing', async () => {
     mockVerifyIdToken.mockResolvedValue({
       getPayload: () => ({
@@ -213,7 +180,7 @@ describe('AuthService - Mocked Tests', () => {
     expect(result.googleId).toBe('google-123');
   });
 
-  // Test Case 24: generateToken uses default secret when JWT_SECRET not set
+  // generateToken uses default secret when JWT_SECRET not set
   it('should use default secret when JWT_SECRET is not set', () => {
     const originalSecret = process.env.JWT_SECRET;
     delete process.env.JWT_SECRET;

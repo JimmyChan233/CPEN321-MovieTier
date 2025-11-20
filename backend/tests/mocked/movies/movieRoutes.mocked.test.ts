@@ -544,30 +544,7 @@ describe('GET /search - Additional branch coverage', () => {
 });
 
 describe('GET /search - Fallback catch block coverage (Lines 90-93)', () => {
-  /**
-   * This test specifically covers lines 90-93 - the fallback catch block
-   * when detail fetch fails for a zh-CN result
-   * 
-   * Coverage:
-   * Line 90: overview: movie.overview ?? null,
-   * Line 91: posterPath: movie.poster_path ?? null,
-   * Line 92: releaseDate: movie.release_date ?? null,
-   * Line 93: voteAverage: movie.vote_average ?? null
-   */
 
-  /**
-   * Edge case: zh result has missing optional fields
-   * Tests the ?? null operator chains
-   */
-
-  /**
-   * Multiple results - test catch block is hit for all failed fetches
-   */
-
-  /**
-   * Test: Some detail fetches succeed, some fail
-   * Tests the mixed scenario
-   */
   it('should handle mixed success/failure in detail fetches', async () => {
     jest.clearAllMocks();
     
@@ -630,14 +607,5 @@ describe('GET /search - Fallback catch block coverage (Lines 90-93)', () => {
     expect(res.body.data[1].overview).toBe('Chinese overview 2');
   });
 
-  /**
-   * Edge case: zh result with null values (not undefined)
-   * Tests the ?? null chains
-   */
-
-  /**
-   * Verify detail fetch succeeds - does NOT enter catch block
-   * This ensures we're testing the right scenario
-   */
 });
 });
