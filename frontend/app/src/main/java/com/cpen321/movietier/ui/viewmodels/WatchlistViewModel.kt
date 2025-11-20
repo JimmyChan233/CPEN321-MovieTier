@@ -14,16 +14,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class WatchlistSort { DATE_DESC, DATE_ASC, RATING_DESC, RATING_ASC }
 
+/** Unified state - all UI state in one place */
 data class WatchlistUiState(
     val isLoading: Boolean = false,
     val items: List<WatchlistItem> = emptyList(),
     val displayed: List<WatchlistItem> = emptyList(),
     val sort: WatchlistSort = WatchlistSort.DATE_DESC,
+    val compareState: WatchlistCompareState? = null,
+    val movieDetails: Map<Int, Movie> = emptyMap(),
     val error: String? = null
 )
 
@@ -43,8 +49,7 @@ class WatchlistViewModel @Inject constructor(
     private val _events = MutableSharedFlow<FeedEvent>()
     val events = _events
 
-    private val _compareState = MutableStateFlow<WatchlistCompareState?>(null)
-    val compareState: StateFlow<WatchlistCompareState?> = _compareState.asStateFlow()
+    private val ratingsCache = mutableMapOf<Int, Double?>()
 
     init { load() }
 
@@ -62,7 +67,15 @@ class WatchlistViewModel @Inject constructor(
                     )
                     prefetchRatings(items)
                 }
-                is Result.Error -> _ui.value = WatchlistUiState(false, emptyList(), emptyList(), WatchlistSort.DATE_DESC, res.message)
+                is Result.Error -> _ui.value = WatchlistUiState(
+                    isLoading = false,
+                    items = emptyList(),
+                    displayed = emptyList(),
+                    sort = WatchlistSort.DATE_DESC,
+                    compareState = null,
+                    movieDetails = emptyMap(),
+                    error = res.message
+                )
                 else -> {}
             }
         }
@@ -82,10 +95,6 @@ class WatchlistViewModel @Inject constructor(
         }
     }
 
-    private val ratingsCache = mutableMapOf<Int, Double?>()
-    private val _details = MutableStateFlow<Map<Int, Movie>>(emptyMap())
-    val details = _details.asStateFlow()
-
     private fun prefetchRatings(items: List<WatchlistItem>) {
         items.take(40).forEach { item ->
             if (!ratingsCache.containsKey(item.movieId)) {
@@ -93,9 +102,9 @@ class WatchlistViewModel @Inject constructor(
                     when (val res = movieRepository.getMovieDetails(item.movieId)) {
                         is Result.Success -> {
                             ratingsCache[item.movieId] = res.data.voteAverage
-                            val map = _details.value.toMutableMap()
+                            val map = _ui.value.movieDetails.toMutableMap()
                             map[item.movieId] = res.data
-                            _details.value = map
+                            _ui.value = _ui.value.copy(movieDetails = map)
                             if (_ui.value.sort == WatchlistSort.RATING_DESC || _ui.value.sort == WatchlistSort.RATING_ASC) {
                                 _ui.value = _ui.value.copy(displayed = sortList(_ui.value.items, _ui.value.sort))
                             }
@@ -172,7 +181,7 @@ class WatchlistViewModel @Inject constructor(
                         releaseDate = null,
                         voteAverage = null
                     )
-                    _compareState.value = WatchlistCompareState(newMovie = newMovie, compareWith = cmpMovie)
+                    _ui.value = _ui.value.copy(compareState = WatchlistCompareState(newMovie = newMovie, compareWith = cmpMovie))
                 } else {
                     _events.emit(FeedEvent.Error("Comparison data missing"))
                 }
@@ -196,25 +205,29 @@ class WatchlistViewModel @Inject constructor(
                                     releaseDate = null,
                                     voteAverage = null
                                 )
-                                _compareState.value = WatchlistCompareState(newMovie = newMovie, compareWith = nextMovie)
+                                _ui.value = _ui.value.copy(compareState = WatchlistCompareState(newMovie = newMovie, compareWith = nextMovie))
                             } else {
                                 _events.emit(FeedEvent.Error("Comparison data missing"))
-                                _compareState.value = null
+                                _ui.value = _ui.value.copy(compareState = null)
                             }
                         }
                         "added" -> {
                             _events.emit(FeedEvent.Message("Added '${newMovie.title}' to rankings"))
-                            _compareState.value = null
+                            _ui.value = _ui.value.copy(compareState = null)
                             load() // Refresh watchlist
                         }
                     }
                 }
                 is Result.Error -> {
                     _events.emit(FeedEvent.Error(res.message ?: "Comparison failed"))
-                    _compareState.value = null
+                    _ui.value = _ui.value.copy(compareState = null)
                 }
                 else -> {}
             }
         }
     }
+
+    // Backward compatibility for existing code
+    val compareState: StateFlow<WatchlistCompareState?> = ui.map { it.compareState }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, null)
+    val details: StateFlow<Map<Int, Movie>> = ui.map { it.movieDetails }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyMap())
 }
