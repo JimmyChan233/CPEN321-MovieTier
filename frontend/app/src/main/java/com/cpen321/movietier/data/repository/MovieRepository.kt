@@ -40,18 +40,6 @@ class MovieRepository @Inject constructor(
         }
     }
 
-//    suspend fun addMovie(movieId: Int, title: String, posterPath: String?, overview: String? = null): Result<RankedMovie> {
-//        return try {
-//            val response = apiService.addMovie(AddMovieRequest(movieId, title, posterPath, overview))
-//            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
-//                Result.Success(response.body()!!.data!!)
-//            } else {
-//                Result.Error(Exception("Failed to add movie: ${response.message()}"))
-//            }
-//        } catch (e: IOException) {
-//            Result.Error(e, "Network error: ${e.message}")
-//        }
-//    }
 
     suspend fun addMovie(
         movieId: Int,
@@ -71,74 +59,23 @@ class MovieRepository @Inject constructor(
         }
     }
 
-
-//    suspend fun compareMovies(movieId: Int, comparedMovieId: Int, preferredMovieId: Int): Result<Unit> {
-//        return try {
-//            val response = apiService.compareMovies(
-//                CompareMoviesRequest(movieId, comparedMovieId, preferredMovieId)
-//            )
-//            if (response.isSuccessful && response.body()?.success == true) {
-//                Result.Success(Unit)
-//            } else {
-//                Result.Error(Exception("Failed to compare movies: ${response.message()}"))
-//            }
-//        } catch (e: IOException) {
-//            Result.Error(e, "Network error: ${e.message}")
-//        }
-//    }
-suspend fun compareMovies(
-    movieId: Int,
-    comparedMovieId: Int,
-    preferredMovieId: Int
-): Result<AddMovieResponse> {
-    return try {
-        val response = apiService.compareMovies(
-            CompareMoviesRequest(movieId, comparedMovieId, preferredMovieId)
-        )
-        if (response.isSuccessful && response.body()?.success == true) {
-            Result.Success(response.body()!!)
-        } else {
-            Result.Error(Exception(response.body()?.message ?: "Failed to compare movies"))
-        }
-    } catch (e: IOException) {
-        Result.Error(e, "Network error: ${e.message}")
-    }
-}
-
-
-    suspend fun getRecommendations(): Result<List<Movie>> {
+    suspend fun compareMovies(
+        movieId: Int,
+        comparedMovieId: Int,
+        preferredMovieId: Int
+    ): Result<AddMovieResponse> {
         return try {
-            val response = apiService.getRecommendations()
+            val response = apiService.compareMovies(
+                CompareMoviesRequest(movieId, comparedMovieId, preferredMovieId)
+            )
             if (response.isSuccessful && response.body()?.success == true) {
-                Result.Success(response.body()!!.data ?: emptyList())
+                Result.Success(response.body()!!)
             } else {
-                Result.Error(Exception("Failed to get recommendations: ${response.message()}"))
+                Result.Error(Exception(response.body()?.message ?: "Failed to compare movies"))
             }
         } catch (e: IOException) {
             Result.Error(e, "Network error: ${e.message}")
         }
-    }
-
-    suspend fun getTrendingMovies(): Result<List<Movie>> {
-        return try {
-            val response = apiService.getTrendingMovies()
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.Success(response.body()!!.data ?: emptyList())
-            } else {
-                Result.Error(Exception("Failed to get trending movies: ${response.message()}"))
-            }
-        } catch (e: IOException) {
-            Result.Error(e, "Network error: ${e.message}")
-        }
-    }
-
-    suspend fun getMovieQuote(title: String, year: String? = null, rating: Double? = null): Result<String> {
-        val quote = MovieQuoteProvider.getQuote(
-            title = title,
-            year = year,
-            rating = rating
-        )
-        return Result.Success(quote)
     }
 
     suspend fun getMovieVideos(movieId: Int): Result<MovieVideo?> {
@@ -228,4 +165,48 @@ suspend fun compareMovies(
             Result.Error(e, "Network error: ${e.message}")
         }
     }
+
+    // Cache for backend-fetched quotes
+    private val apiQuoteCache = mutableMapOf<String, String>()
+
+    private fun getCacheKey(title: String, year: String?): String {
+        return "$title${year?.let { "::$it" } ?: ""}"
+    }
+
+    suspend fun getQuote(
+        title: String,
+        year: String? = null,
+        rating: Double? = null
+    ): Result<String> {
+        // Step 1: Check if this title exists in the hardcoded database
+        if (MovieQuoteProvider.hasQuoteInDatabase(title)) {
+            val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
+            return Result.Success(localQuote)
+        }
+
+        // Step 2: Not in local database, try backend API for better quote
+        val cacheKey = getCacheKey(title, year)
+
+        // Check if we've already fetched from API for this title
+        apiQuoteCache[cacheKey]?.let { return Result.Success(it) }
+
+        // Fetch from backend API
+        return try {
+            val response = apiService.getQuote(title, year)
+            if (response.isSuccessful && response.body()?.success == true && !response.body()?.data.isNullOrBlank()) {
+                val quote = response.body()!!.data!!
+                apiQuoteCache[cacheKey] = quote
+                Result.Success(quote)
+            } else {
+                // API failed or returned empty, fall back to local quote
+                val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
+                Result.Success(localQuote)
+            }
+        } catch (e: IOException) {
+            // Network error, fall back to local quote
+            val localQuote = MovieQuoteProvider.getQuote(title, year, rating)
+            Result.Success(localQuote)
+        }
+    }
+
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.data.model.Movie
 import com.cpen321.movietier.data.model.MovieVideo
 import com.cpen321.movietier.data.repository.MovieRepository
+import com.cpen321.movietier.data.repository.RecommendationRepository
 import com.cpen321.movietier.data.repository.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,10 +28,9 @@ data class RecommendationUiState(
 
 @HiltViewModel
 class RecommendationViewModel @Inject constructor(
+    private val recommendationRepository: RecommendationRepository,
     private val movieRepository: MovieRepository,
-    private val watchlistRepository: WatchlistRepository,
-    private val quoteRepository: com.cpen321.movietier.data.repository.QuoteRepository
-
+    private val watchlistRepository: WatchlistRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RecommendationUiState())
@@ -51,7 +51,7 @@ class RecommendationViewModel @Inject constructor(
             loadTrendingMovies()
 
             // Then, try to get personalized recommendations
-            when (val result = movieRepository.getRecommendations()) {
+            when (val result = recommendationRepository.getRecommendations()) {
                 is Result.Success -> {
                     if (result.data.isNotEmpty()) {
                         // User has rankings, show personalized recommendations
@@ -83,7 +83,7 @@ class RecommendationViewModel @Inject constructor(
     }
 
     private suspend fun loadTrendingMovies() {
-        when (val trendingResult = movieRepository.getTrendingMovies()) {
+        when (val trendingResult = recommendationRepository.getTrendingMovies()) {
             is Result.Success -> {
                 _uiState.value = _uiState.value.copy(
                     trendingMovies = trendingResult.data
@@ -137,7 +137,7 @@ class RecommendationViewModel @Inject constructor(
         year: String? = null,
         rating: Double? = null
     ): String {
-        return when (val result = quoteRepository.getQuote(title, year, rating)) {
+        return when (val result = movieRepository.getQuote(title, year, rating)) {
             is Result.Success -> result.data
             is Result.Error -> title // Fallback to title if all else fails
             is Result.Loading -> title // Should not happen in this context
