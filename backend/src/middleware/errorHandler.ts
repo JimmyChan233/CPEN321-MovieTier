@@ -8,8 +8,8 @@ export const errorHandler = (
   res: Response,
   next: NextFunction,
 ) => {
-  // Ensure next is available in scope (required by Express error handler signature)
-  void next;
+  // next is required by Express but not used in error handler logic
+  const _ = next;
 
   logger.error("Unhandled API error", {
     method: req.method,
