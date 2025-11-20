@@ -203,7 +203,7 @@ describe("Unmocked: DELETE /auth/account", () => {
 
     app = express();
     app.use(express.json());
-    app.use("/", authRoutes);
+    app.use("/api/auth", authRoutes);
   });
 
   afterAll(async () => {

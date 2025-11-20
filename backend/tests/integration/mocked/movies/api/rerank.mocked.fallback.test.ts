@@ -144,10 +144,11 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
   });
 
   it("should handle edge case when ranked movie is not found", async () => {
-    const rankedMovieId = "non-existent-movie";
+    // Use a valid MongoDB ObjectId format so it passes validation
+    const rankedMovieId = "507f1f77bcf86cd799439011";
 
     const RankedMovie = require("../../../../../src/models/movie/RankedMovie");
-    RankedMovie.findById.mockResolvedValue(null); // Movie not found
+    RankedMovie.findOne.mockResolvedValue(null); // Movie not found
 
     const response = await request(app)
       .post("/movies/rerank/start")
@@ -156,7 +157,7 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
         rankedId: rankedMovieId,
       });
 
-    // Should return 404 Not Found when movie not found
+    // Should return 404 Not Found when movie not found (after passing validation)
     expect(response.status).toStrictEqual(404);
   });
 });

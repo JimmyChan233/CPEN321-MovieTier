@@ -41,7 +41,10 @@ describe("NFR: Performance - Response Time Requirements", () => {
     app = express();
     app.use(express.json());
 
-    // Mock authentication for performance tests
+    // Mount actual auth routes for performance testing
+    app.use("/api/auth", authRoutes);
+
+    // Mock authentication for performance tests (for other routes)
     app.use((req: any, res: any, next: any) => {
       req.userId = "test-user-id";
       next();
@@ -118,8 +121,8 @@ describe("NFR: Performance - Response Time Requirements", () => {
 
     const responseTime = Date.now() - startTime;
 
-    // Should fail with test token (400 or 401)
-    expect([400, 401]).toContain(res.status);
+    // Should fail with test token (returns 400 Bad Request)
+    expect(res.status).toStrictEqual(400);
     expect(responseTime).toBeLessThan(500); // NFR requirement: < 500ms
   });
 
