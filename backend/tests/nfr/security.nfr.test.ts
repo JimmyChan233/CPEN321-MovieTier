@@ -83,7 +83,8 @@ describe("NFR: Security - Authentication & Authorization", () => {
         )
         .query({ query: "test" });
 
-      expect(res.status).toBeGreaterThanOrEqual(400);
+      // Should reject with 401 Unauthorized or 400 Bad Request
+      expect([400, 401]).toContain(res.status);
       expect(res.body.success).toBe(false);
     }
   });
@@ -105,8 +106,8 @@ describe("NFR: Security - Authentication & Authorization", () => {
         .set("Authorization", `Bearer ${validToken}`)
         .query({ query: maliciousInput });
 
-      // Should not crash or expose sensitive information
-      expect(res.status).toBeLessThan(500);
+      // Should handle gracefully (200 success, 400 validation error, but never 500 server error)
+      expect([200, 400]).toContain(res.status);
       if (res.body.message) {
         expect(res.body.message).not.toContain("SQL");
         expect(res.body.message).not.toContain("database");

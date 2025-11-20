@@ -156,7 +156,7 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
         rankedId: rankedMovieId,
       });
 
-    // Should return appropriate error status
-    expect(response.status).toBeGreaterThanOrEqual(400);
+    // Should return 404 Not Found when movie not found
+    expect(response.status).toStrictEqual(404);
   });
 });

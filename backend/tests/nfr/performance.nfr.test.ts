@@ -118,7 +118,8 @@ describe("NFR: Performance - Response Time Requirements", () => {
 
     const responseTime = Date.now() - startTime;
 
-    expect(res.status).toBeGreaterThanOrEqual(400); // Will fail with test token
+    // Should fail with test token (400 or 401)
+    expect([400, 401]).toContain(res.status);
     expect(responseTime).toBeLessThan(500); // NFR requirement: < 500ms
   });
 

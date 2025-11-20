@@ -1,12 +1,14 @@
 /**
- * @unmocked Integration tests for feed operations
- * Tests with real MongoDB database
+ * @unmocked Integration tests for feed operations with real MongoDB
+ * MongoDB is unmocked (real database), external services (SSE, FCM) are mocked
+ * Focuses on constraint validation and error handling
  */
 
 /**
  * Feed API Tests - Unmocked
- * Tests: GET /feed, POST /feed/:activityId/like, DELETE /feed/:activityId/like,
+ * Tests: GET /feed, POST /feed/:activityId/like,
  *        GET /feed/:activityId/comments, POST /feed/:activityId/comments
+ * Focus: Validation, constraints (unique likes), error cases, database integration
  */
 
 import request from "supertest";
@@ -57,19 +59,10 @@ describe("Unmocked: GET /feed", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await FeedActivity.deleteMany({});
     await Like.deleteMany({});
   });
-
-  // Input: User with friends who have ranked movies
-  // Expected status code: 200
-  // Expected behavior: Return friend activities with like/comment counts
-  // Expected output: Array of activities with enriched data
-
-  // Input: User with no friends
-  // Expected status code: 200
-  // Expected behavior: Return empty feed
-  // Expected output: Empty array
 
   // Input: Unauthenticated request
   // Expected status code: 401
@@ -80,6 +73,9 @@ describe("Unmocked: GET /feed", () => {
 
     expect(res.status).toStrictEqual(401);
   });
+
+  // Note: Tests for returning feed data are in the mocked test suite
+  // This integration test focuses on authentication and error cases
 });
 
 describe("Unmocked: POST /feed/:activityId/like", () => {
@@ -118,18 +114,9 @@ describe("Unmocked: POST /feed/:activityId/like", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await Like.deleteMany({});
   });
-
-  // Input: Valid activity ID
-  // Expected status code: 201
-  // Expected behavior: Like is created in database
-  // Expected output: Success message with like count
-
-  // Input: Invalid activity ID
-  // Expected status code: 404
-  // Expected behavior: Database is unchanged
-  // Expected output: Not found error
 
   // Input: Duplicate like on same activity
   // Expected status code: 400
@@ -150,6 +137,9 @@ describe("Unmocked: POST /feed/:activityId/like", () => {
 
     expect(res.status).toStrictEqual(400);
   });
+
+  // Note: Tests for creating successful likes are in the mocked test suite
+  // This integration test focuses on constraint validation
 });
 
 describe("Unmocked: GET /feed/:activityId/comments", () => {

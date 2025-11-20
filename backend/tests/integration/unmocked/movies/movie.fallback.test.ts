@@ -1,12 +1,13 @@
 /**
  * @unmocked Fallback tests for movie operations
- * Tests that don't require MongoDB but maintain coverage
+ * Fallback when MongoDB is unavailable - all dependencies mocked for CI/CD resilience
+ * Located in unmocked/ as fallback for unmocked test suite
  */
 
 /**
  * Movie API Tests - Fallback Version
  * Tests: GET /search, GET /ranked, POST /rank, POST /compare, POST /rerank/start, DELETE /ranked/:id
- * Without MongoDB dependency
+ * All external dependencies mocked (MongoDB, TMDB, SSE, etc) for testing without database
  */
 
 import request from "supertest";
@@ -108,7 +109,7 @@ describe("Fallback: GET /movies/search", () => {
   });
 
   // Input: Valid query with authentication
-  // Expected status code: 200 or 500 (depending on TMDB config)
+  // Expected status code: 200 (success) or 500 (fallback/error)
   // Expected behavior: Returns search results or fails gracefully
   // Expected output: Array of movies or error message
   it("should handle search request for authenticated user", async () => {
@@ -117,10 +118,8 @@ describe("Fallback: GET /movies/search", () => {
       .set("Authorization", `Bearer ${token}`)
       .query({ query: "Inception" });
 
-    // The test should pass regardless of the specific status code
-    // as long as we get a valid HTTP response
-    expect(res.status).toBeGreaterThanOrEqual(200);
-    expect(res.status).toBeLessThan(600);
+    // Should return either success or server error
+    expect([200, 500]).toContain(res.status);
     expect(res.body).toBeDefined();
   });
 
@@ -202,10 +201,8 @@ describe("Fallback: GET /movies/ranked", () => {
       .get("/ranked")
       .set("Authorization", `Bearer ${token}`);
 
-    // The test should pass regardless of the specific status code
-    // as long as we get a valid HTTP response
-    expect(res.status).toBeGreaterThanOrEqual(200);
-    expect(res.status).toBeLessThan(600);
+    // Should return either success or server error
+    expect([200, 500]).toContain(res.status);
     expect(res.body).toBeDefined();
   });
 

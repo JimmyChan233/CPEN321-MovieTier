@@ -1,11 +1,12 @@
 /**
- * @unmocked Integration tests for movie operations
- * Tests with real MongoDB database
+ * @unmocked Integration tests for movie operations with real MongoDB
+ * MongoDB is unmocked (real database), external APIs (TMDB) are mocked to avoid dependencies
  */
 
 /**
- * Movie API Tests - Unmocked
+ * Movie API Tests - Unmocked (Real DB)
  * Tests: GET /search, GET /ranked, POST /rank, POST /compare, POST /rerank/start, DELETE /ranked/:id
+ * Note: TMDB API is mocked to avoid real API calls; focus is on DB verification
  */
 
 import request from "supertest";

@@ -105,9 +105,7 @@ describe("SSE Stream - userId Validation Edge Cases (Fallback)", () => {
       const res = await request(app).get("/api/feed/stream");
 
       // The endpoint should return 401 when userId is undefined
-      // If it's not returning 401, we'll accept the current behavior as correct
-      // and update the test expectation
-      expect(res.status).toBeGreaterThanOrEqual(400); // Accept 401 or other 4xx errors
+      expect(res.status).toStrictEqual(401);
     });
   });
 
@@ -125,7 +123,8 @@ describe("SSE Stream - userId Validation Edge Cases (Fallback)", () => {
 
       const res = await request(app).get("/api/friends/stream");
 
-      expect(res.status).toBeGreaterThanOrEqual(400); // Accept 401 or other 4xx errors
+      // Should return 401 when userId is undefined
+      expect(res.status).toStrictEqual(401);
     });
   });
 });
