@@ -1,24 +1,23 @@
 /**
- * Advanced Branch Coverage Tests
- * Tests for TMDB response fallbacks and other edge cases
+ * @mocked API tests for movie edge cases with mocked TMDB
+ * Tests TMDB response fallbacks, null handling, and enrichment logic
  */
 
 import request from 'supertest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import express, { Express } from 'express';
-import movieRoutes from '../../src/routes/movieRoutes';
-import watchlistRoutes from '../../src/routes/watchlistRoutes';
-import feedRoutes from '../../src/routes/feedRoutes';
-import { authenticate } from '../../src/middleware/auth';
-import User from '../../src/models/user/User';
-import RankedMovie from '../../src/models/movie/RankedMovie';
-import WatchlistItem from '../../src/models/watch/WatchlistItem';
-import FeedActivity from '../../src/models/feed/FeedActivity';
-import { generateTestJWT } from '../utils/test-fixtures';
+import movieRoutes from '../../../src/routes/movieRoutes';
+import watchlistRoutes from '../../../src/routes/watchlistRoutes';
+import feedRoutes from '../../../src/routes/feedRoutes';
+import { authenticate } from '../../../src/middleware/auth';
+import User from '../../../src/models/user/User';
+import WatchlistItem from '../../../src/models/watch/WatchlistItem';
+import FeedActivity from '../../../src/models/feed/FeedActivity';
+import { generateTestJWT } from '../../utils/test-fixtures';
 
 const mockTmdbGet = jest.fn();
-jest.mock('../../src/services/tmdb/tmdbClient', () => ({
+jest.mock('../../../src/services/tmdb/tmdbClient', () => ({
   getTmdbClient: () => ({
     get: mockTmdbGet
   })
@@ -57,9 +56,6 @@ describe('Movie Routes - TMDB Field Fallbacks', () => {
     jest.clearAllMocks();
   });
 
-
-
-
   it('should handle videos list with non-YouTube videos', async () => {
     mockTmdbGet.mockResolvedValueOnce({
       data: {
@@ -76,6 +72,61 @@ describe('Movie Routes - TMDB Field Fallbacks', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toBeDefined();
+  });
+
+  it('should handle null data.results in /providers endpoint', async () => {
+    const movieId = 278;
+
+    mockTmdbGet.mockResolvedValue({
+      data: {
+        results: null // Triggers ?? {} fallback
+      }
+    });
+
+    const res = await request(app)
+      .get(`/api/movies/${movieId}/providers`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it('should handle null detailsResp.data in /details endpoint', async () => {
+    const movieId = 278;
+
+    mockTmdbGet
+      .mockResolvedValueOnce({
+        data: null // Triggers ?? {} fallback for detailsResp.data
+      })
+      .mockResolvedValueOnce({
+        data: {
+          cast: []
+        }
+      });
+
+    const res = await request(app)
+      .get(`/api/movies/${movieId}/details`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('should handle non-array data.results in /videos endpoint', async () => {
+    const movieId = 278;
+
+    mockTmdbGet.mockResolvedValue({
+      data: {
+        results: 'not an array' // Triggers Array.isArray false branch
+      }
+    });
+
+    const res = await request(app)
+      .get(`/api/movies/${movieId}/videos`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // Should return null trailer when results isn't an array
+    expect(res.body.data).toBeNull();
   });
 });
 
@@ -133,7 +184,6 @@ describe('Watchlist Routes - TMDB Enrichment', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.posterPath).toBeUndefined(); // Should not be set since TMDB didn't have it
   });
-
 });
 
 describe('Feed Routes - Activity Enrichment', () => {
@@ -173,7 +223,6 @@ describe('Feed Routes - Activity Enrichment', () => {
     jest.clearAllMocks();
   });
 
-
   it('should skip enrichment when activity already has poster and overview', async () => {
     await FeedActivity.create({
       userId: user._id,
@@ -199,13 +248,12 @@ describe('Config Module NODE_ENV Fallback', () => {
     jest.resetModules();
   });
 
-
   it('should use production when NODE_ENV is set to production', () => {
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
 
     jest.resetModules();
-    const config = require('../../src/config').default;
+    const config = require('../../../src/config').default;
 
     expect(config.nodeEnv).toBe('production');
 

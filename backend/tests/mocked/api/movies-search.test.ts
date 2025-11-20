@@ -1,25 +1,25 @@
 /**
- * Tests for the final 27 uncovered branches
- * Targeting CJK search, nullability, and edge cases
+ * @mocked API tests for movie search with mocked TMDB
+ * Tests search functionality, CJK search, and response handling with mocked external APIs
  */
 
 import request from 'supertest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import express, { Express } from 'express';
-import movieRoutes from '../../src/routes/movieRoutes';
-import { authenticate } from '../../src/middleware/auth';
-import User from '../../src/models/user/User';
-import { generateTestJWT } from '../utils/test-fixtures';
+import movieRoutes from '../../../src/routes/movieRoutes';
+import { authenticate } from '../../../src/middleware/auth';
+import User from '../../../src/models/user/User';
+import { generateTestJWT } from '../../utils/test-fixtures';
 
 const mockTmdbGet = jest.fn();
-jest.mock('../../src/services/tmdb/tmdbClient', () => ({
+jest.mock('../../../src/services/tmdb/tmdbClient', () => ({
   getTmdbClient: () => ({
     get: mockTmdbGet
   })
 }));
 
-describe('Final 27 Branches - CJK Search with Detail Fetch', () => {
+describe('Movie Search - CJK Search with Detail Fetch', () => {
   let mongoServer: MongoMemoryServer;
   let app: Express;
   let token: string;
@@ -52,8 +52,7 @@ describe('Final 27 Branches - CJK Search with Detail Fetch', () => {
     jest.clearAllMocks();
   });
 
-
-  it('should handle CJK search where zh.results is not an array (Array.isAsync false)', async () => {
+  it('should handle CJK search where zh.results is not an array', async () => {
     mockTmdbGet
       .mockResolvedValueOnce({
         data: { results: [] } // Empty English
@@ -72,8 +71,7 @@ describe('Final 27 Branches - CJK Search with Detail Fetch', () => {
     expect(res.body.data).toEqual([]);
   });
 
-
-  it('should handle CJK detail fetch with partial fields from TMDB (mixed || operators)', async () => {
+  it('should handle CJK detail fetch with partial fields from TMDB', async () => {
     mockTmdbGet
       .mockResolvedValueOnce({
         data: { results: [] }
@@ -149,5 +147,79 @@ describe('Final 27 Branches - CJK Search with Detail Fetch', () => {
     expect(res.body.data[0].title).toBe('韓国映画'); // Falls back to original
   });
 
+  it('should handle CJK search with fallback to detail fetch', async () => {
+    mockTmdbGet
+      .mockResolvedValueOnce({
+        data: { results: [] } // Empty English results
+      })
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              id: 101,
+              title: '中文电影'
+            }
+          ]
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          id: 101,
+          title: 'Chinese Movie English',
+          overview: 'Detailed overview',
+          poster_path: '/chinese.jpg',
+          release_date: '2020-01-01',
+          vote_average: 7.5
+        }
+      });
 
+    const res = await request(app)
+      .get('/api/movies/search?query=中文')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it('should handle search when cast field is null or missing', async () => {
+    mockTmdbGet
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              id: 2,
+              title: 'Movie'
+            }
+          ]
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          cast: null // Null instead of array
+        }
+      });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=test&includeCast=true')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    // When cast is null/missing, it defaults to empty array in the code
+    expect(Array.isArray(res.body.data[0].cast) || res.body.data[0].cast === undefined).toBe(true);
+  });
+
+  it('should handle search with undefined results', async () => {
+    mockTmdbGet.mockResolvedValueOnce({
+      data: {
+        // results is undefined
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/movies/search?query=test')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
 });

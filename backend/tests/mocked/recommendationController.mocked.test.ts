@@ -297,6 +297,66 @@ describe('Recommendation Controller - Mocked Tests', () => {
       expect(res.body.success).toBe(true);
     });
 
+    it('should handle recommendations with movies having partial fields', async () => {
+      // Create a ranked movie to base recommendations on
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 100,
+        title: 'Base Movie',
+        rank: 1
+      });
+
+      mockTmdbGet
+        .mockResolvedValueOnce({
+          data: {
+            results: [
+              { id: 100, title: 'Base', genres: [] }
+            ]
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [
+              {
+                id: 201,
+                title: 'Similar Movie 1',
+                genre_ids: [28],
+                original_language: 'en'
+                // Missing: overview, poster_path, release_date, vote_average
+              },
+              {
+                id: 202,
+                title: 'Similar Movie 2',
+                overview: 'Has overview',
+                genre_ids: [18],
+                // Missing: poster_path, release_date, vote_average, original_language
+              }
+            ]
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [
+              {
+                id: 301,
+                title: 'Recommended',
+                poster_path: '/rec.jpg',
+                vote_average: 8.0
+                // Missing: overview, release_date, original_language
+              }
+            ]
+          }
+        });
+
+      const res = await request(app)
+        .get('/api/recommendations')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
+    });
+
 
 
 

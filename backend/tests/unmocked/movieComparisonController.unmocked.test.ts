@@ -98,6 +98,48 @@ describe('Movie Comparison Controller - Complete Coverage', () => {
 
   // ========== Error Handling ==========
 
+  it('should handle movieComparisionController addMovie when user has no name property', async () => {
+    // Mock User.findById to return a user document without name
+    jest.spyOn(User, 'findById').mockImplementationOnce(function(this: any) {
+      return {
+        select: jest.fn().mockResolvedValueOnce({
+          _id: user1._id,
+          // name is undefined
+        })
+      } as any;
+    });
+
+    // Mock Friendship.find to return empty
+    jest.spyOn(Friendship, 'find').mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .post('/add')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({
+        movieId: 100,
+        title: 'Test Movie',
+        posterPath: '/poster.jpg'
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    jest.restoreAllMocks();
+  });
+
+  it('should handle NODE_ENV being explicitly set to staging', () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'staging';
+
+    jest.resetModules();
+    const config = require('../../src/config').default;
+
+    expect(config.nodeEnv).toBe('staging');
+
+    if (originalEnv) {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
 
   it('should handle error in compareMovies', async () => {
     await RankedMovie.create({
