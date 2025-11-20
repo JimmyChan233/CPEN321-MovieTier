@@ -355,8 +355,8 @@ describe("Mocked: DELETE /auth/account", () => {
   });
 });
 
-// Interface POST /auth/signup
-describe("Mocked: POST /auth/signup", () => {
+// Service-level mocked tests (mocking AuthService methods)
+describe("Mocked: POST /auth/signup (service level)", () => {
   let app: express.Application;
 
   beforeAll(() => {
@@ -406,8 +406,8 @@ describe("Mocked: POST /auth/signup", () => {
   });
 });
 
-// Interface POST /auth/signout
-describe("Mocked: POST /auth/signout", () => {
+// Service-level mocked tests (mocking token validation)
+describe("Mocked: POST /auth/signout (service level)", () => {
   let app: express.Application;
 
   beforeAll(() => {
@@ -436,8 +436,8 @@ describe("Mocked: POST /auth/signout", () => {
   });
 });
 
-// Interface DELETE /auth/account
-describe("Mocked: DELETE /auth/account", () => {
+// Service-level mocked tests (mocking account deletion)
+describe("Mocked: DELETE /auth/account (service level)", () => {
   let app: express.Application;
 
   beforeAll(() => {

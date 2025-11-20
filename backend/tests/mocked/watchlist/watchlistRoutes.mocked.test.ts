@@ -25,7 +25,7 @@ jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
   }),
 }));
 
-describe("Watchlist Routes - Mocked Tests", () => {
+describe("Mocked: Watchlist Routes", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;

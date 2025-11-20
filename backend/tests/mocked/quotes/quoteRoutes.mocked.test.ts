@@ -27,7 +27,7 @@ const mockFetchMovieTagline = fetchMovieTagline as jest.MockedFunction<
   typeof fetchMovieTagline
 >;
 
-describe("Quote Routes - Mocked Tests", () => {
+describe("Mocked: Quote Routes", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;

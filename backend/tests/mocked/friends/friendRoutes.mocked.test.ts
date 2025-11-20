@@ -29,7 +29,7 @@ jest.mock("../../../src/services/notification.service", () => ({
   },
 }));
 
-describe("Friend Routes - Mocked Error Tests", () => {
+describe("Mocked: Friend Routes", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user1: any;

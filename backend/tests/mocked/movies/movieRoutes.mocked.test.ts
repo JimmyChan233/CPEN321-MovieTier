@@ -201,7 +201,7 @@ jest.mock("../../../src/controllers/movie/movieController", () => ({
   }),
 }));
 
-describe("Movie Routes - Mocked Tests", () => {
+describe("Mocked: Movie Routes", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;

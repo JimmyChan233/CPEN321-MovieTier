@@ -36,7 +36,7 @@ jest.mock("../../../src/utils/logger", () => ({
 import { AuthService } from "../../../src/services/auth/authService";
 import User from "../../../src/models/user/User";
 
-describe("AuthService - Mocked Tests", () => {
+describe("Mocked: AuthService", () => {
   let mongoServer: MongoMemoryServer;
   let authService: AuthService;
 

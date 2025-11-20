@@ -35,7 +35,7 @@ jest.mock("../../../src/utils/logger", () => ({
   },
 }));
 
-describe("Recommendation Controller - Mocked Tests", () => {
+describe("Mocked: Recommendation Controller", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;

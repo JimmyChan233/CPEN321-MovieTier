@@ -32,7 +32,7 @@ const mockRes = () => {
   return res;
 };
 
-describe("startRerank (mocked)", () => {
+describe("Mocked: Rerank Controller - startRerank", () => {
   beforeEach(() => jest.clearAllMocks());
 
   it("returns 401 if user not authorized", async () => {

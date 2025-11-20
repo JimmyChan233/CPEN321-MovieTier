@@ -46,7 +46,7 @@ jest.mock("../../../src/services/sse/sseService", () => ({
   },
 }));
 
-describe("Feed Routes - Mocked Error Tests", () => {
+describe("Mocked: Feed Routes", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user1: any;
