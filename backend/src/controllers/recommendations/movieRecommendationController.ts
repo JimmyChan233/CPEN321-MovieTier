@@ -113,12 +113,10 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
     logger.error("Trending movies error", {
       error: (error as Error).message,
     });
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load trending movies. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load trending movies. Please try again",
+    });
   }
 };
 
@@ -303,12 +301,10 @@ export const getRecommendations = async (req: Request, res: Response) => {
       userId: authReq.userId,
       error: (error as Error).message,
     });
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load recommendations. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load recommendations. Please try again",
+    });
   }
 };
 

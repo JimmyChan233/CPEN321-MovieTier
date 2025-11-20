@@ -11,12 +11,10 @@ export const getWatchlist = async (req: Request, res: Response) => {
     });
     res.json({ success: true, data: items });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load watchlist. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load watchlist. Please try again",
+    });
   }
 };
 
@@ -75,12 +73,10 @@ export const addToWatchlist = async (req: Request, res: Response) => {
     return res.status(201).json({ success: true, data: item });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to add to watchlist. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to add to watchlist. Please try again",
+    });
   }
 };
 
@@ -104,11 +100,9 @@ export const removeFromWatchlist = async (req: Request, res: Response) => {
     }
     res.json({ success: true, message: "Removed from watchlist" });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to remove from watchlist. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to remove from watchlist. Please try again",
+    });
   }
 };

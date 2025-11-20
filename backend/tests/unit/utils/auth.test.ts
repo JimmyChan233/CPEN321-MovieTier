@@ -1,5 +1,7 @@
 /**
  * @unit Unit tests for authentication middleware
+ * Tests with mocked JWT library, no external dependencies
+ * Focus: JWT validation, error handling, middleware behavior
  */
 
 import { Request, Response, NextFunction } from "express";

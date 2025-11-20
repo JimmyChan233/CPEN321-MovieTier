@@ -143,12 +143,10 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
 
     // Rate limit per-sender
     if (!req.userId || !checkRateLimit(req.userId)) {
-      return res
-        .status(429)
-        .json({
-          success: false,
-          message: "Too many requests. Please try again later.",
-        });
+      return res.status(429).json({
+        success: false,
+        message: "Too many requests. Please try again later.",
+      });
     }
 
     // Prevent sending a request to self
@@ -157,12 +155,10 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
     if (self.email === email) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Cannot send a friend request to yourself",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Cannot send a friend request to yourself",
+      });
     }
 
     const friend = await User.findOne({ email });
@@ -203,13 +199,11 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       status: "pending",
     });
     if (reversePending) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message:
-            "A request from this user is already pending. Please accept it.",
-        });
+      return res.status(400).json({
+        success: false,
+        message:
+          "A request from this user is already pending. Please accept it.",
+      });
     }
 
     const request = new FriendRequest({
@@ -239,12 +233,10 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ success: true, data: request });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to send friend request. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to send friend request. Please try again",
+    });
   }
 };
 
@@ -272,12 +264,10 @@ export const respondToFriendRequest = async (
     }
 
     if (String(request.receiverId) !== String(req.userId)) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Not authorized to respond to this request",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to respond to this request",
+      });
     }
 
     if (request.status !== "pending") {
@@ -444,12 +434,10 @@ export const cancelFriendRequest = async (req: AuthRequest, res: Response) => {
         .json({ success: false, message: "Friend request not found" });
     }
     if (String(request.senderId) !== String(req.userId)) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Not authorized to cancel this request",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to cancel this request",
+      });
     }
     if (request.status !== "pending") {
       return res

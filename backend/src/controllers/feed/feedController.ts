@@ -205,12 +205,10 @@ export const getFeed = async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load feed. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load feed. Please try again",
+    });
   }
 };
 
@@ -392,12 +390,10 @@ export const addComment = async (req: AuthRequest, res: Response) => {
     }
 
     if (text.length > 500) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Comment must be 500 characters or less",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Comment must be 500 characters or less",
+      });
     }
 
     const activity = await FeedActivity.findById(activityId).populate("userId");
@@ -473,12 +469,10 @@ export const deleteComment = async (req: AuthRequest, res: Response) => {
     }
 
     if (String(comment.userId) !== String(req.userId)) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You can only delete your own comments",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own comments",
+      });
     }
 
     await Comment.findByIdAndDelete(commentId);

@@ -1,11 +1,11 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document } from "mongoose";
 
 /**
  * Feed activity interface representing user activities in the feed
  */
 export interface IFeedActivity extends Document {
   userId: mongoose.Types.ObjectId;
-  activityType: 'ranked_movie';
+  activityType: "ranked_movie";
   movieId: number;
   movieTitle: string;
   posterPath?: string;
@@ -45,7 +45,7 @@ export interface IFeedActivityResponse {
     name: string;
     profileImageUrl?: string;
   };
-  activityType: 'ranked_movie';
+  activityType: "ranked_movie";
   movieId: number;
   movieTitle: string;
   posterPath?: string;

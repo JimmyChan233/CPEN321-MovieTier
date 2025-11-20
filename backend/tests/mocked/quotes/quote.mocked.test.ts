@@ -1,11 +1,11 @@
 /**
  * @mocked Mocked tests for quote feature
- * Tests with mocked external services (TMDB) and real MongoDB
+ * Tests with mocked TMDB service and real MongoDB database
  */
 
 /**
- * Quote API Tests - Unmocked
- * Tests: GET /quotes
+ * Quote API Tests - Mocked
+ * Tests: GET /quotes with mocked TMDB service
  */
 
 import request from "supertest";
@@ -16,7 +16,7 @@ import movieRoutes from "../../../src/routes/movieRoutes";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
-describe("Unmocked: GET /quotes", () => {
+describe("Mocked: GET /quotes", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;

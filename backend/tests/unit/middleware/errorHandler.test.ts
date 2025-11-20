@@ -1,6 +1,7 @@
 /**
  * @unit Unit tests for errorHandler middleware
- * Tests error formatting, logging, and null/undefined handling
+ * Tests with mocked dependencies, no external API calls
+ * Focus: error formatting, logging, null/undefined handling
  */
 
 import { handleTmdbResponseError } from "../../../src/services/tmdb/tmdbClient";

@@ -19,12 +19,10 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
   try {
     const query = String(req.query.query ?? "");
     if (!query || query.trim().length < 2) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Query must be at least 2 characters",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Query must be at least 2 characters",
+      });
     }
 
     // Escape special regex characters to prevent ReDoS attacks
@@ -38,12 +36,10 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true, data: users });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to search users. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to search users. Please try again",
+    });
   }
 };
 
@@ -60,12 +56,10 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
     if (name === undefined && profileImageUrl === undefined) {
       logger.warn("Profile update failed: no fields provided");
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "At least one field (name or profileImageUrl) is required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "At least one field (name or profileImageUrl) is required",
+      });
     }
 
     if (name !== undefined && (!name || name.trim().length < 1)) {
@@ -100,12 +94,10 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     res.json({ success: true, data: user });
   } catch (error) {
     logger.error("Profile update error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to update profile. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to update profile. Please try again",
+    });
   }
 };
 
@@ -135,12 +127,10 @@ export const registerFcmToken = async (req: AuthRequest, res: Response) => {
     res.json({ success: true, message: "FCM token registered successfully" });
   } catch (error) {
     logger.error("FCM token registration error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to register FCM token. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to register FCM token. Please try again",
+    });
   }
 };
 
@@ -162,12 +152,10 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
     }
     res.json({ success: true, data: user });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load user. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load user. Please try again",
+    });
   }
 };
 
@@ -188,24 +176,20 @@ export const getUserWatchlist = async (req: AuthRequest, res: Response) => {
         friendId: userId,
       });
       if (!areFriends) {
-        return res
-          .status(403)
-          .json({
-            success: false,
-            message: "You must be friends to view this watchlist.",
-          });
+        return res.status(403).json({
+          success: false,
+          message: "You must be friends to view this watchlist.",
+        });
       }
     }
 
     const items = await WatchlistItem.find({ userId }).sort({ createdAt: -1 });
     res.json({ success: true, data: items });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load user watchlist. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load user watchlist. Please try again",
+    });
   }
 };
 
@@ -224,12 +208,10 @@ export const getUserRankings = async (req: AuthRequest, res: Response) => {
       friendId: userId,
     });
     if (!areFriends && String(req.userId) !== userId) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You must be friends to view these rankings.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You must be friends to view these rankings.",
+      });
     }
 
     const movies = await RankedMovie.find({
@@ -263,11 +245,9 @@ export const getUserRankings = async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load rankings. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load rankings. Please try again",
+    });
   }
 };

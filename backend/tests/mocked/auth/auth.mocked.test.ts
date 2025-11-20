@@ -128,12 +128,10 @@ describe("Mocked: POST /auth/signin", () => {
   });
 
   it("should reject signin without idToken", async () => {
-    const res = await request(app)
-      .post("/api/auth/signin")
-      .send({
-        email: "test@example.com",
-        name: "Test User"
-      });
+    const res = await request(app).post("/api/auth/signin").send({
+      email: "test@example.com",
+      name: "Test User",
+    });
 
     expect(res.status).toStrictEqual(400);
     expect(res.body.success).toBe(false);
@@ -190,7 +188,7 @@ describe("Mocked: POST /auth/signup", () => {
     await User.create({
       email: "existing@example.com",
       name: "Existing User",
-      googleId: "google-existing"
+      googleId: "google-existing",
     });
 
     const res = await request(app)
@@ -203,12 +201,10 @@ describe("Mocked: POST /auth/signup", () => {
   });
 
   it("should reject signup without idToken", async () => {
-    const res = await request(app)
-      .post("/api/auth/signup")
-      .send({
-        email: "newuser@example.com",
-        name: "New User"
-      });
+    const res = await request(app).post("/api/auth/signup").send({
+      email: "newuser@example.com",
+      name: "New User",
+    });
 
     expect(res.status).toStrictEqual(400);
     expect(res.body.success).toBe(false);
@@ -246,7 +242,7 @@ describe("Mocked: POST /auth/signout", () => {
     user = await User.create({
       email: "test@example.com",
       name: "Test User",
-      googleId: "google-123"
+      googleId: "google-123",
     });
     token = generateTestJWT(user._id.toString());
   });
@@ -274,9 +270,7 @@ describe("Mocked: POST /auth/signout", () => {
   });
 
   it("should reject signout without token", async () => {
-    const res = await request(app)
-      .post("/api/auth/signout")
-      .send({});
+    const res = await request(app).post("/api/auth/signout").send({});
 
     expect(res.status).toStrictEqual(401);
     expect(res.body.success).toBe(false);
@@ -313,11 +307,11 @@ describe("Mocked: DELETE /auth/account", () => {
     await User.deleteMany({});
     await Friendship.deleteMany({});
     await FriendRequest.deleteMany({});
-    
+
     user = await User.create({
       email: "test@example.com",
       name: "Test User",
-      googleId: "google-123"
+      googleId: "google-123",
     });
     token = generateTestJWT(user._id.toString());
   });
@@ -353,9 +347,7 @@ describe("Mocked: DELETE /auth/account", () => {
   });
 
   it("should reject account deletion without token", async () => {
-    const res = await request(app)
-      .delete("/api/auth/account")
-      .send({});
+    const res = await request(app).delete("/api/auth/account").send({});
 
     expect(res.status).toStrictEqual(401);
     expect(res.body.success).toBe(false);

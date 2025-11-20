@@ -65,17 +65,15 @@ describe("Mocked: Movie Comparison and Addition - Database Failures", () => {
 
   it("should reject duplicate movie ranking", async () => {
     // Mock the find method to return an array with the existing movie
-    const findSpy = jest
-      .spyOn(RankedMovie, "find")
-      .mockReturnValueOnce([
-        {
-          _id: "existing-movie",
-          movieId: 278,
-          userId: "test-user-id",
-          title: "The Shawshank Redemption",
-          rank: 1,
-        } as any
-      ] as any);
+    const findSpy = jest.spyOn(RankedMovie, "find").mockReturnValueOnce([
+      {
+        _id: "existing-movie",
+        movieId: 278,
+        userId: "test-user-id",
+        title: "The Shawshank Redemption",
+        rank: 1,
+      } as any,
+    ] as any);
 
     const res = await request(app)
       .post("/api/movies/add")

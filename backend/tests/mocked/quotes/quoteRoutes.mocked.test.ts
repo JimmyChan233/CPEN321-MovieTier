@@ -1,11 +1,11 @@
 /**
  * @mocked Mocked tests for quote feature
- * Tests with mocked external services (TMDB) and real MongoDB
+ * Tests with mocked TMDB service and real MongoDB database
  */
 
 /**
  * Quote Routes Tests - Mocked
- * Tests for movie tagline fetching endpoint
+ * Tests for movie tagline fetching endpoint with mocked TMDB service
  */
 
 import request from "supertest";
@@ -27,7 +27,7 @@ const mockFetchMovieTagline = fetchMovieTagline as jest.MockedFunction<
   typeof fetchMovieTagline
 >;
 
-describe("Quote Routes - Unmocked Tests", () => {
+describe("Quote Routes - Mocked Tests", () => {
   let mongoServer: MongoMemoryServer;
   let app: express.Application;
   let user: any;

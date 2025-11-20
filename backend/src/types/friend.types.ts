@@ -1,4 +1,4 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document } from "mongoose";
 
 /**
  * Friendship interface representing a friendship relationship
@@ -15,7 +15,7 @@ export interface IFriendship extends Document {
 export interface IFriendRequest extends Document {
   senderId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +38,6 @@ export interface IFriendRequestResponse {
   _id: string;
   sender: IFriend;
   receiver: IFriend;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   createdAt: Date;
 }

@@ -1,4 +1,4 @@
-import { Document } from 'mongoose';
+import { Document } from "mongoose";
 
 /**
  * Ranked movie interface representing user's movie rankings

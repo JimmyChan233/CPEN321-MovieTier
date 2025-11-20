@@ -66,12 +66,10 @@ export const searchMovies = async (req: Request, res: Response) => {
   try {
     const query = String(req.query.query ?? "").trim();
     if (!query || query.length < 2) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Query must be at least 2 characters",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Query must be at least 2 characters",
+      });
     }
 
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
@@ -203,12 +201,10 @@ export const searchMovies = async (req: Request, res: Response) => {
     const combined = enriched.concat(remaining);
     res.json({ success: true, data: combined });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to search movies. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to search movies. Please try again",
+    });
   }
 };
 
@@ -245,12 +241,10 @@ export const getRankedMovies = async (req: Request, res: Response) => {
     });
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load rankings. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load rankings. Please try again",
+    });
   }
 };
 
@@ -291,12 +285,10 @@ export const deleteRankedMovie = async (req: Request, res: Response) => {
 
     res.json({ success: true, message: "Removed from rankings" });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to remove from rankings. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to remove from rankings. Please try again",
+    });
   }
 };
 
@@ -365,12 +357,10 @@ export const getWatchProviders = async (req: Request, res: Response) => {
 
     res.json({ success: true, data: payload });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load watch providers. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load watch providers. Please try again",
+    });
   }
 };
 
@@ -401,12 +391,10 @@ export const getMovieDetails = async (req: Request, res: Response) => {
     };
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load movie details. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load movie details. Please try again",
+    });
   }
 };
 
@@ -445,12 +433,10 @@ export const getMovieVideos = async (req: Request, res: Response) => {
 
     res.json({ success: true, data: shaped });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to load movie videos. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to load movie videos. Please try again",
+    });
   }
 };
 
@@ -619,12 +605,10 @@ export const addMovie = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to add movie to ranking. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to add movie to ranking. Please try again",
+    });
   }
 };
 
@@ -808,12 +792,10 @@ export const compareMovies = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to save comparison. Please try again",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Unable to save comparison. Please try again",
+    });
   }
 };
 
@@ -899,12 +881,10 @@ export const startRerank = async (req: Request, res: Response) => {
       },
     });
   } catch (e) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Unable to start rerank. Please try again",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Unable to start rerank. Please try again",
+    });
   }
 };
 

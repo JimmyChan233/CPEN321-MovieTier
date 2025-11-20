@@ -7,9 +7,7 @@ import { logger } from "../../utils/logger";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export class AuthService {
-  async verifyGoogleToken(
-    idToken: string,
-  ): Promise<{
+  async verifyGoogleToken(idToken: string): Promise<{
     email: string;
     name: string;
     googleId: string;
