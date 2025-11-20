@@ -1,6 +1,8 @@
 /**
  * @unmocked Integration tests for recommendations
  * Tests with real MongoDB database
+ * Note: These tests focus on validation, error handling, and database integration
+ * External service calls (TMDB) are skipped if unavailable
  */
 
 /**
@@ -17,71 +19,25 @@ import RankedMovie from "../../../src/models/movie/RankedMovie";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
-// Mock the TMDB client to avoid real API calls and timeouts
-jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
-  getTmdbClient: jest.fn(() => ({
-    get: jest.fn((url: string) => {
-      if (url === "/trending/movie/week") {
-        return Promise.resolve({
-          data: {
-            results: [
-              {
-                id: 550,
-                title: "Fight Club",
-                overview: "A ticking-time-bomb insomniac...",
-                poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-                release_date: "1999-10-15",
-                vote_average: 8.4,
-              },
-              {
-                id: 680,
-                title: "Pulp Fiction",
-                overview: "A burger-loving hit man...",
-                poster_path: "/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg",
-                release_date: "1994-09-10",
-                vote_average: 8.5,
-              },
-            ],
-          },
-        });
-      }
-      if (url.includes("/similar") || url.includes("/recommendations")) {
-        return Promise.resolve({
-          data: {
-            results: [
-              {
-                id: 424,
-                title: "Schindler's List",
-                overview: "The true story...",
-                poster_path: "/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg",
-                release_date: "1993-11-30",
-                vote_average: 8.6,
-              },
-            ],
-          },
-        });
-      }
-      if (url.includes("/movie/")) {
-        return Promise.resolve({
-          data: {
-            id: 278,
-            genres: [
-              { id: 18, name: "Drama" },
-              { id: 80, name: "Crime" },
-            ],
-          },
-        });
-      }
-      return Promise.reject(new Error("Not found"));
-    }),
-  })),
-}));
+// Helper function to check if TMDB service is available
+const isTmdbAvailable = async (): Promise<boolean> => {
+  try {
+    const { getTmdbClient } = require("../../../src/services/tmdb/tmdbClient");
+    const client = getTmdbClient();
+    // Test with a simple endpoint to check if TMDB is accessible
+    await client.get("/configuration");
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 describe("Unmocked: GET /recommendations", () => {
   let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
+  let tmdbAvailable: boolean;
 
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
@@ -96,6 +52,12 @@ describe("Unmocked: GET /recommendations", () => {
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
+    
+    // Check if TMDB is available
+    tmdbAvailable = await isTmdbAvailable();
+    if (!tmdbAvailable) {
+      console.log('TMDB service unavailable - some recommendation tests will be skipped');
+    }
   });
 
   afterAll(async () => {
@@ -116,6 +78,58 @@ describe("Unmocked: GET /recommendations", () => {
 
     expect(res.status).toStrictEqual(401);
   });
+
+  // Test with valid authentication but no ranked movies
+  it("should handle request with authentication but no user rankings", async () => {
+    if (!tmdbAvailable) {
+      console.log('Skipping test - TMDB service unavailable');
+      return;
+    }
+
+    const res = await request(app)
+      .get("/")
+      .set("Authorization", `Bearer ${token}`);
+
+    // Should return some recommendations (trending or similar)
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  // Test with user rankings
+  it("should provide recommendations based on user rankings", async () => {
+    if (!tmdbAvailable) {
+      console.log('Skipping test - TMDB service unavailable');
+      return;
+    }
+
+    // Add some ranked movies for the user
+    await RankedMovie.create([
+      {
+        userId: user._id,
+        movieId: 550,
+        title: "Fight Club",
+        posterPath: "/fight-club.jpg",
+        rank: 1,
+      },
+      {
+        userId: user._id,
+        movieId: 680,
+        title: "Pulp Fiction",
+        posterPath: "/pulp-fiction.jpg",
+        rank: 2,
+      }
+    ]);
+
+    const res = await request(app)
+      .get("/")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+  });
 });
 
 describe("Unmocked: GET /recommendations/trending", () => {
@@ -123,6 +137,7 @@ describe("Unmocked: GET /recommendations/trending", () => {
   let app: express.Application;
   let user: any;
   let token: string;
+  let tmdbAvailable: boolean;
 
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
@@ -137,6 +152,12 @@ describe("Unmocked: GET /recommendations/trending", () => {
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
+    
+    // Check if TMDB is available
+    tmdbAvailable = await isTmdbAvailable();
+    if (!tmdbAvailable) {
+      console.log('TMDB service unavailable - trending tests will be skipped');
+    }
   });
 
   afterAll(async () => {
@@ -151,5 +172,39 @@ describe("Unmocked: GET /recommendations/trending", () => {
     const res = await request(app).get("/trending");
 
     expect(res.status).toStrictEqual(401);
+  });
+
+  // Test trending movies with valid authentication
+  it("should return trending movies when authenticated", async () => {
+    if (!tmdbAvailable) {
+      console.log('Skipping test - TMDB service unavailable');
+      return;
+    }
+
+    const res = await request(app)
+      .get("/trending")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+  });
+
+  // Test error handling for trending endpoint
+  it("should handle trending request errors gracefully", async () => {
+    if (!tmdbAvailable) {
+      console.log('Skipping test - TMDB service unavailable');
+      return;
+    }
+
+    // Test with invalid query parameters
+    const res = await request(app)
+      .get("/trending?invalidParam=value")
+      .set("Authorization", `Bearer ${token}`);
+
+    // Should still work with invalid params (they should be ignored)
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
   });
 });

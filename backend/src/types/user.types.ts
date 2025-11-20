@@ -31,3 +31,13 @@ export interface IAuthResponse {
   user: IUserProfile;
   token: string;
 }
+
+/**
+ * Google token verification result
+ */
+export interface IGoogleTokenResult {
+  email: string;
+  name: string;
+  googleId: string;
+  picture?: string;
+}

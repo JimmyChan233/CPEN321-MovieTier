@@ -337,4 +337,25 @@ describe("Advanced Friend Routes Tests", () => {
       .get("/requests/outgoing")
       .set("Authorization", `Bearer ${token1}`);
   });
+
+  // Test unauthorized access to streamFriends endpoint
+  it("should return 401 when userId is missing from streamFriends", async () => {
+    skipIfMongoUnavailable(mongoContext);
+
+    // Create a new app instance without auth middleware to simulate missing userId
+    const unauthApp = express();
+    unauthApp.use(express.json());
+    unauthApp.use((req: any, res, next) => {
+      req.userId = undefined;
+      next();
+    });
+    unauthApp.use("/", friendRoutes);
+
+    const res = await request(unauthApp)
+      .get("/stream");
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/unauthorized|No authentication token/i);
+  });
 });

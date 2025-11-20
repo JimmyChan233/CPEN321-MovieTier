@@ -1,18 +1,13 @@
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import User from "../../models/user/User";
-import { IUser } from "../../types/user.types";
+import { IUser, IGoogleTokenResult } from "../../types/user.types";
 import { logger } from "../../utils/logger";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export class AuthService {
-  async verifyGoogleToken(idToken: string): Promise<{
-    email: string;
-    name: string;
-    googleId: string;
-    picture?: string;
-  }> {
+  async verifyGoogleToken(idToken: string): Promise<IGoogleTokenResult> {
     try {
       const ticket = await client.verifyIdToken({
         idToken,

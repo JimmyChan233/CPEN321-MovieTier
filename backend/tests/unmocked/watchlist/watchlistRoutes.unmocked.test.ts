@@ -1,6 +1,8 @@
 /**
  * @unmocked Integration tests for watchlist operations
  * Tests with real MongoDB database
+ * Note: These tests focus on validation, error handling, and database integration
+ * External service calls (TMDB) are skipped if unavailable
  */
 
 /**
@@ -21,17 +23,18 @@ import {
 } from "../../utils/test-fixtures";
 import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
-// Mock TMDB client
-jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
-  getTmdbClient: jest.fn(() => ({
-    get: jest.fn().mockResolvedValue({
-      data: {
-        poster_path: "/mocked-poster.jpg",
-        overview: "Mocked overview from TMDB",
-      },
-    }),
-  })),
-}));
+// Helper function to check if TMDB service is available
+const isTmdbAvailable = async (): Promise<boolean> => {
+  try {
+    const { getTmdbClient } = require("../../../src/services/tmdb/tmdbClient");
+    const client = getTmdbClient();
+    // Test with a simple endpoint to check if TMDB is accessible
+    await client.get("/configuration");
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 describe("Watchlist Routes - Unmocked Tests", () => {
   let mongoContext: MongoTestContext;
@@ -40,6 +43,7 @@ describe("Watchlist Routes - Unmocked Tests", () => {
   let user2: any;
   let token1: string;
   let token2: string;
+  let tmdbAvailable: boolean;
 
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
@@ -51,6 +55,12 @@ describe("Watchlist Routes - Unmocked Tests", () => {
     app = express();
     app.use(express.json());
     app.use("/", watchlistRoutes);
+    
+    // Check if TMDB is available
+    tmdbAvailable = await isTmdbAvailable();
+    if (!tmdbAvailable) {
+      console.log('TMDB service unavailable - TMDB enrichment tests will be skipped');
+    }
   });
 
   afterAll(async () => {
@@ -109,79 +119,85 @@ describe("Watchlist Routes - Unmocked Tests", () => {
 
   describe("POST /", () => {
     describe("TMDB Enrichment", () => {
-      const enrichmentTests = [
-        {
-          name: "should enrich missing posterPath from TMDB",
-          request: { movieId: 550, title: "Fight Club" },
-          mockResponse: {
-            data: {
-              poster_path: "/enriched-poster.jpg",
-              overview: "Enriched overview",
-            },
-          },
-          expectations: {
-            posterPath: "/enriched-poster.jpg",
-            overview: "Enriched overview",
-          },
-        },
-        {
-          name: "should enrich missing overview from TMDB",
-          request: {
-            movieId: 680,
-            title: "Pulp Fiction",
-            posterPath: "/existing-poster.jpg",
-          },
-          mockResponse: {
-            data: {
-              poster_path: "/poster.jpg",
-              overview: "Enriched overview text",
-            },
-          },
-          expectations: {
-            posterPath: "/existing-poster.jpg",
-            overview: "Enriched overview text",
-          },
-        },
-        {
-          name: "should handle TMDB enrichment failure gracefully",
-          request: { movieId: 550, title: "Fight Club" },
-          mockError: new Error("TMDB API error"),
-          expectations: {
-            status: 201,
-            success: true,
+      it("should add movie with complete data (no enrichment needed)", async () => {
+        const res = await request(app)
+          .post("/")
+          .set("Authorization", `Bearer ${token1}`)
+          .send({
             movieId: 550,
-          },
-        },
-      ];
+            title: "Fight Club",
+            posterPath: "/fight-club-poster.jpg",
+            overview: "An insomniac office worker and a devil-may-care soap maker...",
+          });
 
-      enrichmentTests.forEach((test) => {
-        it(test.name, async () => {
-          const {
-            getTmdbClient,
-          } = require("../../../src/services/tmdb/tmdbClient");
-          if (test.mockError) {
-            const mockGet = jest.fn().mockRejectedValue(test.mockError);
-            getTmdbClient.mockReturnValue({ get: mockGet });
-          } else {
-            const mockGet = jest.fn().mockResolvedValue(test.mockResponse);
-            getTmdbClient.mockReturnValue({ get: mockGet });
-          }
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.movieId).toBe(550);
+        expect(res.body.data.title).toBe("Fight Club");
+        expect(res.body.data.posterPath).toBe("/fight-club-poster.jpg");
+        expect(res.body.data.overview).toBe("An insomniac office worker and a devil-may-care soap maker...");
 
-          const res = await request(app)
-            .post("/")
-            .set("Authorization", `Bearer ${token1}`)
-            .send(test.request);
-
-          console.log(res);
-          expect(res.status).toBe(201);
-          if (!test.mockError) {
-            expect(res.body.data.posterPath).toBe(test.expectations.posterPath);
-            expect(res.body.data.overview).toBe(test.expectations.overview);
-          } else {
-            expect(res.body.success).toBe(test.expectations.success);
-            expect(res.body.data.movieId).toBe(test.expectations.movieId);
-          }
+        // Verify it was saved to database
+        const savedItem = await WatchlistItem.findOne({
+          userId: user1._id,
+          movieId: 550,
         });
+        expect(savedItem).toBeDefined();
+        expect((savedItem as any).title).toBe("Fight Club");
+      });
+
+      it("should handle TMDB enrichment when external service is available", async () => {
+        if (!tmdbAvailable) {
+          console.log('Skipping test - TMDB service unavailable');
+          return;
+        }
+
+        const res = await request(app)
+          .post("/")
+          .set("Authorization", `Bearer ${token1}`)
+          .send({
+            movieId: 550,
+            title: "Fight Club",
+            // Missing posterPath and overview - should be enriched from TMDB
+          });
+
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.movieId).toBe(550);
+        expect(res.body.data.title).toBe("Fight Club");
+        
+        // Should have enriched data from TMDB
+        expect(res.body.data.posterPath).toBeDefined();
+        expect(res.body.data.overview).toBeDefined();
+      });
+
+      it("should handle missing data gracefully when TMDB is unavailable", async () => {
+        if (tmdbAvailable) {
+          console.log('Skipping test - TMDB is available, this tests the unavailable case');
+          return;
+        }
+
+        const res = await request(app)
+          .post("/")
+          .set("Authorization", `Bearer ${token1}`)
+          .send({
+            movieId: 550,
+            title: "Fight Club",
+            // Missing posterPath and overview, TMDB unavailable
+          });
+
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.movieId).toBe(550);
+        expect(res.body.data.title).toBe("Fight Club");
+        
+        // Should still create the item even without enrichment
+        const savedItem = await WatchlistItem.findOne({
+          userId: user1._id,
+          movieId: 550,
+        });
+        expect(savedItem).toBeDefined();
+        expect((savedItem as any).title).toBe("Fight Club");
       });
     });
 

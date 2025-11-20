@@ -7,6 +7,7 @@ import { sseService } from "../../services/sse/sseService";
 import notificationService from "../../services/notification.service";
 import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
 import { isValidEmail } from "../../utils/validators";
+import { IPopulatedFriendRequest, ISendFriendRequestBody, IRespondToFriendRequestBody } from "../../types/friend.types";
 
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -59,13 +60,7 @@ export const getFriendRequestsDetailed = async (
       status: "pending",
     }).populate("senderId", "_id email name profileImageUrl");
     const data = requests.map((r: unknown) => {
-      const request = r as {
-        _id: unknown;
-        senderId: unknown;
-        receiverId: unknown;
-        status: unknown;
-        createdAt: unknown;
-      };
+      const request = r as IPopulatedFriendRequest;
       return {
         _id: request._id,
         sender: request.senderId,
@@ -102,13 +97,7 @@ export const getOutgoingRequestsDetailed = async (
       status: "pending",
     }).populate("receiverId", "_id email name profileImageUrl");
     const data = requests.map((r: unknown) => {
-      const request = r as {
-        _id: unknown;
-        receiverId: unknown;
-        senderId: unknown;
-        status: unknown;
-        createdAt: unknown;
-      };
+      const request = r as IPopulatedFriendRequest;
       return {
         _id: request._id,
         receiver: request.receiverId,
@@ -125,7 +114,7 @@ export const getOutgoingRequestsDetailed = async (
 
 export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
   try {
-    const { email } = req.body as { email?: string };
+    const { email } = req.body as ISendFriendRequestBody;
 
     if (!isValidEmail(email)) {
       return sendError(res, ErrorMessages.INVALID_EMAIL, HttpStatus.BAD_REQUEST);
@@ -215,10 +204,7 @@ export const respondToFriendRequest = async (
   res: Response,
 ) => {
   try {
-    const { requestId, accept } = req.body as {
-      requestId?: string;
-      accept?: boolean;
-    };
+    const { requestId, accept } = req.body as IRespondToFriendRequestBody;
 
     if (!requestId || typeof accept !== "boolean") {
       return sendError(res, "requestId and accept are required", HttpStatus.BAD_REQUEST);

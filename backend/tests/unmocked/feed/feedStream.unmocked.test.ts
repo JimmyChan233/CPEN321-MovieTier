@@ -42,5 +42,7 @@ describe("Unmocked: Feed SSE Stream", () => {
       .get("/api/feed/stream");
 
     expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/unauthorized|No authentication token/i);
   });
 });

@@ -128,6 +128,28 @@ describe("Unmocked: GET /movies/ranked", () => {
 
     expect(res.status).toStrictEqual(401);
   });
+
+  // Input: Database error during getRankedMovies
+  // Expected status code: 500
+  // Expected behavior: Error handling triggers
+  // Expected output: Internal server error
+  it("should handle database errors in getRankedMovies", async () => {
+    // Mock RankedMovie.find to throw an error
+    const originalFind = RankedMovie.find;
+    RankedMovie.find = jest.fn().mockImplementation(() => {
+      throw new Error("Database connection failed");
+    });
+
+    const res = await request(app)
+      .get("/ranked")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toStrictEqual(500);
+    expect(res.body.message).toBe("Unable to load rankings. Please try again");
+
+    // Restore original method
+    RankedMovie.find = originalFind;
+  });
 });
 
 describe("Unmocked: DELETE /movies/ranked/:id", () => {
@@ -169,6 +191,35 @@ describe("Unmocked: DELETE /movies/ranked/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);
+  });
+
+  // Input: Database error during deleteRankedMovie
+  // Expected status code: 500
+  // Expected behavior: Error handling triggers
+  // Expected output: Internal server error
+  it("should handle database errors in deleteRankedMovie", async () => {
+    // Create a valid ranked movie
+    const rankedMovie = await RankedMovie.create({
+      userId: user._id,
+      movieId: 278,
+      title: "The Shawshank Redemption",
+      posterPath: "/9O7gLzmreU0NqkNXq2V0fbBYw1w.jpg",
+      rank: 1,
+    });
+
+    // Mock RankedMovie.findOne to throw an error
+    const originalFindOne = RankedMovie.findOne;
+    RankedMovie.findOne = jest.fn().mockRejectedValue(new Error("Database connection failed"));
+
+    const res = await request(app)
+      .delete(`/ranked/${rankedMovie._id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toStrictEqual(500);
+    expect(res.body.message).toBe("Unable to remove from rankings. Please try again");
+
+    // Restore original method
+    RankedMovie.findOne = originalFindOne;
   });
 });
 

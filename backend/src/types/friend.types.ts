@@ -41,3 +41,29 @@ export interface IFriendRequestResponse {
   status: "pending" | "accepted" | "rejected";
   createdAt: Date;
 }
+
+/**
+ * Friend request with populated sender/receiver data
+ */
+export interface IPopulatedFriendRequest {
+  _id: unknown;
+  senderId: unknown;
+  receiverId: unknown;
+  status: unknown;
+  createdAt: unknown;
+}
+
+/**
+ * Send friend request request body
+ */
+export interface ISendFriendRequestBody {
+  email?: string;
+}
+
+/**
+ * Respond to friend request body
+ */
+export interface IRespondToFriendRequestBody {
+  requestId?: string;
+  accept?: boolean;
+}

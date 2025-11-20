@@ -1,11 +1,11 @@
 /**
- * @mocked Mocked tests for external services
- * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ * @mocked Fallback tests for SSE Authentication Edge Cases
+ * Tests that don't require MongoDB or port binding
  */
 
 /**
- * SSE Authentication Edge Case Tests
- * Tests the defensive userId validation in SSE stream handlers
+ * SSE Authentication Edge Case Tests - Fallback Version
+ * Tests the defensive userId validation in SSE stream handlers without requiring MongoDB
  */
 
 // Mock the authenticate middleware BEFORE importing routes
@@ -39,11 +39,38 @@ jest.mock("../../../src/services/notification.service", () => ({
   },
 }));
 
+// Mock database models to avoid MongoDB dependency
+jest.mock("../../../src/models/user/User", () => ({
+  findById: jest.fn(),
+  findOne: jest.fn(),
+  create: jest.fn(),
+  deleteMany: jest.fn(),
+}));
+
+jest.mock("../../../src/models/friend/Friend", () => ({
+  Friendship: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  FriendRequest: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+}));
+
+jest.mock("../../../src/models/feed/FeedActivity", () => ({
+  find: jest.fn(),
+  findOne: jest.fn(),
+  create: jest.fn(),
+  deleteMany: jest.fn(),
+}));
+
 import request from "supertest";
 import express from "express";
 
-// Skipped in sandbox environments that don't support port binding
-describe.skip("SSE Stream - userId Validation Edge Cases", () => {
+describe("SSE Stream - userId Validation Edge Cases (Fallback)", () => {
   let app: express.Application;
   let authenticate: jest.Mock;
 
