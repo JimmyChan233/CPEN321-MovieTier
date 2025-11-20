@@ -39,13 +39,51 @@ import com.cpen321.movietier.ui.components.MovieDetailActions
 import com.cpen321.movietier.ui.components.YouTubePlayerDialog
 import com.cpen321.movietier.ui.components.StarRating
 import androidx.compose.ui.draw.clip
-import com.cpen321.movietier.ui.common.CommonContext
-import com.cpen321.movietier.ui.common.MovieDialogState
-import com.cpen321.movietier.ui.common.MovieDialogCallbacks
-import com.cpen321.movietier.ui.common.DialogViewModels
-import com.cpen321.movietier.ui.common.SideEffectCallbacks
-import com.cpen321.movietier.ui.common.FriendProfileSideEffectData
-import com.cpen321.movietier.ui.common.FriendProfileViewModels
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.CoroutineScope
+
+// Inline definitions of parameter group classes (moved from deleted ParameterGroups.kt)
+internal data class CommonContext(
+    val context: android.content.Context,
+    val scope: CoroutineScope,
+    val snackbarHostState: SnackbarHostState
+)
+
+internal data class MovieDialogState(
+    val trailerKey: String? = null,
+    val showTrailerDialog: Boolean = false,
+    val trailerMovieTitle: String = ""
+)
+
+internal data class MovieDialogCallbacks(
+    val onTrailerKeyUpdate: (String?) -> Unit = {},
+    val onDismissMovie: () -> Unit = {},
+    val onShowTrailer: (String) -> Unit = {},
+    val onDismissTrailer: (Boolean) -> Unit = {}
+)
+
+internal data class DialogViewModels(
+    val vm: Any,
+    val rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel,
+    val navController: androidx.navigation.NavController
+)
+
+internal data class SideEffectCallbacks(
+    val onCountryChanged: (String) -> Unit = {},
+    val onMovieDetailsUpdated: (Map<Int, com.cpen321.movietier.data.model.Movie>) -> Unit = {},
+    val onCloseSheet: () -> Unit = {}
+)
+
+internal data class FriendProfileSideEffectData(
+    val watchlist: List<com.cpen321.movietier.data.model.WatchlistItem>,
+    val rankings: List<com.cpen321.movietier.data.model.RankedMovie>,
+    val movieDetailsMap: Map<Int, com.cpen321.movietier.data.model.Movie>
+)
+
+internal data class FriendProfileViewModels(
+    val vm: com.cpen321.movietier.ui.viewmodels.FriendProfileViewModel,
+    val rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

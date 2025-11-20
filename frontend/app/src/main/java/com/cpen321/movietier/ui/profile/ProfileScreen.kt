@@ -30,9 +30,24 @@ import com.cpen321.movietier.ui.theme.ThemeMode
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
-import com.cpen321.movietier.ui.common.ProfileViewModels
-import com.cpen321.movietier.ui.common.ProfileUiStates
-import com.cpen321.movietier.ui.common.DeleteDialogState
+import com.cpen321.movietier.ui.viewmodels.AuthUiState
+
+// Inline definitions of parameter group classes (moved from deleted ParameterGroups.kt)
+internal data class ProfileViewModels(
+    val watchlistVm: WatchlistViewModel,
+    val themeViewModel: ThemeViewModel,
+    val authViewModel: AuthViewModel
+)
+
+internal data class ProfileUiStates(
+    val authUiState: AuthUiState,
+    val themeMode: ThemeMode
+)
+
+internal data class DeleteDialogState(
+    val showDialog: Boolean = false,
+    val onShowDialogChange: (Boolean) -> Unit = {}
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

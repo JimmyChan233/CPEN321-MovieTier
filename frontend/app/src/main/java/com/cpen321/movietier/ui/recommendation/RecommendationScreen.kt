@@ -41,10 +41,33 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.cpen321.movietier.data.local.MovieQuoteProvider
 import java.time.LocalDate
-import com.cpen321.movietier.ui.common.CommonContext
-import com.cpen321.movietier.ui.common.MovieDialogState
-import com.cpen321.movietier.ui.common.MovieDialogCallbacks
-import com.cpen321.movietier.ui.common.RecommendationViewModels
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.CoroutineScope
+
+// Inline definitions of parameter group classes (moved from deleted ParameterGroups.kt)
+internal data class CommonContext(
+    val context: android.content.Context,
+    val scope: CoroutineScope,
+    val snackbarHostState: SnackbarHostState
+)
+
+internal data class MovieDialogState(
+    val trailerKey: String? = null,
+    val showTrailerDialog: Boolean = false,
+    val trailerMovieTitle: String = ""
+)
+
+internal data class MovieDialogCallbacks(
+    val onTrailerKeyUpdate: (String?) -> Unit = {},
+    val onDismissMovie: () -> Unit = {},
+    val onShowTrailer: (String) -> Unit = {},
+    val onDismissTrailer: (Boolean) -> Unit = {}
+)
+
+internal data class RecommendationViewModels(
+    val recommendationViewModel: com.cpen321.movietier.ui.viewmodels.RecommendationViewModel,
+    val rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

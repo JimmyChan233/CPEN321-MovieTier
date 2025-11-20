@@ -37,8 +37,6 @@ import com.cpen321.movietier.utils.LocationHelper
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.cpen321.movietier.ui.common.CommonContext
-import com.cpen321.movietier.ui.common.WatchlistContentData
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -49,39 +47,42 @@ fun WatchlistScreen(
     val ui by vm.ui.collectAsState()
     val compareState by vm.compareState.collectAsState()
     val details by vm.details.collectAsState()
-    val commonContext = CommonContext(
-        context = LocalContext.current,
-        scope = rememberCoroutineScope(),
-        snackbarHostState = remember { SnackbarHostState() }
-    )
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
     var country by remember { mutableStateOf("CA") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf<com.cpen321.movietier.data.model.WatchlistItem?>(null) }
 
-    WSLocationHandler(commonContext) { country = it }
-    WSSideEffects(navController, vm, commonContext.snackbarHostState)
+    WSLocationHandler(context, scope) { country = it }
+    WSSideEffects(navController, vm, snackbarHostState)
 
     Scaffold(
-        topBar = { WSTopBar(navController, vm, commonContext.scope, listState) },
-        snackbarHost = { SnackbarHost(commonContext.snackbarHostState) }
+        topBar = { WSTopBar(navController, vm, scope, listState) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         WSContent(
-            contentData = WatchlistContentData(ui, details, country),
+            ui = ui,
+            details = details,
+            country = country,
             padding = padding,
             listState = listState,
             vm = vm,
-            commonContext = commonContext,
+            context = context,
+            scope = scope,
+            snackbarHostState = snackbarHostState,
             onLongClick = { itemToDelete = it; showDeleteDialog = true }
         )
         WSComparisonDialog(compareState, vm)
-        WSDeleteDialog(showDeleteDialog, itemToDelete, vm, commonContext, { showDeleteDialog = it }, { itemToDelete = it })
+        WSDeleteDialog(showDeleteDialog, itemToDelete, vm, context, scope, snackbarHostState, { showDeleteDialog = it }, { itemToDelete = it })
     }
 }
 
 @Composable
 private fun WSLocationHandler(
-    commonContext: CommonContext,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
     onCountryChanged: (String) -> Unit
 ) {
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -89,12 +90,12 @@ private fun WSLocationHandler(
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            commonContext.scope.launch { onCountryChanged(LocationHelper.getCountryCode(commonContext.context)) }
+            scope.launch { onCountryChanged(LocationHelper.getCountryCode(context)) }
         }
     }
     LaunchedEffect(Unit) {
-        if (LocationHelper.hasLocationPermission(commonContext.context)) {
-            onCountryChanged(LocationHelper.getCountryCode(commonContext.context))
+        if (LocationHelper.hasLocationPermission(context)) {
+            onCountryChanged(LocationHelper.getCountryCode(context))
         } else {
             locationPermissionLauncher.launch(LocationHelper.getLocationPermissions())
         }
@@ -161,16 +162,17 @@ private fun WSTopBarSortMenu(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WSContent(
-    contentData: WatchlistContentData,
+    ui: com.cpen321.movietier.ui.viewmodels.WatchlistUiState,
+    details: Map<Int, com.cpen321.movietier.data.model.Movie>,
+    country: String,
     padding: PaddingValues,
     listState: LazyListState,
     vm: WatchlistViewModel,
-    commonContext: CommonContext,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState,
     onLongClick: (com.cpen321.movietier.data.model.WatchlistItem) -> Unit
 ) {
-    val ui = contentData.uiState
-    val details = contentData.movieDetails
-    val country = contentData.country
 
     if (ui.isLoading) {
         Box(Modifier.fillMaxSize().padding(padding)) { CircularProgressIndicator(Modifier.padding(24.dp)) }
@@ -182,7 +184,7 @@ private fun WSContent(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(ui.displayed, key = { it.id }) { item ->
-                WSWatchlistItemCard(item, details[item.movieId], country, vm, commonContext, onLongClick)
+                WSWatchlistItemCard(item, details[item.movieId], country, vm, context, scope, snackbarHostState, onLongClick)
             }
             if (ui.displayed.isEmpty()) {
                 item { Text("Your watchlist is empty", color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -198,13 +200,15 @@ private fun WSWatchlistItemCard(
     details: com.cpen321.movietier.data.model.Movie?,
     country: String,
     vm: WatchlistViewModel,
-    commonContext: CommonContext,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState,
     onLongClick: (com.cpen321.movietier.data.model.WatchlistItem) -> Unit
 ) {
     Card(Modifier.fillMaxWidth().combinedClickable(onClick = {}, onLongClick = { onLongClick(item) })) {
         Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title, modifier = Modifier.height(140.dp).aspectRatio(2f/3f))
-            WSWatchlistItemInfo(item, details, country, vm, commonContext)
+            WSWatchlistItemInfo(item, details, country, vm, context, scope, snackbarHostState)
         }
     }
 }
@@ -215,7 +219,9 @@ private fun androidx.compose.foundation.layout.RowScope.WSWatchlistItemInfo(
     details: com.cpen321.movietier.data.model.Movie?,
     country: String,
     vm: WatchlistViewModel,
-    commonContext: CommonContext
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
 ) {
     Column(Modifier.weight(1f)) {
         Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -223,7 +229,7 @@ private fun androidx.compose.foundation.layout.RowScope.WSWatchlistItemInfo(
         if (details != null) Spacer(Modifier.height(4.dp))
         item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
         Spacer(Modifier.height(8.dp))
-        WSWatchlistItemActions(item, country, vm, commonContext)
+        WSWatchlistItemActions(item, country, vm, context, scope, snackbarHostState)
     }
 }
 
@@ -242,24 +248,26 @@ private fun WSWatchlistItemActions(
     item: com.cpen321.movietier.data.model.WatchlistItem,
     country: String,
     vm: WatchlistViewModel,
-    commonContext: CommonContext
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
 ) {
     FilledTonalButton(onClick = {
-        commonContext.scope.launch {
+        scope.launch {
             val tmdbLink = "https://www.themoviedb.org/movie/${item.movieId}/watch?locale=${country}"
             var tmdbOpened = false
-            try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
+            try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
             if (!tmdbOpened) {
                 when (val res = vm.getWatchProviders(item.movieId, country)) {
                     is com.cpen321.movietier.data.repository.Result.Success -> {
                         val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
                         if (!res.data.link.isNullOrBlank()) {
-                            try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
-                            catch (e: ActivityNotFoundException) { commonContext.snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}") }
-                        } else if (providers.isNotEmpty()) { commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
-                        else { commonContext.snackbarHostState.showSnackbar("No streaming info found") }
+                            try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
+                            catch (e: ActivityNotFoundException) { snackbarHostState.showSnackbar("Open link failed. Available: ${providers.joinToString()}") }
+                        } else if (providers.isNotEmpty()) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
+                        else { snackbarHostState.showSnackbar("No streaming info found") }
                     }
-                    is com.cpen321.movietier.data.repository.Result.Error -> { commonContext.snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
+                    is com.cpen321.movietier.data.repository.Result.Error -> { snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
                     else -> {}
                 }
             }
@@ -321,7 +329,9 @@ private fun WSDeleteDialog(
     showDeleteDialog: Boolean,
     itemToDelete: com.cpen321.movietier.data.model.WatchlistItem?,
     vm: WatchlistViewModel,
-    commonContext: CommonContext,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState,
     onShowDialogChange: (Boolean) -> Unit,
     onItemToDeleteChange: (com.cpen321.movietier.data.model.WatchlistItem?) -> Unit
 ) {
@@ -336,7 +346,7 @@ private fun WSDeleteDialog(
                         itemToDelete.let { vm.removeFromWatchlist(it.movieId) }
                         onShowDialogChange(false)
                         onItemToDeleteChange(null)
-                        commonContext.scope.launch { commonContext.snackbarHostState.showSnackbar("Removed from watchlist") }
+                        scope.launch { snackbarHostState.showSnackbar("Removed from watchlist") }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { Text("Remove") }

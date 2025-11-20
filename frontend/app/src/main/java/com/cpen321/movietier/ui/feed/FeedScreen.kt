@@ -49,12 +49,46 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.cpen321.movietier.ui.common.CommonContext
-import com.cpen321.movietier.ui.common.MovieActionCallbacks
-import com.cpen321.movietier.ui.common.CommentsState
-import com.cpen321.movietier.ui.common.DismissCallbacks
-import com.cpen321.movietier.ui.common.MovieDialogState
-import com.cpen321.movietier.ui.common.MovieDialogCallbacks
+import androidx.compose.material3.SnackbarHostState
+import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+
+// Inline definitions of parameter group classes (moved from deleted ParameterGroups.kt)
+internal data class CommonContext(
+    val context: android.content.Context,
+    val scope: CoroutineScope,
+    val snackbarHostState: SnackbarHostState
+)
+
+internal data class MovieDialogState(
+    val trailerKey: String? = null,
+    val showTrailerDialog: Boolean = false,
+    val trailerMovieTitle: String = ""
+)
+
+internal data class MovieDialogCallbacks(
+    val onTrailerKeyUpdate: (String?) -> Unit = {},
+    val onDismissMovie: () -> Unit = {},
+    val onShowTrailer: (String) -> Unit = {},
+    val onDismissTrailer: (Boolean) -> Unit = {}
+)
+
+internal data class DismissCallbacks(
+    val onDismissMovie: () -> Unit = {},
+    val onDismissComments: () -> Unit = {}
+)
+
+internal data class CommentsState(
+    val showCommentsForActivity: String? = null,
+    val commentsData: Map<String, List<com.cpen321.movietier.data.model.FeedComment>> = emptyMap(),
+    val currentUserId: String? = null
+)
+
+internal data class MovieActionCallbacks(
+    val onAddToRanking: (com.cpen321.movietier.data.model.Movie) -> Unit = {},
+    val onAddToWatchlist: (com.cpen321.movietier.data.model.Movie) -> Unit = {},
+    val onDismiss: () -> Unit = {}
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
