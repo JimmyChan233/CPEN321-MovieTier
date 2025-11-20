@@ -1,5 +1,5 @@
-import { Response } from 'express';
-import { logger } from '../../utils/logger';
+import { Response } from "express";
+import { logger } from "../../utils/logger";
 
 type UserId = string;
 
@@ -16,7 +16,7 @@ class SseService {
     }
 
     // Clean up when client disconnects
-    res.on('close', () => {
+    res.on("close", () => {
       this.removeClient(userId, res);
     });
   }
@@ -52,14 +52,16 @@ class SseService {
     }
 
     // Clean up closed connections
-    toRemove.forEach(res => { this.removeClient(userId, res); });
+    toRemove.forEach((res) => {
+      this.removeClient(userId, res);
+    });
   }
 
   /**
    * Gracefully close all SSE connections (for server shutdown)
    */
   clear() {
-    logger.info('Closing all SSE connections...');
+    logger.info("Closing all SSE connections...");
     for (const [userId, clients] of this.clients.entries()) {
       for (const res of clients) {
         try {
@@ -72,9 +74,8 @@ class SseService {
       }
       this.clients.delete(userId);
     }
-    logger.success('All SSE connections closed');
+    logger.success("All SSE connections closed");
   }
 }
 
 export const sseService = new SseService();
-

@@ -31,6 +31,10 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  globalSetup: '<rootDir>/tests/globalSetup.ts',
+  globalTeardown: '<rootDir>/tests/globalTeardown.ts',
   testTimeout: 10000,
-  verbose: true
+  verbose: false,
+  maxWorkers: 1,
+  forceExit: true
 };
