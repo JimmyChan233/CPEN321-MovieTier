@@ -244,11 +244,12 @@ export const getMyFeed = async (req: AuthRequest, res: Response) => {
 };
 
 // asyncHandler wrapper requires async function signature even without await
-// userId is guaranteed by auth middleware, safe from null/undefined
-// eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-non-null-assertion
+// eslint-disable-next-line @typescript-eslint/require-await
 export const streamFeed = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId!;
+    if (!req.userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -256,7 +257,7 @@ export const streamFeed = async (req: AuthRequest, res: Response) => {
     res.flushHeaders();
     res.write(`event: connected\n` + `data: {"ok":true}\n\n`);
 
-    const userIdStr = String(userId);
+    const userIdStr = req.userId;
     sseService.addClient(userIdStr, res);
     req.on("close", () => {
       sseService.removeClient(userIdStr, res);

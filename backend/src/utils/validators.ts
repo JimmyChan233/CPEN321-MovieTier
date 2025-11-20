@@ -60,9 +60,7 @@ export const validateUserId = (userId: unknown): userId is string => {
 
 /**
  * Extract and validate request body field
- * SECURITY: field parameter must always be a hardcoded string literal at compile time, never user input.
- * Dynamic access is protected by Object.prototype.hasOwnProperty.call() to prevent prototype pollution.
- * eslint-disable-next-line no-object-injection - field is always a constant string literal
+ * Safe: uses Object.prototype.hasOwnProperty.call to prevent prototype pollution attacks
  */
 export const getRequiredField = <T>(
   obj: unknown,
@@ -71,21 +69,19 @@ export const getRequiredField = <T>(
   if (
     obj &&
     typeof obj === "object" &&
-    Object.prototype.hasOwnProperty.call(obj, field) &&
-    // eslint-disable-next-line no-object-injection
-    (obj as Record<string, unknown>)[field] !== undefined
+    Object.prototype.hasOwnProperty.call(obj, field)
   ) {
-    // eslint-disable-next-line no-object-injection
-    return (obj as Record<string, unknown>)[field] as T;
+    const fieldValue = (obj as Record<string, unknown>)[field];
+    if (fieldValue !== undefined) {
+      return fieldValue as T;
+    }
   }
   return null;
 };
 
 /**
  * Extract and validate optional field
- * SECURITY: field parameter must always be a hardcoded string literal at compile time, never user input.
- * Dynamic access is protected by Object.prototype.hasOwnProperty.call() to prevent prototype pollution.
- * eslint-disable-next-line no-object-injection - field is always a constant string literal
+ * Safe: uses Object.prototype.hasOwnProperty.call to prevent prototype pollution attacks
  */
 export const getOptionalField = <T>(
   obj: unknown,
@@ -95,12 +91,12 @@ export const getOptionalField = <T>(
   if (
     obj &&
     typeof obj === "object" &&
-    Object.prototype.hasOwnProperty.call(obj, field) &&
-    // eslint-disable-next-line no-object-injection
-    (obj as Record<string, unknown>)[field] !== undefined
+    Object.prototype.hasOwnProperty.call(obj, field)
   ) {
-    // eslint-disable-next-line no-object-injection
-    return (obj as Record<string, unknown>)[field] as T;
+    const fieldValue = (obj as Record<string, unknown>)[field];
+    if (fieldValue !== undefined) {
+      return fieldValue as T;
+    }
   }
   return defaultValue;
 };
