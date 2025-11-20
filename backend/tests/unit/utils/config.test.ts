@@ -2,6 +2,11 @@
  * @unit Unit tests for configuration module
  */
 
+/**
+ * Configuration Module Tests
+ * Tests for environment configuration loading and defaults
+ */
+
 import dotenv from "dotenv";
 
 // Mock dotenv to prevent loading .env file during tests
@@ -9,10 +14,11 @@ jest.mock("dotenv", () => ({
   config: jest.fn(),
 }));
 
-describe("config", () => {
+describe("Unit: config", () => {
   const OLD_ENV = process.env;
 
   beforeEach(() => {
+    // jest.resetModules() forces fresh require() of config, picking up new process.env values
     jest.resetModules();
     process.env = { ...OLD_ENV };
     (dotenv.config as jest.Mock).mockClear();

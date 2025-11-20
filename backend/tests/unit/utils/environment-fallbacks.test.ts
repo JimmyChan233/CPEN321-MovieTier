@@ -5,7 +5,7 @@
 
 import { logger } from "../../../src/utils/logger";
 
-describe("Logger HTTP Method - Edge Cases", () => {
+describe("Unit: environment fallbacks - Logger HTTP Edge Cases", () => {
   let stdoutWriteSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe("Logger HTTP Method - Edge Cases", () => {
   });
 });
 
-describe("TMDB Client - Fallback Keys", () => {
+describe("Unit: environment fallbacks - TMDB Client", () => {
   beforeEach(() => {
     jest.resetModules();
   });
@@ -41,7 +41,7 @@ describe("TMDB Client - Fallback Keys", () => {
   });
 });
 
-describe("Config Module - Environment Fallbacks", () => {
+describe("Unit: environment fallbacks - Config Module", () => {
   beforeEach(() => {
     jest.resetModules();
   });
@@ -59,21 +59,20 @@ describe("Config Module - Environment Fallbacks", () => {
   });
 });
 
-describe("TMDB API Key - Fallback Chain", () => {
+describe("Unit: environment fallbacks - TMDB API Key Chain", () => {
   it("should test the TMDB API key fallback chain", () => {
-    // Test: process.env.TMDB_API_KEY ?? process.env.TMDB_KEY
-
+    // Ensures TMDB_API_KEY takes precedence over deprecated TMDB_KEY
     const originalApiKey = process.env.TMDB_API_KEY;
     const originalKey = process.env.TMDB_KEY;
 
     try {
-      // Case 1: TMDB_API_KEY is set
+      // Case 1: Primary key takes precedence
       process.env.TMDB_API_KEY = "api-key-value";
       process.env.TMDB_KEY = "key-value";
       const result1 = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
       expect(result1).toBe("api-key-value");
 
-      // Case 2: Only TMDB_KEY is set
+      // Case 2: Fallback to secondary key
       delete process.env.TMDB_API_KEY;
       const result2 = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
       expect(result2).toBe("key-value");
@@ -83,7 +82,6 @@ describe("TMDB API Key - Fallback Chain", () => {
       const result3 = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
       expect(result3).toBeUndefined();
     } finally {
-      // Restore original values
       if (originalApiKey) {
         process.env.TMDB_API_KEY = originalApiKey;
       }

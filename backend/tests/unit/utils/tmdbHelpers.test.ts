@@ -20,7 +20,7 @@ import {
   handleTmdbResponseError,
 } from "../../../src/services/tmdb/tmdbClient";
 
-describe("TMDB Response Helpers - normalizeMovieDetails", () => {
+describe("Unit: TMDB helpers - normalizeMovieDetails", () => {
   it("should normalize valid movie details", () => {
     const movieData = {
       id: 123,
@@ -92,7 +92,7 @@ describe("TMDB Response Helpers - normalizeMovieDetails", () => {
   });
 });
 
-describe("TMDB Response Helpers - normalizeCastArray", () => {
+describe("Unit: TMDB helpers - normalizeCastArray", () => {
   it("should filter out cast members without names", () => {
     const castData = [
       { name: "Actor 1" },
@@ -126,7 +126,7 @@ describe("TMDB Response Helpers - normalizeCastArray", () => {
   });
 });
 
-describe("TMDB Response Helpers - findBestTrailer", () => {
+describe("Unit: TMDB helpers - findBestTrailer", () => {
   it("should find official trailer with highest priority", () => {
     const videos = [
       { type: "Teaser", official: false, name: "Teaser" },
@@ -162,7 +162,7 @@ describe("TMDB Response Helpers - findBestTrailer", () => {
   });
 });
 
-describe("TMDB Response Helpers - filterYoutubeVideos", () => {
+describe("Unit: TMDB helpers - filterYoutubeVideos", () => {
   it("should filter only YouTube videos", () => {
     const videos = [
       { site: "YouTube", key: "abc123" },
@@ -202,7 +202,7 @@ describe("TMDB Response Helpers - filterYoutubeVideos", () => {
   });
 });
 
-describe("TMDB Client - Request Interceptor Handler", () => {
+describe("Unit: TMDB client - Request Interceptor Handler", () => {
   let stdoutWriteSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -244,7 +244,7 @@ describe("TMDB Client - Request Interceptor Handler", () => {
   });
 });
 
-describe("TMDB Client - Response Success Handler", () => {
+describe("Unit: TMDB client - Response Success Handler", () => {
   let stdoutWriteSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -274,7 +274,7 @@ describe("TMDB Client - Response Success Handler", () => {
   });
 });
 
-describe("TMDB Client - Response Error Handler", () => {
+describe("Unit: TMDB client - Response Error Handler", () => {
   let stdoutWriteSpy: jest.SpyInstance;
 
   beforeEach(() => {
