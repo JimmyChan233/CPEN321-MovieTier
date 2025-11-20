@@ -1,14 +1,15 @@
 /**
- * @unmocked Integration tests for authentication
- * Tests with real MongoDB database
+ * @unmocked Integration tests for authentication with real MongoDB
+ * MongoDB is unmocked (real database), external services (Google OAuth) are mocked
+ * Focuses on validation, error handling, and database integration
  */
 
 /**
  * Authentication API Tests - Unmocked
  *
- * These tests verify the authentication endpoints without mocking external dependencies.
- * External components (Google OAuth, MongoDB) are expected to work as designed.
- * Tests include: signIn, signUp, signOut, deleteAccount
+ * These tests verify auth endpoint behavior with real MongoDB but mocked OAuth.
+ * Comprehensive OAuth flow tests are in the mocked test suite.
+ * Focus here: validation, error cases, database constraints
  */
 
 import request from "supertest";
@@ -96,7 +97,7 @@ describe("Unmocked: POST /auth/signin", () => {
     });
 
     // Should fail with authentication error since token is invalid
-    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toStrictEqual(400);
     expect(res.body.message).toBeDefined();
   });
 });
@@ -123,13 +124,9 @@ describe("Unmocked: POST /auth/signup", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
   });
-
-  // Input: Valid new user credentials (email doesn't exist)
-  // Expected status code: 201
-  // Expected behavior: New user is created in database with Google profile data
-  // Expected output: Created user object with JWT token and status 201
 
   // Input: No idToken in request
   // Expected status code: 400
@@ -145,10 +142,8 @@ describe("Unmocked: POST /auth/signup", () => {
     expect(res.body.message).toMatch(/idToken|required/i);
   });
 
-  // Input: Email that already exists in database
-  // Expected status code: 400
-  // Expected behavior: Database is unchanged, no duplicate user created
-  // Expected output: Error message about duplicate email
+  // Note: Tests for successful signup and duplicate email handling are in auth.mocked.test.ts
+  // since they require mocking Google OAuth token verification
 });
 
 // Interface POST /auth/signout
@@ -173,18 +168,9 @@ describe("Unmocked: POST /auth/signout", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
   });
-
-  // Input: Valid JWT token from authenticated user
-  // Expected status code: 200
-  // Expected behavior: User session is invalidated (no backend state change for stateless JWT)
-  // Expected output: Success message
-
-  // Input: No authentication token in header
-  // Expected status code: 401
-  // Expected behavior: Request is rejected without signing out
-  // Expected output: Unauthorized error message
 
   // Input: Malformed or invalid JWT token
   // Expected status code: 401
@@ -196,9 +182,11 @@ describe("Unmocked: POST /auth/signout", () => {
       .set("Authorization", "Bearer invalid.jwt.token")
       .send({});
 
-    expect(res.status).toBeGreaterThanOrEqual(400); // Should be 401 or 404
+    expect(res.status).toStrictEqual(401);
     expect(res.body.message).toMatch(/invalid|expired/i);
   });
+
+  // Note: Test for successful signout with valid token is in auth.mocked.test.ts
 });
 
 // Interface DELETE /auth/account
@@ -215,7 +203,7 @@ describe("Unmocked: DELETE /auth/account", () => {
 
     app = express();
     app.use(express.json());
-    app.use("/", authRoutes);
+    app.use("/api/auth", authRoutes);
   });
 
   afterAll(async () => {
@@ -223,20 +211,11 @@ describe("Unmocked: DELETE /auth/account", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await Friendship.deleteMany({});
     await FriendRequest.deleteMany({});
   });
-
-  // Input: Valid JWT token from authenticated user
-  // Expected status code: 200
-  // Expected behavior: User and all related data (friendships, friend requests) are deleted
-  // Expected output: Success confirmation message
-
-  // Input: No authentication token
-  // Expected status code: 401
-  // Expected behavior: Database is unchanged
-  // Expected output: Unauthorized error
 
   // Input: Invalid authentication token
   // Expected status code: 401
@@ -254,10 +233,13 @@ describe("Unmocked: DELETE /auth/account", () => {
       .set("Authorization", "Bearer invalid.token")
       .send({});
 
-    expect(res.status).toBeGreaterThanOrEqual(400); // Should be 401 or 404
+    expect(res.status).toStrictEqual(401);
 
     // Verify user still exists
     const stillExistingUser = await User.findById(user._id);
     expect(stillExistingUser).toBeDefined();
   });
+
+  // Note: Tests for successful account deletion are in auth.mocked.test.ts
+  // This integration test focuses on error cases and validation
 });

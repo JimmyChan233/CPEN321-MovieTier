@@ -53,7 +53,8 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
     app = express();
     app.use(express.json());
 
-    userId = "test-user-123";
+    // Use a valid MongoDB ObjectId format for userId
+    userId = "507f1f77bcf86cd799439012";
     const jwtSecret = process.env.JWT_SECRET || "test-secret";
     token = jwt.sign({ userId }, jwtSecret, { expiresIn: "1h" });
 
@@ -144,10 +145,13 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
   });
 
   it("should handle edge case when ranked movie is not found", async () => {
-    const rankedMovieId = "non-existent-movie";
+    // Use a valid MongoDB ObjectId format so it passes validation
+    const rankedMovieId = "507f1f77bcf86cd799439011";
 
     const RankedMovie = require("../../../../../src/models/movie/RankedMovie");
-    RankedMovie.findById.mockResolvedValue(null); // Movie not found
+    RankedMovie.findOne.mockResolvedValue(null); // Movie not found
+
+    // No need to reach the code that uses Friendship since we return 404 early
 
     const response = await request(app)
       .post("/movies/rerank/start")
@@ -156,7 +160,7 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
         rankedId: rankedMovieId,
       });
 
-    // Should return appropriate error status
-    expect(response.status).toBeGreaterThanOrEqual(400);
+    // Should return 404 Not Found when movie not found (after passing validation)
+    expect(response.status).toStrictEqual(404);
   });
 });
