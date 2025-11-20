@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import WatchlistItem from "../../models/watch/WatchlistItem";
 import { getTmdbClient } from "../../services/tmdb/tmdbClient";
 import { AuthRequest } from "../../types/middleware.types";
+import { sendSuccess, sendError, HttpStatus } from "../../utils/responseHandler";
 
 export const getWatchlist = async (req: Request, res: Response) => {
   try {
@@ -9,12 +10,9 @@ export const getWatchlist = async (req: Request, res: Response) => {
     const items = await WatchlistItem.find({ userId: authReq.userId }).sort({
       createdAt: -1,
     });
-    res.json({ success: true, data: items });
+    return sendSuccess(res, items);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load watchlist. Please try again",
-    });
+    return sendError(res, "Unable to load watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -29,9 +27,7 @@ export const addToWatchlist = async (req: Request, res: Response) => {
     };
 
     if (!movieId || !title) {
-      return res
-        .status(400)
-        .json({ success: false, message: "movieId and title are required" });
+      return sendError(res, "movieId and title are required", HttpStatus.BAD_REQUEST);
     }
 
     // Step 1: Check for duplicate
@@ -40,10 +36,7 @@ export const addToWatchlist = async (req: Request, res: Response) => {
       movieId,
     });
     if (existing) {
-      return res.status(409).json({
-        success: false,
-        message: "Movie already in watchlist",
-      });
+      return sendError(res, "Movie already in watchlist", HttpStatus.CONFLICT);
     }
 
     // Step 2: Enrich from TMDB if fields are missing
@@ -70,13 +63,10 @@ export const addToWatchlist = async (req: Request, res: Response) => {
     });
     await item.save();
 
-    return res.status(201).json({ success: true, data: item });
+    return sendSuccess(res, item, HttpStatus.CREATED);
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Unable to add to watchlist. Please try again",
-    });
+    return sendError(res, "Unable to add to watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -85,24 +75,17 @@ export const removeFromWatchlist = async (req: Request, res: Response) => {
     const authReq = req as AuthRequest;
     const movieId = Number(req.params.movieId);
     if (isNaN(movieId) || !Number.isInteger(movieId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid movie id" });
+      return sendError(res, "Invalid movie id", HttpStatus.BAD_REQUEST);
     }
     const result = await WatchlistItem.deleteOne({
       userId: authReq.userId,
       movieId,
     });
     if (result.deletedCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Movie not found in watchlist" });
+      return sendError(res, "Movie not found in watchlist", HttpStatus.NOT_FOUND);
     }
-    res.json({ success: true, message: "Removed from watchlist" });
+    return sendSuccess(res, { message: "Removed from watchlist" });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to remove from watchlist. Please try again",
-    });
+    return sendError(res, "Unable to remove from watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

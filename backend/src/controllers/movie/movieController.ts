@@ -25,6 +25,8 @@ import {
   findBestTrailer,
   filterYoutubeVideos,
 } from "../../utils/tmdbResponseHelpers";
+import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
+import { isValidSearchQuery, isValidMongoId } from "../../utils/validators";
 
 const RankedMovie = RankedMovieModel;
 
@@ -65,18 +67,13 @@ async function removeFromWatchlist(
 export const searchMovies = async (req: Request, res: Response) => {
   try {
     const query = String(req.query.query ?? "").trim();
-    if (!query || query.length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Query must be at least 2 characters",
-      });
+    if (!isValidSearchQuery(query)) {
+      return sendError(res, "Query must be at least 2 characters", HttpStatus.BAD_REQUEST);
     }
 
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return res
-        .status(500)
-        .json({ success: false, message: "TMDB API key not configured" });
+      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     const tmdb = getTmdbClient();
@@ -171,7 +168,7 @@ export const searchMovies = async (req: Request, res: Response) => {
     }
 
     if (!includeCast || baseResults.length === 0) {
-      return res.json({ success: true, data: baseResults });
+      return sendSuccess(res, baseResults);
     }
 
     // Enrich with top cast names (up to 3) for first up to 10 results
@@ -199,12 +196,9 @@ export const searchMovies = async (req: Request, res: Response) => {
     );
     const remaining = baseResults.slice(limit).map((r) => ({ ...r, cast: [] }));
     const combined = enriched.concat(remaining);
-    res.json({ success: true, data: combined });
+    return sendSuccess(res, combined);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to search movies. Please try again",
-    });
+    return sendError(res, ErrorMessages.FAILED_SEARCH, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -239,12 +233,9 @@ export const getRankedMovies = async (req: Request, res: Response) => {
         createdAt: movieDoc.createdAt,
       };
     });
-    res.json({ success: true, data: shaped });
+    return sendSuccess(res, shaped);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load rankings. Please try again",
-    });
+    return sendError(res, "Unable to load rankings. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -252,14 +243,12 @@ export const deleteRankedMovie = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { id } = req.params as { id: string };
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: "Invalid id" });
+    if (!isValidMongoId(id)) {
+      return sendError(res, "Invalid id", HttpStatus.BAD_REQUEST);
     }
     const doc = await RankedMovie.findOne({ _id: id, userId: authReq.userId });
     if (!doc) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Ranked movie not found" });
+      return sendError(res, "Ranked movie not found", HttpStatus.NOT_FOUND);
     }
     const removedRank = doc.rank;
     const removedMovieId = doc.movieId;
@@ -283,12 +272,9 @@ export const deleteRankedMovie = async (req: Request, res: Response) => {
       });
     });
 
-    res.json({ success: true, message: "Removed from rankings" });
+    return sendSuccess(res, { message: "Removed from rankings" });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to remove from rankings. Please try again",
-    });
+    return sendError(res, "Unable to remove from rankings. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -296,18 +282,14 @@ export const getWatchProviders = async (req: Request, res: Response) => {
   try {
     const movieId = Number(req.params.movieId);
     if (!movieId || Number.isNaN(movieId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid movie id" });
+      return sendError(res, "Invalid movie id", HttpStatus.BAD_REQUEST);
     }
 
     const country = String(req.query.country ?? "CA").toUpperCase();
 
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return res
-        .status(500)
-        .json({ success: false, message: "TMDB API key not configured" });
+      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     const tmdb = getTmdbClient();
@@ -355,12 +337,9 @@ export const getWatchProviders = async (req: Request, res: Response) => {
       },
     };
 
-    res.json({ success: true, data: payload });
+    return sendSuccess(res, payload);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load watch providers. Please try again",
-    });
+    return sendError(res, "Unable to load watch providers. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -368,15 +347,11 @@ export const getMovieDetails = async (req: Request, res: Response) => {
   try {
     const movieId = Number(req.params.movieId);
     if (!movieId || Number.isNaN(movieId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid movie id" });
+      return sendError(res, "Invalid movie id", HttpStatus.BAD_REQUEST);
     }
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return res
-        .status(500)
-        .json({ success: false, message: "TMDB API key not configured" });
+      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     const tmdb = getTmdbClient();
     const [detailsResp, creditsResp] = await Promise.all([
@@ -389,12 +364,9 @@ export const getMovieDetails = async (req: Request, res: Response) => {
       ...normalizeMovieDetails(d),
       cast,
     };
-    res.json({ success: true, data: shaped });
+    return sendSuccess(res, shaped);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load movie details. Please try again",
-    });
+    return sendError(res, "Unable to load movie details. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -402,15 +374,11 @@ export const getMovieVideos = async (req: Request, res: Response) => {
   try {
     const movieId = Number(req.params.movieId);
     if (!movieId || Number.isNaN(movieId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid movie id" });
+      return sendError(res, "Invalid movie id", HttpStatus.BAD_REQUEST);
     }
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return res
-        .status(500)
-        .json({ success: false, message: "TMDB API key not configured" });
+      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     const tmdb = getTmdbClient();
     const { data } = await tmdb.get(`/movie/${movieId}/videos`, {
@@ -431,12 +399,9 @@ export const getMovieVideos = async (req: Request, res: Response) => {
         }
       : null;
 
-    res.json({ success: true, data: shaped });
+    return sendSuccess(res, shaped);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load movie videos. Please try again",
-    });
+    return sendError(res, "Unable to load movie videos. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -444,9 +409,7 @@ export const addMovie = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     if (!authReq.userId) {
-      return res
-        .status(401)
-        .json({ success: false, message: "User ID not found" });
+      return sendError(res, "User ID not found", HttpStatus.UNAUTHORIZED);
     }
     const userId = authReq.userId;
     const { movieId, title, posterPath, overview } = req.body as {
@@ -458,10 +421,7 @@ export const addMovie = async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!movieId || !title) {
-      return res.status(400).json({
-        success: false,
-        message: "movieId and title are required",
-      });
+      return sendError(res, "movieId and title are required", HttpStatus.BAD_REQUEST);
     }
 
     const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -565,16 +525,13 @@ export const addMovie = async (req: Request, res: Response) => {
         }
       }
 
-      return res.json({ success: true, status: "added", data: rankedMovie });
+      return sendSuccess(res, { status: "added", data: rankedMovie });
     }
 
     // Case 2: Duplicate movie
     if (rankedMovies.some((m: IRankedMovie) => m.movieId === movieId)) {
       await removeFromWatchlist(userId, movieId);
-      return res.status(400).json({
-        success: false,
-        message: "Movie already ranked",
-      });
+      return sendError(res, "Movie already ranked", HttpStatus.BAD_REQUEST);
     }
 
     // Case 3: Begin comparison
@@ -583,17 +540,14 @@ export const addMovie = async (req: Request, res: Response) => {
     const middleIndex = Math.floor((0 + high) / 2);
     const compareWith = rankedMovies.at(middleIndex);
     if (!compareWith) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Unable to find comparison movie" });
+      return sendError(res, "Unable to find comparison movie", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     startSession(userId, { movieId, title, posterPath }, high);
 
     // Remove from watchlist immediately when starting comparison
     await removeFromWatchlist(userId, movieId);
 
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       status: "compare",
       data: {
         compareWith: {
@@ -605,10 +559,7 @@ export const addMovie = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Unable to add movie to ranking. Please try again",
-    });
+    return sendError(res, "Unable to add movie to ranking. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -619,9 +570,7 @@ export const compareMovies = async (req: Request, res: Response) => {
 
     // Validate authentication
     if (!userId) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication required" });
+      return sendError(res, "Authentication required", HttpStatus.UNAUTHORIZED);
     }
 
     const { preferredMovieId } = req.body as {
@@ -630,17 +579,13 @@ export const compareMovies = async (req: Request, res: Response) => {
 
     // Validate required field
     if (!preferredMovieId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "preferredMovieId is required" });
+      return sendError(res, "preferredMovieId is required", HttpStatus.BAD_REQUEST);
     }
 
     const session = getSession(userId);
 
     if (!session) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No active comparison session" });
+      return sendError(res, "No active comparison session", HttpStatus.BAD_REQUEST);
     }
 
     const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -766,7 +711,7 @@ export const compareMovies = async (req: Request, res: Response) => {
         }
       }
 
-      return res.json({ success: true, status: "added", data: movie });
+      return sendSuccess(res, { status: "added", data: movie });
     }
 
     // Continue comparison
@@ -774,13 +719,10 @@ export const compareMovies = async (req: Request, res: Response) => {
     const nextIndex = Math.floor((low + high) / 2);
     const nextCompare = rankedMovies.at(nextIndex);
     if (!nextCompare) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Unable to find comparison movie" });
+      return sendError(res, "Unable to find comparison movie", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       status: "compare",
       data: {
         compareWith: {
@@ -792,10 +734,7 @@ export const compareMovies = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Unable to save comparison. Please try again",
-    });
+    return sendError(res, "Unable to save comparison. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -803,13 +742,11 @@ export const startRerank = async (req: Request, res: Response) => {
   try {
     const userId = (req as { userId?: string }).userId;
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return sendError(res, ErrorMessages.UNAUTHORIZED, HttpStatus.UNAUTHORIZED);
     }
     const { rankedId } = req.body as { rankedId: string };
-    if (!rankedId || !mongoose.Types.ObjectId.isValid(rankedId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid rankedId" });
+    if (!rankedId || !isValidMongoId(rankedId)) {
+      return sendError(res, "Invalid rankedId", HttpStatus.BAD_REQUEST);
     }
 
     const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -818,9 +755,7 @@ export const startRerank = async (req: Request, res: Response) => {
       userId: userObjectId,
     });
     if (!doc)
-      return res
-        .status(404)
-        .json({ success: false, message: "Ranked movie not found" });
+      return sendError(res, "Ranked movie not found", HttpStatus.NOT_FOUND);
 
     // Remove the item and close the gap
     const removedRank = doc.rank;
@@ -857,7 +792,7 @@ export const startRerank = async (req: Request, res: Response) => {
         rank: 1,
       });
       await re.save();
-      return res.json({ success: true, status: "added", data: re });
+      return sendSuccess(res, { status: "added", data: re });
     }
 
     // Start a compare session and return mid element as first comparator
@@ -865,12 +800,9 @@ export const startRerank = async (req: Request, res: Response) => {
     const mid = Math.floor((0 + (remaining.length - 1)) / 2);
     const cmp = remaining.at(mid);
     if (!cmp) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Unable to find comparison movie" });
+      return sendError(res, "Unable to find comparison movie", HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       status: "compare",
       data: {
         compareWith: {
@@ -881,10 +813,7 @@ export const startRerank = async (req: Request, res: Response) => {
       },
     });
   } catch (e) {
-    return res.status(500).json({
-      success: false,
-      message: "Unable to start rerank. Please try again",
-    });
+    return sendError(res, "Unable to start rerank. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -893,21 +822,19 @@ export const getMovieQuote = async (req: Request, res: Response) => {
     const title = String(req.query.title ?? "").trim();
     const year = String(req.query.year ?? "").trim() || undefined;
     if (!title) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing title", data: null });
+      return sendError(res, "Missing title", HttpStatus.BAD_REQUEST);
     }
 
     const tagline = await fetchMovieTagline(title, year);
     if (tagline) {
-      return res.json({ success: true, data: tagline });
+      return sendSuccess(res, tagline);
     }
     // Return fallback quote if no tagline found (still 200 status for frontend compatibility)
     const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
-    return res.json({ success: true, data: randomQuote, fallback: true });
+    return sendSuccess(res, { data: randomQuote, fallback: true });
   } catch (e: unknown) {
     // On error, return fallback quote
     const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
-    return res.json({ success: true, data: randomQuote, fallback: true });
+    return sendSuccess(res, { data: randomQuote, fallback: true });
   }
 };

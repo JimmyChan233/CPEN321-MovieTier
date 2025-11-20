@@ -6,6 +6,7 @@ import { logger } from "../../utils/logger";
 import { AxiosInstance } from "axios";
 import { AuthRequest } from "../../types/middleware.types";
 import crypto from "crypto";
+import { sendSuccess, sendError, HttpStatus } from "../../utils/responseHandler";
 
 // Cryptographically secure random number generator
 function secureRandom(): number {
@@ -95,7 +96,7 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
     });
 
     if (!data?.results || data.results.length === 0) {
-      return res.json({ success: true, data: [] });
+      return sendSuccess(res, []);
     }
 
     // Map to our movie format
@@ -108,15 +109,12 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
       voteAverage: movie.vote_average ?? null,
     }));
 
-    res.json({ success: true, data: movies });
+    return sendSuccess(res, movies);
   } catch (error) {
     logger.error("Trending movies error", {
       error: (error as Error).message,
     });
-    res.status(500).json({
-      success: false,
-      message: "Unable to load trending movies. Please try again",
-    });
+    return sendError(res, "Unable to load trending movies. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -124,9 +122,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     if (!authReq.userId) {
-      return res
-        .status(401)
-        .json({ success: false, message: "User ID not found" });
+      return sendError(res, "User ID not found", HttpStatus.UNAUTHORIZED);
     }
     const userId = authReq.userId;
     const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -137,7 +133,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
       rank: 1,
     });
     if (rankedMovies.length === 0) {
-      return res.json({ success: true, data: [] });
+      return sendSuccess(res, []);
     }
 
     // Step 2: Analyze user preferences from top 50% of ranked movies
@@ -225,7 +221,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
     }
 
     if (allRecs.length === 0) {
-      return res.json({ success: true, data: [] });
+      return sendSuccess(res, []);
     }
 
     // Step 4: Remove duplicates
@@ -294,17 +290,14 @@ export const getRecommendations = async (req: Request, res: Response) => {
       voteAverage: m.voteAverage,
     }));
 
-    res.json({ success: true, data: finalList });
+    return sendSuccess(res, finalList);
   } catch (error) {
     const authReq = req as AuthRequest;
     logger.error("Recommendation error", {
       userId: authReq.userId,
       error: (error as Error).message,
     });
-    res.status(500).json({
-      success: false,
-      message: "Unable to load recommendations. Please try again",
-    });
+    return sendError(res, "Unable to load recommendations. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 

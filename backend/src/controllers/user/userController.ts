@@ -6,6 +6,8 @@ import WatchlistItem from "../../models/watch/WatchlistItem";
 import { Friendship } from "../../models/friend/Friend";
 import RankedMovie from "../../models/movie/RankedMovie";
 import { logger } from "../../utils/logger";
+import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
+import { isValidMongoId, isValidString } from "../../utils/validators";
 
 /**
  * Escape special regex characters for MongoDB $regex operator
@@ -18,11 +20,8 @@ function escapeRegexForMongo(str: string): string {
 export const searchUsers = async (req: AuthRequest, res: Response) => {
   try {
     const query = String(req.query.query ?? "");
-    if (!query || query.trim().length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Query must be at least 2 characters",
-      });
+    if (!isValidString(query, 2)) {
+      return sendError(res, "Query must be at least 2 characters", HttpStatus.BAD_REQUEST);
     }
 
     // Escape special regex characters to prevent ReDoS attacks
@@ -34,12 +33,9 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
       .select("_id email name profileImageUrl")
       .limit(20);
 
-    res.json({ success: true, data: users });
+    return sendSuccess(res, users);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to search users. Please try again",
-    });
+    return sendError(res, "Unable to search users. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -56,17 +52,12 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
     if (name === undefined && profileImageUrl === undefined) {
       logger.warn("Profile update failed: no fields provided");
-      return res.status(400).json({
-        success: false,
-        message: "At least one field (name or profileImageUrl) is required",
-      });
+      return sendError(res, "At least one field (name or profileImageUrl) is required", HttpStatus.BAD_REQUEST);
     }
 
-    if (name !== undefined && (!name || name.trim().length < 1)) {
+    if (name !== undefined && !isValidString(name)) {
       logger.warn("Profile update failed: empty name");
-      return res
-        .status(400)
-        .json({ success: false, message: "Name is required" });
+      return sendError(res, "Name is required", HttpStatus.BAD_REQUEST);
     }
 
     const updateFields: { name?: string; profileImageUrl?: string } = {};
@@ -85,19 +76,14 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
     if (!user) {
       logger.error(`Profile update failed: user ${req.userId} not found`);
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return sendError(res, "User not found", HttpStatus.NOT_FOUND);
     }
 
     logger.success(`Profile updated for user ${req.userId}`);
-    res.json({ success: true, data: user });
+    return sendSuccess(res, user);
   } catch (error) {
     logger.error("Profile update error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Unable to update profile. Please try again",
-    });
+    return sendError(res, "Unable to update profile. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -105,10 +91,8 @@ export const registerFcmToken = async (req: AuthRequest, res: Response) => {
   try {
     const { token } = req.body as { token?: string };
 
-    if (!token || token.trim().length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "FCM token is required" });
+    if (!isValidString(token)) {
+      return sendError(res, "FCM token is required", HttpStatus.BAD_REQUEST);
     }
 
     const user = await User.findByIdAndUpdate(
@@ -118,54 +102,40 @@ export const registerFcmToken = async (req: AuthRequest, res: Response) => {
     ).select("_id email name profileImageUrl fcmToken");
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return sendError(res, "User not found", HttpStatus.NOT_FOUND);
     }
 
     logger.success(`FCM token registered for user ${req.userId}`);
-    res.json({ success: true, message: "FCM token registered successfully" });
+    return sendSuccess(res, { message: "FCM token registered successfully" });
   } catch (error) {
     logger.error("FCM token registration error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Unable to register FCM token. Please try again",
-    });
+    return sendError(res, "Unable to register FCM token. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
     const { userId } = req.params as { userId: string };
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid user id" });
+    if (!isValidMongoId(userId)) {
+      return sendError(res, "Invalid user id", HttpStatus.BAD_REQUEST);
     }
     const user = await User.findById(userId).select(
       "_id email name profileImageUrl",
     );
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return sendError(res, "User not found", HttpStatus.NOT_FOUND);
     }
-    res.json({ success: true, data: user });
+    return sendSuccess(res, user);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load user. Please try again",
-    });
+    return sendError(res, "Unable to load user. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
 export const getUserWatchlist = async (req: AuthRequest, res: Response) => {
   try {
     const { userId } = req.params as { userId: string };
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid user id" });
+    if (!isValidMongoId(userId)) {
+      return sendError(res, "Invalid user id", HttpStatus.BAD_REQUEST);
     }
 
     // Allow users to see their own watchlist
@@ -176,30 +146,22 @@ export const getUserWatchlist = async (req: AuthRequest, res: Response) => {
         friendId: userId,
       });
       if (!areFriends) {
-        return res.status(403).json({
-          success: false,
-          message: "You must be friends to view this watchlist.",
-        });
+        return sendError(res, "You must be friends to view this watchlist.", HttpStatus.FORBIDDEN);
       }
     }
 
     const items = await WatchlistItem.find({ userId }).sort({ createdAt: -1 });
-    res.json({ success: true, data: items });
+    return sendSuccess(res, items);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load user watchlist. Please try again",
-    });
+    return sendError(res, "Unable to load user watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
 export const getUserRankings = async (req: AuthRequest, res: Response) => {
   try {
     const { userId } = req.params as { userId: string };
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid user id" });
+    if (!isValidMongoId(userId)) {
+      return sendError(res, "Invalid user id", HttpStatus.BAD_REQUEST);
     }
 
     // Friendship check
@@ -208,10 +170,7 @@ export const getUserRankings = async (req: AuthRequest, res: Response) => {
       friendId: userId,
     });
     if (!areFriends && String(req.userId) !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "You must be friends to view these rankings.",
-      });
+      return sendError(res, "You must be friends to view these rankings.", HttpStatus.FORBIDDEN);
     }
 
     const movies = await RankedMovie.find({
@@ -243,11 +202,8 @@ export const getUserRankings = async (req: AuthRequest, res: Response) => {
       };
     });
 
-    res.json({ success: true, data: shaped });
+    return sendSuccess(res, shaped);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to load rankings. Please try again",
-    });
+    return sendError(res, "Unable to load rankings. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
