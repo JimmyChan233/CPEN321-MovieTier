@@ -8,6 +8,9 @@ import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.model.User
 import com.cpen321.movietier.data.repository.AuthRepository
 import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.domain.usecase.auth.DeleteAccountUseCase
+import com.cpen321.movietier.domain.usecase.auth.SignInWithGoogleUseCase
+import com.cpen321.movietier.domain.usecase.auth.SignOutUseCase
 import com.cpen321.movietier.fcm.FcmHelper
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -32,7 +35,10 @@ data class AuthUiState(
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
+    private val signOutUseCase: SignOutUseCase,
+    private val deleteAccountUseCase: DeleteAccountUseCase
 ) : ViewModel() {
 
     companion object {
@@ -84,110 +90,99 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-suspend fun signInWithGoogle(context: Context, googleClientId: String) {
-    _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+    fun signInWithGoogle(context: Context, googleClientId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-    try {
-        val credentialManager = CredentialManager.create(context)
+            try {
+                val credentialManager = CredentialManager.create(context)
 
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setServerClientId(googleClientId)
-            .setFilterByAuthorizedAccounts(false)
-            .setAutoSelectEnabled(false)   // prevents reusing a stale credential
-            .build()
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setServerClientId(googleClientId)
+                    .setFilterByAuthorizedAccounts(false)
+                    .setAutoSelectEnabled(false)   // prevents reusing a stale credential
+                    .build()
 
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
 
-        val result = credentialManager.getCredential(context, request)
-        val credential = result.credential
-        Log.d(TAG, "Credential class: ${credential.javaClass.name}")
+                val result = credentialManager.getCredential(context, request)
+                val credential = result.credential
+                Log.d(TAG, "Credential class: ${credential.javaClass.name}")
 
-        when {
-            // ✅ Newer devices (returns the wrapped credential)
-            credential is androidx.credentials.CustomCredential &&
-                    credential.type == com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
-                val googleIdTokenCredential =
-                    com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.createFrom(credential.data)
-                val idToken = googleIdTokenCredential.idToken
-                handleGoogleSignIn(idToken)
-            }
-
-            // ✅ Older versions (returns the ID token directly)
-            credential is com.google.android.libraries.identity.googleid.GoogleIdTokenCredential -> {
-                val idToken = credential.idToken
-                handleGoogleSignIn(idToken)
-            }
-
-            // ❌ Anything else
-            else -> {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = "Invalid credential type"
-                )
-            }
-        }
-    } catch (e: GetCredentialException) {
-        Log.e(TAG, "Sign in error", e)
-        _uiState.value = _uiState.value.copy(
-            isLoading = false,
-            errorMessage = e.message ?: "Sign in failed"
-        )
-    }
-}
-
-
-    private suspend fun handleGoogleSignIn(idToken: String) {
-        // Try sign in first
-        when (val result = authRepository.signIn(idToken)) {
-            is Result.Success -> {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isAuthenticated = true,
-                    user = result.data.user,
-                    successMessage = "Sign in successful"
-                )
-            }
-            is Result.Error -> {
-                // If sign in fails, try sign up
-                val errorMsg = result.message ?: result.exception.message ?: ""
-                Log.d(TAG, "Sign in error: $errorMsg")
-
-                if (errorMsg.contains("not found", ignoreCase = true) ||
-                    errorMsg.contains("User not found", ignoreCase = true)) {
-                    Log.d(TAG, "User not found, attempting sign up")
-                    handleGoogleSignUp(idToken)
+                val idToken = extractIdToken(credential)
+                if (idToken != null) {
+                    handleGoogleSignInWithFallback(idToken)
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = errorMsg.ifEmpty { "Sign in failed" }
+                        errorMessage = "Invalid credential type"
                     )
                 }
-            }
-            is Result.Loading -> {
-                _uiState.value = _uiState.value.copy(isLoading = true)
+            } catch (e: GetCredentialException) {
+                Log.e(TAG, "Sign in error", e)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.message ?: "Sign in failed"
+                )
             }
         }
     }
 
-    private suspend fun handleGoogleSignUp(idToken: String) {
-        Log.d(TAG, "Starting sign up")
-        when (val result = authRepository.signUp(idToken)) {
+    /**
+     * Extracts the ID token from the credential.
+     * Handles both newer devices (CustomCredential) and older versions (direct GoogleIdTokenCredential).
+     */
+    private fun extractIdToken(credential: androidx.credentials.Credential): String? {
+        return when {
+            // ✅ Newer devices (returns the wrapped credential)
+            credential is androidx.credentials.CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
+                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                googleIdTokenCredential.idToken
+            }
+
+            // ✅ Older versions (returns the ID token directly)
+            credential is GoogleIdTokenCredential -> {
+                credential.idToken
+            }
+
+            // ❌ Anything else
+            else -> null
+        }
+    }
+
+    /**
+     * Handles Google sign-in with fallback to sign-up using the use case.
+     *
+     * Uses SignInWithGoogleUseCase which encapsulates:
+     * - Initial sign-in attempt
+     * - Fallback to sign-up if user not found
+     * - Error handling
+     */
+    private suspend fun handleGoogleSignInWithFallback(idToken: String) {
+        Log.d(TAG, "Attempting sign-in with Google ID token")
+        when (val result = signInWithGoogleUseCase(idToken)) {
             is Result.Success -> {
-                Log.d(TAG, "Sign up successful")
+                val successMessage = if (result.data.isNewUser) {
+                    "Account created successfully"
+                } else {
+                    "Sign in successful"
+                }
+                Log.d(TAG, "Authentication successful: isNewUser=${result.data.isNewUser}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isAuthenticated = true,
                     user = result.data.user,
-                    successMessage = "Account created successfully"
+                    successMessage = successMessage
                 )
             }
             is Result.Error -> {
-                Log.e(TAG, "Sign up failed: ${result.message}")
+                Log.e(TAG, "Authentication failed: ${result.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = result.message ?: result.exception.message ?: "Sign up failed"
+                    errorMessage = result.message
                 )
             }
             is Result.Loading -> {
@@ -196,11 +191,15 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
         }
     }
 
+    /**
+     * Signs out the current user using SignOutUseCase.
+     */
     fun signOut() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            when (authRepository.signOut()) {
+            when (val result = signOutUseCase()) {
                 is Result.Success -> {
+                    Log.d(TAG, "Sign-out successful")
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isAuthenticated = false,
@@ -209,21 +208,28 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     )
                 }
                 is Result.Error -> {
+                    Log.e(TAG, "Sign-out failed: ${result.message}")
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = "Sign out failed"
+                        errorMessage = result.message ?: "Sign out failed"
                     )
                 }
-                is Result.Loading -> {}
+                is Result.Loading -> {
+                    _uiState.value = _uiState.value.copy(isLoading = true)
+                }
             }
         }
     }
 
+    /**
+     * Deletes the current user's account using DeleteAccountUseCase.
+     */
     fun deleteAccount() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            when (authRepository.deleteAccount()) {
+            when (val result = deleteAccountUseCase()) {
                 is Result.Success -> {
+                    Log.d(TAG, "Account deletion successful")
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isAuthenticated = false,
@@ -232,12 +238,15 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     )
                 }
                 is Result.Error -> {
+                    Log.e(TAG, "Account deletion failed: ${result.message}")
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = "Failed to delete account"
+                        errorMessage = result.message ?: "Failed to delete account"
                     )
                 }
-                is Result.Loading -> {}
+                is Result.Loading -> {
+                    _uiState.value = _uiState.value.copy(isLoading = true)
+                }
             }
         }
     }
