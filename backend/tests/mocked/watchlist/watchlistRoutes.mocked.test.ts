@@ -10,12 +10,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import watchlistRoutes from "../../../src/routes/watchlistRoutes";
 import User from "../../../src/models/user/User";
 import WatchlistItem from "../../../src/models/watch/WatchlistItem";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock TMDB client
 const mockTmdbGet = jest.fn();
@@ -26,14 +26,17 @@ jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
 }));
 
 describe("Mocked: Watchlist Routes", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -41,11 +44,11 @@ describe("Mocked: Watchlist Routes", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await WatchlistItem.deleteMany({});
 

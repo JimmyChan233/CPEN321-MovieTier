@@ -13,12 +13,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import authRoutes from "../../../src/routes/authRoutes";
 import User from "../../../src/models/user/User";
 import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
 import { generateTestJWT } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 /**
  * @unmocked Integration tests for authentication
@@ -28,12 +28,15 @@ import { generateTestJWT } from "../../utils/test-fixtures";
 
 // Interface POST /auth/signin
 describe("Unmocked: POST /auth/signin", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -41,11 +44,11 @@ describe("Unmocked: POST /auth/signin", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
   });
 
@@ -95,12 +98,15 @@ describe("Unmocked: POST /auth/signin", () => {
 
 // Interface POST /auth/signup
 describe("Unmocked: POST /auth/signup", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -108,8 +114,7 @@ describe("Unmocked: POST /auth/signup", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -143,12 +148,15 @@ describe("Unmocked: POST /auth/signup", () => {
 
 // Interface POST /auth/signout
 describe("Unmocked: POST /auth/signout", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -156,8 +164,7 @@ describe("Unmocked: POST /auth/signout", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -191,12 +198,15 @@ describe("Unmocked: POST /auth/signout", () => {
 
 // Interface DELETE /auth/account
 describe("Unmocked: DELETE /auth/account", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -204,8 +214,7 @@ describe("Unmocked: DELETE /auth/account", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {

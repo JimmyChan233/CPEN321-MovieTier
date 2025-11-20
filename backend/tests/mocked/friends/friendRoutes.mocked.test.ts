@@ -10,12 +10,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import friendRoutes from "../../../src/routes/friendRoutes";
 import User from "../../../src/models/user/User";
 import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 import { sseService } from "../../../src/services/sse/sseService";
 
@@ -30,7 +30,7 @@ jest.mock("../../../src/services/notification.service", () => ({
 }));
 
 describe("Mocked: Friend Routes", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user1: any;
   let user2: any;
@@ -38,8 +38,11 @@ describe("Mocked: Friend Routes", () => {
   let token2: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -47,11 +50,11 @@ describe("Mocked: Friend Routes", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await Friendship.deleteMany({});
     await FriendRequest.deleteMany({});

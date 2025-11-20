@@ -10,7 +10,7 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 import express from "express";
 import feedRoutes from "../../../src/routes/feedRoutes";
 import User from "../../../src/models/user/User";
@@ -22,7 +22,7 @@ import Comment from "../../../src/models/feed/Comment";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
 describe("Feed Route Handlers - Inline Handlers", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user1: any;
   let user2: any;
@@ -31,8 +31,11 @@ describe("Feed Route Handlers - Inline Handlers", () => {
   let token2: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -56,8 +59,7 @@ describe("Feed Route Handlers - Inline Handlers", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {

@@ -10,21 +10,24 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import userRoutes from "../../../src/routes/userRoutes";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 describe("Unmocked: PUT /users/profile", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -35,8 +38,7 @@ describe("Unmocked: PUT /users/profile", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   // Input: Invalid JWT token
@@ -54,14 +56,17 @@ describe("Unmocked: PUT /users/profile", () => {
 });
 
 describe("Unmocked: POST /users/fcm-token", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -72,8 +77,7 @@ describe("Unmocked: POST /users/fcm-token", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   // Input: Missing token
@@ -91,15 +95,18 @@ describe("Unmocked: POST /users/fcm-token", () => {
 });
 
 describe("Unmocked: GET /users/profile/:userId", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let otherUser: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -115,8 +122,7 @@ describe("Unmocked: GET /users/profile/:userId", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   // Input: No authentication

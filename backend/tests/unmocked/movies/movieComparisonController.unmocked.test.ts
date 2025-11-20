@@ -10,7 +10,6 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import movieRoutes from "../../../src/routes/movieRoutes";
 import User from "../../../src/models/user/User";
@@ -23,9 +22,10 @@ import {
   mockUsers,
   mockMovies,
 } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 describe("Movie Comparison Controller - Complete Coverage", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user1: any;
   let user2: any;
@@ -33,8 +33,11 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
   let token2: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -53,8 +56,7 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -448,6 +450,6 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
     expect(res.status).toBe(500);
 
     // Reconnect
-    await mongoose.connect(mongoServer.getUri());
+    await mongoose.connect(mongoContext.mongoUri);
   });
 });

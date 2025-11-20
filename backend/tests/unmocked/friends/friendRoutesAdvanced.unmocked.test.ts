@@ -10,7 +10,7 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 import express from "express";
 import friendRoutes from "../../../src/routes/friendRoutes";
 import User from "../../../src/models/user/User";
@@ -18,7 +18,7 @@ import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
 describe("Advanced Friend Routes Tests", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user1: any;
   let user2: any;
@@ -30,8 +30,11 @@ describe("Advanced Friend Routes Tests", () => {
   let token4: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -61,8 +64,7 @@ describe("Advanced Friend Routes Tests", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {

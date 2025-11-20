@@ -10,7 +10,6 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import movieRoutes from "../../../src/routes/movieRoutes";
 import User from "../../../src/models/user/User";
@@ -25,6 +24,7 @@ import {
   updateSession,
   endSession,
 } from "../../../src/utils/comparisonSession";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock TMDB client
 const mockTmdbGet = jest.fn();
@@ -54,14 +54,17 @@ jest.mock("../../../src/services/notification.service", () => ({
 import notificationService from "../../../src/services/notification.service";
 
 describe("Movie Comparison Controller - Mocked Tests", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -69,11 +72,11 @@ describe("Movie Comparison Controller - Mocked Tests", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await RankedMovie.deleteMany({});
     await FeedActivity.deleteMany({});

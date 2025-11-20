@@ -10,7 +10,6 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import movieRoutes from "../../../src/routes/movieRoutes";
 import User from "../../../src/models/user/User";
@@ -20,6 +19,7 @@ import {
   mockUsers,
   mockMovies,
 } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock the TMDB client to avoid real API calls in tests
 jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
@@ -55,14 +55,17 @@ jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
 }));
 
 describe("Unmocked: GET /movies/search", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -73,8 +76,7 @@ describe("Unmocked: GET /movies/search", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   // Input: Valid query but unauthenticated
@@ -89,14 +91,17 @@ describe("Unmocked: GET /movies/search", () => {
 });
 
 describe("Unmocked: GET /movies/ranked", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -107,8 +112,7 @@ describe("Unmocked: GET /movies/ranked", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -127,14 +131,17 @@ describe("Unmocked: GET /movies/ranked", () => {
 });
 
 describe("Unmocked: DELETE /movies/ranked/:id", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -145,8 +152,7 @@ describe("Unmocked: DELETE /movies/ranked/:id", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -167,14 +173,17 @@ describe("Unmocked: DELETE /movies/ranked/:id", () => {
 });
 
 describe("Unmocked: POST /movies/rank", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -185,8 +194,7 @@ describe("Unmocked: POST /movies/rank", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -199,7 +207,7 @@ describe("Unmocked: POST /movies/rank", () => {
   // Expected output: Validation error
   it("should reject ranking without title", async () => {
     const res = await request(app)
-      .post("/rank")
+      .post("/add")
       .set("Authorization", `Bearer ${token}`)
       .send({
         movieId: 278,

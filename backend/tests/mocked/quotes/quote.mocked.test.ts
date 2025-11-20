@@ -10,21 +10,24 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import movieRoutes from "../../../src/routes/movieRoutes";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 describe("Mocked: GET /quotes", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -35,8 +38,7 @@ describe("Mocked: GET /quotes", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   // Input: Valid query parameter (movie title)
@@ -45,7 +47,7 @@ describe("Mocked: GET /quotes", () => {
   // Expected output: Quote object or fallback quote
   it("should return quote for movie", async () => {
     const res = await request(app)
-      .get("/quote")
+      .get("/api/movies/quote")
       .set("Authorization", `Bearer ${token}`)
       .query({ title: "Inception" });
 
@@ -61,7 +63,7 @@ describe("Mocked: GET /quotes", () => {
   // Expected output: Validation error
   it("should reject quote request without title", async () => {
     const res = await request(app)
-      .get("/quote")
+      .get("/api/movies/quote")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);

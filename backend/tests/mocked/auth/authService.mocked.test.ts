@@ -9,7 +9,6 @@
  */
 
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import jwt from "jsonwebtoken";
 
 // Mock google-auth-library BEFORE importing anything else
@@ -35,25 +34,29 @@ jest.mock("../../../src/utils/logger", () => ({
 // Import after mocking
 import { AuthService } from "../../../src/services/auth/authService";
 import User from "../../../src/models/user/User";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 describe("Mocked: AuthService", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let authService: AuthService;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     process.env.GOOGLE_CLIENT_ID = "test-client-id";
     process.env.JWT_SECRET = "test-jwt-secret";
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     authService = new AuthService();
     jest.clearAllMocks();

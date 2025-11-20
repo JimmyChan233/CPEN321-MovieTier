@@ -10,12 +10,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import recommendationRoutes from "../../../src/routes/recommendationRoutes";
 import User from "../../../src/models/user/User";
 import RankedMovie from "../../../src/models/movie/RankedMovie";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock the TMDB client to avoid real API calls and timeouts
 jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
@@ -78,14 +78,17 @@ jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
 }));
 
 describe("Unmocked: GET /recommendations", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -96,11 +99,11 @@ describe("Unmocked: GET /recommendations", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await RankedMovie.deleteMany({});
   });
 
@@ -116,14 +119,17 @@ describe("Unmocked: GET /recommendations", () => {
 });
 
 describe("Unmocked: GET /recommendations/trending", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -134,8 +140,7 @@ describe("Unmocked: GET /recommendations/trending", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   // Input: No authentication token

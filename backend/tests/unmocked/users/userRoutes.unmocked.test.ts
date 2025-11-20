@@ -10,7 +10,6 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import userRoutes from "../../../src/routes/userRoutes";
 import User from "../../../src/models/user/User";
@@ -18,9 +17,10 @@ import WatchlistItem from "../../../src/models/watch/WatchlistItem";
 import RankedMovie from "../../../src/models/movie/RankedMovie";
 import { Friendship } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 describe("User Routes - Unmocked Tests", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user1: any;
   let user2: any;
@@ -29,8 +29,11 @@ describe("User Routes - Unmocked Tests", () => {
   let token2: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -38,11 +41,11 @@ describe("User Routes - Unmocked Tests", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await WatchlistItem.deleteMany({});
     await Friendship.deleteMany({});
@@ -122,7 +125,7 @@ describe("User Routes - Unmocked Tests", () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain("Unable to search users");
 
-      await mongoose.connect(mongoServer.getUri());
+      await mongoose.connect(mongoContext.mongoUri);
     });
   });
 
@@ -261,7 +264,7 @@ describe("User Routes - Unmocked Tests", () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain("Unable to load user");
 
-      await mongoose.connect(mongoServer.getUri());
+      await mongoose.connect(mongoContext.mongoUri);
     });
   });
 
@@ -342,7 +345,7 @@ describe("User Routes - Unmocked Tests", () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain("Unable to load user watchlist");
 
-      await mongoose.connect(mongoServer.getUri());
+      await mongoose.connect(mongoContext.mongoUri);
     });
   });
 
@@ -407,7 +410,7 @@ describe("User Routes - Unmocked Tests", () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain("Unable to load rankings");
 
-      await mongoose.connect(mongoServer.getUri());
+      await mongoose.connect(mongoContext.mongoUri);
     });
 
     it("should return rankings with null posterPath when movie has no posterPath", async () => {

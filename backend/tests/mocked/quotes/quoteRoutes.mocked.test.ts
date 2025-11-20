@@ -10,12 +10,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import movieRoutes from "../../../src/routes/movieRoutes";
 import { authenticate } from "../../../src/middleware/auth";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock TMDB tagline service
 jest.mock("../../../src/services/tmdb/tmdbTaglineService", () => ({
@@ -28,14 +28,17 @@ const mockFetchMovieTagline = fetchMovieTagline as jest.MockedFunction<
 >;
 
 describe("Mocked: Quote Routes", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -44,11 +47,11 @@ describe("Mocked: Quote Routes", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT((user as any)._id.toString());
@@ -60,7 +63,7 @@ describe("Mocked: Quote Routes", () => {
       mockFetchMovieTagline.mockRejectedValueOnce(new Error("TMDB API error"));
 
       const res = await request(app)
-        .get("/quote?title=Test Movie")
+        .get("/api/movies/quote?title=Test Movie")
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);
@@ -74,7 +77,7 @@ describe("Mocked: Quote Routes", () => {
       mockFetchMovieTagline.mockResolvedValueOnce("Tagline");
 
       const res = await request(app)
-        .get("/quote?title=Movie&year=")
+        .get("/api/movies/quote?title=Movie&year=")
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);

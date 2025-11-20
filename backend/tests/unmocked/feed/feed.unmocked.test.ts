@@ -11,7 +11,7 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 import express from "express";
 import feedRoutes from "../../../src/routes/feedRoutes";
 import User from "../../../src/models/user/User";
@@ -22,15 +22,18 @@ import { Friendship } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
 describe("Unmocked: GET /feed", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let friend: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -45,8 +48,7 @@ describe("Unmocked: GET /feed", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -76,7 +78,7 @@ describe("Unmocked: GET /feed", () => {
 });
 
 describe("Unmocked: POST /feed/:activityId/like", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let friend: any;
@@ -84,8 +86,11 @@ describe("Unmocked: POST /feed/:activityId/like", () => {
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -104,8 +109,7 @@ describe("Unmocked: POST /feed/:activityId/like", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -144,7 +148,7 @@ describe("Unmocked: POST /feed/:activityId/like", () => {
 });
 
 describe("Unmocked: GET /feed/:activityId/comments", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let friend: any;
@@ -152,8 +156,11 @@ describe("Unmocked: GET /feed/:activityId/comments", () => {
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -172,8 +179,7 @@ describe("Unmocked: GET /feed/:activityId/comments", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
@@ -202,7 +208,7 @@ describe("Unmocked: GET /feed/:activityId/comments", () => {
 });
 
 describe("Unmocked: POST /feed/:activityId/comments", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let friend: any;
@@ -210,8 +216,11 @@ describe("Unmocked: POST /feed/:activityId/comments", () => {
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -230,8 +239,7 @@ describe("Unmocked: POST /feed/:activityId/comments", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {

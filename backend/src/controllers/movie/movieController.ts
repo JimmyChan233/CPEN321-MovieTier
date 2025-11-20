@@ -293,7 +293,7 @@ export const getWatchProviders = async (req: Request, res: Response) => {
     }
 
     const tmdb = getTmdbClient();
-    const { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
+    let { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
 
     interface WatchProvider {
       provider_name?: string;
@@ -525,7 +525,7 @@ export const addMovie = async (req: Request, res: Response) => {
         }
       }
 
-      return sendSuccess(res, { status: "added", data: rankedMovie });
+      return sendSuccess(res, rankedMovie, 200, { status: "added" });
     }
 
     // Case 2: Duplicate movie
@@ -548,15 +548,12 @@ export const addMovie = async (req: Request, res: Response) => {
     await removeFromWatchlist(userId, movieId);
 
     return sendSuccess(res, {
-      status: "compare",
-      data: {
-        compareWith: {
-          movieId: compareWith.movieId,
-          title: compareWith.title,
-          posterPath: compareWith.posterPath,
-        },
+      compareWith: {
+        movieId: compareWith.movieId,
+        title: compareWith.title,
+        posterPath: compareWith.posterPath,
       },
-    });
+    }, 200, { status: "compare" });
   } catch (error) {
     console.error(error);
     return sendError(res, "Unable to add movie to ranking. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -711,7 +708,7 @@ export const compareMovies = async (req: Request, res: Response) => {
         }
       }
 
-      return sendSuccess(res, { status: "added", data: movie });
+      return sendSuccess(res, movie, 200, { status: "added" });
     }
 
     // Continue comparison
@@ -723,15 +720,12 @@ export const compareMovies = async (req: Request, res: Response) => {
     }
 
     return sendSuccess(res, {
-      status: "compare",
-      data: {
-        compareWith: {
-          movieId: nextCompare.movieId,
-          title: nextCompare.title,
-          posterPath: nextCompare.posterPath,
-        },
+      compareWith: {
+        movieId: nextCompare.movieId,
+        title: nextCompare.title,
+        posterPath: nextCompare.posterPath,
       },
-    });
+    }, 200, { status: "compare" });
   } catch (error) {
     console.error(error);
     return sendError(res, "Unable to save comparison. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -792,7 +786,7 @@ export const startRerank = async (req: Request, res: Response) => {
         rank: 1,
       });
       await re.save();
-      return sendSuccess(res, { status: "added", data: re });
+      return sendSuccess(res, re, 200, { status: "added" });
     }
 
     // Start a compare session and return mid element as first comparator
@@ -803,15 +797,12 @@ export const startRerank = async (req: Request, res: Response) => {
       return sendError(res, "Unable to find comparison movie", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     return sendSuccess(res, {
-      status: "compare",
-      data: {
-        compareWith: {
-          movieId: cmp.movieId,
-          title: cmp.title,
-          posterPath: cmp.posterPath,
-        },
+      compareWith: {
+        movieId: cmp.movieId,
+        title: cmp.title,
+        posterPath: cmp.posterPath,
       },
-    });
+    }, 200, { status: "compare" });
   } catch (e) {
     return sendError(res, "Unable to start rerank. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
   }
@@ -831,10 +822,10 @@ export const getMovieQuote = async (req: Request, res: Response) => {
     }
     // Return fallback quote if no tagline found (still 200 status for frontend compatibility)
     const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
-    return sendSuccess(res, { data: randomQuote, fallback: true });
+    return sendSuccess(res, randomQuote, 200, { fallback: true });
   } catch (e: unknown) {
     // On error, return fallback quote
     const randomQuote = fallbackQuotes[randomInt(fallbackQuotes.length)];
-    return sendSuccess(res, { data: randomQuote, fallback: true });
+    return sendSuccess(res, randomQuote, 200, { fallback: true });
   }
 };

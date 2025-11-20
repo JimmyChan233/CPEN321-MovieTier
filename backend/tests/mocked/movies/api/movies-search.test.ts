@@ -5,12 +5,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express, { Express } from "express";
 import movieRoutes from "../../../../src/routes/movieRoutes";
 import { authenticate } from "../../../../src/middleware/auth";
 import User from "../../../../src/models/user/User";
 import { generateTestJWT } from "../../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../../utils/mongoConnect";
 
 const mockTmdbGet = jest.fn();
 jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
@@ -20,14 +20,17 @@ jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
 }));
 
 describe("Movie Search - CJK Search with Detail Fetch", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: Express;
   let token: string;
   let user: any;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -44,8 +47,7 @@ describe("Movie Search - CJK Search with Detail Fetch", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   afterEach(() => {

@@ -10,7 +10,6 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import feedRoutes from "../../../src/routes/feedRoutes";
 import User from "../../../src/models/user/User";
@@ -19,7 +18,8 @@ import Like from "../../../src/models/feed/Like";
 import Comment from "../../../src/models/feed/Comment";
 import { Friendship } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
-import RankedMovie from "../../../src/models/movie/RankedMovie"; // ← ADD THIS LINE
+import RankedMovie from "../../../src/models/movie/RankedMovie";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock TMDB client
 jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
@@ -47,7 +47,7 @@ jest.mock("../../../src/services/sse/sseService", () => ({
 }));
 
 describe("Mocked: Feed Routes", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user1: any;
   let user2: any;
@@ -55,8 +55,11 @@ describe("Mocked: Feed Routes", () => {
   let token2: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -64,11 +67,11 @@ describe("Mocked: Feed Routes", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await FeedActivity.deleteMany({});
     await Like.deleteMany({});

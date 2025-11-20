@@ -10,12 +10,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import recommendationRoutes from "../../../src/routes/recommendationRoutes";
 import User from "../../../src/models/user/User";
 import RankedMovie from "../../../src/models/movie/RankedMovie";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock TMDB client
 const mockTmdbGet = jest.fn();
@@ -36,14 +36,17 @@ jest.mock("../../../src/utils/logger", () => ({
 }));
 
 describe("Mocked: Recommendation Controller", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -51,11 +54,11 @@ describe("Mocked: Recommendation Controller", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await RankedMovie.deleteMany({});
 
@@ -354,6 +357,59 @@ describe("Mocked: Recommendation Controller", () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBeDefined();
+    });
+
+    it("should handle recommendations with movies missing genre_ids", async () => {
+      // Create a ranked movie to base recommendations on
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 100,
+        title: "Base Movie",
+        rank: 1,
+      });
+
+      mockTmdbGet
+        .mockResolvedValueOnce({
+          data: {
+            results: [{ id: 100, title: "Base", genres: [] }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [
+              {
+                id: 201,
+                title: "Similar Movie",
+                overview: "Overview",
+                poster_path: "/poster.jpg",
+                release_date: "2023-01-01",
+                vote_average: 8.0,
+                original_language: "en",
+                // Missing: genre_ids - should default to [] in convertTmdbMovie
+              },
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [],
+          },
+        });
+
+      const res = await request(app)
+        .get("/api/recommendations")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
+      // Verify that movies were returned (convertTmdbMovie was used)
+      expect(res.body.data.length).toBeGreaterThan(0);
     });
   });
 });

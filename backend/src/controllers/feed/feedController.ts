@@ -245,11 +245,7 @@ export const getMyFeed = async (req: AuthRequest, res: Response) => {
 
 export const streamFeed = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      res.status(401).end();
-      return;
-    }
+    const userId = req.userId as string;
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");

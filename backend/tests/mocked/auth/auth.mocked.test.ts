@@ -12,13 +12,13 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import authRoutes from "../../../src/routes/authRoutes";
 import User from "../../../src/models/user/User";
 import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
 import { AuthService } from "../../../src/services/auth/authService";
 import { generateTestJWT } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock the Google OAuth verification with different tokens for different scenarios
 const mockTokenMap: Record<
@@ -63,12 +63,15 @@ jest
 
 // Interface POST /auth/signin
 describe("Mocked: POST /auth/signin", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -76,8 +79,7 @@ describe("Mocked: POST /auth/signin", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   afterEach(() => {
@@ -85,6 +87,7 @@ describe("Mocked: POST /auth/signin", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
   });
 
@@ -137,16 +140,31 @@ describe("Mocked: POST /auth/signin", () => {
     expect(res.body.success).toBe(false);
     expect(res.body.message).toMatch(/idToken|required/i);
   });
+
+  it("should handle signin error without message property", async () => {
+    jest.spyOn(AuthService.prototype, "verifyGoogleToken").mockRejectedValueOnce({});
+
+    const res = await request(app).post("/api/auth/signin").send({
+      idToken: "mock-valid-token",
+    });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Unable to sign in. Please try again");
+  });
 });
 
 // Interface POST /auth/signup
 describe("Mocked: POST /auth/signup", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -154,8 +172,7 @@ describe("Mocked: POST /auth/signup", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   afterEach(() => {
@@ -163,6 +180,7 @@ describe("Mocked: POST /auth/signup", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
   });
 
@@ -214,14 +232,17 @@ describe("Mocked: POST /auth/signup", () => {
 
 // Interface POST /auth/signout
 describe("Mocked: POST /auth/signout", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -229,8 +250,7 @@ describe("Mocked: POST /auth/signout", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   afterEach(() => {
@@ -238,6 +258,7 @@ describe("Mocked: POST /auth/signout", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     user = await User.create({
       email: "test@example.com",
@@ -280,14 +301,17 @@ describe("Mocked: POST /auth/signout", () => {
 
 // Interface DELETE /auth/account
 describe("Mocked: DELETE /auth/account", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -295,8 +319,7 @@ describe("Mocked: DELETE /auth/account", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   afterEach(() => {
@@ -304,6 +327,7 @@ describe("Mocked: DELETE /auth/account", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await Friendship.deleteMany({});
     await FriendRequest.deleteMany({});

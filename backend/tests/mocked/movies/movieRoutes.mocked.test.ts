@@ -10,7 +10,6 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import movieRoutes from "../../../src/routes/movieRoutes";
 import User from "../../../src/models/user/User";
@@ -18,6 +17,7 @@ import RankedMovie from "../../../src/models/movie/RankedMovie";
 import FeedActivity from "../../../src/models/feed/FeedActivity";
 import { Friendship } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
 
 // Mock TMDB client
 const mockTmdbGet = jest.fn();
@@ -36,181 +36,23 @@ jest.mock("../../../src/services/sse/sseService", () => ({
 
 import { sseService } from "../../../src/services/sse/sseService";
 
-// Mock controllers - comprehensive implementation for all test cases
-jest.mock("../../../src/controllers/movie/movieController", () => ({
-  searchMovies: jest.fn((req, res) => {
-    const query = String(req.query.query ?? "").trim();
-    if (!query || query.length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Query must be at least 2 characters",
-      });
-    }
-
-    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        message: "TMDB API key not configured",
-      });
-    }
-
-    // Handle the specific test case for cast enrichment
-    const includeCast =
-      String(req.query.includeCast ?? "false").toLowerCase() === "true";
-
-    if (query === "Movie" && includeCast) {
-      // Return 15 results for the cast enrichment test
-      const mockResults = Array.from({ length: 15 }, (_, i) => ({
-        id: 1000 + i,
-        title: `Movie ${i + 1}`,
-        overview: `Overview ${i + 1}`,
-        poster_path: `/poster${i + 1}.jpg`,
-        release_date: "2020-01-01",
-        vote_average: 7.0,
-      }));
-
-      return res.json({
-        success: true,
-        data: mockResults,
-      });
-    }
-
-    // Default response
-    return res.json({
-      success: true,
-      data: [
-        {
-          id: 550,
-          title: "Fight Club",
-          overview:
-            "A ticking-time-bomb insomniac and a slippery soap salesman...",
-          poster_path: "/poster.jpg",
-          release_date: "1999-10-15",
-          vote_average: 8.4,
-          cast: includeCast ? [] : undefined,
-        },
-      ],
-    });
-  }),
-
-  getRankedMovies: jest.fn((req, res) => {
-    return res.json({ success: true, data: [] });
-  }),
-
-  deleteRankedMovie: jest.fn((req, res) => {
-    const { id } = req.params;
-    if (!id || id === "99999") {
-      return res.status(404).json({
-        success: false,
-        message: "Movie not found",
-      });
-    }
-    return res.json({ success: true });
-  }),
-
-  getWatchProviders: jest.fn((req, res) => {
-    const movieId = Number(req.params.movieId);
-    if (!movieId || movieId <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid movie ID",
-      });
-    }
-
-    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        message: "TMDB API key not configured",
-      });
-    }
-
-    return res.json({ success: true, data: [] });
-  }),
-
-  getMovieDetails: jest.fn((req, res) => {
-    const movieId = Number(req.params.movieId);
-    if (!movieId || movieId <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid movie ID",
-      });
-    }
-
-    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        message: "TMDB API key not configured",
-      });
-    }
-
-    return res.json({ success: true, data: {} });
-  }),
-
-  getMovieVideos: jest.fn((req, res) => {
-    const movieId = Number(req.params.movieId);
-    if (!movieId || movieId <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid movie ID",
-      });
-    }
-
-    const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        message: "TMDB API key not configured",
-      });
-    }
-
-    return res.json({ success: true, data: [] });
-  }),
-
-  addMovie: jest.fn((req, res) => {
-    const { movieId, title } = req.body;
-    if (!movieId || !title) {
-      return res.status(400).json({
-        success: false,
-        message: "movieId and title are required",
-      });
-    }
-
-    // Simulate successful addition
-    return res.json({
-      success: true,
-      status: "added",
-      data: { movieId, title, rank: 1 },
-    });
-  }),
-
-  compareMovies: jest.fn((req, res) => {
-    return res.json({
-      success: true,
-      status: "compare",
-      data: {
-        compareWith: { movieId: 1, title: "Test Movie", posterPath: null },
-      },
-    });
-  }),
-
-  startRerank: jest.fn((req, res) => {
-    return res.json({ success: true });
-  }),
-}));
+// Import real controllers so they run with mocked TMDB
+import * as movieController from "../../../src/controllers/movie/movieController";
+import { asyncHandler } from "../../../src/utils/asyncHandler";
 
 describe("Mocked: Movie Routes", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: express.Application;
   let user: any;
   let token: string;
   const originalTmdbKey = process.env.TMDB_API_KEY;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -227,8 +69,7 @@ describe("Mocked: Movie Routes", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
     // Restore original key
     if (originalTmdbKey) {
       process.env.TMDB_API_KEY = originalTmdbKey;
@@ -238,6 +79,7 @@ describe("Mocked: Movie Routes", () => {
   });
 
   beforeEach(async () => {
+    skipIfMongoUnavailable(mongoContext);
     await User.deleteMany({});
     await RankedMovie.deleteMany({});
     await FeedActivity.deleteMany({});
@@ -355,11 +197,73 @@ describe("Mocked: Movie Routes", () => {
 
   // ==================== GET /ranked Tests ====================
 
-  describe("GET /ranked", () => {});
+  describe("GET /ranked", () => {
+    it("should return empty list when user has no ranked movies", async () => {
+      const res = await request(app)
+        .get("/api/movies/ranked")
+        .set("Authorization", `Bearer ${token}`);
 
-  // ==================== POST /rank Tests ====================
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toEqual([]);
+    });
 
-  describe("POST /rank", () => {
+    it("should return user's ranked movies sorted by rank", async () => {
+      // Create some ranked movies
+      await RankedMovie.create([
+        {
+          userId: (user as any)._id,
+          movieId: 100,
+          title: "Movie 1",
+          posterPath: "/poster1.jpg",
+          rank: 2,
+        },
+        {
+          userId: (user as any)._id,
+          movieId: 200,
+          title: "Movie 2",
+          posterPath: "/poster2.jpg",
+          rank: 1,
+        },
+      ]);
+
+      const res = await request(app)
+        .get("/api/movies/ranked")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveLength(2);
+      // Should be sorted by rank ascending
+      expect(res.body.data[0].rank).toBe(1);
+      expect(res.body.data[1].rank).toBe(2);
+      expect(res.body.data[0].movie.id).toBe(200);
+    });
+
+    it("should handle ranked movies without posterPath", async () => {
+      // Create a ranked movie without posterPath
+      await RankedMovie.create({
+        userId: (user as any)._id,
+        movieId: 300,
+        title: "Movie Without Poster",
+        posterPath: undefined,
+        rank: 1,
+      });
+
+      const res = await request(app)
+        .get("/api/movies/ranked")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].movie.posterPath).toBeNull();
+    });
+  });
+
+  // ==================== POST /add Tests ====================
+
+  describe("POST /add", () => {
     it("should notify friends via SSE when ranking", async () => {
       // Create a friendship
       const friend = await User.create({
@@ -377,7 +281,7 @@ describe("Mocked: Movie Routes", () => {
       const sendSpy = jest.spyOn(sseService, "send");
 
       await request(app)
-        .post("/api/movies/rank")
+        .post("/api/movies/add")
         .set("Authorization", `Bearer ${token}`)
         .send({
           movieId: 550,
@@ -401,7 +305,7 @@ describe("Mocked: Movie Routes", () => {
       });
 
       const res = await request(app)
-        .post("/api/movies/rank")
+        .post("/api/movies/add")
         .set("Authorization", `Bearer ${token}`)
         .send({
           movieId: 550,
@@ -410,7 +314,7 @@ describe("Mocked: Movie Routes", () => {
 
       expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain("Unable to rank movie");
+      expect(res.body.message).toContain("Unable to add movie to ranking");
     });
   });
 
@@ -574,7 +478,7 @@ describe("Mocked: Movie Routes", () => {
   describe("GET /search - Branch coverage", () => {});
 
   describe("GET /:movieId/details - Branch coverage", () => {});
-  describe("POST /rank - Branch coverage", () => {
+  describe("POST /add - Branch coverage", () => {
     it("should handle TMDB returning undefined for optional fields", async () => {
       mockTmdbGet.mockResolvedValueOnce({
         data: {
@@ -583,7 +487,7 @@ describe("Mocked: Movie Routes", () => {
       });
 
       const res = await request(app)
-        .post("/api/movies/rank")
+        .post("/api/movies/add")
         .set("Authorization", `Bearer ${token}`)
         .send({
           movieId: 550,
@@ -597,7 +501,7 @@ describe("Mocked: Movie Routes", () => {
       const tmdbSpy = mockTmdbGet;
 
       const res = await request(app)
-        .post("/api/movies/rank")
+        .post("/api/movies/add")
         .set("Authorization", `Bearer ${token}`)
         .send({
           movieId: 550,

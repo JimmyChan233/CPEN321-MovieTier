@@ -19,13 +19,22 @@ type ApiResponse<T = unknown> = SuccessResponse<T> | ErrorResponse;
 
 /**
  * Send a success response
+ * Supports optional metadata fields that will be merged into the top level
+ * Example: sendSuccess(res, movie, 200, { status: "added" })
+ * Returns: { success: true, status: "added", data: movie }
  */
 export const sendSuccess = <T>(
   res: Response,
   data: T,
   statusCode: number = 200,
+  metadata?: Record<string, unknown>,
 ): Response<SuccessResponse<T>> => {
-  return res.status(statusCode).json({ success: true, data });
+  const response: Record<string, unknown> = { success: true };
+  if (metadata) {
+    Object.assign(response, metadata);
+  }
+  response.data = data;
+  return res.status(statusCode).json(response);
 };
 
 /**
@@ -62,7 +71,7 @@ export const ErrorMessages = {
   FAILED_SEND_REQUEST: "Unable to send friend request. Please try again",
   FAILED_RESPOND_REQUEST: "Unable to respond to friend request",
   FAILED_REMOVE_FRIEND: "Failed to remove friend",
-  FAILED_GET_FEED: "Failed to get feed",
+  FAILED_GET_FEED: "Unable to load feed",
   FAILED_LIKE: "Failed to like activity",
   FAILED_UNLIKE: "Failed to unlike activity",
   FAILED_COMMENT: "Failed to add comment",

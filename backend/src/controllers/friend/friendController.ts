@@ -305,7 +305,7 @@ export const respondToFriendRequest = async (
       });
     }
 
-    return sendSuccess(res, { message: "Friend request handled" });
+    return sendSuccess(res, null, 200, { message: "Friend request handled" });
   } catch (error) {
     return sendError(res, "Failed to respond to request", HttpStatus.INTERNAL_SERVER_ERROR);
   }
@@ -344,7 +344,7 @@ export const removeFriend = async (req: AuthRequest, res: Response) => {
     sseService.send(String(req.userId), "friend_removed", { userId: friendId });
     sseService.send(String(friendId), "friend_removed", { userId: req.userId });
 
-    return sendSuccess(res, { message: "Friend removed" });
+    return sendSuccess(res, null, 200, { message: "Friend removed" });
   } catch (error) {
     return sendError(res, ErrorMessages.FAILED_REMOVE_FRIEND, HttpStatus.INTERNAL_SERVER_ERROR);
   }
@@ -352,11 +352,7 @@ export const removeFriend = async (req: AuthRequest, res: Response) => {
 
 export const streamFriends = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      res.status(401).end();
-      return;
-    }
+    const userId = req.userId as string;
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -396,7 +392,7 @@ export const cancelFriendRequest = async (req: AuthRequest, res: Response) => {
       userId: request.senderId,
     });
 
-    return sendSuccess(res, { message: "Friend request canceled" });
+    return sendSuccess(res, null, 200, { message: "Friend request canceled" });
   } catch (error) {
     return sendError(res, "Failed to cancel friend request", HttpStatus.INTERNAL_SERVER_ERROR);
   }

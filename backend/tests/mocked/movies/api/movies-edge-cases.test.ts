@@ -5,7 +5,6 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import express, { Express } from "express";
 import movieRoutes from "../../../../src/routes/movieRoutes";
 import watchlistRoutes from "../../../../src/routes/watchlistRoutes";
@@ -15,6 +14,7 @@ import User from "../../../../src/models/user/User";
 import WatchlistItem from "../../../../src/models/watch/WatchlistItem";
 import FeedActivity from "../../../../src/models/feed/FeedActivity";
 import { generateTestJWT } from "../../../utils/test-fixtures";
+import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../../utils/mongoConnect";
 
 const mockTmdbGet = jest.fn();
 jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
@@ -24,14 +24,17 @@ jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
 }));
 
 describe("Movie Routes - TMDB Field Fallbacks", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: Express;
   let token: string;
   let user: any;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -48,8 +51,7 @@ describe("Movie Routes - TMDB Field Fallbacks", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   afterEach(() => {
@@ -131,14 +133,17 @@ describe("Movie Routes - TMDB Field Fallbacks", () => {
 });
 
 describe("Watchlist Routes - TMDB Enrichment", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: Express;
   let token: string;
   let user: any;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -155,8 +160,7 @@ describe("Watchlist Routes - TMDB Enrichment", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   afterEach(() => {
@@ -187,14 +191,17 @@ describe("Watchlist Routes - TMDB Enrichment", () => {
 });
 
 describe("Feed Routes - Activity Enrichment", () => {
-  let mongoServer: MongoMemoryServer;
+  let mongoContext: MongoTestContext;
   let app: Express;
   let token: string;
   let user: any;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    mongoContext = await initializeTestMongo();
+    if (mongoContext.skipIfUnavailable) {
+      console.log('Skipping test suite - MongoDB unavailable');
+      return;
+    }
 
     app = express();
     app.use(express.json());
@@ -211,8 +218,7 @@ describe("Feed Routes - Activity Enrichment", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await cleanupTestMongo(mongoContext);
   });
 
   beforeEach(async () => {

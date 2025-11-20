@@ -34,6 +34,9 @@ router.post("/rerank/start", authenticate, asyncHandler(startRerank));
 // Delete a ranked movie and re-sequence ranks
 router.delete("/ranked/:id", authenticate, asyncHandler(deleteRankedMovie));
 
+// Get movie quote/tagline from TMDB (must come before /:movieId routes)
+router.get("/quote", authenticate, asyncHandler(getMovieQuote));
+
 // Get watch providers for a TMDB movie id
 router.get(
   "/:movieId/providers",
@@ -46,8 +49,5 @@ router.get("/:movieId/details", authenticate, asyncHandler(getMovieDetails));
 
 // Get movie videos/trailers from TMDB
 router.get("/:movieId/videos", authenticate, asyncHandler(getMovieVideos));
-
-// Get movie quote/tagline from TMDB
-router.get("/quote", authenticate, asyncHandler(getMovieQuote));
 
 export default router;
