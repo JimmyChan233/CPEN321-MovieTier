@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 
 // Error handler requires 4 params (err, req, res, next) for Express to recognize it as error handler
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// Parameter _next is intentionally unused but required by Express middleware signature
 export const errorHandler = (
   err: Error,
   req: Request,
