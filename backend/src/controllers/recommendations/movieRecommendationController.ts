@@ -5,66 +5,22 @@ import { getTmdbClient } from "../../services/tmdb/tmdbClient";
 import { logger } from "../../utils/logger";
 import { AxiosInstance } from "axios";
 import { AuthRequest } from "../../types/middleware.types";
+import {
+  UserPreferences,
+  TmdbMovie,
+  TmdbGenre,
+  TmdbMovieDetails,
+  MovieRecommendation,
+  ScoredMovie,
+  RankedMovieDoc,
+  DiscoverParams,
+} from "../../types/recommendation.types";
 import crypto from "crypto";
 import { sendSuccess, sendError, HttpStatus } from "../../utils/responseHandler";
 
 // Cryptographically secure random number generator
 function secureRandom(): number {
   return crypto.randomBytes(4).readUInt32BE(0) / 0xffffffff;
-}
-
-interface UserPreferences {
-  topGenres: number[];
-  languages: string[];
-  minVoteAverage: number;
-}
-
-interface TmdbMovie {
-  id: number;
-  title: string;
-  overview?: string;
-  poster_path?: string;
-  release_date?: string;
-  vote_average?: number;
-  genre_ids?: number[];
-  original_language?: string;
-}
-
-interface TmdbGenre {
-  id: number;
-  name: string;
-}
-
-interface TmdbMovieDetails {
-  id: number;
-  title: string;
-  overview?: string;
-  poster_path?: string;
-  release_date?: string;
-  vote_average?: number;
-  genres?: TmdbGenre[];
-  original_language?: string;
-}
-
-interface MovieRecommendation {
-  id: number;
-  title: string;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  voteAverage: number | null;
-  genreIds?: number[];
-  originalLanguage?: string;
-}
-
-interface ScoredMovie extends MovieRecommendation {
-  score: number;
-}
-
-interface RankedMovieDoc {
-  movieId: number;
-  rank: number;
-  userId: mongoose.Types.ObjectId;
 }
 
 // Helper function to convert TMDB movie to MovieRecommendation
@@ -377,15 +333,6 @@ async function fetchDiscoverRecommendations(
   // For each preferred language, fetch discover results
   for (const language of preferences.languages.slice(0, 2)) {
     try {
-      interface DiscoverParams {
-        with_original_language: string;
-        "vote_average.gte": number;
-        "vote_count.gte": number;
-        sort_by: string;
-        page: number;
-        with_genres?: string;
-      }
-
       const params: DiscoverParams = {
         with_original_language: language,
         "vote_average.gte": preferences.minVoteAverage,
