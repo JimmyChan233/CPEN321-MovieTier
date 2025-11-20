@@ -38,7 +38,7 @@ export interface IComparisonSession {
   userId: string;
   movieIds: number[];
   currentIndex: number;
-  rankings: Array<{ movieId: number; rank: number }>;
+  rankings: { movieId: number; rank: number }[];
   createdAt: Date;
   updatedAt: Date;
 }

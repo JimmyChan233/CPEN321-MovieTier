@@ -15,8 +15,6 @@ interface ErrorResponse {
   message: string;
 }
 
-type ApiResponse<T = unknown> = SuccessResponse<T> | ErrorResponse;
-
 /**
  * Send a success response
  * Supports optional metadata fields that will be merged into the top level
@@ -26,9 +24,9 @@ type ApiResponse<T = unknown> = SuccessResponse<T> | ErrorResponse;
 export const sendSuccess = <T>(
   res: Response,
   data: T,
-  statusCode: number = 200,
+  statusCode = 200,
   metadata?: Record<string, unknown>,
-): Response<SuccessResponse<T>> => {
+): Response => {
   const response: Record<string, unknown> = { success: true };
   if (metadata) {
     Object.assign(response, metadata);
@@ -43,8 +41,8 @@ export const sendSuccess = <T>(
 export const sendError = (
   res: Response,
   message: string,
-  statusCode: number = 500,
-): Response<ErrorResponse> => {
+  statusCode = 500,
+): Response => {
   return res.status(statusCode).json({ success: false, message });
 };
 

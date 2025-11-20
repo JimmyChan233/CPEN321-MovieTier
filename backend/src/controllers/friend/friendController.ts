@@ -6,7 +6,7 @@ import User from "../../models/user/User";
 import { sseService } from "../../services/sse/sseService";
 import notificationService from "../../services/notification.service";
 import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
-import { isValidEmail, validateUserId } from "../../utils/validators";
+import { isValidEmail } from "../../utils/validators";
 
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -128,7 +128,7 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
     const { email } = req.body as { email?: string };
 
     if (!isValidEmail(email)) {
-      return sendError(res, !email ? ErrorMessages.EMAIL_REQUIRED : ErrorMessages.INVALID_EMAIL, HttpStatus.BAD_REQUEST);
+      return sendError(res, ErrorMessages.INVALID_EMAIL, HttpStatus.BAD_REQUEST);
     }
 
     // Rate limit per-sender
@@ -352,7 +352,7 @@ export const removeFriend = async (req: AuthRequest, res: Response) => {
 
 export const streamFriends = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId as string;
+    const userId = req.userId!;
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");

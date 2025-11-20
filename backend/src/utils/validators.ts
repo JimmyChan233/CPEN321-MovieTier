@@ -25,7 +25,7 @@ export const isValidMongoId = (id: unknown): id is string => {
  */
 export const isValidString = (
   value: unknown,
-  minLength: number = 1,
+  minLength = 1,
 ): value is string => {
   return typeof value === "string" && value.trim().length >= minLength;
 };
@@ -60,6 +60,7 @@ export const validateUserId = (userId: unknown): userId is string => {
 
 /**
  * Extract and validate request body field
+ * Note: field parameter should always be a hardcoded string literal, never user input
  */
 export const getRequiredField = <T>(
   obj: unknown,
@@ -68,7 +69,7 @@ export const getRequiredField = <T>(
   if (
     obj &&
     typeof obj === "object" &&
-    field in obj &&
+    Object.prototype.hasOwnProperty.call(obj, field) &&
     (obj as Record<string, unknown>)[field] !== undefined
   ) {
     return (obj as Record<string, unknown>)[field] as T;
@@ -78,6 +79,7 @@ export const getRequiredField = <T>(
 
 /**
  * Extract and validate optional field
+ * Note: field parameter should always be a hardcoded string literal, never user input
  */
 export const getOptionalField = <T>(
   obj: unknown,
@@ -87,7 +89,7 @@ export const getOptionalField = <T>(
   if (
     obj &&
     typeof obj === "object" &&
-    field in obj &&
+    Object.prototype.hasOwnProperty.call(obj, field) &&
     (obj as Record<string, unknown>)[field] !== undefined
   ) {
     return (obj as Record<string, unknown>)[field] as T;

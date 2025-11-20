@@ -6,7 +6,7 @@ import WatchlistItem from "../../models/watch/WatchlistItem";
 import { Friendship } from "../../models/friend/Friend";
 import RankedMovie from "../../models/movie/RankedMovie";
 import { logger } from "../../utils/logger";
-import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
+import { sendSuccess, sendError, HttpStatus } from "../../utils/responseHandler";
 import { isValidMongoId, isValidString } from "../../utils/validators";
 
 /**

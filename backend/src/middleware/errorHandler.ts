@@ -6,7 +6,7 @@ export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  _next: NextFunction,
+  next: NextFunction,
 ) => {
   logger.error("Unhandled API error", {
     method: req.method,
