@@ -350,6 +350,9 @@ export const removeFriend = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// asyncHandler wrapper requires async function signature even without await
+// userId is guaranteed by auth middleware, safe from null/undefined
+// eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-non-null-assertion
 export const streamFriends = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId!;

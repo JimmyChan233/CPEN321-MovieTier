@@ -5,16 +5,6 @@ import { Response } from "express";
  * Provides consistent JSON response structure across all controllers
  */
 
-interface SuccessResponse<T = unknown> {
-  success: true;
-  data: T;
-}
-
-interface ErrorResponse {
-  success: false;
-  message: string;
-}
-
 /**
  * Send a success response
  * Supports optional metadata fields that will be merged into the top level

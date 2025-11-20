@@ -60,7 +60,9 @@ export const validateUserId = (userId: unknown): userId is string => {
 
 /**
  * Extract and validate request body field
- * Note: field parameter should always be a hardcoded string literal, never user input
+ * SECURITY: field parameter must always be a hardcoded string literal at compile time, never user input.
+ * Dynamic access is protected by Object.prototype.hasOwnProperty.call() to prevent prototype pollution.
+ * eslint-disable-next-line no-object-injection - field is always a constant string literal
  */
 export const getRequiredField = <T>(
   obj: unknown,
@@ -70,8 +72,10 @@ export const getRequiredField = <T>(
     obj &&
     typeof obj === "object" &&
     Object.prototype.hasOwnProperty.call(obj, field) &&
+    // eslint-disable-next-line no-object-injection
     (obj as Record<string, unknown>)[field] !== undefined
   ) {
+    // eslint-disable-next-line no-object-injection
     return (obj as Record<string, unknown>)[field] as T;
   }
   return null;
@@ -79,7 +83,9 @@ export const getRequiredField = <T>(
 
 /**
  * Extract and validate optional field
- * Note: field parameter should always be a hardcoded string literal, never user input
+ * SECURITY: field parameter must always be a hardcoded string literal at compile time, never user input.
+ * Dynamic access is protected by Object.prototype.hasOwnProperty.call() to prevent prototype pollution.
+ * eslint-disable-next-line no-object-injection - field is always a constant string literal
  */
 export const getOptionalField = <T>(
   obj: unknown,
@@ -90,8 +96,10 @@ export const getOptionalField = <T>(
     obj &&
     typeof obj === "object" &&
     Object.prototype.hasOwnProperty.call(obj, field) &&
+    // eslint-disable-next-line no-object-injection
     (obj as Record<string, unknown>)[field] !== undefined
   ) {
+    // eslint-disable-next-line no-object-injection
     return (obj as Record<string, unknown>)[field] as T;
   }
   return defaultValue;
