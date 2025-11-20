@@ -14,7 +14,12 @@ import express from "express";
 import userRoutes from "../../../src/routes/userRoutes";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 describe("Unmocked: PUT /users/profile", () => {
   let mongoContext: MongoTestContext;
@@ -25,7 +30,7 @@ describe("Unmocked: PUT /users/profile", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -64,7 +69,7 @@ describe("Unmocked: POST /users/fcm-token", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -104,7 +109,7 @@ describe("Unmocked: GET /users/profile/:userId", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

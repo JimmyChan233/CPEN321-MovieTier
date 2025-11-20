@@ -9,7 +9,12 @@ import Like from "../../models/feed/Like";
 import Comment from "../../models/feed/Comment";
 import User from "../../models/user/User";
 import notificationService from "../../services/notification.service";
-import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
+import {
+  sendSuccess,
+  sendError,
+  ErrorMessages,
+  HttpStatus,
+} from "../../utils/responseHandler";
 
 /**
  * Check if an activity needs TMDB enrichment for missing metadata
@@ -206,7 +211,11 @@ export const getFeed = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, shaped);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_GET_FEED, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_GET_FEED,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -239,7 +248,11 @@ export const getMyFeed = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, shaped);
   } catch (error) {
-    return sendError(res, "Unable to load your activities", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load your activities",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -311,7 +324,11 @@ export const likeActivity = async (req: AuthRequest, res: Response) => {
     if (err.code === 11000) {
       return sendError(res, "Already liked", HttpStatus.BAD_REQUEST);
     }
-    return sendError(res, ErrorMessages.FAILED_LIKE, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_LIKE,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -330,7 +347,11 @@ export const unlikeActivity = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, { message: "Like removed" });
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_UNLIKE, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_UNLIKE,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -362,7 +383,11 @@ export const getComments = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, shaped);
   } catch (error) {
-    return sendError(res, "Failed to load comments", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Failed to load comments",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -376,7 +401,11 @@ export const addComment = async (req: AuthRequest, res: Response) => {
     }
 
     if (text.length > 500) {
-      return sendError(res, "Comment must be 500 characters or less", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "Comment must be 500 characters or less",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const activity = await FeedActivity.findById(activityId).populate("userId");
@@ -430,7 +459,11 @@ export const addComment = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, shaped, HttpStatus.CREATED);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_COMMENT, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_COMMENT,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -448,13 +481,21 @@ export const deleteComment = async (req: AuthRequest, res: Response) => {
     }
 
     if (String(comment.userId) !== String(req.userId)) {
-      return sendError(res, "You can only delete your own comments", HttpStatus.FORBIDDEN);
+      return sendError(
+        res,
+        "You can only delete your own comments",
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     await Comment.findByIdAndDelete(commentId);
 
     return sendSuccess(res, { message: "Comment deleted" });
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_DELETE_COMMENT, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_DELETE_COMMENT,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };

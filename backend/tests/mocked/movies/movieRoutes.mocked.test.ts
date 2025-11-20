@@ -17,7 +17,12 @@ import RankedMovie from "../../../src/models/movie/RankedMovie";
 import FeedActivity from "../../../src/models/feed/FeedActivity";
 import { Friendship } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Mock TMDB client
 const mockTmdbGet = jest.fn();
@@ -50,7 +55,7 @@ describe("Mocked: Movie Routes", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

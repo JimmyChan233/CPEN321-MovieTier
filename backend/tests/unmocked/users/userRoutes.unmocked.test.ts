@@ -17,7 +17,12 @@ import WatchlistItem from "../../../src/models/watch/WatchlistItem";
 import RankedMovie from "../../../src/models/movie/RankedMovie";
 import { Friendship } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 describe("User Routes - Unmocked Tests", () => {
   let mongoContext: MongoTestContext;
@@ -31,7 +36,7 @@ describe("User Routes - Unmocked Tests", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

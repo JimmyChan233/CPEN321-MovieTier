@@ -31,7 +31,9 @@ export const safeExecute = async <T>(
  * Safely try an operation without returning a fallback
  * Used when we just want to ignore errors silently
  */
-export const safeIgnore = async (operation: () => Promise<void>): Promise<void> => {
+export const safeIgnore = async (
+  operation: () => Promise<void>,
+): Promise<void> => {
   try {
     await operation();
   } catch {

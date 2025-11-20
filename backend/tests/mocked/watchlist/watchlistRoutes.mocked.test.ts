@@ -43,7 +43,7 @@ describe("Mocked: Watchlist Routes - TMDB Enrichment", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock User.findById
     (User.findById as jest.Mock).mockReturnValue({
       select: jest.fn().mockResolvedValue(mockUser),
@@ -53,7 +53,7 @@ describe("Mocked: Watchlist Routes - TMDB Enrichment", () => {
     const { getTmdbClient } = require("../../../src/services/tmdb/tmdbClient");
     mockGet = jest.fn();
     (getTmdbClient as jest.Mock).mockReturnValue({ get: mockGet });
-    
+
     // Reset WatchlistItem mocks
     (WatchlistItem.findOne as jest.Mock).mockReset();
     (WatchlistItem.create as jest.Mock).mockReset();
@@ -94,9 +94,11 @@ describe("Mocked: Watchlist Routes - TMDB Enrichment", () => {
       // Check that we get a successful response
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      
+
       // Verify TMDB was called (this is the key part we're testing)
-      expect(mockGet).toHaveBeenCalledWith("/movie/550", {"params": {"language": "en-US"}});
+      expect(mockGet).toHaveBeenCalledWith("/movie/550", {
+        params: { language: "en-US" },
+      });
     });
 
     it("should enrich missing overview from TMDB", async () => {
@@ -134,7 +136,9 @@ describe("Mocked: Watchlist Routes - TMDB Enrichment", () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       // Verify TMDB was called for enrichment
-      expect(mockGet).toHaveBeenCalledWith("/movie/680", {"params": {"language": "en-US"}});
+      expect(mockGet).toHaveBeenCalledWith("/movie/680", {
+        params: { language: "en-US" },
+      });
     });
 
     it("should handle TMDB enrichment failure gracefully", async () => {
@@ -249,7 +253,7 @@ describe("Mocked: Watchlist Routes - TMDB Enrichment", () => {
       expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain("already in watchlist");
-      
+
       // Should not call TMDB or create new item
       expect(mockGet).not.toHaveBeenCalled();
       expect(WatchlistItem.create).not.toHaveBeenCalled();

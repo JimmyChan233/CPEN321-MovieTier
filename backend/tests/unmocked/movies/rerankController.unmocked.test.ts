@@ -16,7 +16,12 @@ import User from "../../../src/models/user/User";
 import RankedMovie from "../../../src/models/movie/RankedMovie";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 import { errorHandler } from "../../../src/middleware/errorHandler";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 describe("Rerank Controller - Complete Coverage", () => {
   let mongoContext: MongoTestContext;
@@ -27,7 +32,7 @@ describe("Rerank Controller - Complete Coverage", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

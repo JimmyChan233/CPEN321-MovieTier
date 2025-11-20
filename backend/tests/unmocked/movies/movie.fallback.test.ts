@@ -217,7 +217,9 @@ describe("Fallback: GET /movies/ranked", () => {
     // Mock RankedMovie.find to throw an error
     const RankedMovie = require("../../../src/models/movie/RankedMovie");
     RankedMovie.find.mockReturnValue({
-      sort: jest.fn().mockRejectedValue(new Error("Database connection failed")),
+      sort: jest
+        .fn()
+        .mockRejectedValue(new Error("Database connection failed")),
     });
 
     const res = await request(app)
@@ -347,10 +349,10 @@ describe("Fallback: DELETE /movies/ranked/:id", () => {
   it("should handle database errors in deleteRankedMovie", async () => {
     // Mock RankedMovie.findOne to throw an error after valid ID check
     const RankedMovie = require("../../../src/models/movie/RankedMovie");
-    
+
     // First, we need to mock a valid ObjectId check - use a valid 24-char hex string
     const validObjectId = "507f1f77bcf86cd799439011"; // Valid MongoDB ObjectId
-    
+
     // Mock successful findOne (to pass the "not found" check) but then fail on delete
     RankedMovie.findOne.mockResolvedValue({
       _id: validObjectId,
@@ -358,7 +360,9 @@ describe("Fallback: DELETE /movies/ranked/:id", () => {
       movieId: 278,
       title: "Test Movie",
       rank: 1,
-      deleteOne: jest.fn().mockRejectedValue(new Error("Database connection failed")),
+      deleteOne: jest
+        .fn()
+        .mockRejectedValue(new Error("Database connection failed")),
     });
 
     const res = await request(app)
@@ -366,6 +370,8 @@ describe("Fallback: DELETE /movies/ranked/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(500);
-    expect(res.body.message).toBe("Unable to remove from rankings. Please try again");
+    expect(res.body.message).toBe(
+      "Unable to remove from rankings. Please try again",
+    );
   });
 });

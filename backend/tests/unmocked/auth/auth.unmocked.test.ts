@@ -18,7 +18,12 @@ import authRoutes from "../../../src/routes/authRoutes";
 import User from "../../../src/models/user/User";
 import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
 import { generateTestJWT } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 /**
  * @unmocked Integration tests for authentication
@@ -34,7 +39,7 @@ describe("Unmocked: POST /auth/signin", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -104,7 +109,7 @@ describe("Unmocked: POST /auth/signup", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -154,7 +159,7 @@ describe("Unmocked: POST /auth/signout", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -204,7 +209,7 @@ describe("Unmocked: DELETE /auth/account", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

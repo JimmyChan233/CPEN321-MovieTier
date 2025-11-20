@@ -20,7 +20,7 @@ const globalSetup = async () => {
         retries--;
         if (retries === 0) {
           console.warn(
-            "Failed to create MongoMemoryServer after 3 retries. Tests will skip MongoDB-dependent tests."
+            "Failed to create MongoMemoryServer after 3 retries. Tests will skip MongoDB-dependent tests.",
           );
           process.env.MONGO_MEMORY_SERVER_FAILED = "true";
           return;

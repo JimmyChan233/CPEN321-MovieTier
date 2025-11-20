@@ -19,7 +19,12 @@ import Comment from "../../../src/models/feed/Comment";
 import { Friendship } from "../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 import RankedMovie from "../../../src/models/movie/RankedMovie";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Mock TMDB client
 jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
@@ -57,7 +62,7 @@ describe("Mocked: Feed Routes", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

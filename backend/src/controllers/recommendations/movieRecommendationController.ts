@@ -16,7 +16,11 @@ import {
   DiscoverParams,
 } from "../../types/recommendation.types";
 import crypto from "crypto";
-import { sendSuccess, sendError, HttpStatus } from "../../utils/responseHandler";
+import {
+  sendSuccess,
+  sendError,
+  HttpStatus,
+} from "../../utils/responseHandler";
 
 // Cryptographically secure random number generator
 function secureRandom(): number {
@@ -70,7 +74,11 @@ export const getTrendingMovies = async (req: Request, res: Response) => {
     logger.error("Trending movies error", {
       error: (error as Error).message,
     });
-    return sendError(res, "Unable to load trending movies. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load trending movies. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -253,7 +261,11 @@ export const getRecommendations = async (req: Request, res: Response) => {
       userId: authReq.userId,
       error: (error as Error).message,
     });
-    return sendError(res, "Unable to load recommendations. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load recommendations. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 

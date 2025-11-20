@@ -22,7 +22,12 @@ import {
   mockUsers,
   mockMovies,
 } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 describe("Movie Comparison Controller - Complete Coverage", () => {
   let mongoContext: MongoTestContext;
@@ -35,7 +40,7 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -379,7 +384,7 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
   it("should handle addMovie with user having empty name", async () => {
     // Test with existing user1 but simulate the case where name might be processed differently
     // This tests the controller's ability to handle edge cases in user data
-    
+
     const res = await request(app)
       .post("/add")
       .set("Authorization", `Bearer ${token1}`)
@@ -401,7 +406,7 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
     });
     expect(rankedMovie).toBeDefined();
     expect(rankedMovie!.rank).toBe(1);
-    
+
     // Verify feed activity was created (tests the code path where user name might be used)
     const activity = await FeedActivity.findOne({
       userId: user1._id,
@@ -459,7 +464,7 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
       {
         userId: user1._id,
         movieId: 2000,
-        title: "Movie 2", 
+        title: "Movie 2",
         posterPath: "/2.jpg",
         rank: 2,
       },
@@ -479,12 +484,14 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
 
     // Mock FeedActivity.save to throw an error (this happens during finalization without error handling)
     const originalSave = FeedActivity.prototype.save;
-    FeedActivity.prototype.save = jest.fn().mockImplementation(function() {
+    FeedActivity.prototype.save = jest.fn().mockImplementation(function () {
       throw new Error("Database connection failed");
     });
 
     // Mock console.error to verify error logging
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
     // Force the comparison to end by always preferring the new movie
     const res = await request(app)
@@ -496,8 +503,10 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toBe("Unable to save comparison. Please try again");
-    
+    expect(res.body.message).toBe(
+      "Unable to save comparison. Please try again",
+    );
+
     // Verify error was logged to console
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
 

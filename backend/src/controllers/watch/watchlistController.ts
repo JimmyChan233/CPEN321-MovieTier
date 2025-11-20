@@ -2,7 +2,11 @@ import { Request, Response } from "express";
 import WatchlistItem from "../../models/watch/WatchlistItem";
 import { getTmdbClient } from "../../services/tmdb/tmdbClient";
 import { AuthRequest } from "../../types/middleware.types";
-import { sendSuccess, sendError, HttpStatus } from "../../utils/responseHandler";
+import {
+  sendSuccess,
+  sendError,
+  HttpStatus,
+} from "../../utils/responseHandler";
 
 export const getWatchlist = async (req: Request, res: Response) => {
   try {
@@ -12,7 +16,11 @@ export const getWatchlist = async (req: Request, res: Response) => {
     });
     return sendSuccess(res, items);
   } catch (error) {
-    return sendError(res, "Unable to load watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load watchlist. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -27,7 +35,11 @@ export const addToWatchlist = async (req: Request, res: Response) => {
     };
 
     if (!movieId || !title) {
-      return sendError(res, "movieId and title are required", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "movieId and title are required",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Step 1: Check for duplicate
@@ -66,7 +78,11 @@ export const addToWatchlist = async (req: Request, res: Response) => {
     return sendSuccess(res, item, HttpStatus.CREATED);
   } catch (error) {
     console.error(error);
-    return sendError(res, "Unable to add to watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to add to watchlist. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -82,10 +98,18 @@ export const removeFromWatchlist = async (req: Request, res: Response) => {
       movieId,
     });
     if (result.deletedCount === 0) {
-      return sendError(res, "Movie not found in watchlist", HttpStatus.NOT_FOUND);
+      return sendError(
+        res,
+        "Movie not found in watchlist",
+        HttpStatus.NOT_FOUND,
+      );
     }
     return sendSuccess(res, { message: "Removed from watchlist" });
   } catch (error) {
-    return sendError(res, "Unable to remove from watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to remove from watchlist. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };

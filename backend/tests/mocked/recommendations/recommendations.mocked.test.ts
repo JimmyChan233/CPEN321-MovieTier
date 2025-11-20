@@ -91,13 +91,17 @@ describe("Mocked: GET /recommendations", () => {
     app.use("/", recommendationRoutes);
 
     // Use a valid MongoDB ObjectId format
-    mockUser = { _id: "507f1f77bcf86cd799439011", name: "Test User", email: "test@example.com" };
+    mockUser = {
+      _id: "507f1f77bcf86cd799439011",
+      name: "Test User",
+      email: "test@example.com",
+    };
     mockToken = generateTestJWT(mockUser._id);
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock User.findById
     (User.findById as jest.Mock).mockReturnValue({
       select: jest.fn().mockResolvedValue(mockUser),
@@ -115,7 +119,7 @@ describe("Mocked: GET /recommendations", () => {
           rank: 1,
         },
         {
-          userId: "507f1f77bcf86cd799439011", 
+          userId: "507f1f77bcf86cd799439011",
           movieId: 680,
           title: "Pulp Fiction",
           rank: 2,
@@ -131,7 +135,7 @@ describe("Mocked: GET /recommendations", () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.length).toBeGreaterThan(0);
-    
+
     // Verify TMDB was called for recommendations
     const { getTmdbClient } = require("../../../src/services/tmdb/tmdbClient");
     expect(getTmdbClient).toHaveBeenCalled();
@@ -184,13 +188,17 @@ describe("Mocked: GET /recommendations/trending", () => {
     app.use("/", recommendationRoutes);
 
     // Use a valid MongoDB ObjectId format
-    mockUser = { _id: "507f1f77bcf86cd799439011", name: "Test User", email: "test@example.com" };
+    mockUser = {
+      _id: "507f1f77bcf86cd799439011",
+      name: "Test User",
+      email: "test@example.com",
+    };
     mockToken = generateTestJWT(mockUser._id);
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock User.findById
     (User.findById as jest.Mock).mockReturnValue({
       select: jest.fn().mockResolvedValue(mockUser),

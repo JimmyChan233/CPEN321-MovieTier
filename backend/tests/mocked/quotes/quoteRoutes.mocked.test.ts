@@ -15,7 +15,12 @@ import movieRoutes from "../../../src/routes/movieRoutes";
 import { authenticate } from "../../../src/middleware/auth";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Mock TMDB tagline service
 jest.mock("../../../src/services/tmdb/tmdbTaglineService", () => ({
@@ -36,7 +41,7 @@ describe("Mocked: Quote Routes", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

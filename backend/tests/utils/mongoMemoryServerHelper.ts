@@ -18,7 +18,9 @@ export class MongoServerManager {
   /**
    * Create or reuse an existing MongoMemoryServer instance
    */
-  static async createServer(config: MongoServerConfig = {}): Promise<MongoMemoryServer | null> {
+  static async createServer(
+    config: MongoServerConfig = {},
+  ): Promise<MongoMemoryServer | null> {
     const { autoConnect = true, skipIfFails = true } = config;
 
     // If already failed, return null to skip tests
@@ -44,7 +46,7 @@ export class MongoServerManager {
         this.failureDetected = true;
         console.warn(
           "MongoMemoryServer creation failed. Tests requiring MongoDB will be skipped.",
-          (err as Error).message
+          (err as Error).message,
         );
         return null;
       }
@@ -67,13 +69,19 @@ export class MongoServerManager {
       try {
         await mongoose.disconnect();
       } catch (err) {
-        console.warn("Error disconnecting from MongoDB:", (err as Error).message);
+        console.warn(
+          "Error disconnecting from MongoDB:",
+          (err as Error).message,
+        );
       }
 
       try {
         await this.instance.stop();
       } catch (err) {
-        console.warn("Error stopping MongoMemoryServer:", (err as Error).message);
+        console.warn(
+          "Error stopping MongoMemoryServer:",
+          (err as Error).message,
+        );
       }
 
       this.instance = null;

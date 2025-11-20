@@ -6,7 +6,11 @@ import WatchlistItem from "../../models/watch/WatchlistItem";
 import { Friendship } from "../../models/friend/Friend";
 import RankedMovie from "../../models/movie/RankedMovie";
 import { logger } from "../../utils/logger";
-import { sendSuccess, sendError, HttpStatus } from "../../utils/responseHandler";
+import {
+  sendSuccess,
+  sendError,
+  HttpStatus,
+} from "../../utils/responseHandler";
 import { isValidMongoId, isValidString } from "../../utils/validators";
 
 /**
@@ -21,7 +25,11 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
   try {
     const query = String(req.query.query ?? "");
     if (!isValidString(query, 2)) {
-      return sendError(res, "Query must be at least 2 characters", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "Query must be at least 2 characters",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Escape special regex characters to prevent ReDoS attacks
@@ -35,7 +43,11 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, users);
   } catch (error) {
-    return sendError(res, "Unable to search users. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to search users. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -52,7 +64,11 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
     if (name === undefined && profileImageUrl === undefined) {
       logger.warn("Profile update failed: no fields provided");
-      return sendError(res, "At least one field (name or profileImageUrl) is required", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "At least one field (name or profileImageUrl) is required",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     if (name !== undefined && !isValidString(name)) {
@@ -83,7 +99,11 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     return sendSuccess(res, user);
   } catch (error) {
     logger.error("Profile update error:", error);
-    return sendError(res, "Unable to update profile. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to update profile. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -109,7 +129,11 @@ export const registerFcmToken = async (req: AuthRequest, res: Response) => {
     return sendSuccess(res, { message: "FCM token registered successfully" });
   } catch (error) {
     logger.error("FCM token registration error:", error);
-    return sendError(res, "Unable to register FCM token. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to register FCM token. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -127,7 +151,11 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
     }
     return sendSuccess(res, user);
   } catch (error) {
-    return sendError(res, "Unable to load user. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load user. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -146,14 +174,22 @@ export const getUserWatchlist = async (req: AuthRequest, res: Response) => {
         friendId: userId,
       });
       if (!areFriends) {
-        return sendError(res, "You must be friends to view this watchlist.", HttpStatus.FORBIDDEN);
+        return sendError(
+          res,
+          "You must be friends to view this watchlist.",
+          HttpStatus.FORBIDDEN,
+        );
       }
     }
 
     const items = await WatchlistItem.find({ userId }).sort({ createdAt: -1 });
     return sendSuccess(res, items);
   } catch (error) {
-    return sendError(res, "Unable to load user watchlist. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load user watchlist. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -170,7 +206,11 @@ export const getUserRankings = async (req: AuthRequest, res: Response) => {
       friendId: userId,
     });
     if (!areFriends && String(req.userId) !== userId) {
-      return sendError(res, "You must be friends to view these rankings.", HttpStatus.FORBIDDEN);
+      return sendError(
+        res,
+        "You must be friends to view these rankings.",
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const movies = await RankedMovie.find({
@@ -204,6 +244,10 @@ export const getUserRankings = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, shaped);
   } catch (error) {
-    return sendError(res, "Unable to load rankings. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load rankings. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };

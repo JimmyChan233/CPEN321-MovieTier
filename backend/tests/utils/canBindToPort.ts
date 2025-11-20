@@ -63,7 +63,7 @@ export function skipIfCantBindToPort(callback: () => void): void {
   canBindToPort().then((canBind) => {
     if (!canBind) {
       console.warn(
-        "Environment does not support port binding. Skipping this test suite."
+        "Environment does not support port binding. Skipping this test suite.",
       );
       return; // Skip
     }

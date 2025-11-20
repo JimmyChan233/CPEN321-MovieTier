@@ -25,7 +25,12 @@ import {
   findBestTrailer,
   filterYoutubeVideos,
 } from "../../utils/tmdbResponseHelpers";
-import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
+import {
+  sendSuccess,
+  sendError,
+  ErrorMessages,
+  HttpStatus,
+} from "../../utils/responseHandler";
 import { isValidSearchQuery, isValidMongoId } from "../../utils/validators";
 
 const RankedMovie = RankedMovieModel;
@@ -68,12 +73,20 @@ export const searchMovies = async (req: Request, res: Response) => {
   try {
     const query = String(req.query.query ?? "").trim();
     if (!isValidSearchQuery(query)) {
-      return sendError(res, "Query must be at least 2 characters", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "Query must be at least 2 characters",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
+      return sendError(
+        res,
+        "TMDB API key not configured",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     const tmdb = getTmdbClient();
@@ -198,7 +211,11 @@ export const searchMovies = async (req: Request, res: Response) => {
     const combined = enriched.concat(remaining);
     return sendSuccess(res, combined);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_SEARCH, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_SEARCH,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -235,7 +252,11 @@ export const getRankedMovies = async (req: Request, res: Response) => {
     });
     return sendSuccess(res, shaped);
   } catch (error) {
-    return sendError(res, "Unable to load rankings. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load rankings. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -274,7 +295,11 @@ export const deleteRankedMovie = async (req: Request, res: Response) => {
 
     return sendSuccess(res, { message: "Removed from rankings" });
   } catch (error) {
-    return sendError(res, "Unable to remove from rankings. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to remove from rankings. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -289,7 +314,11 @@ export const getWatchProviders = async (req: Request, res: Response) => {
 
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
+      return sendError(
+        res,
+        "TMDB API key not configured",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     const tmdb = getTmdbClient();
@@ -339,7 +368,11 @@ export const getWatchProviders = async (req: Request, res: Response) => {
 
     return sendSuccess(res, payload);
   } catch (error) {
-    return sendError(res, "Unable to load watch providers. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load watch providers. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -351,7 +384,11 @@ export const getMovieDetails = async (req: Request, res: Response) => {
     }
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
+      return sendError(
+        res,
+        "TMDB API key not configured",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
     const tmdb = getTmdbClient();
     const [detailsResp, creditsResp] = await Promise.all([
@@ -366,7 +403,11 @@ export const getMovieDetails = async (req: Request, res: Response) => {
     };
     return sendSuccess(res, shaped);
   } catch (error) {
-    return sendError(res, "Unable to load movie details. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load movie details. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -378,7 +419,11 @@ export const getMovieVideos = async (req: Request, res: Response) => {
     }
     const apiKey = process.env.TMDB_API_KEY ?? process.env.TMDB_KEY;
     if (!apiKey) {
-      return sendError(res, "TMDB API key not configured", HttpStatus.INTERNAL_SERVER_ERROR);
+      return sendError(
+        res,
+        "TMDB API key not configured",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
     const tmdb = getTmdbClient();
     const { data } = await tmdb.get(`/movie/${movieId}/videos`, {
@@ -401,7 +446,11 @@ export const getMovieVideos = async (req: Request, res: Response) => {
 
     return sendSuccess(res, shaped);
   } catch (error) {
-    return sendError(res, "Unable to load movie videos. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to load movie videos. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -421,7 +470,11 @@ export const addMovie = async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!movieId || !title) {
-      return sendError(res, "movieId and title are required", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "movieId and title are required",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -540,23 +593,36 @@ export const addMovie = async (req: Request, res: Response) => {
     const middleIndex = Math.floor((0 + high) / 2);
     const compareWith = rankedMovies.at(middleIndex);
     if (!compareWith) {
-      return sendError(res, "Unable to find comparison movie", HttpStatus.INTERNAL_SERVER_ERROR);
+      return sendError(
+        res,
+        "Unable to find comparison movie",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
     startSession(userId, { movieId, title, posterPath }, high);
 
     // Remove from watchlist immediately when starting comparison
     await removeFromWatchlist(userId, movieId);
 
-    return sendSuccess(res, {
-      compareWith: {
-        movieId: compareWith.movieId,
-        title: compareWith.title,
-        posterPath: compareWith.posterPath,
+    return sendSuccess(
+      res,
+      {
+        compareWith: {
+          movieId: compareWith.movieId,
+          title: compareWith.title,
+          posterPath: compareWith.posterPath,
+        },
       },
-    }, 200, { status: "compare" });
+      200,
+      { status: "compare" },
+    );
   } catch (error) {
     console.error(error);
-    return sendError(res, "Unable to add movie to ranking. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to add movie to ranking. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -576,13 +642,21 @@ export const compareMovies = async (req: Request, res: Response) => {
 
     // Validate required field
     if (!preferredMovieId) {
-      return sendError(res, "preferredMovieId is required", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "preferredMovieId is required",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const session = getSession(userId);
 
     if (!session) {
-      return sendError(res, "No active comparison session", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "No active comparison session",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -716,19 +790,32 @@ export const compareMovies = async (req: Request, res: Response) => {
     const nextIndex = Math.floor((low + high) / 2);
     const nextCompare = rankedMovies.at(nextIndex);
     if (!nextCompare) {
-      return sendError(res, "Unable to find comparison movie", HttpStatus.INTERNAL_SERVER_ERROR);
+      return sendError(
+        res,
+        "Unable to find comparison movie",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
-    return sendSuccess(res, {
-      compareWith: {
-        movieId: nextCompare.movieId,
-        title: nextCompare.title,
-        posterPath: nextCompare.posterPath,
+    return sendSuccess(
+      res,
+      {
+        compareWith: {
+          movieId: nextCompare.movieId,
+          title: nextCompare.title,
+          posterPath: nextCompare.posterPath,
+        },
       },
-    }, 200, { status: "compare" });
+      200,
+      { status: "compare" },
+    );
   } catch (error) {
     console.error(error);
-    return sendError(res, "Unable to save comparison. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to save comparison. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -736,7 +823,11 @@ export const startRerank = async (req: Request, res: Response) => {
   try {
     const userId = (req as { userId?: string }).userId;
     if (!userId) {
-      return sendError(res, ErrorMessages.UNAUTHORIZED, HttpStatus.UNAUTHORIZED);
+      return sendError(
+        res,
+        ErrorMessages.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     const { rankedId } = req.body as { rankedId: string };
     if (!rankedId || !isValidMongoId(rankedId)) {
@@ -794,17 +885,30 @@ export const startRerank = async (req: Request, res: Response) => {
     const mid = Math.floor((0 + (remaining.length - 1)) / 2);
     const cmp = remaining.at(mid);
     if (!cmp) {
-      return sendError(res, "Unable to find comparison movie", HttpStatus.INTERNAL_SERVER_ERROR);
+      return sendError(
+        res,
+        "Unable to find comparison movie",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-    return sendSuccess(res, {
-      compareWith: {
-        movieId: cmp.movieId,
-        title: cmp.title,
-        posterPath: cmp.posterPath,
+    return sendSuccess(
+      res,
+      {
+        compareWith: {
+          movieId: cmp.movieId,
+          title: cmp.title,
+          posterPath: cmp.posterPath,
+        },
       },
-    }, 200, { status: "compare" });
+      200,
+      { status: "compare" },
+    );
   } catch (e) {
-    return sendError(res, "Unable to start rerank. Please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Unable to start rerank. Please try again",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 

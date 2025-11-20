@@ -5,9 +5,18 @@ import { Friendship, FriendRequest } from "../../models/friend/Friend";
 import User from "../../models/user/User";
 import { sseService } from "../../services/sse/sseService";
 import notificationService from "../../services/notification.service";
-import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
+import {
+  sendSuccess,
+  sendError,
+  ErrorMessages,
+  HttpStatus,
+} from "../../utils/responseHandler";
 import { isValidEmail } from "../../utils/validators";
-import { IPopulatedFriendRequest, ISendFriendRequestBody, IRespondToFriendRequestBody } from "../../types/friend.types";
+import {
+  IPopulatedFriendRequest,
+  ISendFriendRequestBody,
+  IRespondToFriendRequestBody,
+} from "../../types/friend.types";
 
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -34,7 +43,11 @@ export const getFriends = async (req: AuthRequest, res: Response) => {
     );
     return sendSuccess(res, friends);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_GET_FRIENDS, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_GET_FRIENDS,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -46,7 +59,11 @@ export const getFriendRequests = async (req: AuthRequest, res: Response) => {
     });
     return sendSuccess(res, requests);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_GET_REQUESTS, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_GET_REQUESTS,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -71,7 +88,11 @@ export const getFriendRequestsDetailed = async (
     });
     return sendSuccess(res, data);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_GET_REQUESTS, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_GET_REQUESTS,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -83,7 +104,11 @@ export const getOutgoingRequests = async (req: AuthRequest, res: Response) => {
     });
     return sendSuccess(res, requests);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_GET_OUTGOING, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_GET_OUTGOING,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -108,7 +133,11 @@ export const getOutgoingRequestsDetailed = async (
     });
     return sendSuccess(res, data);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_GET_OUTGOING, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_GET_OUTGOING,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -117,21 +146,37 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
     const { email } = req.body as ISendFriendRequestBody;
 
     if (!isValidEmail(email)) {
-      return sendError(res, ErrorMessages.INVALID_EMAIL, HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        ErrorMessages.INVALID_EMAIL,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Rate limit per-sender
     if (!req.userId || !checkRateLimit(req.userId)) {
-      return sendError(res, ErrorMessages.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
+      return sendError(
+        res,
+        ErrorMessages.TOO_MANY_REQUESTS,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
     // Prevent sending a request to self
     const self = await User.findById(req.userId);
     if (!self) {
-      return sendError(res, ErrorMessages.UNAUTHORIZED, HttpStatus.UNAUTHORIZED);
+      return sendError(
+        res,
+        ErrorMessages.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     if (self.email === email) {
-      return sendError(res, ErrorMessages.CANNOT_SELF_REQUEST, HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        ErrorMessages.CANNOT_SELF_REQUEST,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const friend = await User.findOne({ email });
@@ -155,7 +200,11 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       status: "pending",
     });
     if (existingPending) {
-      return sendError(res, ErrorMessages.REQUEST_ALREADY_SENT, HttpStatus.CONFLICT);
+      return sendError(
+        res,
+        ErrorMessages.REQUEST_ALREADY_SENT,
+        HttpStatus.CONFLICT,
+      );
     }
 
     // Check if reverse pending request exists
@@ -165,7 +214,11 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       status: "pending",
     });
     if (reversePending) {
-      return sendError(res, ErrorMessages.FRIEND_REQUEST_PENDING, HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        ErrorMessages.FRIEND_REQUEST_PENDING,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const request = new FriendRequest({
@@ -195,7 +248,11 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, request, HttpStatus.CREATED);
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_SEND_REQUEST, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_SEND_REQUEST,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -207,7 +264,11 @@ export const respondToFriendRequest = async (
     const { requestId, accept } = req.body as IRespondToFriendRequestBody;
 
     if (!requestId || typeof accept !== "boolean") {
-      return sendError(res, "requestId and accept are required", HttpStatus.BAD_REQUEST);
+      return sendError(
+        res,
+        "requestId and accept are required",
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const request = await FriendRequest.findById(requestId);
@@ -216,7 +277,11 @@ export const respondToFriendRequest = async (
     }
 
     if (String(request.receiverId) !== String(req.userId)) {
-      return sendError(res, "Not authorized to respond to this request", HttpStatus.FORBIDDEN);
+      return sendError(
+        res,
+        "Not authorized to respond to this request",
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     if (request.status !== "pending") {
@@ -293,7 +358,11 @@ export const respondToFriendRequest = async (
 
     return sendSuccess(res, null, 200, { message: "Friend request handled" });
   } catch (error) {
-    return sendError(res, "Failed to respond to request", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Failed to respond to request",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -332,7 +401,11 @@ export const removeFriend = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, null, 200, { message: "Friend removed" });
   } catch (error) {
-    return sendError(res, ErrorMessages.FAILED_REMOVE_FRIEND, HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      ErrorMessages.FAILED_REMOVE_FRIEND,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -369,7 +442,11 @@ export const cancelFriendRequest = async (req: AuthRequest, res: Response) => {
       return sendError(res, "Friend request not found", HttpStatus.NOT_FOUND);
     }
     if (String(request.senderId) !== String(req.userId)) {
-      return sendError(res, "Not authorized to cancel this request", HttpStatus.FORBIDDEN);
+      return sendError(
+        res,
+        "Not authorized to cancel this request",
+        HttpStatus.FORBIDDEN,
+      );
     }
     if (request.status !== "pending") {
       return sendError(res, "Request is not pending", HttpStatus.BAD_REQUEST);
@@ -384,7 +461,11 @@ export const cancelFriendRequest = async (req: AuthRequest, res: Response) => {
 
     return sendSuccess(res, null, 200, { message: "Friend request canceled" });
   } catch (error) {
-    return sendError(res, "Failed to cancel friend request", HttpStatus.INTERNAL_SERVER_ERROR);
+    return sendError(
+      res,
+      "Failed to cancel friend request",
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 

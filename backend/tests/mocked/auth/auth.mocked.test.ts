@@ -18,7 +18,12 @@ import User from "../../../src/models/user/User";
 import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
 import { AuthService } from "../../../src/services/auth/authService";
 import { generateTestJWT } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Mock the Google OAuth verification with different tokens for different scenarios
 const mockTokenMap: Record<
@@ -69,7 +74,7 @@ describe("Mocked: POST /auth/signin", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -142,7 +147,9 @@ describe("Mocked: POST /auth/signin", () => {
   });
 
   it("should handle signin error without message property", async () => {
-    jest.spyOn(AuthService.prototype, "verifyGoogleToken").mockRejectedValueOnce({});
+    jest
+      .spyOn(AuthService.prototype, "verifyGoogleToken")
+      .mockRejectedValueOnce({});
 
     const res = await request(app).post("/api/auth/signin").send({
       idToken: "mock-valid-token",
@@ -162,7 +169,7 @@ describe("Mocked: POST /auth/signup", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -240,7 +247,7 @@ describe("Mocked: POST /auth/signout", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -309,7 +316,7 @@ describe("Mocked: DELETE /auth/account", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

@@ -14,7 +14,12 @@ import User from "../../../../src/models/user/User";
 import WatchlistItem from "../../../../src/models/watch/WatchlistItem";
 import FeedActivity from "../../../../src/models/feed/FeedActivity";
 import { generateTestJWT } from "../../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../../utils/mongoConnect";
 
 const mockTmdbGet = jest.fn();
 jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
@@ -32,7 +37,7 @@ describe("Movie Routes - TMDB Field Fallbacks", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -141,7 +146,7 @@ describe("Watchlist Routes - TMDB Enrichment", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -199,7 +204,7 @@ describe("Feed Routes - Activity Enrichment", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

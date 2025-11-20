@@ -10,7 +10,12 @@ import movieRoutes from "../../../../src/routes/movieRoutes";
 import { authenticate } from "../../../../src/middleware/auth";
 import User from "../../../../src/models/user/User";
 import { generateTestJWT } from "../../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../../utils/mongoConnect";
 
 const mockTmdbGet = jest.fn();
 jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
@@ -28,7 +33,7 @@ describe("Movie Search - CJK Search with Detail Fetch", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

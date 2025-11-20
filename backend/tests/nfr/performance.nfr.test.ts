@@ -240,7 +240,9 @@ describe("NFR: Performance - Database Operations", () => {
       mongoServer = await MongoMemoryServer.create();
       await mongoose.connect(mongoServer.getUri());
     } catch (err) {
-      console.warn("MongoMemoryServer creation failed, skipping database operation NFR tests");
+      console.warn(
+        "MongoMemoryServer creation failed, skipping database operation NFR tests",
+      );
     }
   });
 

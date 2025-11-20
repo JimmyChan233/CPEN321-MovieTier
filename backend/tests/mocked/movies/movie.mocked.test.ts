@@ -19,7 +19,12 @@ import {
   mockUsers,
   mockMovies,
 } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Mock the TMDB client to avoid real API calls in tests
 const mockTmdbGet = jest.fn();
@@ -47,7 +52,7 @@ describe("Mocked: GET /movies/search", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -146,7 +151,11 @@ describe("Mocked: GET /movies/search", () => {
 
     expect(res.status).toStrictEqual(200);
     expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].cast).toEqual(["Brad Pitt", "Edward Norton", "Helena Bonham Carter"]);
+    expect(res.body.data[0].cast).toEqual([
+      "Brad Pitt",
+      "Edward Norton",
+      "Helena Bonham Carter",
+    ]);
   });
 
   // Input: TMDB API returns empty results
@@ -193,7 +202,7 @@ describe("Mocked: GET /movies/ranked", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -281,7 +290,7 @@ describe("Mocked: POST /movies/rank", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -391,7 +400,7 @@ describe("Mocked: DELETE /movies/ranked/:id", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -467,7 +476,7 @@ describe("Mocked: GET /movies/:movieId/details", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -552,7 +561,7 @@ describe("Mocked: GET /movies/:movieId/providers", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -583,18 +592,12 @@ describe("Mocked: GET /movies/:movieId/providers", () => {
         results: {
           US: {
             link: "https://example.com",
-            flatrate: [
-              { provider_name: "Netflix" },
-              { provider_name: "Hulu" },
-            ],
+            flatrate: [{ provider_name: "Netflix" }, { provider_name: "Hulu" }],
             rent: [
               { provider_name: "Apple TV" },
               { provider_name: "Amazon Prime" },
             ],
-            buy: [
-              { provider_name: "Google Play" },
-              { provider_name: "Vudu" },
-            ],
+            buy: [{ provider_name: "Google Play" }, { provider_name: "Vudu" }],
           },
         },
       },
@@ -637,7 +640,7 @@ describe("Mocked: GET /movies/:movieId/videos", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -691,9 +694,9 @@ describe("Mocked: GET /movies/:movieId/videos", () => {
     expect(res.status).toStrictEqual(200);
     expect(res.body.success).toBe(true);
     // The getMovieVideos endpoint returns a single video object, not an array
-    expect(res.body.data).toHaveProperty('key', '6JnN1DmbqoU');
-    expect(res.body.data).toHaveProperty('type', 'Trailer');
-    expect(res.body.data).toHaveProperty('site', 'YouTube');
+    expect(res.body.data).toHaveProperty("key", "6JnN1DmbqoU");
+    expect(res.body.data).toHaveProperty("type", "Trailer");
+    expect(res.body.data).toHaveProperty("site", "YouTube");
   });
 
   // Input: TMDB API throws error

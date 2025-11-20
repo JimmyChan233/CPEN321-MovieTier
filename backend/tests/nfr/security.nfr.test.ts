@@ -30,7 +30,9 @@ describe("NFR: Security - Authentication & Authorization", () => {
       mongoServer = await MongoMemoryServer.create();
       await mongoose.connect(mongoServer.getUri());
     } catch (err) {
-      console.warn("MongoMemoryServer creation failed, skipping security NFR tests");
+      console.warn(
+        "MongoMemoryServer creation failed, skipping security NFR tests",
+      );
       return;
     }
 
@@ -73,7 +75,12 @@ describe("NFR: Security - Authentication & Authorization", () => {
     for (const invalidToken of invalidTokens) {
       const res = await request(app)
         .get("/api/movies/search")
-        .set("Authorization", invalidToken.startsWith("Bearer ") ? invalidToken : `Bearer ${invalidToken}`)
+        .set(
+          "Authorization",
+          invalidToken.startsWith("Bearer ")
+            ? invalidToken
+            : `Bearer ${invalidToken}`,
+        )
         .query({ query: "test" });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
@@ -117,7 +124,9 @@ describe("NFR: Security - Data Protection", () => {
       mongoServer = await MongoMemoryServer.create();
       await mongoose.connect(mongoServer.getUri());
     } catch (err) {
-      console.warn("MongoMemoryServer creation failed, skipping security NFR tests");
+      console.warn(
+        "MongoMemoryServer creation failed, skipping security NFR tests",
+      );
       return;
     }
 

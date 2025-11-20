@@ -17,7 +17,12 @@ import recommendationRoutes from "../../../src/routes/recommendationRoutes";
 import User from "../../../src/models/user/User";
 import RankedMovie from "../../../src/models/movie/RankedMovie";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Helper function to check if TMDB service is available
 const isTmdbAvailable = async (): Promise<boolean> => {
@@ -42,7 +47,7 @@ describe("Unmocked: GET /recommendations", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -52,11 +57,13 @@ describe("Unmocked: GET /recommendations", () => {
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
-    
+
     // Check if TMDB is available
     tmdbAvailable = await isTmdbAvailable();
     if (!tmdbAvailable) {
-      console.log('TMDB service unavailable - some recommendation tests will be skipped');
+      console.log(
+        "TMDB service unavailable - some recommendation tests will be skipped",
+      );
     }
   });
 
@@ -82,7 +89,7 @@ describe("Unmocked: GET /recommendations", () => {
   // Test with valid authentication but no ranked movies
   it("should handle request with authentication but no user rankings", async () => {
     if (!tmdbAvailable) {
-      console.log('Skipping test - TMDB service unavailable');
+      console.log("Skipping test - TMDB service unavailable");
       return;
     }
 
@@ -99,7 +106,7 @@ describe("Unmocked: GET /recommendations", () => {
   // Test with user rankings
   it("should provide recommendations based on user rankings", async () => {
     if (!tmdbAvailable) {
-      console.log('Skipping test - TMDB service unavailable');
+      console.log("Skipping test - TMDB service unavailable");
       return;
     }
 
@@ -118,7 +125,7 @@ describe("Unmocked: GET /recommendations", () => {
         title: "Pulp Fiction",
         posterPath: "/pulp-fiction.jpg",
         rank: 2,
-      }
+      },
     ]);
 
     const res = await request(app)
@@ -142,7 +149,7 @@ describe("Unmocked: GET /recommendations/trending", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -152,11 +159,11 @@ describe("Unmocked: GET /recommendations/trending", () => {
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
-    
+
     // Check if TMDB is available
     tmdbAvailable = await isTmdbAvailable();
     if (!tmdbAvailable) {
-      console.log('TMDB service unavailable - trending tests will be skipped');
+      console.log("TMDB service unavailable - trending tests will be skipped");
     }
   });
 
@@ -177,7 +184,7 @@ describe("Unmocked: GET /recommendations/trending", () => {
   // Test trending movies with valid authentication
   it("should return trending movies when authenticated", async () => {
     if (!tmdbAvailable) {
-      console.log('Skipping test - TMDB service unavailable');
+      console.log("Skipping test - TMDB service unavailable");
       return;
     }
 
@@ -194,7 +201,7 @@ describe("Unmocked: GET /recommendations/trending", () => {
   // Test error handling for trending endpoint
   it("should handle trending request errors gracefully", async () => {
     if (!tmdbAvailable) {
-      console.log('Skipping test - TMDB service unavailable');
+      console.log("Skipping test - TMDB service unavailable");
       return;
     }
 

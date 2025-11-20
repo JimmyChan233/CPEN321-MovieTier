@@ -34,7 +34,12 @@ jest.mock("../../../src/utils/logger", () => ({
 // Import after mocking
 import { AuthService } from "../../../src/services/auth/authService";
 import User from "../../../src/models/user/User";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 describe("Mocked: AuthService", () => {
   let mongoContext: MongoTestContext;
@@ -43,7 +48,7 @@ describe("Mocked: AuthService", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

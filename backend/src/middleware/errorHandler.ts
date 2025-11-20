@@ -5,11 +5,7 @@ import { logger } from "../utils/logger";
  * Handle API errors and send error response
  * Reusable utility function for error handling
  */
-const handleApiError = (
-  err: Error,
-  req: Request,
-  res: Response,
-): void => {
+const handleApiError = (err: Error, req: Request, res: Response): void => {
   logger.error("Unhandled API error", {
     method: req.method,
     url: req.originalUrl,

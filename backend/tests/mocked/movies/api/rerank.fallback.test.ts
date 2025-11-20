@@ -83,7 +83,7 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
 
     const RankedMovie = require("../../../../src/models/movie/RankedMovie");
     RankedMovie.findById.mockResolvedValue(mockRankedMovie);
-    
+
     // findOne for other movies to compare against
     RankedMovie.findOne.mockResolvedValue({
       _id: "another-movie",
@@ -123,7 +123,7 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
 
     const RankedMovie = require("../../../../src/models/movie/RankedMovie");
     RankedMovie.findById.mockResolvedValue(mockRankedMovie);
-    
+
     RankedMovie.findOne.mockResolvedValue({
       _id: "another-movie",
       movieId: 200,

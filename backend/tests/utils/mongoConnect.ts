@@ -32,14 +32,21 @@ export async function initializeTestMongo(): Promise<MongoTestContext> {
 
       // Clear all collections to prevent data conflicts between test suites
       // This is needed when maxWorkers: 1 shares a single MongoDB instance
-      const collections = await mongoose.connection.db!.listCollections().toArray();
+      const collections = await mongoose.connection
+        .db!.listCollections()
+        .toArray();
       for (const collection of collections) {
-        await mongoose.connection.db!.collection(collection.name).deleteMany({});
+        await mongoose.connection
+          .db!.collection(collection.name)
+          .deleteMany({});
       }
 
       return context;
     } catch (err) {
-      console.warn("Failed to connect to global MongoDB:", (err as Error).message);
+      console.warn(
+        "Failed to connect to global MongoDB:",
+        (err as Error).message,
+      );
     }
   }
 
@@ -58,7 +65,7 @@ export async function initializeTestMongo(): Promise<MongoTestContext> {
   } catch (err) {
     console.warn(
       "Failed to create MongoMemoryServer instance. Tests requiring MongoDB will be skipped.",
-      (err as Error).message
+      (err as Error).message,
     );
     context.skipIfUnavailable = true;
     return context;
@@ -68,7 +75,9 @@ export async function initializeTestMongo(): Promise<MongoTestContext> {
 /**
  * Cleanup MongoDB connection for a test suite
  */
-export async function cleanupTestMongo(context: MongoTestContext): Promise<void> {
+export async function cleanupTestMongo(
+  context: MongoTestContext,
+): Promise<void> {
   try {
     await mongoose.disconnect();
   } catch (err) {

@@ -21,7 +21,12 @@ import {
   mockUsers,
   mockMovies,
 } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Helper function to check if TMDB service is available
 const isTmdbAvailable = async (): Promise<boolean> => {
@@ -48,18 +53,20 @@ describe("Watchlist Routes - Unmocked Tests", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
     app = express();
     app.use(express.json());
     app.use("/", watchlistRoutes);
-    
+
     // Check if TMDB is available
     tmdbAvailable = await isTmdbAvailable();
     if (!tmdbAvailable) {
-      console.log('TMDB service unavailable - TMDB enrichment tests will be skipped');
+      console.log(
+        "TMDB service unavailable - TMDB enrichment tests will be skipped",
+      );
     }
   });
 
@@ -127,7 +134,8 @@ describe("Watchlist Routes - Unmocked Tests", () => {
             movieId: 550,
             title: "Fight Club",
             posterPath: "/fight-club-poster.jpg",
-            overview: "An insomniac office worker and a devil-may-care soap maker...",
+            overview:
+              "An insomniac office worker and a devil-may-care soap maker...",
           });
 
         expect(res.status).toBe(201);
@@ -135,7 +143,9 @@ describe("Watchlist Routes - Unmocked Tests", () => {
         expect(res.body.data.movieId).toBe(550);
         expect(res.body.data.title).toBe("Fight Club");
         expect(res.body.data.posterPath).toBe("/fight-club-poster.jpg");
-        expect(res.body.data.overview).toBe("An insomniac office worker and a devil-may-care soap maker...");
+        expect(res.body.data.overview).toBe(
+          "An insomniac office worker and a devil-may-care soap maker...",
+        );
 
         // Verify it was saved to database
         const savedItem = await WatchlistItem.findOne({
@@ -148,7 +158,7 @@ describe("Watchlist Routes - Unmocked Tests", () => {
 
       it("should handle TMDB enrichment when external service is available", async () => {
         if (!tmdbAvailable) {
-          console.log('Skipping test - TMDB service unavailable');
+          console.log("Skipping test - TMDB service unavailable");
           return;
         }
 
@@ -165,7 +175,7 @@ describe("Watchlist Routes - Unmocked Tests", () => {
         expect(res.body.success).toBe(true);
         expect(res.body.data.movieId).toBe(550);
         expect(res.body.data.title).toBe("Fight Club");
-        
+
         // Should have enriched data from TMDB
         expect(res.body.data.posterPath).toBeDefined();
         expect(res.body.data.overview).toBeDefined();
@@ -173,7 +183,9 @@ describe("Watchlist Routes - Unmocked Tests", () => {
 
       it("should handle missing data gracefully when TMDB is unavailable", async () => {
         if (tmdbAvailable) {
-          console.log('Skipping test - TMDB is available, this tests the unavailable case');
+          console.log(
+            "Skipping test - TMDB is available, this tests the unavailable case",
+          );
           return;
         }
 
@@ -190,7 +202,7 @@ describe("Watchlist Routes - Unmocked Tests", () => {
         expect(res.body.success).toBe(true);
         expect(res.body.data.movieId).toBe(550);
         expect(res.body.data.title).toBe("Fight Club");
-        
+
         // Should still create the item even without enrichment
         const savedItem = await WatchlistItem.findOne({
           userId: user1._id,

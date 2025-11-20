@@ -10,7 +10,12 @@
 
 import request from "supertest";
 import mongoose from "mongoose";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 import express from "express";
 import friendRoutes from "../../../src/routes/friendRoutes";
 import User from "../../../src/models/user/User";
@@ -32,7 +37,7 @@ describe("Advanced Friend Routes Tests", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -351,8 +356,7 @@ describe("Advanced Friend Routes Tests", () => {
     });
     unauthApp.use("/", friendRoutes);
 
-    const res = await request(unauthApp)
-      .get("/stream");
+    const res = await request(unauthApp).get("/stream");
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);

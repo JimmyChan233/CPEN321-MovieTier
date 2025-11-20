@@ -24,7 +24,7 @@ describe("Unit: Friend Controller - streamFriends", () => {
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
-    
+
     // Create mock request object
     mockReq = {
       userId: undefined, // Simulate missing userId
@@ -63,27 +63,37 @@ describe("Unit: Friend Controller - streamFriends", () => {
   it("should set up SSE connection when userId is present", async () => {
     // Set up request with userId
     mockReq.userId = "test-user-id";
-    
+
     // Mock the req.on method to simulate close event
     const closeCallback = jest.fn();
-    (mockReq.on as jest.Mock).mockImplementation((event: string, callback: (...args: any[]) => any) => {
-      if (event === "close") {
-        closeCallback.mockImplementation(callback);
-      }
-    });
+    (mockReq.on as jest.Mock).mockImplementation(
+      (event: string, callback: (...args: any[]) => any) => {
+        if (event === "close") {
+          closeCallback.mockImplementation(callback);
+        }
+      },
+    );
 
     // Call the controller function
     await streamFriends(mockReq as any, mockRes as any);
 
     // Verify SSE headers were set
-    expect(mockRes.setHeader).toHaveBeenCalledWith("Content-Type", "text/event-stream");
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      "Content-Type",
+      "text/event-stream",
+    );
     expect(mockRes.setHeader).toHaveBeenCalledWith("Cache-Control", "no-cache");
     expect(mockRes.setHeader).toHaveBeenCalledWith("Connection", "keep-alive");
     expect(mockRes.flushHeaders).toHaveBeenCalled();
-    expect(mockRes.write).toHaveBeenCalledWith(`event: connected\n` + `data: {"ok":true}\n\n`);
+    expect(mockRes.write).toHaveBeenCalledWith(
+      `event: connected\n` + `data: {"ok":true}\n\n`,
+    );
 
     // Verify SSE service was called
-    expect(mockSseService.addClient).toHaveBeenCalledWith("test-user-id", mockRes);
+    expect(mockSseService.addClient).toHaveBeenCalledWith(
+      "test-user-id",
+      mockRes,
+    );
     expect(mockReq.on).toHaveBeenCalledWith("close", expect.any(Function));
   });
 
@@ -104,13 +114,15 @@ describe("Unit: Friend Controller - streamFriends", () => {
   it("should remove client on request close", async () => {
     // Set up request with userId
     mockReq.userId = "test-user-id";
-    
+
     let closeCallback: Function;
-    (mockReq.on as jest.Mock).mockImplementation((event: string, callback: Function) => {
-      if (event === "close") {
-        closeCallback = callback;
-      }
-    });
+    (mockReq.on as jest.Mock).mockImplementation(
+      (event: string, callback: Function) => {
+        if (event === "close") {
+          closeCallback = callback;
+        }
+      },
+    );
 
     // Call the controller function
     await streamFriends(mockReq as any, mockRes as any);
@@ -121,6 +133,9 @@ describe("Unit: Friend Controller - streamFriends", () => {
     }
 
     // Verify SSE service was called to remove client
-    expect(mockSseService.removeClient).toHaveBeenCalledWith("test-user-id", mockRes);
+    expect(mockSseService.removeClient).toHaveBeenCalledWith(
+      "test-user-id",
+      mockRes,
+    );
   });
 });

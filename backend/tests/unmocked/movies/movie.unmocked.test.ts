@@ -19,7 +19,12 @@ import {
   mockUsers,
   mockMovies,
 } from "../../utils/test-fixtures";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 // Mock the TMDB client to avoid real API calls in tests
 jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
@@ -63,7 +68,7 @@ describe("Unmocked: GET /movies/search", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -99,7 +104,7 @@ describe("Unmocked: GET /movies/ranked", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -161,7 +166,7 @@ describe("Unmocked: DELETE /movies/ranked/:id", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -209,14 +214,18 @@ describe("Unmocked: DELETE /movies/ranked/:id", () => {
 
     // Mock RankedMovie.findOne to throw an error
     const originalFindOne = RankedMovie.findOne;
-    RankedMovie.findOne = jest.fn().mockRejectedValue(new Error("Database connection failed"));
+    RankedMovie.findOne = jest
+      .fn()
+      .mockRejectedValue(new Error("Database connection failed"));
 
     const res = await request(app)
       .delete(`/ranked/${rankedMovie._id}`)
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(500);
-    expect(res.body.message).toBe("Unable to remove from rankings. Please try again");
+    expect(res.body.message).toBe(
+      "Unable to remove from rankings. Please try again",
+    );
 
     // Restore original method
     RankedMovie.findOne = originalFindOne;
@@ -232,7 +241,7 @@ describe("Unmocked: POST /movies/rank", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 

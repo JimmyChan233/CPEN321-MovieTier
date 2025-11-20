@@ -20,7 +20,10 @@ const globalTeardown = async () => {
         await mongoServer.stop();
         console.log("✓ MongoMemoryServer stopped");
       } catch (err) {
-        console.warn("Error stopping MongoMemoryServer:", (err as Error).message);
+        console.warn(
+          "Error stopping MongoMemoryServer:",
+          (err as Error).message,
+        );
       }
     }
   } catch (err) {

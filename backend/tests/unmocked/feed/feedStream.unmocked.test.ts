@@ -6,7 +6,12 @@
 import request from "supertest";
 import express from "express";
 import feedRoutes from "../../../src/routes/feedRoutes";
-import { initializeTestMongo, cleanupTestMongo, skipIfMongoUnavailable, MongoTestContext } from "../../utils/mongoConnect";
+import {
+  initializeTestMongo,
+  cleanupTestMongo,
+  skipIfMongoUnavailable,
+  MongoTestContext,
+} from "../../utils/mongoConnect";
 
 describe("Unmocked: Feed SSE Stream", () => {
   let mongoContext: MongoTestContext;
@@ -15,7 +20,7 @@ describe("Unmocked: Feed SSE Stream", () => {
   beforeAll(async () => {
     mongoContext = await initializeTestMongo();
     if (mongoContext.skipIfUnavailable) {
-      console.log('Skipping test suite - MongoDB unavailable');
+      console.log("Skipping test suite - MongoDB unavailable");
       return;
     }
 
@@ -38,8 +43,7 @@ describe("Unmocked: Feed SSE Stream", () => {
   it("should return 401 when userId is missing from streamFeed", async () => {
     skipIfMongoUnavailable(mongoContext);
 
-    const res = await request(app)
-      .get("/api/feed/stream");
+    const res = await request(app).get("/api/feed/stream");
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);

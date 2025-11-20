@@ -51,7 +51,8 @@ export const ErrorMessages = {
   ALREADY_FRIENDS: "Already friends with this user",
   CANNOT_SELF_REQUEST: "Cannot send a friend request to yourself",
   REQUEST_ALREADY_SENT: "Friend request already sent",
-  FRIEND_REQUEST_PENDING: "A request from this user is already pending. Please accept it.",
+  FRIEND_REQUEST_PENDING:
+    "A request from this user is already pending. Please accept it.",
   TOO_MANY_REQUESTS: "Too many requests. Please try again later.",
   FAILED_GET_FRIENDS: "Failed to get friends",
   FAILED_GET_REQUESTS: "Failed to get requests",
