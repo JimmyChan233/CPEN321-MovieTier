@@ -10,8 +10,6 @@ import {
   isValidBoolean,
   isValidSearchQuery,
   validateUserId,
-  getRequiredField,
-  getOptionalField,
 } from "../../../src/utils/validators";
 
 describe("validators", () => {
@@ -120,55 +118,6 @@ describe("validators", () => {
       expect(validateUserId(123)).toBe(false);
       expect(validateUserId(null)).toBe(false);
       expect(validateUserId(undefined)).toBe(false);
-    });
-  });
-
-  describe("getRequiredField", () => {
-    it("should return field value if present", () => {
-      const obj = { name: "test", age: 30 };
-      expect(getRequiredField<string>(obj, "name")).toBe("test");
-      expect(getRequiredField<number>(obj, "age")).toBe(30);
-    });
-
-    it("should return null if field missing or undefined", () => {
-      const obj = { name: "test" };
-      expect(getRequiredField<string>(obj, "missing")).toBeNull();
-      expect(getRequiredField<string>({}, "name")).toBeNull();
-      expect(getRequiredField<string>(null, "name")).toBeNull();
-      expect(getRequiredField<string>(undefined, "name")).toBeNull();
-    });
-
-    it("should return null if field is undefined", () => {
-      const obj = { name: undefined };
-      expect(getRequiredField<string>(obj, "name")).toBeNull();
-    });
-  });
-
-  describe("getOptionalField", () => {
-    it("should return field value if present", () => {
-      const obj = { name: "test", age: 30 };
-      expect(getOptionalField<string>(obj, "name", "default")).toBe("test");
-      expect(getOptionalField<number>(obj, "age", 0)).toBe(30);
-    });
-
-    it("should return default value if field missing", () => {
-      const obj = { name: "test" };
-      expect(getOptionalField<string>(obj, "missing", "default")).toBe(
-        "default"
-      );
-      expect(getOptionalField<number>({}, "age", 0)).toBe(0);
-    });
-
-    it("should return default value if input is null or undefined", () => {
-      expect(getOptionalField<string>(null, "name", "default")).toBe("default");
-      expect(getOptionalField<string>(undefined, "name", "default")).toBe(
-        "default"
-      );
-    });
-
-    it("should return default value if field is undefined", () => {
-      const obj = { name: undefined };
-      expect(getOptionalField<string>(obj, "name", "default")).toBe("default");
     });
   });
 });

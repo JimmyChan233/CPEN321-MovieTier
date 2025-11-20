@@ -58,49 +58,6 @@ export const validateUserId = (userId: unknown): userId is string => {
   return typeof userId === "string" && userId.length > 0;
 };
 
-/**
- * Extract and validate request body field
- * Safe: uses Object.prototype.hasOwnProperty.call to prevent prototype pollution attacks
- */
-export const getRequiredField = <T>(
-  obj: unknown,
-  field: string,
-): T | null => {
-  if (
-    obj &&
-    typeof obj === "object" &&
-    Object.prototype.hasOwnProperty.call(obj, field)
-  ) {
-    const fieldValue = (obj as Record<string, unknown>)[field];
-    if (fieldValue !== undefined) {
-      return fieldValue as T;
-    }
-  }
-  return null;
-};
-
-/**
- * Extract and validate optional field
- * Safe: uses Object.prototype.hasOwnProperty.call to prevent prototype pollution attacks
- */
-export const getOptionalField = <T>(
-  obj: unknown,
-  field: string,
-  defaultValue: T,
-): T => {
-  if (
-    obj &&
-    typeof obj === "object" &&
-    Object.prototype.hasOwnProperty.call(obj, field)
-  ) {
-    const fieldValue = (obj as Record<string, unknown>)[field];
-    if (fieldValue !== undefined) {
-      return fieldValue as T;
-    }
-  }
-  return defaultValue;
-};
-
 export default {
   isValidEmail,
   isValidMongoId,
@@ -109,6 +66,4 @@ export default {
   isValidBoolean,
   isValidSearchQuery,
   validateUserId,
-  getRequiredField,
-  getOptionalField,
 };
