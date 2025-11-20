@@ -14,7 +14,7 @@ import config from "../../../src/config";
 jest.mock("jsonwebtoken");
 const mockedJwt = jwt as jest.Mocked<typeof jwt>;
 
-describe("Auth Middleware", () => {
+describe("Unit: auth middleware", () => {
   let mockRequest: Partial<AuthRequest>;
   let mockResponse: Partial<Response>;
   let nextFunction: NextFunction = jest.fn();

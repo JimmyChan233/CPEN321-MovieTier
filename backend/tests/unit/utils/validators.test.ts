@@ -1,5 +1,10 @@
 /**
- * Unit tests for validators utility
+ * @unit Unit tests for validators utility
+ */
+
+/**
+ * Validators Utility Tests
+ * Tests for email, MongoDB ID, string, number, boolean, and search query validation functions
  */
 
 import {
@@ -12,7 +17,7 @@ import {
   validateUserId,
 } from "../../../src/utils/validators";
 
-describe("validators", () => {
+describe("Unit: validators", () => {
   describe("isValidEmail", () => {
     it("should return true for valid email", () => {
       expect(isValidEmail("test@example.com")).toBe(true);

@@ -1,5 +1,10 @@
 /**
- * Unit tests for responseHandler utility
+ * @unit Unit tests for responseHandler utility
+ */
+
+/**
+ * Response Handler Utility Tests
+ * Tests for sendSuccess and sendError utility functions
  */
 
 import { Response } from "express";
@@ -10,12 +15,13 @@ import {
   HttpStatus,
 } from "../../../src/utils/responseHandler";
 
-describe("responseHandler", () => {
+describe("Unit: responseHandler", () => {
   let res: Partial<Response>;
   let statusMock: jest.Mock;
   let jsonMock: jest.Mock;
 
   beforeEach(() => {
+    // Mock Express response chaining: res.status(200).json(data)
     jsonMock = jest.fn().mockReturnValue({});
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
     res = {

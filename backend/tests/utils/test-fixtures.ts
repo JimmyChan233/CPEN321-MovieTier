@@ -178,3 +178,136 @@ export function generateMockGoogleToken(): string {
 export function generateInvalidJWT(): string {
   return "invalid.jwt.token";
 }
+
+/**
+ * Mock Setup Helpers - Reduces code duplication across test files
+ */
+
+/**
+ * Setup Google Auth Library Mock
+ * Mocks the google-auth-library OAuth2Client for authentication tests
+ * @param options.shouldFail - If true, mock will throw error
+ * @param options.returnEmail - Email to return from verified token
+ */
+export function setupGoogleAuthMock(
+  options: { shouldFail?: boolean; returnEmail?: string } = {}
+) {
+  const mockVerifyIdToken = jest.fn();
+
+  if (options.shouldFail) {
+    mockVerifyIdToken.mockRejectedValue(new Error("Invalid token"));
+  } else {
+    mockVerifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        email: options.returnEmail || "test@gmail.com",
+        email_verified: true,
+        name: "Test User",
+        picture: "https://example.com/pic.jpg",
+      }),
+    });
+  }
+
+  jest.mock("google-auth-library", () => ({
+    OAuth2Client: jest.fn().mockImplementation(() => ({
+      verifyIdToken: mockVerifyIdToken,
+    })),
+  }));
+
+  return mockVerifyIdToken;
+}
+
+/**
+ * Setup TMDB Client Mock
+ * Mocks the TMDB API client for movie data tests
+ * @param options.shouldFail - If true, returns empty results
+ */
+export function setupTmdbMock(options: { shouldFail?: boolean } = {}) {
+  const mockGet = jest.fn();
+
+  if (!options.shouldFail) {
+    mockGet.mockResolvedValue({
+      data: {
+        results: [
+          {
+            id: 27205,
+            title: "Inception",
+            overview: "A thief who steals corporate secrets...",
+            poster_path: "/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
+            release_date: "2010-07-15",
+            vote_average: 8.4,
+          },
+        ],
+      },
+    });
+  } else {
+    mockGet.mockRejectedValue(new Error("TMDB API Error"));
+  }
+
+  jest.mock("../../../src/services/tmdb/tmdbClient", () => ({
+    getTmdbClient: jest.fn(() => ({
+      get: mockGet,
+    })),
+  }));
+
+  return mockGet;
+}
+
+/**
+ * Setup SSE Service Mock
+ * Mocks the Server-Sent Events service for real-time notifications
+ */
+export function setupSSEServiceMock() {
+  const addClientMock = jest.fn();
+  const removeClientMock = jest.fn();
+  const sendMock = jest.fn();
+
+  jest.mock("../../../src/services/sse/sseService", () => ({
+    sseService: {
+      addClient: addClientMock,
+      removeClient: removeClientMock,
+      send: sendMock,
+    },
+  }));
+
+  return { addClientMock, removeClientMock, sendMock };
+}
+
+/**
+ * Setup Notification Service Mock
+ * Mocks Firebase Cloud Messaging notifications
+ */
+export function setupNotificationServiceMock() {
+  const sendMock = jest.fn().mockResolvedValue({ success: true });
+
+  jest.mock("../../../src/services/notification.service", () => ({
+    notificationService: {
+      sendFriendRequestNotification: sendMock,
+      sendMovieRankedNotification: sendMock,
+      sendCommentNotification: sendMock,
+    },
+  }));
+
+  return sendMock;
+}
+
+/**
+ * Setup Authentication Middleware Mock
+ * Mocks JWT verification middleware for route tests
+ */
+export function setupAuthMiddlewareMock(
+  options: { shouldFail?: boolean; userId?: string } = {}
+) {
+  const authenticateMock = jest.fn((req: any, _res: any, next: any) => {
+    if (options.shouldFail) {
+      return next(new Error("Unauthorized"));
+    }
+    req.userId = options.userId || "test-user-123";
+    next();
+  });
+
+  jest.mock("../../../src/middleware/auth", () => ({
+    authenticate: authenticateMock,
+  }));
+
+  return authenticateMock;
+}

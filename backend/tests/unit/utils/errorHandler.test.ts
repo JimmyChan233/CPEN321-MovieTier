@@ -2,6 +2,11 @@
  * @unit Unit tests for error handling and middleware
  */
 
+/**
+ * Error Handler Middleware Tests
+ * Tests for global error handler middleware
+ */
+
 import { Request, Response, NextFunction } from "express";
 import { errorHandler } from "../../../src/middleware/errorHandler";
 import { logger } from "../../../src/utils/logger";
@@ -13,7 +18,7 @@ jest.mock("../../../src/utils/logger", () => ({
   },
 }));
 
-describe("errorHandler middleware", () => {
+describe("Unit: errorHandler middleware", () => {
   let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
   let mockNext: NextFunction;
@@ -56,6 +61,7 @@ describe("errorHandler middleware", () => {
 
   describe("Stack trace handling", () => {
     it("should include stack trace in development mode", () => {
+      // Stack traces should only be exposed in development, never in production
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = "development";
 
@@ -78,8 +84,4 @@ describe("errorHandler middleware", () => {
       expect(jsonMock).toHaveBeenCalled();
     });
   });
-
-  describe("Response format", () => {});
-
-  describe("Edge cases", () => {});
 });
