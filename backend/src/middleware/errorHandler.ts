@@ -2,14 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 
 // Error handler requires exactly 4 params (err, req, res, next) for Express to recognize it as error handler
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ) => {
-  // next is required by Express but not used in error handler logic
-  const _ = next;
 
   logger.error("Unhandled API error", {
     method: req.method,
