@@ -2,13 +2,15 @@ import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 
 // Error handler requires exactly 4 params (err, req, res, next) for Express to recognize it as error handler
-// The _next parameter is intentionally unused but required by Express middleware signature
 export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  _next: NextFunction,
+  next: NextFunction,
 ) => {
+  // Ensure next is available in scope (required by Express error handler signature)
+  void next;
+
   logger.error("Unhandled API error", {
     method: req.method,
     url: req.originalUrl,
