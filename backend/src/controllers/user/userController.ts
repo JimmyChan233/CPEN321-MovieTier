@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../../middleware/auth";
+import { AuthRequest } from "../../types/middleware.types";
 import User from "../../models/user/User";
 import mongoose from "mongoose";
 import WatchlistItem from "../../models/watch/WatchlistItem";

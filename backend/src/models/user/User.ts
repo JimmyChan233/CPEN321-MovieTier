@@ -1,15 +1,5 @@
-import mongoose, { Document, Schema } from "mongoose";
-
-export interface IUser extends Document {
-  email: string;
-  name: string;
-  googleId: string;
-  profileImageUrl?: string;
-  googlePictureUrl?: string;
-  fcmToken?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import mongoose, { Schema } from "mongoose";
+import { IUser } from "../../types/user.types";
 
 const UserSchema: Schema = new Schema(
   {

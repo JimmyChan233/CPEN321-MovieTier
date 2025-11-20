@@ -1,6 +1,6 @@
 import { Response } from "express";
 import mongoose from "mongoose";
-import { AuthRequest } from "../../middleware/auth";
+import { AuthRequest } from "../../types/middleware.types";
 import { Friendship, FriendRequest } from "../../models/friend/Friend";
 import User from "../../models/user/User";
 import { sseService } from "../../services/sse/sseService";

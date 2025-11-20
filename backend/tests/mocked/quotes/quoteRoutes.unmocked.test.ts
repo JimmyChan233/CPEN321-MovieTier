@@ -1,10 +1,10 @@
 /**
- * @unmocked Integration tests for quote feature
- * Tests with real MongoDB database
+ * @mocked Mocked tests for quote feature
+ * Tests with mocked external services (TMDB) and real MongoDB
  */
 
 /**
- * Quote Routes Tests - Unmocked
+ * Quote Routes Tests - Mocked
  * Tests for movie tagline fetching endpoint
  */
 
@@ -12,7 +12,8 @@ import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
-import quoteRoutes from "../../../src/routes/quoteRoutes";
+import movieRoutes from "../../../src/routes/movieRoutes";
+import { authenticate } from "../../../src/middleware/auth";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
@@ -38,7 +39,8 @@ describe("Quote Routes - Unmocked Tests", () => {
 
     app = express();
     app.use(express.json());
-    app.use("/api/quotes", quoteRoutes);
+    app.use(authenticate);
+    app.use("/api/movies", movieRoutes);
   });
 
   afterAll(async () => {
@@ -58,7 +60,7 @@ describe("Quote Routes - Unmocked Tests", () => {
       mockFetchMovieTagline.mockRejectedValueOnce(new Error("TMDB API error"));
 
       const res = await request(app)
-        .get("/api/quotes?title=Test Movie")
+        .get("/quote?title=Test Movie")
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);
@@ -72,7 +74,7 @@ describe("Quote Routes - Unmocked Tests", () => {
       mockFetchMovieTagline.mockResolvedValueOnce("Tagline");
 
       const res = await request(app)
-        .get("/api/quotes?title=Movie&year=")
+        .get("/quote?title=Movie&year=")
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);

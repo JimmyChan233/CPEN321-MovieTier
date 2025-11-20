@@ -1,13 +1,5 @@
-import mongoose, { Document, Schema } from "mongoose";
-
-export interface IWatchlistItem extends Document {
-  userId: mongoose.Types.ObjectId;
-  movieId: number;
-  title: string;
-  posterPath?: string;
-  overview?: string;
-  createdAt: Date;
-}
+import mongoose, { Schema } from "mongoose";
+import { IWatchlistItem } from "../../types/movie.types";
 
 const WatchlistItemSchema: Schema = new Schema(
   {

@@ -1,6 +1,6 @@
 /**
  * @mocked Mocked tests for authentication API
- * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
+ * Tests with mocked external services (Google OAuth, JWT) and real MongoDB
  */
 
 /**
@@ -11,60 +11,355 @@
  */
 
 import request from "supertest";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import authRoutes from "../../../src/routes/authRoutes";
 import User from "../../../src/models/user/User";
+import { Friendship, FriendRequest } from "../../../src/models/friend/Friend";
 import { AuthService } from "../../../src/services/auth/authService";
 import { generateTestJWT } from "../../utils/test-fixtures";
 
+// Mock the Google OAuth verification with different tokens for different scenarios
+const mockTokenMap: Record<
+  string,
+  { email: string; name: string; googleId: string; picture?: string }
+> = {
+  "mock-valid-token": {
+    email: "test@example.com",
+    name: "Test User",
+    googleId: "google-123",
+    picture: "https://example.com/image.jpg",
+  },
+  "mock-nonexistent-token": {
+    email: "nonexistent@example.com",
+    name: "New User",
+    googleId: "google-999",
+    picture: undefined,
+  },
+  "mock-new-user-token": {
+    email: "newuser@example.com",
+    name: "New User",
+    googleId: "google-new-123",
+    picture: "https://example.com/new.jpg",
+  },
+  "mock-existing-user-token": {
+    email: "existing@example.com",
+    name: "Different User",
+    googleId: "google-different",
+    picture: undefined,
+  },
+};
+
+jest
+  .spyOn(AuthService.prototype, "verifyGoogleToken")
+  .mockImplementation(async (idToken: string) => {
+    const mockData = mockTokenMap[idToken];
+    if (mockData) {
+      return mockData;
+    }
+    throw new Error("Invalid Google token");
+  });
+
 // Interface POST /auth/signin
 describe("Mocked: POST /auth/signin", () => {
+  let mongoServer: MongoMemoryServer;
   let app: express.Application;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
     app = express();
     app.use(express.json());
     app.use("/api/auth", authRoutes);
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
   });
 
-  it("should successfully sign in with valid credentials", async () => {
-    const mockUser = {
-      _id: "user-123",
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  beforeEach(async () => {
+    await User.deleteMany({});
+  });
+
+  it("should successfully sign in existing user with valid token", async () => {
+    // Create user in database first
+    await User.create({
       email: "test@example.com",
       name: "Test User",
-      profileImageUrl: "https://example.com/pic.jpg",
-    };
-
-    jest.spyOn(AuthService.prototype, "signIn").mockResolvedValueOnce({
-      user: mockUser as any,
-      token: "mock-jwt-token",
+      googleId: "google-123",
     });
 
-    const res = await request(app).post("/api/auth/signin").send({
-      idToken: "valid-google-token",
-    });
+    const res = await request(app)
+      .post("/api/auth/signin")
+      .send({ idToken: "mock-valid-token" });
 
     expect(res.status).toStrictEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.user).toBeDefined();
-    expect(res.body.token).toBe("mock-jwt-token");
     expect(res.body.user.email).toBe("test@example.com");
+    expect(res.body.user.name).toBe("Test User");
+    expect(res.body.token).toBeDefined();
   });
 
-  it("should handle errors without a message property during sign-in", async () => {
-    jest.spyOn(AuthService.prototype, "signIn").mockRejectedValueOnce({});
-
-    const res = await request(app).post("/api/auth/signin").send({
-      idToken: "valid-google-token",
-    });
+  it("should reject signin for non-existent user", async () => {
+    const res = await request(app)
+      .post("/api/auth/signin")
+      .send({ idToken: "mock-nonexistent-token" });
 
     expect(res.status).toStrictEqual(400);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toBe("Unable to sign in. Please try again");
+    expect(res.body.message).toMatch(/User not found/);
+  });
+
+  it("should reject signin with invalid token", async () => {
+    const res = await request(app)
+      .post("/api/auth/signin")
+      .send({ idToken: "invalid-token" });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/Invalid Google token/);
+  });
+
+  it("should reject signin without idToken", async () => {
+    const res = await request(app)
+      .post("/api/auth/signin")
+      .send({
+        email: "test@example.com",
+        name: "Test User"
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/idToken|required/i);
+  });
+});
+
+// Interface POST /auth/signup
+describe("Mocked: POST /auth/signup", () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use("/api/auth", authRoutes);
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  beforeEach(async () => {
+    await User.deleteMany({});
+  });
+
+  it("should successfully sign up new user with valid token", async () => {
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ idToken: "mock-new-user-token" });
+
+    expect(res.status).toStrictEqual(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.email).toBe("newuser@example.com");
+    expect(res.body.user.name).toBe("New User");
+    expect(res.body.token).toBeDefined();
+
+    // Verify user was saved to database
+    const savedUser = await User.findOne({ email: "newuser@example.com" });
+    expect(savedUser).toBeDefined();
+    expect(savedUser?.googleId).toBe("google-new-123");
+  });
+
+  it("should reject signup for existing user", async () => {
+    // Create user first
+    await User.create({
+      email: "existing@example.com",
+      name: "Existing User",
+      googleId: "google-existing"
+    });
+
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({ idToken: "mock-existing-user-token" });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/User already exists/);
+  });
+
+  it("should reject signup without idToken", async () => {
+    const res = await request(app)
+      .post("/api/auth/signup")
+      .send({
+        email: "newuser@example.com",
+        name: "New User"
+      });
+
+    expect(res.status).toStrictEqual(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/idToken|required/i);
+  });
+});
+
+// Interface POST /auth/signout
+describe("Mocked: POST /auth/signout", () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user: any;
+  let token: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use("/api/auth", authRoutes);
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  beforeEach(async () => {
+    await User.deleteMany({});
+    user = await User.create({
+      email: "test@example.com",
+      name: "Test User",
+      googleId: "google-123"
+    });
+    token = generateTestJWT(user._id.toString());
+  });
+
+  it("should successfully sign out with valid token", async () => {
+    const res = await request(app)
+      .post("/api/auth/signout")
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toMatch(/Signed out successfully/i);
+  });
+
+  it("should reject signout with invalid token", async () => {
+    const res = await request(app)
+      .post("/api/auth/signout")
+      .set("Authorization", "Bearer invalid.token.here")
+      .send({});
+
+    expect(res.status).toStrictEqual(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/invalid|expired/i);
+  });
+
+  it("should reject signout without token", async () => {
+    const res = await request(app)
+      .post("/api/auth/signout")
+      .send({});
+
+    expect(res.status).toStrictEqual(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/No authentication token/i);
+  });
+});
+
+// Interface DELETE /auth/account
+describe("Mocked: DELETE /auth/account", () => {
+  let mongoServer: MongoMemoryServer;
+  let app: express.Application;
+  let user: any;
+  let token: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
+    app = express();
+    app.use(express.json());
+    app.use("/api/auth", authRoutes);
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  beforeEach(async () => {
+    await User.deleteMany({});
+    await Friendship.deleteMany({});
+    await FriendRequest.deleteMany({});
+    
+    user = await User.create({
+      email: "test@example.com",
+      name: "Test User",
+      googleId: "google-123"
+    });
+    token = generateTestJWT(user._id.toString());
+  });
+
+  it("should successfully delete account with valid token", async () => {
+    const res = await request(app)
+      .delete("/api/auth/account")
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+
+    expect(res.status).toStrictEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toMatch(/Account deleted successfully/i);
+
+    // Verify user was deleted from database
+    const deletedUser = await User.findById(user._id);
+    expect(deletedUser).toBeNull();
+  });
+
+  it("should reject account deletion with invalid token", async () => {
+    const res = await request(app)
+      .delete("/api/auth/account")
+      .set("Authorization", "Bearer invalid.token.here")
+      .send({});
+
+    expect(res.status).toStrictEqual(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/invalid|expired/i);
+
+    // Verify user still exists
+    const stillExistingUser = await User.findById(user._id);
+    expect(stillExistingUser).toBeDefined();
+  });
+
+  it("should reject account deletion without token", async () => {
+    const res = await request(app)
+      .delete("/api/auth/account")
+      .send({});
+
+    expect(res.status).toStrictEqual(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/No authentication token/i);
   });
 });
 

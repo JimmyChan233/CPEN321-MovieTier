@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../../middleware/auth";
+import { AuthRequest } from "../../types/middleware.types";
 import FeedActivity from "../../models/feed/FeedActivity";
 import RankedMovie from "../../models/movie/RankedMovie";
 import { getTmdbClient } from "../../services/tmdb/tmdbClient";

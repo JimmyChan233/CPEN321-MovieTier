@@ -5,12 +5,12 @@
 
 import request from "supertest";
 import jwt from "jsonwebtoken";
-import RankedMovie from "../../../../../src/models/movie/RankedMovie";
-import { getTmdbClient } from "../../../../../src/services/tmdb/tmdbClient";
+import RankedMovie from "../../../../src/models/movie/RankedMovie";
+import { getTmdbClient } from "../../../../src/services/tmdb/tmdbClient";
 import express from "express";
 
-jest.mock("../../../../../src/models/movie/RankedMovie");
-jest.mock("../../../../../src/services/tmdb/tmdbClient");
+jest.mock("../../../../src/models/movie/RankedMovie");
+jest.mock("../../../../src/services/tmdb/tmdbClient");
 
 describe("Rerank Controller - Null Fallbacks", () => {
   let app: express.Application;
@@ -26,7 +26,7 @@ describe("Rerank Controller - Null Fallbacks", () => {
     token = jwt.sign({ userId }, jwtSecret, { expiresIn: "1h" });
 
     const movieRoutes =
-      require("../../../../../src/routes/movieRoutes").default;
+      require("../../../../src/routes/movieRoutes").default;
     app.use("/movies", movieRoutes);
 
     jest.clearAllMocks();

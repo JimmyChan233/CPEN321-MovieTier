@@ -3,9 +3,9 @@
  * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
  */
 
-import { startRerank } from "../../src/controllers/rerankController";
-import RankedMovieModel from "../../src/models/movie/RankedMovie";
-import { startSession } from "../../src/utils/comparisonSession";
+import { startRerank } from "../../../src/controllers/movie/movieController";
+import RankedMovieModel from "../../../src/models/movie/RankedMovie";
+import { startSession } from "../../../src/utils/comparisonSession";
 import mongoose from "mongoose";
 
 jest.mock("../../../src/models/movie/RankedMovie");

@@ -4,7 +4,8 @@
 
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { authenticate, AuthRequest } from "../../../src/middleware/auth";
+import { authenticate } from "../../../src/middleware/auth";
+import { AuthRequest } from "../../../src/types/middleware.types";
 import config from "../../../src/config";
 
 // Mock the jsonwebtoken library

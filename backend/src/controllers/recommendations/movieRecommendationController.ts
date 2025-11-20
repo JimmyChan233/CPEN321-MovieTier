@@ -4,7 +4,7 @@ import RankedMovie from "../../models/movie/RankedMovie";
 import { getTmdbClient } from "../../services/tmdb/tmdbClient";
 import { logger } from "../../utils/logger";
 import { AxiosInstance } from "axios";
-import { AuthRequest } from "../../middleware/auth";
+import { AuthRequest } from "../../types/middleware.types";
 import crypto from "crypto";
 
 // Cryptographically secure random number generator

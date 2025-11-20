@@ -1,6 +1,6 @@
 /**
- * @unmocked Integration tests for quote feature
- * Tests with real MongoDB database
+ * @mocked Mocked tests for quote feature
+ * Tests with mocked external services (TMDB) and real MongoDB
  */
 
 /**
@@ -12,7 +12,7 @@ import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
-import quoteRoutes from "../../../src/routes/quoteRoutes";
+import movieRoutes from "../../../src/routes/movieRoutes";
 import User from "../../../src/models/user/User";
 import { generateTestJWT, mockUsers } from "../../utils/test-fixtures";
 
@@ -28,7 +28,7 @@ describe("Unmocked: GET /quotes", () => {
 
     app = express();
     app.use(express.json());
-    app.use("/api/quotes", quoteRoutes);
+    app.use("/api/movies", movieRoutes);
 
     user = await User.create(mockUsers.validUser);
     token = generateTestJWT(user._id.toString());
@@ -45,7 +45,7 @@ describe("Unmocked: GET /quotes", () => {
   // Expected output: Quote object or fallback quote
   it("should return quote for movie", async () => {
     const res = await request(app)
-      .get("/api/quotes")
+      .get("/quote")
       .set("Authorization", `Bearer ${token}`)
       .query({ title: "Inception" });
 
@@ -61,7 +61,7 @@ describe("Unmocked: GET /quotes", () => {
   // Expected output: Validation error
   it("should reject quote request without title", async () => {
     const res = await request(app)
-      .get("/api/quotes")
+      .get("/quote")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toStrictEqual(400);

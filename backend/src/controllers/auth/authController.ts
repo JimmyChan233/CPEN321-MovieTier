@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthService } from "../../services/auth/authService";
-import { AuthRequest } from "../../middleware/auth";
+import { AuthRequest } from "../../types/middleware.types";
 import User from "../../models/user/User";
 import { Friendship, FriendRequest } from "../../models/friend/Friend";
 

@@ -1,10 +1,5 @@
-import mongoose, { Document, Schema } from "mongoose";
-
-export interface ILike extends Document {
-  userId: mongoose.Types.ObjectId;
-  activityId: mongoose.Types.ObjectId;
-  createdAt: Date;
-}
+import mongoose, { Schema } from "mongoose";
+import { ILike } from "../../types/feed.types";
 
 const LikeSchema: Schema = new Schema(
   {

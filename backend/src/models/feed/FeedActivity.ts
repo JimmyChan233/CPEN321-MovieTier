@@ -1,17 +1,5 @@
-import mongoose, { Document, Schema } from "mongoose";
-
-export interface IFeedActivity extends Document {
-  userId: mongoose.Types.ObjectId;
-  activityType: "ranked_movie";
-  movieId: number;
-  movieTitle: string;
-  posterPath?: string;
-  overview?: string;
-  releaseDate?: string;
-  voteAverage?: number;
-  rank?: number;
-  createdAt: Date;
-}
+import mongoose, { Schema } from "mongoose";
+import { IFeedActivity } from "../../types/feed.types";
 
 const FeedActivitySchema: Schema = new Schema(
   {

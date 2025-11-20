@@ -1,14 +1,5 @@
-import mongoose, { Document, Schema } from "mongoose";
-
-export interface IRankedMovie extends Document {
-  userId: mongoose.Types.ObjectId;
-  movieId: number;
-  title: string;
-  posterPath?: string;
-  rank: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import mongoose, { Schema } from "mongoose";
+import { IRankedMovie } from "../../types/movie.types";
 
 const RankedMovieSchema: Schema = new Schema(
   {

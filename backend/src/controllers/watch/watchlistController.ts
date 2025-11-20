@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import WatchlistItem from "../../models/watch/WatchlistItem";
 import { getTmdbClient } from "../../services/tmdb/tmdbClient";
-import { AuthRequest } from "../../middleware/auth";
+import { AuthRequest } from "../../types/middleware.types";
 
 export const getWatchlist = async (req: Request, res: Response) => {
   try {

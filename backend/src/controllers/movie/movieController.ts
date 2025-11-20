@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import RankedMovieModel, { IRankedMovie } from "../../models/movie/RankedMovie";
+import RankedMovieModel from "../../models/movie/RankedMovie";
+import { IRankedMovie } from "../../types/movie.types";
 import FeedActivity from "../../models/feed/FeedActivity";
 import { Friendship } from "../../models/friend/Friend";
 import WatchlistItem from "../../models/watch/WatchlistItem";
@@ -13,7 +14,7 @@ import {
   endSession,
 } from "../../utils/comparisonSession";
 import notificationService from "../../services/notification.service";
-import { AuthRequest } from "../../middleware/auth";
+import { AuthRequest } from "../../types/middleware.types";
 import { logger } from "../../utils/logger";
 import { getTmdbClient } from "../../services/tmdb/tmdbClient";
 import { fetchMovieTagline } from "../../services/tmdb/tmdbTaglineService";
