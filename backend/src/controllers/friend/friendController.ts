@@ -5,6 +5,8 @@ import { Friendship, FriendRequest } from "../../models/friend/Friend";
 import User from "../../models/user/User";
 import { sseService } from "../../services/sse/sseService";
 import notificationService from "../../services/notification.service";
+import { sendSuccess, sendError, ErrorMessages, HttpStatus } from "../../utils/responseHandler";
+import { isValidEmail, validateUserId } from "../../utils/validators";
 
 // Simple in-memory rate limiter: max 5 requests/minute per user
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -29,9 +31,9 @@ export const getFriends = async (req: AuthRequest, res: Response) => {
     const friends = friendships.map(
       (f) => (f as unknown as { friendId: unknown }).friendId,
     );
-    res.json({ success: true, data: friends });
+    return sendSuccess(res, friends);
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to get friends" });
+    return sendError(res, ErrorMessages.FAILED_GET_FRIENDS, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -41,9 +43,9 @@ export const getFriendRequests = async (req: AuthRequest, res: Response) => {
       receiverId: req.userId,
       status: "pending",
     });
-    res.json({ success: true, data: requests });
+    return sendSuccess(res, requests);
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to get requests" });
+    return sendError(res, ErrorMessages.FAILED_GET_REQUESTS, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -72,9 +74,9 @@ export const getFriendRequestsDetailed = async (
         createdAt: request.createdAt,
       };
     });
-    res.json({ success: true, data });
+    return sendSuccess(res, data);
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to get requests" });
+    return sendError(res, ErrorMessages.FAILED_GET_REQUESTS, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -84,11 +86,9 @@ export const getOutgoingRequests = async (req: AuthRequest, res: Response) => {
       senderId: req.userId,
       status: "pending",
     });
-    res.json({ success: true, data: requests });
+    return sendSuccess(res, requests);
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to get outgoing requests" });
+    return sendError(res, ErrorMessages.FAILED_GET_OUTGOING, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -117,11 +117,9 @@ export const getOutgoingRequestsDetailed = async (
         createdAt: request.createdAt,
       };
     });
-    res.json({ success: true, data });
+    return sendSuccess(res, data);
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to get outgoing requests" });
+    return sendError(res, ErrorMessages.FAILED_GET_OUTGOING, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -129,44 +127,27 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
   try {
     const { email } = req.body as { email?: string };
 
-    if (!email || typeof email !== "string") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email is required" });
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid email format" });
+    if (!isValidEmail(email)) {
+      return sendError(res, !email ? ErrorMessages.EMAIL_REQUIRED : ErrorMessages.INVALID_EMAIL, HttpStatus.BAD_REQUEST);
     }
 
     // Rate limit per-sender
     if (!req.userId || !checkRateLimit(req.userId)) {
-      return res.status(429).json({
-        success: false,
-        message: "Too many requests. Please try again later.",
-      });
+      return sendError(res, ErrorMessages.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     // Prevent sending a request to self
     const self = await User.findById(req.userId);
     if (!self) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return sendError(res, ErrorMessages.UNAUTHORIZED, HttpStatus.UNAUTHORIZED);
     }
     if (self.email === email) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot send a friend request to yourself",
-      });
+      return sendError(res, ErrorMessages.CANNOT_SELF_REQUEST, HttpStatus.BAD_REQUEST);
     }
 
     const friend = await User.findOne({ email });
-
     if (!friend) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return sendError(res, ErrorMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     // Check if already friends
@@ -175,9 +156,7 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       friendId: friend._id,
     });
     if (existingFriendship) {
-      return res
-        .status(409)
-        .json({ success: false, message: "Already friends with this user" });
+      return sendError(res, ErrorMessages.ALREADY_FRIENDS, HttpStatus.CONFLICT);
     }
 
     // Check if a pending request already exists from current user to target
@@ -187,9 +166,7 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       status: "pending",
     });
     if (existingPending) {
-      return res
-        .status(409)
-        .json({ success: false, message: "Friend request already sent" });
+      return sendError(res, ErrorMessages.REQUEST_ALREADY_SENT, HttpStatus.CONFLICT);
     }
 
     // Check if reverse pending request exists
@@ -199,11 +176,7 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       status: "pending",
     });
     if (reversePending) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "A request from this user is already pending. Please accept it.",
-      });
+      return sendError(res, ErrorMessages.FRIEND_REQUEST_PENDING, HttpStatus.BAD_REQUEST);
     }
 
     const request = new FriendRequest({
@@ -231,12 +204,9 @@ export const sendFriendRequest = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    res.status(201).json({ success: true, data: request });
+    return sendSuccess(res, request, HttpStatus.CREATED);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Unable to send friend request. Please try again",
-    });
+    return sendError(res, ErrorMessages.FAILED_SEND_REQUEST, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -251,29 +221,20 @@ export const respondToFriendRequest = async (
     };
 
     if (!requestId || typeof accept !== "boolean") {
-      return res
-        .status(400)
-        .json({ success: false, message: "requestId and accept are required" });
+      return sendError(res, "requestId and accept are required", HttpStatus.BAD_REQUEST);
     }
 
     const request = await FriendRequest.findById(requestId);
     if (!request) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Friend request not found" });
+      return sendError(res, "Friend request not found", HttpStatus.NOT_FOUND);
     }
 
     if (String(request.receiverId) !== String(req.userId)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to respond to this request",
-      });
+      return sendError(res, "Not authorized to respond to this request", HttpStatus.FORBIDDEN);
     }
 
     if (request.status !== "pending") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Request already handled" });
+      return sendError(res, "Request already handled", HttpStatus.BAD_REQUEST);
     }
 
     if (accept) {
@@ -344,11 +305,9 @@ export const respondToFriendRequest = async (
       });
     }
 
-    res.json({ success: true, message: "Friend request handled" });
+    return sendSuccess(res, { message: "Friend request handled" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to respond to request" });
+    return sendError(res, "Failed to respond to request", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -358,16 +317,12 @@ export const removeFriend = async (req: AuthRequest, res: Response) => {
 
     // Validate friendId format
     if (!mongoose.Types.ObjectId.isValid(friendId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid friendId format" });
+      return sendError(res, "Invalid friendId format", HttpStatus.BAD_REQUEST);
     }
 
     // Check if user is trying to remove themselves
     if (String(req.userId) === String(friendId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Cannot remove yourself" });
+      return sendError(res, "Cannot remove yourself", HttpStatus.BAD_REQUEST);
     }
 
     // Convert to ObjectIds for proper matching
@@ -382,20 +337,16 @@ export const removeFriend = async (req: AuthRequest, res: Response) => {
     });
 
     if (result.deletedCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Friendship not found" });
+      return sendError(res, "Friendship not found", HttpStatus.NOT_FOUND);
     }
 
     // Notify both users of removal
     sseService.send(String(req.userId), "friend_removed", { userId: friendId });
     sseService.send(String(friendId), "friend_removed", { userId: req.userId });
 
-    res.json({ success: true, message: "Friend removed" });
+    return sendSuccess(res, { message: "Friend removed" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to remove friend" });
+    return sendError(res, ErrorMessages.FAILED_REMOVE_FRIEND, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -429,20 +380,13 @@ export const cancelFriendRequest = async (req: AuthRequest, res: Response) => {
     const { requestId } = req.params;
     const request = await FriendRequest.findById(requestId);
     if (!request) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Friend request not found" });
+      return sendError(res, "Friend request not found", HttpStatus.NOT_FOUND);
     }
     if (String(request.senderId) !== String(req.userId)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to cancel this request",
-      });
+      return sendError(res, "Not authorized to cancel this request", HttpStatus.FORBIDDEN);
     }
     if (request.status !== "pending") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Request is not pending" });
+      return sendError(res, "Request is not pending", HttpStatus.BAD_REQUEST);
     }
     request.status = "rejected";
     await request.save();
@@ -452,11 +396,9 @@ export const cancelFriendRequest = async (req: AuthRequest, res: Response) => {
       userId: request.senderId,
     });
 
-    res.json({ success: true, message: "Friend request canceled" });
+    return sendSuccess(res, { message: "Friend request canceled" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to cancel friend request" });
+    return sendError(res, "Failed to cancel friend request", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
