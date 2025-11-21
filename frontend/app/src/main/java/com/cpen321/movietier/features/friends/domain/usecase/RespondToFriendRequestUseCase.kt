@@ -2,7 +2,7 @@ package com.cpen321.movietier.features.friends.domain.usecase
 
 import android.util.Log
 import com.cpen321.movietier.features.friends.data.repository.FriendRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import javax.inject.Inject
 
 /**

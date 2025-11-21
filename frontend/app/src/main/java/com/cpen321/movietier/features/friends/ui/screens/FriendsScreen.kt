@@ -21,9 +21,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.cpen321.movietier.ui.friends.components.AddFriendDialog
-import com.cpen321.movietier.ui.friends.components.FriendsMainContent
-import com.cpen321.movietier.ui.friends.components.FriendsTopBar
+import com.cpen321.movietier.features.friends.ui.components.AddFriendDialog
+import com.cpen321.movietier.features.friends.ui.components.FriendsMainContent
+import com.cpen321.movietier.features.friends.ui.components.FriendsTopBar
 import com.cpen321.movietier.shared.components.MovieTierTheme
 import com.cpen321.movietier.features.friends.ui.viewmodel.FriendViewModel
 import androidx.compose.ui.tooling.preview.Preview

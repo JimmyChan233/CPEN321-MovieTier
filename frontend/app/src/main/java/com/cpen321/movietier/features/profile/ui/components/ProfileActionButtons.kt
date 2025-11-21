@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.cpen321.movietier.ui.viewmodels.AuthUiState
+import com.cpen321.movietier.features.auth.ui.state.AuthUiState
 
 /**
  * Sign out and delete account action buttons.

@@ -3,6 +3,7 @@ package com.cpen321.movietier.features.feed.data.repository
 import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.shared.models.FeedActivity
 import com.cpen321.movietier.shared.models.FeedComment
+import com.cpen321.movietier.shared.repository.Result
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

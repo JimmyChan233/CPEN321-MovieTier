@@ -27,18 +27,18 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.shared.components.LoadingState
 import com.cpen321.movietier.shared.navigation.NavRoutes
-import com.cpen321.movietier.ui.profile.components.DeleteAccountDialog
-import com.cpen321.movietier.ui.profile.components.ProfileActionButtons
-import com.cpen321.movietier.ui.profile.components.ProfileEditButton
-import com.cpen321.movietier.ui.profile.components.ProfileHeader
-import com.cpen321.movietier.ui.profile.components.ThemeSelectorCard
-import com.cpen321.movietier.ui.profile.components.WatchlistPreviewSection
+import com.cpen321.movietier.features.profile.ui.components.DeleteAccountDialog
+import com.cpen321.movietier.features.profile.ui.components.ProfileActionButtons
+import com.cpen321.movietier.features.profile.ui.components.ProfileEditButton
+import com.cpen321.movietier.features.profile.ui.components.ProfileHeader
+import com.cpen321.movietier.features.profile.ui.components.ThemeSelectorCard
+import com.cpen321.movietier.features.profile.ui.components.WatchlistPreviewSection
 import com.cpen321.movietier.shared.components.MovieTierTheme
 import com.cpen321.movietier.shared.components.ThemeMode
-import com.cpen321.movietier.ui.viewmodels.AuthUiState
-import com.cpen321.movietier.ui.viewmodels.AuthViewModel
+import com.cpen321.movietier.features.auth.ui.state.AuthUiState
+import com.cpen321.movietier.features.auth.ui.viewmodel.AuthViewModel
 import com.cpen321.movietier.shared.components.ThemeViewModel
-import com.cpen321.movietier.ui.viewmodels.WatchlistViewModel
+import com.cpen321.movietier.features.watchlist.ui.viewmodel.WatchlistViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

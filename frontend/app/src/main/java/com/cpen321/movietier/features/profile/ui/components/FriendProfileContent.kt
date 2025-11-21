@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.ui.viewmodels.FriendProfileUi
+import com.cpen321.movietier.features.profile.ui.viewmodel.FriendProfileUi
 
 /**
  * Main content area for friend profile with tabs for rankings and watchlist.

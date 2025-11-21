@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.shared.models.WatchlistItem
 import com.cpen321.movietier.shared.models.RankedMovie
 import com.cpen321.movietier.shared.models.User
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.watchlist.data.repository.WatchlistRepository
 import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.features.ranking.data.repository.MovieRepository

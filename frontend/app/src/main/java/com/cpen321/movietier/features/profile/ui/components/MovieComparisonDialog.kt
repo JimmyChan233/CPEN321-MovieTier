@@ -10,8 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.cpen321.movietier.ui.viewmodels.CompareUiState
-import com.cpen321.movietier.ui.viewmodels.RankingViewModel
+import com.cpen321.movietier.features.ranking.ui.state.CompareUiState
+import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel
 
 /**
  * Dialog for comparing two movies and choosing preference.

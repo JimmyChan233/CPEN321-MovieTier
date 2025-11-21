@@ -20,7 +20,7 @@ import androidx.navigation.NavController
 import com.cpen321.movietier.shared.models.Friend
 import com.cpen321.movietier.shared.components.EmptyState
 import com.cpen321.movietier.shared.components.LoadingState
-import com.cpen321.movietier.ui.viewmodels.FriendUiState
+import com.cpen321.movietier.features.friends.ui.state.FriendUiState
 import com.cpen321.movietier.features.friends.ui.viewmodel.FriendViewModel
 import androidx.compose.foundation.layout.Arrangement
 

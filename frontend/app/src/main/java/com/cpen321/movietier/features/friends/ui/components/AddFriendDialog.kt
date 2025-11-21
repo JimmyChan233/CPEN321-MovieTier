@@ -35,7 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpen321.movietier.shared.models.User
 import com.cpen321.movietier.shared.components.Avatar
 import com.cpen321.movietier.features.friends.ui.viewmodel.FriendViewModel
-import com.cpen321.movietier.ui.viewmodels.FriendRequestUi
+import com.cpen321.movietier.features.friends.ui.state.FriendRequestUi
 
 @Composable
 fun AddFriendDialog(

@@ -11,8 +11,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cpen321.movietier.shared.components.Avatar
-import com.cpen321.movietier.ui.viewmodels.AuthViewModel
+import com.cpen321.movietier.features.auth.ui.viewmodel.AuthViewModel
 import com.cpen321.movietier.features.profile.ui.viewmodel.UserViewModel
+import com.cpen321.movietier.features.auth.ui.state.AuthUiState
 
 
 @OptIn(ExperimentalMaterial3Api::class)

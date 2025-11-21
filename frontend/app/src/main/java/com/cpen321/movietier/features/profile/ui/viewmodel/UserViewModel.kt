@@ -3,7 +3,7 @@ package com.cpen321.movietier.features.profile.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.shared.models.User
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.profile.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

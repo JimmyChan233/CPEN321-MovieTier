@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.models.RankedMovie
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel
 
 @Composable

@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.shared.models.User
 import com.cpen321.movietier.features.auth.data.repository.AuthRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.auth.domain.usecase.DeleteAccountUseCase
 import com.cpen321.movietier.features.auth.domain.usecase.SignInWithGoogleUseCase
 import com.cpen321.movietier.features.auth.domain.usecase.SignOutUseCase

@@ -3,12 +3,14 @@ package com.cpen321.movietier.features.watchlist.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.shared.models.WatchlistItem
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.ranking.data.repository.MovieRepository
 import com.cpen321.movietier.shared.models.WatchProviders
 import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.models.AddMovieResponse
 import com.cpen321.movietier.features.watchlist.data.repository.WatchlistRepository
+import com.cpen321.movietier.features.feed.ui.state.FeedEvent
+import com.cpen321.movietier.features.watchlist.ui.state.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,24 +21,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-enum class WatchlistSort { DATE_DESC, DATE_ASC, RATING_DESC, RATING_ASC }
-
-/** Unified state - all UI state in one place */
-data class WatchlistUiState(
-    val isLoading: Boolean = false,
-    val items: List<WatchlistItem> = emptyList(),
-    val displayed: List<WatchlistItem> = emptyList(),
-    val sort: WatchlistSort = WatchlistSort.DATE_DESC,
-    val compareState: WatchlistCompareState? = null,
-    val movieDetails: Map<Int, Movie> = emptyMap(),
-    val error: String? = null
-)
-
-data class WatchlistCompareState(
-    val newMovie: Movie,
-    val compareWith: Movie
-)
 
 @HiltViewModel
 class WatchlistViewModel @Inject constructor(

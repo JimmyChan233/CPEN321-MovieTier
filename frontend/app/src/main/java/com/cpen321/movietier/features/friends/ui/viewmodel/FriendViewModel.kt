@@ -7,7 +7,7 @@ import com.cpen321.movietier.shared.models.Friend
 import com.cpen321.movietier.shared.models.FriendRequest
 import com.cpen321.movietier.shared.models.User
 import com.cpen321.movietier.features.friends.data.repository.FriendRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

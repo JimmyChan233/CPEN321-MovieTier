@@ -16,8 +16,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.ui.viewmodels.CompareUiState
-import com.cpen321.movietier.ui.viewmodels.RankingViewModel
+import com.cpen321.movietier.features.ranking.ui.state.CompareUiState
+import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel
 
 /**
  * Single movie comparison option in preference dialog.

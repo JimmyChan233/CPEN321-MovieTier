@@ -29,7 +29,11 @@ import com.cpen321.movietier.shared.components.*
 import com.cpen321.movietier.shared.components.YouTubePlayerDialog
 import com.cpen321.movietier.shared.components.MovieDetailActions
 import com.cpen321.movietier.features.recommendation.ui.viewmodel.RecommendationViewModel
-import com.cpen321.movietier.ui.viewmodels.RankingViewModel
+import com.cpen321.movietier.features.recommendation.ui.viewmodel.RecommendationUiState
+import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel
+import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingEvent
+import com.cpen321.movietier.features.ranking.ui.viewmodel.CompareUiState
+import com.cpen321.movietier.features.feed.ui.viewmodel.FeedEvent
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import android.content.ActivityNotFoundException
@@ -65,8 +69,8 @@ internal data class MovieDialogCallbacks(
 )
 
 internal data class RecommendationViewModels(
-    val recommendationViewModel: com.cpen321.movietier.ui.viewmodels.RecommendationViewModel,
-    val rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel
+    val recommendationViewModel: RecommendationViewModel,
+    val rankingViewModel: RankingViewModel
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,16 +162,16 @@ private fun RSSideEffects(
     LaunchedEffect(Unit) {
         recommendationViewModel.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
+                is FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is FeedEvent.Error -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
             }
         }
     }
     LaunchedEffect(Unit) {
         rankingViewModel.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
+                is RankingEvent.Message -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
+                is RankingEvent.Error -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
             }
         }
     }
@@ -196,7 +200,7 @@ private fun RSTopBar(recommendationViewModel: RecommendationViewModel) {
 @Composable
 @VisibleForTesting
 fun RSContent(
-    uiState: com.cpen321.movietier.ui.viewmodels.RecommendationUiState,
+    uiState: RecommendationUiState,
     padding: PaddingValues,
     featuredMovieOffset: Int,
     recommendationViewModel: RecommendationViewModel,
@@ -223,7 +227,7 @@ fun RSContent(
 
 @Composable
 private fun RSContentList(
-    uiState: com.cpen321.movietier.ui.viewmodels.RecommendationUiState,
+    uiState: RecommendationUiState,
     padding: PaddingValues,
     featuredMovieOffset: Int,
     recommendationViewModel: RecommendationViewModel,
@@ -279,7 +283,7 @@ private fun RSContentList(
 private fun RSDialogs(
     selectedMovie: Movie?,
     dialogState: MovieDialogState,
-    compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState?,
+    compareState: CompareUiState?,
     country: String,
     viewModels: RecommendationViewModels,
     commonContext: CommonContext,
@@ -337,7 +341,7 @@ private fun RSDialogs(
 
 @Composable
 private fun RSComparisonDialog(
-    compareState: com.cpen321.movietier.ui.viewmodels.CompareUiState,
+    compareState: CompareUiState,
     rankingViewModel: RankingViewModel
 ) {
     AlertDialog(
@@ -360,7 +364,7 @@ private fun RSComparisonDialog(
 @Composable
 private fun RSComparisonOption(
     movie: Movie,
-    state: com.cpen321.movietier.ui.viewmodels.CompareUiState,
+    state: CompareUiState,
     rankingViewModel: RankingViewModel,
     modifier: Modifier
 ) {

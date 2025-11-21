@@ -11,7 +11,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.ui.viewmodels.FeedCompareState
+import com.cpen321.movietier.features.feed.ui.state.FeedCompareState
 import com.cpen321.movietier.features.feed.ui.viewmodel.FeedViewModel
 
 @Composable

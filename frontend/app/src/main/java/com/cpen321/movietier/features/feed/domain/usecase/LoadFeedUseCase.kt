@@ -2,7 +2,7 @@ package com.cpen321.movietier.features.feed.domain.usecase
 
 import com.cpen321.movietier.shared.models.FeedActivity
 import com.cpen321.movietier.features.feed.data.repository.FeedRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import javax.inject.Inject
 
 /**
