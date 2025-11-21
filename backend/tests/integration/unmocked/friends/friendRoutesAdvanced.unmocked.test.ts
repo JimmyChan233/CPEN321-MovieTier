@@ -79,10 +79,25 @@ describe("Advanced Friend Routes Tests", () => {
 
   // Send friend request with email
   it("should send friend request using email", async () => {
-    await request(app)
+    const res = await request(app)
       .post("/request")
       .set("Authorization", `Bearer ${token1}`)
       .send({ email: user2.email });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+
+    // Verify friend request was created in database
+    const friendRequest = await FriendRequest.findOne({
+      senderId: user1._id,
+      receiverId: user2._id,
+      status: "pending"
+    });
+
+    expect(friendRequest).toBeDefined();
+    expect(friendRequest?.senderId.toString()).toBe(user1._id.toString());
+    expect(friendRequest?.receiverId.toString()).toBe(user2._id.toString());
+    expect(friendRequest?.status).toBe("pending");
   });
 
   // Delete friendship removes both directions
@@ -122,13 +137,20 @@ describe("Advanced Friend Routes Tests", () => {
       status: "pending",
     });
 
-    await request(app)
+    const res = await request(app)
       .post("/respond")
       .set("Authorization", `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
         accept: false,
       });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    // Verify friend request was rejected
+    const updatedRequest = await FriendRequest.findById(friendReq._id);
+    expect(updatedRequest?.status).toBe("rejected");
 
     // Verify no friendships created
     const friendshipCount = await Friendship.countDocuments({
@@ -139,25 +161,57 @@ describe("Advanced Friend Routes Tests", () => {
 
   // Cannot send friend request to self
   it("should reject friend request to self", async () => {
-    await request(app)
+    const res = await request(app)
       .post("/request")
       .set("Authorization", `Bearer ${token1}`)
       .send({ email: user1.email });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toContain("Cannot send a friend request to yourself");
+
+    // Verify no friend request was created
+    const friendRequest = await FriendRequest.findOne({
+      senderId: user1._id,
+      receiverId: user1._id
+    });
+    expect(friendRequest).toBeNull();
   });
 
   // Cannot send duplicate friend request
   it("should reject duplicate friend request", async () => {
     // Send first request
-    await request(app)
+    const res1 = await request(app)
       .post("/request")
       .set("Authorization", `Bearer ${token1}`)
       .send({ email: user2.email });
 
+    expect(res1.status).toBe(201);
+    expect(res1.body.success).toBe(true);
+
+    // Verify first request was created
+    const firstRequest = await FriendRequest.findOne({
+      senderId: user1._id,
+      receiverId: user2._id
+    });
+    expect(firstRequest).toBeDefined();
+
     // Try to send again
-    await request(app)
+    const res2 = await request(app)
       .post("/request")
       .set("Authorization", `Bearer ${token1}`)
       .send({ email: user2.email });
+
+    expect(res2.status).toBe(409);
+    expect(res2.body.success).toBe(false);
+    expect(res2.body.message).toContain("Friend request already sent");
+
+    // Verify only one request exists
+    const requestCount = await FriendRequest.countDocuments({
+      senderId: user1._id,
+      receiverId: user2._id
+    });
+    expect(requestCount).toBe(1);
   });
 
   // Reverse pending request scenario
@@ -299,7 +353,7 @@ describe("Advanced Friend Routes Tests", () => {
     });
 
     // First accept
-    await request(app)
+    const res1 = await request(app)
       .post("/respond")
       .set("Authorization", `Bearer ${token1}`)
       .send({
@@ -307,14 +361,42 @@ describe("Advanced Friend Routes Tests", () => {
         accept: true,
       });
 
+    expect(res1.status).toBe(200);
+    expect(res1.body.success).toBe(true);
+
+    // Verify request was accepted and friendships created
+    const updatedRequest = await FriendRequest.findById(friendReq._id);
+    expect(updatedRequest?.status).toBe("accepted");
+
+    const friendshipCount = await Friendship.countDocuments({
+      $or: [
+        { userId: user1._id, friendId: user2._id },
+        { userId: user2._id, friendId: user1._id }
+      ]
+    });
+    expect(friendshipCount).toBe(2); // Bidirectional friendships
+
     // Try to accept again
-    await request(app)
+    const res2 = await request(app)
       .post("/respond")
       .set("Authorization", `Bearer ${token1}`)
       .send({
         requestId: (friendReq as any)._id.toString(),
         accept: true,
       });
+
+    expect(res2.status).toBe(400);
+    expect(res2.body.success).toBe(false);
+    expect(res2.body.message).toContain("Request already handled");
+
+    // Verify no additional friendships were created
+    const finalFriendshipCount = await Friendship.countDocuments({
+      $or: [
+        { userId: user1._id, friendId: user2._id },
+        { userId: user2._id, friendId: user1._id }
+      ]
+    });
+    expect(finalFriendshipCount).toBe(2);
   });
 
   // Filter out non-pending requests

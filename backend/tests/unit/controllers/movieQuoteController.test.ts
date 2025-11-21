@@ -1,3 +1,8 @@
+/**
+ * @unit
+ * Unit tests for movie quote controller
+ */
+
 import { Request, Response } from "express";
 import { randomInt } from "crypto";
 import { getMovieQuote } from "../../../src/controllers/movie/movieController";

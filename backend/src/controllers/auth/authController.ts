@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "../../services/auth/authService";
 import { AuthRequest } from "../../types/middleware.types";
+import { ISignInRequest, ISignUpRequest } from "../../types/request.types";
 import User from "../../models/user/User";
 import { Friendship, FriendRequest } from "../../models/friend/Friend";
 
@@ -8,7 +9,7 @@ const authService = new AuthService();
 
 export const signIn = async (req: Request, res: Response) => {
   try {
-    const { idToken } = req.body as { idToken?: string };
+    const { idToken } = req.body as ISignInRequest;
 
     if (!idToken || typeof idToken !== "string") {
       return res.status(400).json({
@@ -41,7 +42,7 @@ export const signIn = async (req: Request, res: Response) => {
 
 export const signUp = async (req: Request, res: Response) => {
   try {
-    const { idToken } = req.body as { idToken?: string };
+    const { idToken } = req.body as ISignUpRequest;
 
     if (!idToken || typeof idToken !== "string") {
       return res.status(400).json({

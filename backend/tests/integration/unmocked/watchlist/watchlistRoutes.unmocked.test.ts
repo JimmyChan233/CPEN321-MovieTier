@@ -305,9 +305,20 @@ describe("Watchlist Routes - Unmocked Tests", () => {
     });
 
     it("should not affect other watchlist items", async () => {
-      await request(app)
+      const res = await request(app)
         .delete("/550")
         .set("Authorization", `Bearer ${token1}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.message).toContain("Removed from watchlist");
+
+      // Verify item was actually deleted from database
+      const deletedItem = await WatchlistItem.findOne({
+        userId: (user1 as any)._id,
+        movieId: 550,
+      });
+      expect(deletedItem).toBeNull();
 
       const remaining = await WatchlistItem.find({
         userId: (user1 as any)._id,

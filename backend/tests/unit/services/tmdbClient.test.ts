@@ -1,4 +1,5 @@
 /**
+ * @unit
  * Unit tests for TMDB client interceptors
  */
 

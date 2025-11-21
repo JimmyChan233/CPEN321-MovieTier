@@ -4,3 +4,5 @@ export * from "./friend.types";
 export * from "./feed.types";
 export * from "./movie.types";
 export * from "./middleware.types";
+export * from "./request.types";
+export * from "./response.types";

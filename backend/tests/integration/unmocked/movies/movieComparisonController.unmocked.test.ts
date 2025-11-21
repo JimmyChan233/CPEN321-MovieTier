@@ -514,4 +514,120 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
     FeedActivity.prototype.save = originalSave;
     consoleErrorSpy.mockRestore();
   });
+
+  // ========== Complete Ranking Process with Database Validation ==========
+
+  it("should complete ranking process and save final rank with full database validation", async () => {
+    // Setup: Create 3 ranked movies
+    await RankedMovie.create([
+      {
+        userId: user1._id,
+        movieId: 8000,
+        title: "Movie Alpha",
+        posterPath: "/alpha.jpg",
+        rank: 1,
+      },
+      {
+        userId: user1._id,
+        movieId: 9000,
+        title: "Movie Beta",
+        posterPath: "/beta.jpg",
+        rank: 2,
+      },
+      {
+        userId: user1._id,
+        movieId: 10000,
+        title: "Movie Gamma",
+        posterPath: "/gamma.jpg",
+        rank: 3,
+      },
+    ]);
+
+    // Add new movie to start comparison
+    const addRes = await request(app)
+      .post("/add")
+      .set("Authorization", `Bearer ${token1}`)
+      .send({
+        movieId: 11000,
+        title: "New Movie Omega",
+        posterPath: "/omega.jpg",
+      });
+
+    expect(addRes.status).toBe(200);
+    expect(addRes.body.status).toBe("compare");
+
+    // Simulate comparison process - prefer existing movies to force completion
+    // This should result in the new movie being ranked last
+    let compareRes = await request(app)
+      .post("/compare")
+      .set("Authorization", `Bearer ${token1}`)
+      .send({
+        preferredMovieId: 8000, // Prefer existing movie
+      });
+
+    expect(compareRes.status).toBe(200);
+
+    // Continue comparison based on response
+    if (compareRes.body.status === "compare") {
+      // Prefer existing movie again to complete ranking
+      compareRes = await request(app)
+        .post("/compare")
+        .set("Authorization", `Bearer ${token1}`)
+        .send({
+          preferredMovieId: 9000, // Prefer existing movie
+        });
+
+      expect(compareRes.status).toBe(200);
+
+      // If still comparing, prefer existing movie one more time
+      if (compareRes.body.status === "compare") {
+        compareRes = await request(app)
+          .post("/compare")
+          .set("Authorization", `Bearer ${token1}`)
+          .send({
+            preferredMovieId: 10000, // Prefer existing movie
+          });
+
+        expect(compareRes.status).toBe(200);
+      }
+    }
+
+    // Verify final ranking was saved
+    expect(compareRes.body.status).toBe("added");
+    expect(compareRes.body.data.rank).toBeDefined();
+
+    // Verify RankedMovie was created with correct rank
+    const finalRankedMovie = await RankedMovie.findOne({
+      userId: user1._id,
+      movieId: 11000,
+    });
+
+    expect(finalRankedMovie).toBeDefined();
+    expect(finalRankedMovie!.rank).toBe(compareRes.body.data.rank);
+    expect(finalRankedMovie!.title).toBe("New Movie Omega");
+
+    // Verify FeedActivity was created
+    const feedActivity = await FeedActivity.findOne({
+      userId: user1._id,
+      movieId: 11000,
+      activityType: "ranked_movie",
+    });
+
+    expect(feedActivity).toBeDefined();
+    expect(feedActivity!.rank).toBe(finalRankedMovie!.rank);
+
+    // Verify all 4 movies exist in ranked movies
+    const totalRankedMovies = await RankedMovie.countDocuments({
+      userId: user1._id,
+    });
+    expect(totalRankedMovies).toBe(4);
+
+    // Verify ranks are sequential without gaps
+    const allRanks = await RankedMovie.find({ userId: user1._id })
+      .sort({ rank: 1 })
+      .select("rank");
+
+    const ranks = allRanks.map(m => m.rank);
+    expect(ranks).toEqual([1, 2, 3, 4]);
+  });
 });

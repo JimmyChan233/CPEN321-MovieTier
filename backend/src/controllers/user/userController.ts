@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../../types/middleware.types";
+import { IUpdateProfileRequest, IUpdateFCMTokenRequest } from "../../types/request.types";
 import User from "../../models/user/User";
 import mongoose from "mongoose";
 import WatchlistItem from "../../models/watch/WatchlistItem";
@@ -53,10 +54,7 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, profileImageUrl } = req.body as {
-      name?: string;
-      profileImageUrl?: string;
-    };
+    const { name, profileImageUrl } = req.body as IUpdateProfileRequest;
     logger.info(`Profile update request for user ${req.userId}`, {
       name: name !== undefined ? "updating" : "unchanged",
       profileImageUrl: profileImageUrl !== undefined ? "updating" : "unchanged",
@@ -109,7 +107,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
 export const registerFcmToken = async (req: AuthRequest, res: Response) => {
   try {
-    const { token } = req.body as { token?: string };
+    const { token } = req.body as IUpdateFCMTokenRequest;
 
     if (!isValidString(token)) {
       return sendError(res, "FCM token is required", HttpStatus.BAD_REQUEST);

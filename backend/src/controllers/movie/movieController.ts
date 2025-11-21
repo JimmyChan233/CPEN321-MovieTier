@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import RankedMovieModel from "../../models/movie/RankedMovie";
 import { IRankedMovie } from "../../types/movie.types";
+import { IAddMovieRequest, ICompareMoviesRequest, IStartRerankRequest, IParamsWithMovieId, IParamsWithId, IBodyWithRankedId } from "../../types/request.types";
+import { IMovieResult, IWatchProvider, IWatchProvidersResult } from "../../types/response.types";
 import FeedActivity from "../../models/feed/FeedActivity";
 import { Friendship } from "../../models/friend/Friend";
 import WatchlistItem from "../../models/watch/WatchlistItem";
@@ -102,18 +104,8 @@ export const searchMovies = async (req: Request, res: Response) => {
     const includeCast =
       String(req.query.includeCast ?? "false").toLowerCase() === "true";
 
-    interface MovieResult {
-      id: number;
-      title: string;
-      overview: string | null;
-      posterPath: string | null;
-      releaseDate: string | null;
-      voteAverage: number | null;
-      cast?: string[];
-    }
-
     // Helper to convert TMDB movie to MovieResult
-    const convertToMovieResult = (m: unknown): MovieResult => {
+    const convertToMovieResult = (m: unknown): IMovieResult => {
       const movie = m as {
         id: number;
         title: string;
@@ -132,7 +124,7 @@ export const searchMovies = async (req: Request, res: Response) => {
       };
     };
 
-    let baseResults: MovieResult[] = (data.results ?? []).map(
+    let baseResults: IMovieResult[] = (data.results ?? []).map(
       convertToMovieResult,
     );
 
@@ -263,7 +255,7 @@ export const getRankedMovies = async (req: Request, res: Response) => {
 export const deleteRankedMovie = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
-    const { id } = req.params as { id: string };
+    const { id } = req.params;
     if (!isValidMongoId(id)) {
       return sendError(res, "Invalid id", HttpStatus.BAD_REQUEST);
     }
@@ -324,23 +316,12 @@ export const getWatchProviders = async (req: Request, res: Response) => {
     const tmdb = getTmdbClient();
     let { data } = await tmdb.get(`/movie/${movieId}/watch/providers`);
 
-    interface WatchProvider {
-      provider_name?: string;
-    }
-
-    interface WatchProvidersResult {
-      link?: string;
-      flatrate?: unknown[];
-      rent?: unknown[];
-      buy?: unknown[];
-    }
-
     const results = data?.results ?? {};
     const result = (
       Object.prototype.hasOwnProperty.call(results, country)
         ? results[country as keyof typeof results]
         : {}
-    ) as WatchProvidersResult;
+    ) as IWatchProvidersResult;
 
     let link: string | null = result.link ?? null;
     if (!link) {
@@ -351,7 +332,7 @@ export const getWatchProviders = async (req: Request, res: Response) => {
       Array.isArray(arr)
         ? arr
             .map((p: unknown) => {
-              const provider = p as WatchProvider;
+              const provider = p as IWatchProvider;
               return provider.provider_name;
             })
             .filter((name): name is string => Boolean(name))
@@ -461,12 +442,7 @@ export const addMovie = async (req: Request, res: Response) => {
       return sendError(res, "User ID not found", HttpStatus.UNAUTHORIZED);
     }
     const userId = authReq.userId;
-    const { movieId, title, posterPath, overview } = req.body as {
-      movieId: number;
-      title: string;
-      posterPath?: string;
-      overview?: string;
-    };
+    const { movieId, title, posterPath, overview } = req.body as IAddMovieRequest;
 
     // Validate required fields
     if (!movieId || !title) {
@@ -636,9 +612,7 @@ export const compareMovies = async (req: Request, res: Response) => {
       return sendError(res, "Authentication required", HttpStatus.UNAUTHORIZED);
     }
 
-    const { preferredMovieId } = req.body as {
-      preferredMovieId: number;
-    };
+    const { preferredMovieId } = req.body as ICompareMoviesRequest;
 
     // Validate required field
     if (!preferredMovieId) {
@@ -829,7 +803,7 @@ export const startRerank = async (req: Request, res: Response) => {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    const { rankedId } = req.body as { rankedId: string };
+    const { rankedId } = req.body as IBodyWithRankedId;
     if (!rankedId || !isValidMongoId(rankedId)) {
       return sendError(res, "Invalid rankedId", HttpStatus.BAD_REQUEST);
     }
