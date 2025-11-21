@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.models.RankedMovie
 import com.cpen321.movietier.features.ranking.data.repository.MovieRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.ranking.domain.usecase.DeleteRankedMovieUseCase
 import com.cpen321.movietier.features.ranking.domain.usecase.GetRankedMoviesUseCase
 import com.cpen321.movietier.features.ranking.domain.usecase.StartRerankUseCase

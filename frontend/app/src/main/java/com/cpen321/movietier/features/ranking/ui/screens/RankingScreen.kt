@@ -18,14 +18,14 @@ import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.shared.models.RankedMovie
 import com.cpen321.movietier.shared.components.EmptyState
 import com.cpen321.movietier.shared.components.LoadingState
-import com.cpen321.movietier.ui.ranking.components.AddWatchedMovieDialog
-import com.cpen321.movietier.ui.ranking.components.ComparisonMovieOption
-import com.cpen321.movietier.ui.ranking.components.MovieComparisonDialog
-import com.cpen321.movietier.ui.ranking.components.RankedMovieRow
-import com.cpen321.movietier.ui.ranking.components.RankingTopBar
+import com.cpen321.movietier.features.ranking.ui.components.AddWatchedMovieDialog
+import com.cpen321.movietier.features.ranking.ui.components.ComparisonMovieOption
+import com.cpen321.movietier.features.ranking.ui.components.MovieComparisonDialog
+import com.cpen321.movietier.features.ranking.ui.components.RankedMovieRow
+import com.cpen321.movietier.features.ranking.ui.components.RankingTopBar
 import com.cpen321.movietier.shared.components.MovieTierTheme
-import com.cpen321.movietier.ui.viewmodels.CompareUiState
-import com.cpen321.movietier.ui.viewmodels.RankingEvent
+import com.cpen321.movietier.features.ranking.ui.state.CompareUiState
+import com.cpen321.movietier.features.ranking.ui.state.RankingEvent
 import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel
 import kotlinx.coroutines.launch
 

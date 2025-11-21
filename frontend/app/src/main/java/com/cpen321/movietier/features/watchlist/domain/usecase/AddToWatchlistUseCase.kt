@@ -1,7 +1,7 @@
 package com.cpen321.movietier.features.watchlist.domain.usecase
 
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.watchlist.data.repository.WatchlistRepository
 import javax.inject.Inject
 

@@ -4,6 +4,7 @@ import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.shared.utils.MovieQuoteProvider
 import com.cpen321.movietier.shared.utils.ProvidersCache
 import com.cpen321.movietier.shared.models.*
+import com.cpen321.movietier.shared.repository.Result
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

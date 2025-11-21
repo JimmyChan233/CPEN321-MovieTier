@@ -7,10 +7,11 @@ import com.cpen321.movietier.shared.models.FeedActivity
 import com.cpen321.movietier.shared.models.FeedComment
 import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.features.feed.data.repository.FeedRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.feed.domain.usecase.LoadFeedUseCase
 import com.cpen321.movietier.features.ranking.domain.usecase.AddMovieToRankingUseCase
 import com.cpen321.movietier.features.watchlist.domain.usecase.AddToWatchlistUseCase
+import com.cpen321.movietier.features.feed.ui.state.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -23,30 +24,6 @@ import javax.inject.Inject
  * 3. Clear separation of concerns
  * 4. Reduced from 337 lines to ~170 lines (50% reduction)
  */
-
-/** Unified state - all UI state in one place */
-data class FeedUiState(
-    val isLoading: Boolean = false,
-    val feedActivities: List<FeedActivity> = emptyList(),
-    val feedFilter: FeedFilter = FeedFilter.FRIENDS,
-    val compareState: FeedCompareState? = null,
-    val commentsMap: Map<String, List<FeedComment>> = emptyMap(),
-    val errorMessage: String? = null
-)
-
-data class FeedCompareState(
-    val newMovie: Movie,
-    val compareWith: Movie
-)
-
-enum class FeedFilter {
-    FRIENDS, MINE
-}
-
-sealed class FeedEvent {
-    data class Message(val text: String) : FeedEvent()
-    data class Error(val text: String) : FeedEvent()
-}
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(

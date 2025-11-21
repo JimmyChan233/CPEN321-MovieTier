@@ -9,12 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavController
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.shared.components.MovieDetailActions
 import com.cpen321.movietier.shared.components.MovieDetailBottomSheet
 import com.cpen321.movietier.shared.navigation.NavRoutes
 import com.cpen321.movietier.features.profile.ui.viewmodel.FriendProfileViewModel
-import com.cpen321.movietier.ui.viewmodels.RankingViewModel
+import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHostState

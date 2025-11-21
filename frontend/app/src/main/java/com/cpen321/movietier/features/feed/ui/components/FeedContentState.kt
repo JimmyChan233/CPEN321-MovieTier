@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.ui.viewmodels.FeedUiState
+import com.cpen321.movietier.features.feed.ui.state.FeedUiState
 import com.cpen321.movietier.features.feed.ui.viewmodel.FeedViewModel
 
 @Composable

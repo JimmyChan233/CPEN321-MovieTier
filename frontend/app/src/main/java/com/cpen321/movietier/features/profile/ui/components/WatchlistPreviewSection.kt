@@ -17,7 +17,7 @@ import androidx.navigation.NavController
 import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.models.WatchlistItem
 import com.cpen321.movietier.shared.navigation.NavRoutes
-import com.cpen321.movietier.ui.viewmodels.WatchlistUiState
+import com.cpen321.movietier.features.watchlist.ui.state.WatchlistUiState
 
 /**
  * Shows preview of first 3 watchlist items with link to full watchlist.

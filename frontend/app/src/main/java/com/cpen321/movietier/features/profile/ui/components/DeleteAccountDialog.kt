@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.testTag
-import com.cpen321.movietier.ui.viewmodels.AuthUiState
+import com.cpen321.movietier.features.auth.ui.state.AuthUiState
 
 /**
  * Confirmation dialog for account deletion with warning message.

@@ -6,16 +6,11 @@ import com.cpen321.movietier.shared.models.LoginRequest
 import com.cpen321.movietier.shared.models.LoginResponse
 import com.cpen321.movietier.shared.models.UpdateProfileRequest
 import com.cpen321.movietier.shared.models.User
+import com.cpen321.movietier.shared.repository.Result
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
-
-sealed class Result<out T> {
-    data class Success<out T>(val data: T) : Result<T>()
-    data class Error(val exception: Throwable, val message: String? = null) : Result<Nothing>()
-    object Loading : Result<Nothing>()
-}
 
 @Singleton
 class AuthRepository @Inject constructor(

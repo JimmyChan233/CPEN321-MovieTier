@@ -25,6 +25,11 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.cpen321.movietier.shared.components.StarRating
 import com.cpen321.movietier.features.watchlist.ui.viewmodel.WatchlistViewModel
+import com.cpen321.movietier.features.watchlist.ui.state.WatchlistCompareState
+import com.cpen321.movietier.shared.models.Movie
+import com.cpen321.movietier.shared.models.WatchlistItem
+import com.cpen321.movietier.shared.repository.Result
+import com.cpen321.movietier.features.feed.ui.state.FeedEvent
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import android.content.ActivityNotFoundException
@@ -53,7 +58,7 @@ fun WatchlistScreen(
     val listState = rememberLazyListState()
     var country by remember { mutableStateOf("CA") }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var itemToDelete by remember { mutableStateOf<com.cpen321.movietier.data.model.WatchlistItem?>(null) }
+    var itemToDelete by remember { mutableStateOf<WatchlistItem?>(null) }
 
     WSLocationHandler(context, scope) { country = it }
     WSSideEffects(navController, vm, snackbarHostState)
@@ -203,11 +208,11 @@ private fun WSWatchlistItemCard(
     context: android.content.Context,
     scope: kotlinx.coroutines.CoroutineScope,
     snackbarHostState: SnackbarHostState,
-    onLongClick: (com.cpen321.movietier.data.model.WatchlistItem) -> Unit
+    onLongClick: (WatchlistItem) -> Unit
 ) {
     Card(Modifier.fillMaxWidth().combinedClickable(onClick = {}, onLongClick = { onLongClick(item) })) {
         Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title, modifier = Modifier.height(140.dp).aspectRatio(2f/3f))
+            AsyncImage(model = item.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" }, contentDescription = item.title ?: "Movie", modifier = Modifier.height(140.dp).aspectRatio(2f/3f))
             WSWatchlistItemInfo(item, details, country, vm, context, scope, snackbarHostState)
         }
     }
@@ -215,8 +220,8 @@ private fun WSWatchlistItemCard(
 
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.WSWatchlistItemInfo(
-    item: com.cpen321.movietier.data.model.WatchlistItem,
-    details: com.cpen321.movietier.data.model.Movie?,
+    item: WatchlistItem,
+    details: Movie?,
     country: String,
     vm: WatchlistViewModel,
     context: android.content.Context,
@@ -224,17 +229,19 @@ private fun androidx.compose.foundation.layout.RowScope.WSWatchlistItemInfo(
     snackbarHostState: SnackbarHostState
 ) {
     Column(Modifier.weight(1f)) {
-        Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(item.title ?: "Unknown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         WSWatchlistItemMetadata(details)
         if (details != null) Spacer(Modifier.height(4.dp))
-        item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
+        if (item != null) {
+            item.overview?.let { Text(it, maxLines = 4, style = MaterialTheme.typography.bodyMedium) }
+        }
         Spacer(Modifier.height(8.dp))
         WSWatchlistItemActions(item, country, vm, context, scope, snackbarHostState)
     }
 }
 
 @Composable
-private fun WSWatchlistItemMetadata(details: com.cpen321.movietier.data.model.Movie?) {
+private fun WSWatchlistItemMetadata(details: Movie?) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         details?.releaseDate?.take(4)?.let { year ->
             Text(text = year, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -245,7 +252,7 @@ private fun WSWatchlistItemMetadata(details: com.cpen321.movietier.data.model.Mo
 
 @Composable
 private fun WSWatchlistItemActions(
-    item: com.cpen321.movietier.data.model.WatchlistItem,
+    item: WatchlistItem,
     country: String,
     vm: WatchlistViewModel,
     context: android.content.Context,
@@ -259,7 +266,7 @@ private fun WSWatchlistItemActions(
             try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
             if (!tmdbOpened) {
                 when (val res = vm.getWatchProviders(item.movieId, country)) {
-                    is com.cpen321.movietier.data.repository.Result.Success -> {
+                    is Result.Success -> {
                         val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
                         if (!res.data.link.isNullOrBlank()) {
                             try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
@@ -267,7 +274,7 @@ private fun WSWatchlistItemActions(
                         } else if (providers.isNotEmpty()) { snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
                         else { snackbarHostState.showSnackbar("No streaming info found") }
                     }
-                    is com.cpen321.movietier.data.repository.Result.Error -> { snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
+                    is Result.Error -> { snackbarHostState.showSnackbar(res.message ?: "Failed to load providers") }
                     else -> {}
                 }
             }
@@ -279,7 +286,7 @@ private fun WSWatchlistItemActions(
 
 @Composable
 private fun WSComparisonDialog(
-    compareState: com.cpen321.movietier.ui.viewmodels.WatchlistCompareState?,
+    compareState: WatchlistCompareState?,
     vm: WatchlistViewModel
 ) {
     compareState?.let { state ->
@@ -303,8 +310,8 @@ private fun WSComparisonDialog(
 
 @Composable
 private fun WSComparisonOption(
-    movie: com.cpen321.movietier.data.model.Movie,
-    state: com.cpen321.movietier.ui.viewmodels.WatchlistCompareState,
+    movie: Movie,
+    state: WatchlistCompareState,
     vm: WatchlistViewModel,
     modifier: Modifier
 ) {
@@ -327,13 +334,13 @@ private fun WSComparisonOption(
 @Composable
 private fun WSDeleteDialog(
     showDeleteDialog: Boolean,
-    itemToDelete: com.cpen321.movietier.data.model.WatchlistItem?,
+    itemToDelete: WatchlistItem?,
     vm: WatchlistViewModel,
     context: android.content.Context,
     scope: kotlinx.coroutines.CoroutineScope,
     snackbarHostState: SnackbarHostState,
     onShowDialogChange: (Boolean) -> Unit,
-    onItemToDeleteChange: (com.cpen321.movietier.data.model.WatchlistItem?) -> Unit
+    onItemToDeleteChange: (WatchlistItem?) -> Unit
 ) {
     if (showDeleteDialog && itemToDelete != null) {
         AlertDialog(
@@ -377,8 +384,8 @@ private fun WSSideEffects(
     LaunchedEffect(Unit) {
         vm.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
-                is com.cpen321.movietier.ui.viewmodels.FeedEvent.Error -> snackbarHostState.showSnackbar(event.text)
+                is FeedEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is FeedEvent.Error -> snackbarHostState.showSnackbar(event.text)
             }
         }
     }

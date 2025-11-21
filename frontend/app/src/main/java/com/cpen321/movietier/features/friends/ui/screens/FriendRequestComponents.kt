@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cpen321.movietier.shared.components.Avatar
-import com.cpen321.movietier.ui.viewmodels.FriendRequestUi
+import com.cpen321.movietier.features.friends.ui.state.FriendRequestUi
 
 /**
  * Displays an incoming friend request card with accept/reject actions

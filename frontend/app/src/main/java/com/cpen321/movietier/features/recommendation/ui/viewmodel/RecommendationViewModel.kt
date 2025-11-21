@@ -6,7 +6,7 @@ import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.models.MovieVideo
 import com.cpen321.movietier.features.ranking.data.repository.MovieRepository
 import com.cpen321.movietier.features.recommendation.data.repository.RecommendationRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

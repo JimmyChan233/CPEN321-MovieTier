@@ -11,10 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.cpen321.movietier.shared.models.Friend
-import com.cpen321.movietier.ui.friends.OutgoingRequestRow
-import com.cpen321.movietier.ui.friends.RequestRow
+import com.cpen321.movietier.features.friends.ui.components.OutgoingRequestRow
+import com.cpen321.movietier.features.friends.ui.screens.RequestRow
 import com.cpen321.movietier.shared.navigation.NavRoutes
-import com.cpen321.movietier.ui.viewmodels.FriendRequestUi
+import com.cpen321.movietier.features.friends.ui.state.FriendRequestUi
 import com.cpen321.movietier.features.friends.ui.viewmodel.FriendViewModel
 
 fun LazyListScope.OutgoingRequestsSection(

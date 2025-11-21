@@ -15,11 +15,11 @@ import com.cpen321.movietier.shared.models.FeedComment
 import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.components.CommentBottomSheet
 import com.cpen321.movietier.shared.components.YouTubePlayerDialog
-import com.cpen321.movietier.ui.feed.components.*
+import com.cpen321.movietier.features.feed.ui.components.*
 import com.cpen321.movietier.shared.navigation.NavRoutes
 import com.cpen321.movietier.shared.components.MovieTierTheme
-import com.cpen321.movietier.ui.viewmodels.FeedCompareState
-import com.cpen321.movietier.ui.viewmodels.FeedEvent
+import com.cpen321.movietier.features.feed.ui.state.FeedCompareState
+import com.cpen321.movietier.features.feed.ui.state.FeedEvent
 import com.cpen321.movietier.features.feed.ui.viewmodel.FeedViewModel
 import kotlinx.coroutines.launch
 import com.cpen321.movietier.core.util.LocationHelper

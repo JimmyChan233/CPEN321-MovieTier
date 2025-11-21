@@ -23,11 +23,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.data.repository.Result
-import com.cpen321.movietier.ui.profile.components.FriendProfileContent
-import com.cpen321.movietier.ui.profile.components.FriendProfileMovieDetailSheet
-import com.cpen321.movietier.ui.profile.components.FriendProfileTopBar
-import com.cpen321.movietier.ui.profile.components.MovieComparisonDialog
+import com.cpen321.movietier.shared.repository.Result
+import com.cpen321.movietier.features.profile.ui.components.FriendProfileContent
+import com.cpen321.movietier.features.profile.ui.components.FriendProfileMovieDetailSheet
+import com.cpen321.movietier.features.profile.ui.components.FriendProfileTopBar
+import com.cpen321.movietier.features.profile.ui.components.MovieComparisonDialog
 import com.cpen321.movietier.shared.components.YouTubePlayerDialog
 import com.cpen321.movietier.features.profile.ui.viewmodel.FriendProfileViewModel
 import com.cpen321.movietier.core.util.LocationHelper
@@ -40,7 +40,7 @@ fun FriendProfileScreen(
     navController: NavController,
     userId: String,
     vm: FriendProfileViewModel = hiltViewModel(),
-    rankingViewModel: com.cpen321.movietier.ui.viewmodels.RankingViewModel = hiltViewModel()
+    rankingViewModel: com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel = hiltViewModel()
 ) {
     val ui by vm.uiState.collectAsState()
     val compareState by rankingViewModel.compareState.collectAsState()

@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cpen321.movietier.shared.models.FeedComment
-import com.cpen321.movietier.ui.util.formatIsoToPstDateTime
+import com.cpen321.movietier.core.util.formatIsoToPstDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

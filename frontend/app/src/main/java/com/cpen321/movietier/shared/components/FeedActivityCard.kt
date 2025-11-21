@@ -30,7 +30,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.cpen321.movietier.shared.models.FeedActivity
-import com.cpen321.movietier.ui.util.formatIsoToPstDateTime
+import com.cpen321.movietier.core.util.formatIsoToPstDateTime
 
 @Composable
 fun FeedActivityCard(

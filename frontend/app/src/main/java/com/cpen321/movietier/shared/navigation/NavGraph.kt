@@ -15,6 +15,7 @@ import com.cpen321.movietier.features.recommendation.ui.screens.RecommendationSc
 import com.cpen321.movietier.features.profile.ui.screens.ProfileScreen
 import com.cpen321.movietier.features.profile.ui.screens.FriendProfileScreen
 import com.cpen321.movietier.features.profile.ui.screens.EditProfileScreen
+import com.cpen321.movietier.features.watchlist.ui.screens.WatchlistScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpen321.movietier.features.auth.ui.viewmodel.AuthViewModel
 
@@ -87,7 +88,7 @@ fun NavGraph(
         }
 
         composable(NavRoutes.WATCHLIST) {
-            com.cpen321.movietier.ui.watchlist.WatchlistScreen(navController = navController)
+            WatchlistScreen(navController = navController)
         }
     }
 }

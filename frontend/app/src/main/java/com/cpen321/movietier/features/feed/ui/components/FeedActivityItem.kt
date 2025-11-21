@@ -3,7 +3,7 @@ package com.cpen321.movietier.features.feed.ui.components
 import androidx.compose.runtime.*
 import com.cpen321.movietier.shared.models.FeedActivity
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.shared.components.FeedActivityCard
 import com.cpen321.movietier.features.feed.ui.viewmodel.FeedViewModel
 

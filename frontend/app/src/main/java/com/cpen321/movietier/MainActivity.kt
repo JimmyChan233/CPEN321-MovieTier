@@ -20,12 +20,12 @@ import com.cpen321.movietier.fcm.FcmHelper
 import com.cpen321.movietier.shared.navigation.NavGraph
 import com.cpen321.movietier.shared.navigation.NavRoutes
 import com.cpen321.movietier.shared.components.MovieTierTheme
-import com.cpen321.movietier.ui.viewmodels.ThemeViewModel
+import com.cpen321.movietier.shared.components.ThemeViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import com.cpen321.movietier.ui.viewmodels.AuthViewModel
+import com.cpen321.movietier.features.auth.ui.viewmodel.AuthViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

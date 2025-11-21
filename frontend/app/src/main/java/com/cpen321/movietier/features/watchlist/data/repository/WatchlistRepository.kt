@@ -3,6 +3,7 @@ package com.cpen321.movietier.features.watchlist.data.repository
 import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.shared.models.AddWatchlistRequest
 import com.cpen321.movietier.shared.models.WatchlistItem
+import com.cpen321.movietier.shared.repository.Result
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -2,7 +2,7 @@ package com.cpen321.movietier.features.ranking.domain.usecase
 
 import com.cpen321.movietier.shared.models.AddMovieResponse
 import com.cpen321.movietier.features.ranking.data.repository.MovieRepository
-import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.shared.repository.Result
 import javax.inject.Inject
 
 /**

@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cpen321.movietier.shared.models.Movie
-import com.cpen321.movietier.ui.viewmodels.CompareUiState
+import com.cpen321.movietier.features.ranking.ui.state.CompareUiState
 
 @Composable
 internal fun MovieComparisonDialog(
