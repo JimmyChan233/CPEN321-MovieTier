@@ -2,8 +2,19 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import RankedMovieModel from "../../models/movie/RankedMovie";
 import { IRankedMovie } from "../../types/movie.types";
-import { IAddMovieRequest, ICompareMoviesRequest, IStartRerankRequest, IParamsWithMovieId, IParamsWithId, IBodyWithRankedId } from "../../types/request.types";
-import { IMovieResult, IWatchProvider, IWatchProvidersResult } from "../../types/response.types";
+import {
+  IAddMovieRequest,
+  ICompareMoviesRequest,
+  IStartRerankRequest,
+  IParamsWithMovieId,
+  IParamsWithId,
+  IBodyWithRankedId,
+} from "../../types/request.types";
+import {
+  IMovieResult,
+  IWatchProvider,
+  IWatchProvidersResult,
+} from "../../types/response.types";
 import FeedActivity from "../../models/feed/FeedActivity";
 import { Friendship } from "../../models/friend/Friend";
 import WatchlistItem from "../../models/watch/WatchlistItem";
@@ -442,7 +453,8 @@ export const addMovie = async (req: Request, res: Response) => {
       return sendError(res, "User ID not found", HttpStatus.UNAUTHORIZED);
     }
     const userId = authReq.userId;
-    const { movieId, title, posterPath, overview } = req.body as IAddMovieRequest;
+    const { movieId, title, posterPath, overview } =
+      req.body as IAddMovieRequest;
 
     // Validate required fields
     if (!movieId || !title) {

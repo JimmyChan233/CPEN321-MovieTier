@@ -71,7 +71,9 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
     await Friendship.deleteMany({});
 
     // Clear any active comparison sessions
-    const { endSession } = await import("../../../../src/utils/comparisonSession");
+    const { endSession } = await import(
+      "../../../../src/utils/comparisonSession"
+    );
     endSession((user1 as any)._id.toString());
     endSession((user2 as any)._id.toString());
   });
@@ -627,7 +629,7 @@ describe("Movie Comparison Controller - Complete Coverage", () => {
       .sort({ rank: 1 })
       .select("rank");
 
-    const ranks = allRanks.map(m => m.rank);
+    const ranks = allRanks.map((m) => m.rank);
     expect(ranks).toEqual([1, 2, 3, 4]);
   });
 });

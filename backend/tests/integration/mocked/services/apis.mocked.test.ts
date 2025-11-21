@@ -13,7 +13,10 @@ import express from "express";
 import FeedActivity from "../../../../src/models/feed/FeedActivity";
 import Like from "../../../../src/models/feed/Like";
 import Comment from "../../../../src/models/feed/Comment";
-import { Friendship, FriendRequest } from "../../../../src/models/friend/Friend";
+import {
+  Friendship,
+  FriendRequest,
+} from "../../../../src/models/friend/Friend";
 import WatchlistItem from "../../../../src/models/watch/WatchlistItem";
 import RankedMovie from "../../../../src/models/movie/RankedMovie";
 import User from "../../../../src/models/user/User";

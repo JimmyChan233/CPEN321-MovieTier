@@ -50,7 +50,9 @@ describe("Mocked: Watchlist Routes - TMDB Enrichment", () => {
     });
 
     // Setup TMDB mock
-    const { getTmdbClient } = require("../../../../src/services/tmdb/tmdbClient");
+    const {
+      getTmdbClient,
+    } = require("../../../../src/services/tmdb/tmdbClient");
     mockGet = jest.fn();
     (getTmdbClient as jest.Mock).mockReturnValue({ get: mockGet });
 

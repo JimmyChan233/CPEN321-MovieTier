@@ -118,7 +118,8 @@ describe("SSE Stream - userId Validation Edge Cases (Fallback)", () => {
       });
 
       // Import routes AFTER mocking
-      const friendRoutes = require("../../../../src/routes/friendRoutes").default;
+      const friendRoutes =
+        require("../../../../src/routes/friendRoutes").default;
       app.use("/api/friends", friendRoutes);
 
       const res = await request(app).get("/api/friends/stream");

@@ -137,7 +137,9 @@ describe("Mocked: GET /recommendations", () => {
     expect(res.body.data.length).toBeGreaterThan(0);
 
     // Verify TMDB was called for recommendations
-    const { getTmdbClient } = require("../../../../src/services/tmdb/tmdbClient");
+    const {
+      getTmdbClient,
+    } = require("../../../../src/services/tmdb/tmdbClient");
     expect(getTmdbClient).toHaveBeenCalled();
   });
 
@@ -160,7 +162,9 @@ describe("Mocked: GET /recommendations", () => {
 
   it("should handle TMDB API errors gracefully", async () => {
     // Mock TMDB client to reject
-    const { getTmdbClient } = require("../../../../src/services/tmdb/tmdbClient");
+    const {
+      getTmdbClient,
+    } = require("../../../../src/services/tmdb/tmdbClient");
     (getTmdbClient as jest.Mock).mockReturnValue({
       get: jest.fn().mockRejectedValue(new Error("TMDB API error")),
     });
@@ -207,7 +211,9 @@ describe("Mocked: GET /recommendations/trending", () => {
 
   it("should return trending movies", async () => {
     // Ensure TMDB mock is set up correctly for trending
-    const { getTmdbClient } = require("../../../../src/services/tmdb/tmdbClient");
+    const {
+      getTmdbClient,
+    } = require("../../../../src/services/tmdb/tmdbClient");
     (getTmdbClient as jest.Mock).mockReturnValue({
       get: jest.fn((url: string) => {
         if (url === "/trending/movie/week") {
@@ -252,7 +258,9 @@ describe("Mocked: GET /recommendations/trending", () => {
 
   it("should handle empty trending response", async () => {
     // Mock TMDB to return empty results
-    const { getTmdbClient } = require("../../../../src/services/tmdb/tmdbClient");
+    const {
+      getTmdbClient,
+    } = require("../../../../src/services/tmdb/tmdbClient");
     (getTmdbClient as jest.Mock).mockReturnValue({
       get: jest.fn().mockResolvedValue({
         data: { results: [] },

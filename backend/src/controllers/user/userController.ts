@@ -1,6 +1,9 @@
 import { Response } from "express";
 import { AuthRequest } from "../../types/middleware.types";
-import { IUpdateProfileRequest, IUpdateFCMTokenRequest } from "../../types/request.types";
+import {
+  IUpdateProfileRequest,
+  IUpdateFCMTokenRequest,
+} from "../../types/request.types";
 import User from "../../models/user/User";
 import mongoose from "mongoose";
 import WatchlistItem from "../../models/watch/WatchlistItem";

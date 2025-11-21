@@ -19,7 +19,10 @@ import {
 import express from "express";
 import friendRoutes from "../../../../src/routes/friendRoutes";
 import User from "../../../../src/models/user/User";
-import { Friendship, FriendRequest } from "../../../../src/models/friend/Friend";
+import {
+  Friendship,
+  FriendRequest,
+} from "../../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../../utils/test-fixtures";
 
 describe("Advanced Friend Routes Tests", () => {
@@ -91,7 +94,7 @@ describe("Advanced Friend Routes Tests", () => {
     const friendRequest = await FriendRequest.findOne({
       senderId: user1._id,
       receiverId: user2._id,
-      status: "pending"
+      status: "pending",
     });
 
     expect(friendRequest).toBeDefined();
@@ -168,12 +171,14 @@ describe("Advanced Friend Routes Tests", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toContain("Cannot send a friend request to yourself");
+    expect(res.body.message).toContain(
+      "Cannot send a friend request to yourself",
+    );
 
     // Verify no friend request was created
     const friendRequest = await FriendRequest.findOne({
       senderId: user1._id,
-      receiverId: user1._id
+      receiverId: user1._id,
     });
     expect(friendRequest).toBeNull();
   });
@@ -192,7 +197,7 @@ describe("Advanced Friend Routes Tests", () => {
     // Verify first request was created
     const firstRequest = await FriendRequest.findOne({
       senderId: user1._id,
-      receiverId: user2._id
+      receiverId: user2._id,
     });
     expect(firstRequest).toBeDefined();
 
@@ -209,7 +214,7 @@ describe("Advanced Friend Routes Tests", () => {
     // Verify only one request exists
     const requestCount = await FriendRequest.countDocuments({
       senderId: user1._id,
-      receiverId: user2._id
+      receiverId: user2._id,
     });
     expect(requestCount).toBe(1);
   });
@@ -371,8 +376,8 @@ describe("Advanced Friend Routes Tests", () => {
     const friendshipCount = await Friendship.countDocuments({
       $or: [
         { userId: user1._id, friendId: user2._id },
-        { userId: user2._id, friendId: user1._id }
-      ]
+        { userId: user2._id, friendId: user1._id },
+      ],
     });
     expect(friendshipCount).toBe(2); // Bidirectional friendships
 
@@ -393,8 +398,8 @@ describe("Advanced Friend Routes Tests", () => {
     const finalFriendshipCount = await Friendship.countDocuments({
       $or: [
         { userId: user1._id, friendId: user2._id },
-        { userId: user2._id, friendId: user1._id }
-      ]
+        { userId: user2._id, friendId: user1._id },
+      ],
     });
     expect(finalFriendshipCount).toBe(2);
   });

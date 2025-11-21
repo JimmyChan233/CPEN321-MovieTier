@@ -117,9 +117,10 @@ describe("NFR: Reliability and Availability", () => {
 
     it("should continue operating when Firebase notifications fail", async () => {
       // Mock notification service failure
-      const notificationService = require("../../src/services/notification.service").default;
+      const notificationService =
+        require("../../src/services/notification.service").default;
       notificationService.sendFriendRequestNotification.mockRejectedValueOnce(
-        new Error("Firebase service unavailable")
+        new Error("Firebase service unavailable"),
       );
 
       // This should not affect the main functionality
@@ -313,11 +314,16 @@ describe("NFR: Reliability and Availability", () => {
       expect(userRankedMovies.status).toBe(200);
 
       // Handle different response structures
-      if (userRankedMovies.body.data && Array.isArray(userRankedMovies.body.data)) {
+      if (
+        userRankedMovies.body.data &&
+        Array.isArray(userRankedMovies.body.data)
+      ) {
         expect(userRankedMovies.body.data.length).toBeGreaterThan(0);
         if (userRankedMovies.body.data.length > 0) {
           // Find the test movie in the results
-          const testMovie = userRankedMovies.body.data.find((movie: any) => movie.title === "Consistency Test Movie");
+          const testMovie = userRankedMovies.body.data.find(
+            (movie: any) => movie.title === "Consistency Test Movie",
+          );
           if (testMovie) {
             expect(testMovie.title).toBe("Consistency Test Movie");
           }
@@ -380,7 +386,8 @@ describe("NFR: Reliability and Availability", () => {
   describe("Logging and Monitoring", () => {
     it("should log errors appropriately for monitoring", async () => {
       // Mock Firebase service to trigger logging
-      const notificationService = require("../../src/services/notification.service").default;
+      const notificationService =
+        require("../../src/services/notification.service").default;
 
       // Force Firebase to be uninitialized to trigger warning logs
       notificationService.initialized = false;

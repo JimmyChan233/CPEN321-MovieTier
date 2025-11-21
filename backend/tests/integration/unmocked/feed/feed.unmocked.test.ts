@@ -250,7 +250,9 @@ describe("Unmocked: POST /feed/:activityId/like - Success Cases", () => {
     });
 
     // Update activity like count
-    await FeedActivity.findByIdAndUpdate(activity._id, { $inc: { likeCount: 1 } });
+    await FeedActivity.findByIdAndUpdate(activity._id, {
+      $inc: { likeCount: 1 },
+    });
 
     // Verify initial state
     const initialLike = await Like.findById(like._id);

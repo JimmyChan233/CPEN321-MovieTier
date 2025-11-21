@@ -89,7 +89,7 @@ describe("Comparison Session Utility", () => {
           }),
           low: 0,
           high: 8,
-        })
+        }),
       );
     });
   });

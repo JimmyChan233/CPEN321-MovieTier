@@ -13,7 +13,10 @@ import mongoose from "mongoose";
 import express from "express";
 import friendRoutes from "../../../../src/routes/friendRoutes";
 import User from "../../../../src/models/user/User";
-import { Friendship, FriendRequest } from "../../../../src/models/friend/Friend";
+import {
+  Friendship,
+  FriendRequest,
+} from "../../../../src/models/friend/Friend";
 import { generateTestJWT, mockUsers } from "../../../utils/test-fixtures";
 import {
   initializeTestMongo,

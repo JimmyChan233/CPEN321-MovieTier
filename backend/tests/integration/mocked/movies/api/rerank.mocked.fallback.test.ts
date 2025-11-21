@@ -58,7 +58,8 @@ describe("Rerank Controller - Null Fallbacks (Fallback)", () => {
     const jwtSecret = process.env.JWT_SECRET || "test-secret";
     token = jwt.sign({ userId }, jwtSecret, { expiresIn: "1h" });
 
-    const movieRoutes = require("../../../../../src/routes/movieRoutes").default;
+    const movieRoutes =
+      require("../../../../../src/routes/movieRoutes").default;
     app.use("/movies", movieRoutes);
 
     jest.clearAllMocks();

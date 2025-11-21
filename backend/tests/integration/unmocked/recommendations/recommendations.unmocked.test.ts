@@ -27,7 +27,9 @@ import {
 // Helper function to check if TMDB service is available
 const isTmdbAvailable = async (): Promise<boolean> => {
   try {
-    const { getTmdbClient } = require("../../../../src/services/tmdb/tmdbClient");
+    const {
+      getTmdbClient,
+    } = require("../../../../src/services/tmdb/tmdbClient");
     const client = getTmdbClient();
     // Test with a simple endpoint to check if TMDB is accessible
     await client.get("/configuration");

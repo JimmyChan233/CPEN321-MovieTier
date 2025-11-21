@@ -190,7 +190,7 @@ export function generateInvalidJWT(): string {
  * @param options.returnEmail - Email to return from verified token
  */
 export function setupGoogleAuthMock(
-  options: { shouldFail?: boolean; returnEmail?: string } = {}
+  options: { shouldFail?: boolean; returnEmail?: string } = {},
 ) {
   const mockVerifyIdToken = jest.fn();
 
@@ -295,7 +295,7 @@ export function setupNotificationServiceMock() {
  * Mocks JWT verification middleware for route tests
  */
 export function setupAuthMiddlewareMock(
-  options: { shouldFail?: boolean; userId?: string } = {}
+  options: { shouldFail?: boolean; userId?: string } = {},
 ) {
   const authenticateMock = jest.fn((req: any, _res: any, next: any) => {
     if (options.shouldFail) {
