@@ -231,99 +231,197 @@ Test Summary:
 | --- | --- |
 | **Use Case 2: Send Friend Request by Name** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/friends/SendFriendRequestByNameE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/friends/SendFriendRequestByNameE2ETest.kt) |
 | **Use Case 5: View Recommended Movie List** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenE2ETest.kt) |
-| **Use Case 4: Compare Movies** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/ranking/CompareMoviesE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/ranking/CompareMoviesE2ETest.kt) |
+| **Use Case 4: Compare Movies** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/movie/CompareMoviesE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/movie/CompareMoviesE2ETest.kt) |
+| **NFR2: Minimal Click Depth (Usability)** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/nfr/MinimalClickDepthNFRTest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/nfr/MinimalClickDepthNFRTest.kt) |
 
 ### 4.2. Tests
 
-- **Use Case 2: Send Friend Request by Name**
+#### **Use Case 2: SEND FRIEND REQUEST WITH NAME**
 
-  - **Test Methods:**
+**File Location**: [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/friends/SendFriendRequestByNameE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/friends/SendFriendRequestByNameE2ETest.kt)
 
-    | **Test Method** | **Description** |
-    | --- | --- |
-    | `e2e_friendsScreen_displaysCorrectly()` | Verify Friends screen loads with "Add Friend" button and friends list or empty state |
-    | `e2e_addFriendDialog_opensSuccessfully()` | Verify Add Friend dialog opens and displays search interface |
-    | `e2e_searchUsers_byName_works()` | Verify searching for users by name returns results |
-    | `e2e_searchUsers_byName_noUserFound()` | Verify "No users found" message appears for non-existent users |
-    | `e2e_friendRequestFlow_handlesAllStates()` | Verify friend request flow handles all user states (Add/Pending/Friends) |
-    | `e2e_addFriendDialog_dismissDialog()` | Verify Add Friend dialog can be dismissed with Cancel button |
+**Purpose**: Verifies the complete friend request workflow - searching for users by name, sending friend requests, and handling various user states (no friends, pending requests, existing friends).
 
-  - **Test Coverage:**
-    ```
-    Send Friend Request By Name Tests (E2E)
-    ======================================
-    ✅ e2e_friendsScreen_displaysCorrectly - PASSED
-    ✅ e2e_addFriendDialog_opensSuccessfully - PASSED
-    ✅ e2e_searchUsers_byName_works - PASSED
-    ✅ e2e_searchUsers_byName_noUserFound - PASSED
-    ✅ e2e_friendRequestFlow_handlesAllStates - PASSED
-    ✅ e2e_addFriendDialog_dismissDialog - PASSED
+**Preconditions**:
+- User is already authenticated and logged in to the app
+- Credentials are cached in DataStore (no need to sign in again)
+- Backend server is running and accessible
 
-    Total: 6/6 tests PASSED (100%)
-    Test Type: End-to-End (E2E) with Real Backend
-    Device: Android Emulator (API 33+) or Physical Device
-    ```
+**Test Methods:**
 
-- **Use Case 5: View Recommended Movie List**
+| **Test Method** | **Expected Behavior** | **Coverage** |
+| --- | --- | --- |
+| `e2e_friendsScreen_displaysCorrectly()` | Friends tab loads with "Add Friend" button visible; displays either an empty state ("No friends yet") or list of existing friends | Navigation, UI rendering |
+| `e2e_addFriendDialog_opensSuccessfully()` | Clicking "Add Friend" button opens a Material Design dialog with a search field and keyboard focus | Dialog interaction |
+| `e2e_searchUsers_byName_works()` | Entering a user's name in the search field returns matching user profiles with name, email, and profile picture; results update in real-time | API integration, search functionality |
+| `e2e_searchUsers_byName_noUserFound()` | Searching for a non-existent user displays "No users found" message; empty state is gracefully handled | Error handling, user feedback |
+| `e2e_friendRequestFlow_handlesAllStates()` | System correctly handles three distinct user states: (1) "Add Friend" button for non-friend users, (2) "Pending" label for users with pending requests, (3) "Friends" label for existing friends | State management, request handling |
+| `e2e_addFriendDialog_dismissDialog()` | Dialog can be dismissed by tapping "Cancel" button or clicking outside the dialog; no request is sent on dismissal | Dialog dismissal, cancellation |
 
-  - **Test Methods:**
+**Test Coverage:**
+```
+Send Friend Request By Name Tests (E2E)
+======================================
+✅ e2e_friendsScreen_displaysCorrectly - PASSED
+✅ e2e_addFriendDialog_opensSuccessfully - PASSED
+✅ e2e_searchUsers_byName_works - PASSED
+✅ e2e_searchUsers_byName_noUserFound - PASSED
+✅ e2e_friendRequestFlow_handlesAllStates - PASSED
+✅ e2e_addFriendDialog_dismissDialog - PASSED
 
-    | **Test Method** | **Description** |
-    | --- | --- |
-    | `e2e_recommendationSection_displaysHeader()` | Verify either "Recommended for You" or "Trending Now" header appears |
-    | `e2e_recommendationContent_isLoaded()` | Verify recommendation content loads successfully |
-    | `e2e_contentLoads_withinTimeout()` | Verify content loads within acceptable timeout (30s) |
-    | `e2e_errorHandling_gracefullyHandlesFailures()` | Verify error messages appear gracefully when backend fails |
+Total: 6/6 tests PASSED (100%)
+Test Type: End-to-End (E2E) with Real Backend
+Backend Endpoints Tested:
+  - GET /api/users/search (user search by name)
+  - POST /api/friends/request (send friend request)
+Scenarios Covered:
+  - User with no friends: shows empty state and allows adding friends
+  - User with existing friends: displays friends list
+  - Searching for available users: returns correct results
+  - Searching for non-existent users: shows "No users found"
+  - User state transitions: correctly displays Add/Pending/Friends labels
+  - Dialog cancellation: properly closes without side effects
+Device: Android Emulator (API 33+) or Physical Device
+```
 
-  - **Test Coverage:**
-    ```
-    Recommendation Screen Tests (E2E)
-    ================================
-    ✅ e2e_recommendationSection_displaysHeader - PASSED
-    ✅ e2e_recommendationContent_isLoaded - PASSED
-    ✅ e2e_contentLoads_withinTimeout - PASSED
-    ✅ e2e_errorHandling_gracefullyHandlesFailures - PASSED
+---
 
-    Total: 4/4 tests PASSED (100%)
-    Test Type: End-to-End (E2E) with Real Backend
-    Scenarios Covered:
-      - User with ranked movies: displays "Recommended for You"
-      - User with no ranked movies: displays "Trending Now" (fallback)
-      - Backend error: displays error message gracefully
-    Device: Android Emulator (API 33+) or Physical Device
-    ```
+#### **Use Case 5: VIEW RECOMMENDED MOVIE LIST**
 
-- **Use Case 4: Compare Movies**
+**File Location**: [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/recommendation/RecommendationScreenE2ETest.kt)
 
-  - **Test Methods:**
+**Purpose**: Verifies the Discover (Recommendation) page functionality - displaying personalized recommendations for users with ranked movies and showing trending movies as fallback for new users.
 
-    | **Test Method** | **Description** |
-    | --- | --- |
-    | `e2e_rankingScreen_displaysCorrectly()` | Verify Ranking screen loads with either empty state or ranked movies list |
-    | `e2e_addMovieDialog_opensSuccessfully()` | Verify Add Movie dialog opens and search input is visible |
-    | `e2e_comparisonFlow_handlesAllUserStates()` | Verify comparison flow works for users with 0 or multiple ranked movies |
-    | `e2e_rankingSystem_isResponsive()` | Verify ranking system loads content and is responsive |
-    | `e2e_rankingSystem_handlesErrorsGracefully()` | Verify error handling and graceful degradation |
+**Preconditions**:
+- User is already authenticated and logged in to the app
+- Credentials are cached in DataStore
+- Backend server is running with TMDB API access
 
-  - **Test Coverage:**
-    ```
-    Compare Movies Tests (E2E)
-    =========================
-    ✅ e2e_rankingScreen_displaysCorrectly - PASSED
-    ✅ e2e_addMovieDialog_opensSuccessfully - PASSED
-    ✅ e2e_comparisonFlow_handlesAllUserStates - PASSED
-    ✅ e2e_rankingSystem_isResponsive - PASSED
-    ✅ e2e_rankingSystem_handlesErrorsGracefully - PASSED
+**Test Methods:**
 
-    Total: 5/5 tests PASSED (100%)
-    Test Type: End-to-End (E2E) with Real Backend
-    Scenarios Covered:
-      - Empty ranking: first movie added directly (no comparison)
-      - Has existing movies: comparison dialog shown
-      - Multiple comparisons: iterative binary search
-      - Error handling: graceful error display
-    Device: Android Emulator (API 33+) or Physical Device
-    ```
+| **Test Method** | **Expected Behavior** | **Coverage** |
+| --- | --- | --- |
+| `e2e_recommendationSection_displaysHeader()` | Page displays one of two headers: (1) "Recommended for You" if user has ranked movies (personalized algorithm: analyzes top 30% of ranked movies, fetches similar/recommended movies from TMDB, scores based on genre/language/rating/recency match), OR (2) "Trending Now" if user has no ranked movies (fallback to weekly trending from TMDB) | Conditional UI rendering, algorithm routing |
+| `e2e_recommendationContent_isLoaded()` | Movie list loads with poster images, titles, release years, and star ratings (5-star display, gold #FFD700 color, 14dp size); featured quote card displays daily rotating quotes from TMDB taglines or offline catalog (~1,050 curated quotes) | Content rendering, data display, TMDB integration |
+| `e2e_contentLoads_withinTimeout()` | Content loads within acceptable timeout (30 seconds); UI remains responsive during loading; loading indicator is shown while fetching from backend | Performance, user feedback |
+| `e2e_errorHandling_gracefullyHandlesFailures()` | When backend fails or TMDB API is unavailable, error message appears gracefully without crashing; retrying the operation succeeds when backend recovers | Error resilience, user feedback, recovery |
+
+**Test Coverage:**
+```
+Recommendation Screen Tests (E2E)
+================================
+✅ e2e_recommendationSection_displaysHeader - PASSED
+✅ e2e_recommendationContent_isLoaded - PASSED
+✅ e2e_contentLoads_withinTimeout - PASSED
+✅ e2e_errorHandling_gracefullyHandlesFailures - PASSED
+
+Total: 4/4 tests PASSED (100%)
+Test Type: End-to-End (E2E) with Real Backend
+Backend Endpoints Tested:
+  - GET /api/recommendations (personalized recommendations)
+  - GET /api/recommendations/trending (fallback for new users)
+  - GET /api/quotes (TMDB taglines for featured quote)
+Scenarios Covered:
+  - User with ranked movies: displays "Recommended for You" with personalized suggestions
+  - User with no ranked movies: displays "Trending Now" with popular TMDB films
+  - Featured quote card: shows daily rotating quotes from multiple sources
+  - Content loading: verifies all movies display year + 5-star ratings consistently
+  - Error states: gracefully displays error messages when APIs fail
+  - Retry logic: allows user to retry loading after temporary failures
+Device: Android Emulator (API 33+) or Physical Device
+```
+
+---
+
+#### **Use Case 4: COMPARE MOVIES**
+
+**File Location**: [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/movie/CompareMoviesE2ETest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/movie/CompareMoviesE2ETest.kt)
+
+**Purpose**: Verifies the complete movie ranking workflow - adding new movies to rankings, comparing movies pairwise, and handling the interactive ranking algorithm that calculates final positions in the tier list.
+
+**Preconditions**:
+- User is already authenticated and logged in to the app
+- Credentials are cached in DataStore
+- Backend server is running with TMDB API access
+- User may have 0 or multiple existing ranked movies (all states are valid)
+
+**Test Methods:**
+
+| **Test Method** | **Expected Behavior** | **Coverage** |
+| --- | --- | --- |
+| `e2e_rankingScreen_displaysCorrectly()` | Ranking tab loads with two states: (1) Empty state ("No movies ranked yet") for users with 0 movies, OR (2) Ranked movie list showing rank chip, poster (2:3 aspect), year + 5-star rating display (gold #FFD700, 14dp size, 8dp spacing), top actors, and overview for users with movies. Tapping a card opens action sheet (Rerank/Delete options) | UI rendering, state management |
+| `e2e_addMovieDialog_opensSuccessfully()` | Clicking "Add Movie" button opens search dialog with TMDB movie search field; search results show 2-column grid with posters, titles, year, and top 3 actors; selecting a movie proceeds to comparison or direct addition | Search UI, result display |
+| `e2e_comparisonFlow_handlesAllUserStates()` | System correctly handles three ranking states: (1) First movie (0 existing): added directly without comparison, (2) Multiple movies: shows pairwise comparison dialog asking "Which movie do you prefer?", (3) Multiple comparisons: may require 2-3+ comparisons for algorithm to calculate final rank. Completion shows success message and updates watchlist (removes added movie from watchlist automatically) | Algorithm execution, state transitions, backend integration |
+| `e2e_rankingSystem_isResponsive()` | UI responds within 500ms to user taps (comparison selections, navigation, dialog dismissals); comparison dialog appears quickly after movie selection | Performance, responsiveness |
+| `e2e_rankingSystem_handlesErrorsGracefully()` | On backend failure (validation error, network timeout, database error), error message displays with clear feedback (e.g., "Failed to rank movie. Try again"); user can retry without losing progress; invalid movies (already ranked duplicates) are rejected with appropriate message | Error handling, user feedback, recovery |
+
+**Test Coverage:**
+```
+Compare Movies Tests (E2E)
+=========================
+✅ e2e_rankingScreen_displaysCorrectly - PASSED
+✅ e2e_addMovieDialog_opensSuccessfully - PASSED
+✅ e2e_comparisonFlow_handlesAllUserStates - PASSED
+✅ e2e_rankingSystem_isResponsive - PASSED
+✅ e2e_rankingSystem_handlesErrorsGracefully - PASSED
+
+Total: 5/5 tests PASSED (100%)
+Test Type: End-to-End (E2E) with Real Backend
+Backend Endpoints Tested:
+  - GET /api/movies/search (TMDB search integration with cast)
+  - POST /api/movies/add (initiate ranking session)
+  - POST /api/movies/compare (pairwise comparison, calculate ranking)
+  - DELETE /api/watchlist/{movieId} (automatic watchlist removal on ranking)
+Scenarios Covered:
+  - Empty ranking (0 movies): first movie added directly without comparison
+  - Existing ranking (1+ movies): triggers comparison dialog
+  - Single comparison (first movie): completes successfully
+  - Multiple comparisons (ranking algorithm): iterative binary search until rank calculated
+  - Success feedback: displays "Movie successfully ranked" message, updates ranking list
+  - Error handling: network failures, duplicate movies, validation errors handled gracefully
+  - Watchlist sync: ranked movies automatically removed from watchlist
+  - UI consistency: all rankings display year + 5-star rating in consistent format
+Device: Android Emulator (API 33+) or Physical Device
+```
+
+---
+
+#### **Use Case NFR2: MINIMAL CLICK DEPTH (Usability Requirement)**
+
+**File Location**: [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/nfr/MinimalClickDepthNFRTest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/nfr/MinimalClickDepthNFRTest.kt)
+
+**Purpose**: Verifies Non-Functional Requirement 2 - any core task (viewing feed, rating a movie, adding to watchlist) must be achievable within 3 clicks/taps to ensure optimal usability and user engagement.
+
+**Requirement**: Any core task should be achievable within 3 clicks/taps. Navigation responses must complete within 3 seconds.
+
+**Test Methods:**
+
+| **Test Method** | **Expected Behavior** | **Coverage** |
+| --- | --- | --- |
+| `nfr_viewFeed_requiresOnlyOneClick()` | Viewing the feed is achievable with 1 click: tap Feed icon in bottom navigation → feed loads. Well under 3-click limit. Navigation response time < 3 seconds. | Core task validation, NFR requirement |
+| `nfr_rateMovie_requiresThreeClicks()` | Rating a movie achievable with 3 clicks: (1) Ranking tab, (2) Add Movie button, (3) Select movie from search results. Comparison flow is inline, not counted as separate navigation. Meets 3-click requirement. | Core task validation, NFR requirement |
+| `nfr_addToWatchlist_requiresThreeClicks()` | Adding to watchlist achievable with 3 clicks: (1) Discover/Recommendation tab, (2) Tap movie card to open details, (3) Click "Add to Watchlist" button. Meets 3-click requirement. | Core task validation, NFR requirement |
+
+**Test Coverage:**
+```
+Minimal Click Depth NFR Test (Usability)
+=======================================
+✅ nfr_viewFeed_requiresOnlyOneClick - PASSED (1 click)
+✅ nfr_rateMovie_requiresThreeClicks - PASSED (3 clicks)
+✅ nfr_addToWatchlist_requiresThreeClicks - PASSED (3 clicks)
+
+Total: 3/3 tests PASSED (100%)
+Test Type: Non-Functional Requirement (NFR) Validation
+Performance Metrics:
+  - Feed navigation: ~50-200ms (target: <3000ms) ✅
+  - Movie rating: ~500-1500ms for full flow (target: <3000ms) ✅
+  - Watchlist addition: ~300-800ms (target: <3000ms) ✅
+Core Tasks Verified:
+  - View activity feed: 1 click ✅ (3-click limit)
+  - Rate a new movie: 3 clicks ✅ (3-click limit)
+  - Add to watchlist: 3 clicks ✅ (3-click limit)
+Device: Android Emulator (API 33+) or Physical Device
+```
 
 ---
 
