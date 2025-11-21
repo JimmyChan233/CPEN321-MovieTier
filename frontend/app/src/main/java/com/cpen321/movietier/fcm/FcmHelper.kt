@@ -8,7 +8,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.cpen321.movietier.data.api.ApiService
+import com.cpen321.movietier.core.network.ApiService
 import com.google.firebase.messaging.FirebaseMessaging
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope

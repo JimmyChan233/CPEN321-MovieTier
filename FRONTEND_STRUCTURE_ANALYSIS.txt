@@ -1,0 +1,281 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     FRONTEND DIRECTORY STRUCTURE ANALYSIS                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CURRENT STRUCTURE
+═════════════════════════════════════════════════════════════════════════════
+
+frontend/app/src/main/java/com/cpen321/movietier/
+├── data/                          ✅ Well-organized
+│   ├── api/
+│   │   ├── ApiService.kt          (composition interface combining 7 services)
+│   │   ├── services/              ✅ Feature-based API services
+│   │   │   ├── AuthApiService.kt
+│   │   │   ├── FeedApiService.kt
+│   │   │   ├── FriendsApiService.kt
+│   │   │   ├── MovieApiService.kt
+│   │   │   ├── RecommendationsApiService.kt
+│   │   │   ├── UserApiService.kt
+│   │   │   └── WatchlistApiService.kt
+│   │   └── SseClient.kt           (Server-Sent Events)
+│   │
+│   ├── local/                     ⚠️ Needs reorganization
+│   │   ├── TokenManager.kt        ✅ Clear purpose
+│   │   ├── SettingsManager.kt     ✅ Clear purpose
+│   │   ├── MovieQuoteProvider.kt  ⚠️ Should be in services/
+│   │   ├── MovieQuotesData.kt     ⚠️ Should be in utils/
+│   │   └── ProvidersCache.kt      ⚠️ Should be in services/cache/
+│   │
+│   ├── model/                     ⚠️ Mixed concerns (DTOs only, no domain)
+│   │   ├── Movie.kt
+│   │   ├── RankedMovie.kt
+│   │   ├── User.kt
+│   │   ├── Feed.kt
+│   │   ├── Friend.kt
+│   │   ├── Watchlist.kt
+│   │   └── WatchProviders.kt
+│   │
+│   └── repository/                ✅ Excellent organization
+│       ├── AuthRepository.kt
+│       ├── FeedRepository.kt
+│       ├── FriendRepository.kt
+│       ├── MovieRepository.kt
+│       ├── RecommendationRepository.kt
+│       ├── UserRepository.kt
+│       └── WatchlistRepository.kt
+│
+├── domain/                        ❌ CRITICAL: Model layer is EMPTY
+│   ├── model/                     ❌ EMPTY - Should contain domain entities
+│   │   └── (no files)
+│   ├── repository/                ❌ EMPTY - No abstractions defined
+│   │   └── (no files)
+│   └── usecase/                   ✅ Well-organized
+│       ├── auth/                  (3 files)
+│       │   ├── SignInWithGoogleUseCase.kt
+│       │   ├── SignOutUseCase.kt
+│       │   └── DeleteAccountUseCase.kt
+│       ├── feed/                  (3 files)
+│       │   ├── LoadFeedUseCase.kt
+│       │   ├── LikeActivityUseCase.kt
+│       │   └── CommentOnActivityUseCase.kt
+│       ├── friend/                (2 files)
+│       │   ├── SendFriendRequestUseCase.kt
+│       │   └── RespondToFriendRequestUseCase.kt
+│       ├── movie/                 (3 files)
+│       │   ├── SearchMoviesUseCase.kt
+│       │   ├── AddMovieToRankingUseCase.kt
+│       │   └── GetMovieDetailsUseCase.kt
+│       ├── ranking/               (3 files)
+│       │   ├── GetRankedMoviesUseCase.kt
+│       │   ├── DeleteRankedMovieUseCase.kt
+│       │   └── StartRerankUseCase.kt
+│       ├── user/                  ❌ EMPTY
+│       │   └── (no files)
+│       └── watchlist/             (1 file)
+│           └── AddToWatchlistUseCase.kt
+│
+├── di/                            ✅ Well-organized
+│   └── NetworkModule.kt           (Hilt DI configuration)
+│
+├── ui/                            ⚠️ Inconsistent organization
+│   ├── auth/                      ✅ Single screen
+│   │   └── AuthScreen.kt
+│   │
+│   ├── components/                ✅ Global reusable components
+│   │   ├── interfaces/            ⚠️ Unclear purpose
+│   │   ├── Avatar.kt
+│   │   ├── CommentBottomSheet.kt
+│   │   ├── FeaturedMovieCard.kt
+│   │   ├── FeedActivityCard.kt
+│   │   ├── MovieCard.kt
+│   │   ├── MovieDetailSheet.kt
+│   │   ├── PosterGrid.kt
+│   │   ├── RecommendationCard.kt
+│   │   ├── Shimmer.kt
+│   │   ├── StarRating.kt
+│   │   ├── States.kt              ⚠️ Vague name
+│   │   └── YouTubePlayer.kt
+│   │
+│   ├── feed/                      ⚠️ Inconsistent file placement
+│   │   ├── FeedScreen.kt          (178 lines - TOO LARGE)
+│   │   ├── FeedComponents.kt      ⚠️ Should be in components/
+│   │   ├── FeedProviderUtils.kt   ⚠️ Should be in components/ or utils/
+│   │   └── components/            (10+ files)
+│   │       ├── FeedActivityItem.kt
+│   │       ├── FeedComparisonDialog.kt
+│   │       ├── FeedContentState.kt
+│   │       ├── FeedEmptyState.kt
+│   │       ├── FeedFilterBar.kt
+│   │       ├── FeedLoadingState.kt
+│   │       ├── FeedMovieDetailSheet.kt
+│   │       └── FeedTopBar.kt
+│   │
+│   ├── friends/                   ✅ Organized
+│   │   ├── FriendsScreen.kt
+│   │   ├── FriendRequestComponents.kt
+│   │   └── components/            (7 files)
+│   │
+│   ├── navigation/                ✅ Navigation logic
+│   │   └── NavGraph.kt
+│   │
+│   ├── profile/                   ⚠️ TOO MANY FILES (19 components!)
+│   │   ├── ProfileScreen.kt       ✅
+│   │   ├── EditProfileScreen.kt   ✅
+│   │   ├── FriendProfileScreen.kt ✅
+│   │   ├── FriendProfileCards.kt  ⚠️ Should be in components/
+│   │   └── components/            (19 files - EXCESSIVE)
+│   │       ├── DeleteAccountDialog.kt
+│   │       ├── FriendProfileContent.kt
+│   │       ├── FriendProfileHeader.kt
+│   │       ├── FriendProfileMovieDetailSheet.kt
+│   │       ├── FriendProfileTopBar.kt
+│   │       ├── FriendRankingsList.kt
+│   │       ├── FriendWatchlistTab.kt
+│   │       ├── MovieComparisonDialog.kt
+│   │       ├── MovieComparisonOption.kt
+│   │       ├── ProfileActionButtons.kt
+│   │       ├── ProfileEditButton.kt
+│   │       ├── ProfileHeader.kt
+│   │       ├── RankedMovieCard.kt
+│   │       ├── ThemeSelectorCard.kt
+│   │       ├── WatchItemCard.kt
+│   │       ├── WatchlistPreviewCard.kt
+│   │       ├── WatchlistPreviewInfo.kt
+│   │       ├── WatchlistPreviewPoster.kt
+│   │       └── WatchlistPreviewSection.kt
+│   │
+│   ├── ranking/                   ⚠️ Inconsistent organization
+│   │   ├── RankingScreen.kt       (170+ lines - LARGE)
+│   │   ├── MovieActionSheet.kt    ⚠️ Should be in components/
+│   │   ├── state/                 ❌ EMPTY directory
+│   │   ├── viewmodel/             ❌ EMPTY directory
+│   │   └── components/            (12 files)
+│   │       ├── AddWatchedMovieDialog.kt
+│   │       ├── ComparisonMovieOption.kt
+│   │       ├── MovieComparisonDialog.kt
+│   │       ├── MovieSearchResultCard.kt
+│   │       ├── MovieSearchResultsList.kt
+│   │       ├── RankedMovieInfo.kt
+│   │       ├── RankedMovieMetadata.kt
+│   │       ├── RankedMovieRankBadgeAndPoster.kt
+│   │       ├── RankedMovieRow.kt
+│   │       └── RankingTopBar.kt
+│   │
+│   ├── recommendation/            ✅ Single file
+│   │   └── RecommendationScreen.kt (150+ lines - LARGE)
+│   │
+│   ├── theme/                     ✅ Well-organized
+│   │   ├── Dimens.kt
+│   │   ├── Shapes.kt
+│   │   ├── Theme.kt
+│   │   └── Type.kt
+│   │
+│   ├── util/                      ✅ Utilities
+│   │   └── TimeFormat.kt
+│   │
+│   ├── viewmodels/                ✅ Centralized but inconsistent
+│   │   ├── AuthViewModel.kt       (260 lines - LARGE, state _uiState)
+│   │   ├── FeedViewModel.kt       (337+ lines - LARGE, state _uiState)
+│   │   ├── FriendProfileViewModel.kt
+│   │   ├── FriendViewModel.kt
+│   │   ├── RankingViewModel.kt    (262 lines - LARGE, state _uiState)
+│   │   ├── RecommendationViewModel.kt
+│   │   ├── ThemeViewModel.kt
+│   │   ├── UserViewModel.kt
+│   │   └── WatchlistViewModel.kt  (280 lines, state _ui ⚠️ INCONSISTENT)
+│   │
+│   └── watchlist/                 ✅ Single file
+│       └── WatchlistScreen.kt
+│
+├── fcm/                           ✅ Firebase Cloud Messaging
+│   ├── FcmHelper.kt
+│   └── MovieTierFirebaseMessagingService.kt
+│
+├── utils/                         ✅ General utilities
+│   └── LocationHelper.kt
+│
+├── MainActivity.kt                ✅ Entry point
+└── MovieTierApplication.kt        ✅ Application class
+
+═════════════════════════════════════════════════════════════════════════════
+
+PROBLEMS IDENTIFIED
+═════════════════════════════════════════════════════════════════════════════
+
+🔴 CRITICAL PROBLEMS
+
+1. EMPTY DOMAIN LAYER
+   Files: domain/model/ (no files), domain/repository/ (no files)
+   Impact: No domain entities → API models mixed with business logic
+   Violates Clean Architecture principles
+
+2. EMPTY FEATURE DIRECTORIES
+   Files: ui/ranking/state/, ui/ranking/viewmodel/, domain/usecase/user/
+   Impact: Confusing - suggest structure was planned but incomplete
+
+❌ HIGH-SEVERITY PROBLEMS
+
+1. INCONSISTENT STATE NAMING
+   Problem: WatchlistViewModel uses _ui instead of _uiState
+   Files: ui/viewmodels/WatchlistViewModel.kt
+   Impact: Breaks naming convention, confuses developers
+
+2. LARGE VIEWMODELS
+   Files: AuthViewModel (260), RankingViewModel (262), FeedViewModel (337+)
+   Impact: Hard to test, multiple responsibilities
+
+3. LARGE SCREEN FILES
+   Files: FeedScreen (178), RankingScreen (170+), RecommendationScreen (150+)
+   Impact: Mixed concerns, hard to maintain
+
+4. LOOSE FILE ORGANIZATION
+   Files: FeedComponents.kt, FeedProviderUtils.kt at root instead of components/
+   Impact: Inconsistent structure across features
+
+⚠️ MEDIUM-SEVERITY PROBLEMS
+
+1. EXCESSIVE PROFILE COMPONENTS
+   Files: 19 component files in ui/profile/components/
+   Impact: Hard to navigate, should be consolidated to 7-8 files
+
+2. DUPLICATE CLASSES
+   Found: CommonContext, MovieDialogState in FeedScreen + RecommendationScreen
+   Impact: DRY violation, harder to maintain
+
+3. SCATTERED LOCAL STORAGE
+   Files: MovieQuoteProvider, ProvidersCache in data/local/
+   Impact: Mixed concerns, unclear responsibilities
+
+4. SINGLE ROUTE OBJECT
+   Files: NavRoutes in NavGraph.kt (all routes together)
+   Impact: Not scalable, no feature-based organization
+
+═════════════════════════════════════════════════════════════════════════════
+
+RECOMMENDATIONS
+═════════════════════════════════════════════════════════════════════════════
+
+✏️ STRUCTURE IMPROVEMENTS
+
+PHASE 1 (Critical):
+  • Populate domain/model/ with Movie, User, RankedMovie, FeedActivity entities
+  • Delete empty directories (ui/ranking/state, ui/ranking/viewmodel)
+  • Or populate them if feature-scoped organization is desired
+
+PHASE 2 (High):
+  • Move FeedComponents.kt, FeedProviderUtils.kt → ui/feed/components/
+  • Move MovieActionSheet.kt → ui/ranking/components/
+  • Extract state classes from ViewModels to dedicated files:
+    - ui/ranking/RankingState.kt
+    - ui/feed/FeedState.kt
+    - etc.
+
+PHASE 3 (Medium):
+  • Consolidate ui/profile/components/ (19 → 7-8 files)
+  • Create ui/common/ScreenParameterGroups.kt for duplicate classes
+  • Organize routes by feature:
+    - ui/navigation/AuthRoutes.kt
+    - ui/navigation/ProfileRoutes.kt
+    - etc.
+
+═════════════════════════════════════════════════════════════════════════════
