@@ -19,7 +19,7 @@ export interface IUpdateProfileRequest {
 }
 
 export interface IUpdateFCMTokenRequest {
-  fcmToken: string;
+  token: string;
 }
 
 // Friend Request Types
@@ -54,11 +54,6 @@ export interface IStartRerankRequest {
 
 export interface ICreateCommentRequest {
   content: string;
-}
-
-// FCM Token Request Type
-export interface IUpdateFCMTokenRequest {
-  token: string;
 }
 
 // Watchlist Request Types

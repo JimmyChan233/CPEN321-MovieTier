@@ -92,14 +92,14 @@ export interface ICompareMoviesResponse extends IBaseDataResponse {
 }
 
 export interface IRankedMoviesResponse extends IBaseDataResponse {
-  data: Array<{
+  data: {
     id: string;
     movieId: number;
     title: string;
     posterPath?: string;
     rank: number;
     createdAt: string;
-  }>;
+  }[];
 }
 
 export interface IMovieDetailsResponse extends IBaseDataResponse {
@@ -112,12 +112,12 @@ export interface IMovieDetailsResponse extends IBaseDataResponse {
     voteAverage?: number;
     genres?: string[];
     cast?: string[];
-    videos?: Array<{
+    videos?: {
       key: string;
       name: string;
       site: string;
       type: string;
-    }>;
+    }[];
     watchProviders?: {
       link?: string;
       flatrate?: { provider_name: string }[];
@@ -129,7 +129,7 @@ export interface IMovieDetailsResponse extends IBaseDataResponse {
 
 // Feed Response Types
 export interface IFeedResponse extends IBaseDataResponse {
-  data: Array<{
+  data: {
     id: string;
     userId: string;
     userName: string;
@@ -143,7 +143,7 @@ export interface IFeedResponse extends IBaseDataResponse {
     commentCount: number;
     isLikedByUser: boolean;
     createdAt: string;
-  }>;
+  }[];
 }
 
 export interface ILikeResponse extends IBaseResponse {
@@ -163,19 +163,19 @@ export interface ICommentResponse extends IBaseDataResponse {
 }
 
 export interface ICommentsResponse extends IBaseDataResponse {
-  data: Array<{
+  data: {
     id: string;
     content: string;
     userId: string;
     userName: string;
     userProfileImageUrl?: string;
     createdAt: string;
-  }>;
+  }[];
 }
 
 // Watchlist Response Types
 export interface IWatchlistResponse extends IBaseDataResponse {
-  data: Array<{
+  data: {
     id: string;
     movieId: number;
     title: string;
@@ -184,7 +184,7 @@ export interface IWatchlistResponse extends IBaseDataResponse {
     releaseDate?: string;
     voteAverage?: number;
     addedAt: string;
-  }>;
+  }[];
 }
 
 export interface IWatchlistItemResponse extends IBaseDataResponse {
@@ -202,7 +202,7 @@ export interface IWatchlistItemResponse extends IBaseDataResponse {
 
 // Recommendation Response Types
 export interface IRecommendationsResponse extends IBaseDataResponse {
-  data: Array<{
+  data: {
     id: number;
     title: string;
     overview?: string;
@@ -211,7 +211,7 @@ export interface IRecommendationsResponse extends IBaseDataResponse {
     voteAverage?: number;
     genres?: string[];
     recommendationScore?: number;
-  }>;
+  }[];
 }
 
 // TMDB Response Types (for internal use)
@@ -269,7 +269,7 @@ export interface IWatchProvider {
 
 export interface IWatchProvidersResult {
   link?: string;
-  flatrate?: Array<{ provider_name: string }>;
-  rent?: Array<{ provider_name: string }>;
-  buy?: Array<{ provider_name: string }>;
+  flatrate?: { provider_name: string }[];
+  rent?: { provider_name: string }[];
+  buy?: { provider_name: string }[];
 }
