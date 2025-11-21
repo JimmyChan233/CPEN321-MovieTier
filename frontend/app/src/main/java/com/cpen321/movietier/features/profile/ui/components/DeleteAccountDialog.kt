@@ -1,7 +1,7 @@
 package com.cpen321.movietier.features.profile.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,7 +26,7 @@ internal fun DeleteAccountDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                Icons.Default.ExitToApp,
+                Icons.AutoMirrored.Filled.ExitToApp,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error
             )

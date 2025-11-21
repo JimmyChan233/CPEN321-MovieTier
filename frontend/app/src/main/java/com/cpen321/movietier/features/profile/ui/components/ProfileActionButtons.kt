@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -35,7 +35,7 @@ internal fun ProfileActionButtons(
         colors = ButtonDefaults.filledTonalButtonColors()
     ) {
         Icon(
-            Icons.Default.ExitToApp,
+            Icons.AutoMirrored.Filled.ExitToApp,
             contentDescription = null,
             modifier = Modifier.size(18.dp)
         )

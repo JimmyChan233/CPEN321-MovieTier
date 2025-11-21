@@ -11,6 +11,9 @@ import com.cpen321.movietier.features.ranking.domain.usecase.GetRankedMoviesUseC
 import com.cpen321.movietier.features.ranking.domain.usecase.StartRerankUseCase
 import com.cpen321.movietier.features.ranking.domain.usecase.AddMovieToRankingUseCase
 import com.cpen321.movietier.features.ranking.domain.usecase.SearchMoviesUseCase
+import com.cpen321.movietier.features.ranking.ui.state.RankingUiState
+import com.cpen321.movietier.features.ranking.ui.state.CompareUiState
+import com.cpen321.movietier.features.ranking.ui.state.RankingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -23,25 +26,6 @@ import javax.inject.Inject
  * 3. Clear separation of concerns
  * 4. Reduced from 260 lines to ~200 lines (23% reduction)
  */
-
-/** Unified state - all UI state in one place */
-data class RankingUiState(
-    val isLoading: Boolean = false,
-    val rankedMovies: List<RankedMovie> = emptyList(),
-    val compareState: CompareUiState? = null,
-    val searchResults: List<Movie> = emptyList(),
-    val errorMessage: String? = null
-)
-
-data class CompareUiState(
-    val newMovie: Movie,
-    val compareWith: Movie
-)
-
-sealed class RankingEvent {
-    data class Message(val text: String) : RankingEvent()
-    data class Error(val text: String) : RankingEvent()
-}
 
 @HiltViewModel
 class RankingViewModel @Inject constructor(

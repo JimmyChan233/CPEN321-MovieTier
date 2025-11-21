@@ -7,10 +7,10 @@ import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.shared.components.AvailabilityInfo
 import com.cpen321.movietier.shared.components.MovieDetailActions
 import com.cpen321.movietier.shared.components.MovieDetailBottomSheet
-import com.cpen321.movietier.ui.feed.CommonContext
-import com.cpen321.movietier.ui.feed.MovieActionCallbacks
-import com.cpen321.movietier.ui.feed.MovieDialogCallbacks
-import com.cpen321.movietier.ui.feed.MovieDialogState
+import com.cpen321.movietier.features.feed.ui.screens.CommonContext
+import com.cpen321.movietier.features.feed.ui.screens.MovieActionCallbacks
+import com.cpen321.movietier.features.feed.ui.screens.MovieDialogCallbacks
+import com.cpen321.movietier.features.feed.ui.screens.MovieDialogState
 import com.cpen321.movietier.features.feed.ui.viewmodel.FeedViewModel
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.CoroutineScope

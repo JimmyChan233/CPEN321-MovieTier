@@ -136,8 +136,8 @@ internal fun FeedTopBar(onRefresh: () -> Unit) {
 
 @Composable
 internal fun FeedFilterBar(
-    currentFilter: com.cpen321.movietier.ui.viewmodels.FeedFilter,
-    onFilterSelected: (com.cpen321.movietier.ui.viewmodels.FeedFilter) -> Unit
+    currentFilter: com.cpen321.movietier.features.feed.ui.state.FeedFilter,
+    onFilterSelected: (com.cpen321.movietier.features.feed.ui.state.FeedFilter) -> Unit
 ) {
     Row(
         modifier = Modifier.testTag("feed_filter_bar").fillMaxWidth().padding(bottom = 0.dp),
@@ -147,14 +147,14 @@ internal fun FeedFilterBar(
         FilterToggleFab(
             label = "Friends",
             icon = Icons.Filled.People,
-            selected = currentFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS,
-            onClick = { onFilterSelected(com.cpen321.movietier.ui.viewmodels.FeedFilter.FRIENDS) }
+            selected = currentFilter == com.cpen321.movietier.features.feed.ui.state.FeedFilter.FRIENDS,
+            onClick = { onFilterSelected(com.cpen321.movietier.features.feed.ui.state.FeedFilter.FRIENDS) }
         )
         FilterToggleFab(
             label = "My Activities",
             icon = Icons.Filled.History,
-            selected = currentFilter == com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE,
-            onClick = { onFilterSelected(com.cpen321.movietier.ui.viewmodels.FeedFilter.MINE) }
+            selected = currentFilter == com.cpen321.movietier.features.feed.ui.state.FeedFilter.MINE,
+            onClick = { onFilterSelected(com.cpen321.movietier.features.feed.ui.state.FeedFilter.MINE) }
         )
     }
 }
@@ -191,9 +191,9 @@ internal fun FeedEmptyState(navController: NavController) {
 
 @Composable
 internal fun FeedComparisonOption(
-    newMovie: com.cpen321.movietier.data.model.Movie,
-    compareWith: com.cpen321.movietier.data.model.Movie,
-    preferred: com.cpen321.movietier.data.model.Movie,
+    newMovie: com.cpen321.movietier.shared.models.Movie,
+    compareWith: com.cpen321.movietier.shared.models.Movie,
+    preferred: com.cpen321.movietier.shared.models.Movie,
     feedViewModel: FeedViewModel,
     modifier: Modifier
 ) {

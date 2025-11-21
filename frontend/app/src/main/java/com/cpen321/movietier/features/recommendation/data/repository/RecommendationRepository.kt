@@ -3,6 +3,7 @@ package com.cpen321.movietier.features.recommendation.data.repository
 import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.shared.models.ApiResponse
 import com.cpen321.movietier.shared.models.Movie
+import com.cpen321.movietier.shared.repository.Result
 import retrofit2.Response
 import java.io.IOException
 import javax.inject.Inject

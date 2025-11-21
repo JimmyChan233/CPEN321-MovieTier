@@ -17,6 +17,7 @@ import com.cpen321.movietier.features.watchlist.data.repository.WatchlistReposit
 import kotlinx.coroutines.flow.MutableSharedFlow
 import com.cpen321.movietier.shared.models.WatchProviders
 import com.cpen321.movietier.shared.utils.MovieQuoteProvider
+import com.cpen321.movietier.features.feed.ui.state.FeedEvent
 
 data class RecommendationUiState(
     val isLoading: Boolean = false,

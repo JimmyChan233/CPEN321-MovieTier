@@ -28,12 +28,13 @@ import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.components.*
 import com.cpen321.movietier.shared.components.YouTubePlayerDialog
 import com.cpen321.movietier.shared.components.MovieDetailActions
+import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.recommendation.ui.viewmodel.RecommendationViewModel
 import com.cpen321.movietier.features.recommendation.ui.viewmodel.RecommendationUiState
 import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingViewModel
-import com.cpen321.movietier.features.ranking.ui.viewmodel.RankingEvent
-import com.cpen321.movietier.features.ranking.ui.viewmodel.CompareUiState
-import com.cpen321.movietier.features.feed.ui.viewmodel.FeedEvent
+import com.cpen321.movietier.features.ranking.ui.state.RankingEvent
+import com.cpen321.movietier.features.ranking.ui.state.CompareUiState
+import com.cpen321.movietier.features.feed.ui.state.FeedEvent
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import android.content.ActivityNotFoundException
@@ -172,6 +173,7 @@ private fun RSSideEffects(
             when (event) {
                 is RankingEvent.Message -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
                 is RankingEvent.Error -> { onCloseSheet(); snackbarHostState.showSnackbar(event.text) }
+                else -> {}
             }
         }
     }
@@ -296,7 +298,7 @@ private fun RSDialogs(
         LaunchedEffect(movie.id) {
             val result = recommendationViewModel.getMovieVideos(movie.id)
             callbacks.onTrailerKeyUpdate(when (result) {
-                is com.cpen321.movietier.data.repository.Result.Success -> result.data?.key
+                is Result.Success -> result.data?.key
                 else -> null
             })
         }
@@ -312,7 +314,7 @@ private fun RSDialogs(
                         try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink))); tmdbOpened = true } catch (_: Exception) {}
                         if (!tmdbOpened) {
                             when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
-                                is com.cpen321.movietier.data.repository.Result.Success -> {
+                                is Result.Success -> {
                                     val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
                                     if (!res.data.link.isNullOrBlank()) {
                                         try { commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link))) }
@@ -320,7 +322,7 @@ private fun RSDialogs(
                                     } else if (providers.isNotEmpty()) { commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}") }
                                     else { commonContext.snackbarHostState.showSnackbar("No streaming info found") }
                                 }
-                                is com.cpen321.movietier.data.repository.Result.Error -> commonContext.snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
+                                is Result.Error -> commonContext.snackbarHostState.showSnackbar(res.message ?: "Failed to load providers")
                                 else -> {}
                             }
                         }
@@ -341,24 +343,26 @@ private fun RSDialogs(
 
 @Composable
 private fun RSComparisonDialog(
-    compareState: CompareUiState,
+    compareState: CompareUiState?,
     rankingViewModel: RankingViewModel
 ) {
-    AlertDialog(
-        onDismissRequest = {},
-        title = { Text("Which movie do you prefer?") },
-        text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Help us place '${compareState.newMovie.title}' in your rankings:", style = MaterialTheme.typography.bodyMedium)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    RSComparisonOption(compareState.newMovie, compareState, rankingViewModel, Modifier.weight(1f))
-                    RSComparisonOption(compareState.compareWith, compareState, rankingViewModel, Modifier.weight(1f))
+    compareState?.let { state ->
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Which movie do you prefer?") },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Help us place '${state.newMovie.title}' in your rankings:", style = MaterialTheme.typography.bodyMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        RSComparisonOption(state.newMovie, state, rankingViewModel, Modifier.weight(1f))
+                        RSComparisonOption(state.compareWith, state, rankingViewModel, Modifier.weight(1f))
+                    }
                 }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {}
-    )
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
 }
 
 @Composable

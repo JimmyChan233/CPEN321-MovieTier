@@ -4,6 +4,8 @@ import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.core.datastore.TokenManager
 import com.cpen321.movietier.shared.models.UpdateProfileRequest
 import com.cpen321.movietier.shared.models.User
+import com.cpen321.movietier.shared.models.ApiResponse
+import com.cpen321.movietier.shared.repository.Result
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,7 +27,7 @@ class UserRepository @Inject constructor(
     }
 
     private suspend fun handleUpdateProfileResponse(
-        response: retrofit2.Response<com.cpen321.movietier.data.model.ApiResponse<User>>
+        response: retrofit2.Response<ApiResponse<User>>
     ): Result<User> {
         if (!response.isSuccessful || response.body() == null) {
             val errorMessage = parseUpdateProfileError(response.errorBody()?.string())
@@ -55,7 +57,7 @@ class UserRepository @Inject constructor(
         return try {
             val gson = com.google.gson.Gson()
             val errorResponse =
-                gson.fromJson(errorBody, com.cpen321.movietier.data.model.ApiResponse::class.java)
+                gson.fromJson(errorBody, ApiResponse::class.java)
             errorResponse.message
         } catch (e: IOException) {
             "Failed to update profile"

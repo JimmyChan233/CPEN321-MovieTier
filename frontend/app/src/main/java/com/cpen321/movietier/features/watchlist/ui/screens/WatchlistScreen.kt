@@ -26,6 +26,8 @@ import coil.compose.AsyncImage
 import com.cpen321.movietier.shared.components.StarRating
 import com.cpen321.movietier.features.watchlist.ui.viewmodel.WatchlistViewModel
 import com.cpen321.movietier.features.watchlist.ui.state.WatchlistCompareState
+import com.cpen321.movietier.features.watchlist.ui.state.WatchlistUiState
+import com.cpen321.movietier.features.watchlist.ui.state.WatchlistSort
 import com.cpen321.movietier.shared.models.Movie
 import com.cpen321.movietier.shared.models.WatchlistItem
 import com.cpen321.movietier.shared.repository.Result
@@ -143,22 +145,22 @@ private fun WSTopBarSortMenu(
     DropdownMenu(expanded = expanded, onDismissRequest = { onDismiss(false) }) {
         DropdownMenuItem(text = { Text("Date Added (Newest)") }, onClick = {
             onDismiss(false)
-            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_DESC)
+            vm.setSort(WatchlistSort.DATE_DESC)
             scope.launch { listState.animateScrollToItem(0) }
         })
         DropdownMenuItem(text = { Text("Date Added (Oldest)") }, onClick = {
             onDismiss(false)
-            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.DATE_ASC)
+            vm.setSort(WatchlistSort.DATE_ASC)
             scope.launch { listState.animateScrollToItem(0) }
         })
         DropdownMenuItem(text = { Text("Rating (High → Low)") }, onClick = {
             onDismiss(false)
-            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_DESC)
+            vm.setSort(WatchlistSort.RATING_DESC)
             scope.launch { listState.animateScrollToItem(0) }
         })
         DropdownMenuItem(text = { Text("Rating (Low → High)") }, onClick = {
             onDismiss(false)
-            vm.setSort(com.cpen321.movietier.ui.viewmodels.WatchlistSort.RATING_ASC)
+            vm.setSort(WatchlistSort.RATING_ASC)
             scope.launch { listState.animateScrollToItem(0) }
         })
     }
@@ -167,8 +169,8 @@ private fun WSTopBarSortMenu(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WSContent(
-    ui: com.cpen321.movietier.ui.viewmodels.WatchlistUiState,
-    details: Map<Int, com.cpen321.movietier.data.model.Movie>,
+    ui: WatchlistUiState,
+    details: Map<Int, Movie>,
     country: String,
     padding: PaddingValues,
     listState: LazyListState,
@@ -176,7 +178,7 @@ private fun WSContent(
     context: android.content.Context,
     scope: kotlinx.coroutines.CoroutineScope,
     snackbarHostState: SnackbarHostState,
-    onLongClick: (com.cpen321.movietier.data.model.WatchlistItem) -> Unit
+    onLongClick: (WatchlistItem) -> Unit
 ) {
 
     if (ui.isLoading) {
@@ -201,8 +203,8 @@ private fun WSContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WSWatchlistItemCard(
-    item: com.cpen321.movietier.data.model.WatchlistItem,
-    details: com.cpen321.movietier.data.model.Movie?,
+    item: WatchlistItem,
+    details: Movie?,
     country: String,
     vm: WatchlistViewModel,
     context: android.content.Context,

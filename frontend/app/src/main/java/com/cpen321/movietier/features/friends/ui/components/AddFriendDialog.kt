@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpen321.movietier.shared.models.User
+import com.cpen321.movietier.shared.models.Friend
 import com.cpen321.movietier.shared.components.Avatar
 import com.cpen321.movietier.features.friends.ui.viewmodel.FriendViewModel
 import com.cpen321.movietier.features.friends.ui.state.FriendRequestUi
@@ -99,7 +100,7 @@ private fun AddFriendDialogContent(
     nameQuery: String,
     onNameQueryChange: (String) -> Unit,
     searchResults: List<User>,
-    friends: List<com.cpen321.movietier.data.model.Friend>,
+    friends: List<Friend>,
     outgoingRequests: List<FriendRequestUi>,
     onSendRequest: (String) -> Unit
 ) {
@@ -150,7 +151,7 @@ private fun AddFriendByNameTab(
     nameQuery: String,
     onNameQueryChange: (String) -> Unit,
     searchResults: List<User>,
-    friends: List<com.cpen321.movietier.data.model.Friend>,
+    friends: List<Friend>,
     outgoingRequests: List<FriendRequestUi>,
     onSendRequest: (String) -> Unit
 ) {
@@ -196,7 +197,7 @@ private fun AddFriendByNameTab(
 @Composable
 private fun UserSearchResultsList(
     searchResults: List<User>,
-    friends: List<com.cpen321.movietier.data.model.Friend>,
+    friends: List<Friend>,
     outgoingRequests: List<FriendRequestUi>,
     onSendRequest: (String) -> Unit
 ) {

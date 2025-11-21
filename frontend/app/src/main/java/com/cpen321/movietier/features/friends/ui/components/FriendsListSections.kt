@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.cpen321.movietier.shared.models.Friend
-import com.cpen321.movietier.features.friends.ui.components.OutgoingRequestRow
+import com.cpen321.movietier.features.friends.ui.screens.OutgoingRequestRow
 import com.cpen321.movietier.features.friends.ui.screens.RequestRow
 import com.cpen321.movietier.shared.navigation.NavRoutes
 import com.cpen321.movietier.features.friends.ui.state.FriendRequestUi
