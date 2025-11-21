@@ -3,20 +3,20 @@ package com.cpen321.movietier.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.cpen321.movietier.ui.auth.AuthScreen
-import com.cpen321.movietier.ui.feed.FeedScreen
-import com.cpen321.movietier.ui.friends.FriendsScreen
-import com.cpen321.movietier.ui.ranking.RankingScreen
-import com.cpen321.movietier.ui.recommendation.RecommendationScreen
-import com.cpen321.movietier.ui.profile.ProfileScreen
-import com.cpen321.movietier.ui.profile.FriendProfileScreen
-import com.cpen321.movietier.ui.profile.EditProfileScreen
+import com.cpen321.movietier.ui.auth.screen.AuthScreen
+import com.cpen321.movietier.ui.feed.screen.FeedScreen
+import com.cpen321.movietier.ui.friends.screen.FriendsScreen
+import com.cpen321.movietier.ui.movie.screen.RankingScreen
+import com.cpen321.movietier.ui.recommendation.screen.RecommendationScreen
+import com.cpen321.movietier.ui.user.screen.ProfileScreen
+import com.cpen321.movietier.ui.friends.screen.FriendProfileScreen
+import com.cpen321.movietier.ui.user.screen.EditProfileScreen
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.cpen321.movietier.ui.viewmodels.AuthViewModel
+import com.cpen321.movietier.ui.auth.viewmodel.AuthViewModel
+import com.cpen321.movietier.ui.watchlist.screen.WatchlistScreen
 
 object NavRoutes {
     const val AUTH = "auth"
@@ -87,7 +87,7 @@ fun NavGraph(
         }
 
         composable(NavRoutes.WATCHLIST) {
-            com.cpen321.movietier.ui.watchlist.WatchlistScreen(navController = navController)
+            WatchlistScreen(navController = navController)
         }
     }
 }
