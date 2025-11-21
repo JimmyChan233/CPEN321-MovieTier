@@ -5,9 +5,6 @@ import { IRankedMovie } from "../../types/movie.types";
 import {
   IAddMovieRequest,
   ICompareMoviesRequest,
-  IStartRerankRequest,
-  IParamsWithMovieId,
-  IParamsWithId,
   IBodyWithRankedId,
 } from "../../types/request.types";
 import {

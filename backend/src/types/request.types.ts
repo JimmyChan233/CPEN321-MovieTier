@@ -50,9 +50,7 @@ export interface IStartRerankRequest {
 }
 
 // Feed Request Types
-export interface ICreateLikeRequest {
-  // Empty body, like is created based on URL parameter and auth
-}
+// Like creation uses URL parameter and auth - no body needed
 
 export interface ICreateCommentRequest {
   content: string;

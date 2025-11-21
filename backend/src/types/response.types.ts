@@ -9,7 +9,7 @@ export interface IBaseResponse {
   message?: string;
 }
 
-export interface IBaseDataResponse<T = any> extends IBaseResponse {
+export interface IBaseDataResponse<T = unknown> extends IBaseResponse {
   data: T;
 }
 
@@ -37,22 +37,22 @@ export interface IUserProfileResponse extends IBaseDataResponse {
 }
 
 export interface ISearchUsersResponse extends IBaseDataResponse {
-  data: Array<{
+  data: {
     id: string;
     name: string;
     email: string;
     profileImageUrl?: string;
-  }>;
+  }[];
 }
 
 // Friend Response Types
 export interface IFriendListResponse extends IBaseDataResponse {
-  data: Array<{
+  data: {
     id: string;
     name: string;
     email: string;
     profileImageUrl?: string;
-  }>;
+  }[];
 }
 
 export interface IFriendRequestResponse extends IBaseDataResponse {
@@ -120,9 +120,9 @@ export interface IMovieDetailsResponse extends IBaseDataResponse {
     }>;
     watchProviders?: {
       link?: string;
-      flatrate?: Array<{ provider_name: string }>;
-      rent?: Array<{ provider_name: string }>;
-      buy?: Array<{ provider_name: string }>;
+      flatrate?: { provider_name: string }[];
+      rent?: { provider_name: string }[];
+      buy?: { provider_name: string }[];
     };
   };
 }
@@ -234,20 +234,20 @@ export interface ITmdbMovieDetails {
   poster_path?: string | null;
   release_date?: string | null;
   vote_average?: number | null;
-  genres?: Array<{ id: number; name: string }>;
+  genres?: { id: number; name: string }[];
   videos?: {
     results?: ITmdbVideo[];
   };
   credits?: {
-    cast?: Array<{ name: string; character?: string }>;
+    cast?: { name: string; character?: string }[];
   };
   "watch/providers"?: {
     results?: {
       US?: {
         link?: string;
-        flatrate?: Array<{ provider_name: string }>;
-        rent?: Array<{ provider_name: string }>;
-        buy?: Array<{ provider_name: string }>;
+        flatrate?: { provider_name: string }[];
+        rent?: { provider_name: string }[];
+        buy?: { provider_name: string }[];
       };
     };
   };
