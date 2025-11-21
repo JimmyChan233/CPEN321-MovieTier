@@ -183,6 +183,34 @@ describe("TMDB Tagline Service Tests", () => {
     expect(tagline).toBeNull();
     expect(mockClient.get).toHaveBeenCalledTimes(1);
   });
+
+  it("should search without year and cache the tagline", async () => {
+    mockClient.get
+      .mockResolvedValueOnce({
+        data: {
+          results: [{ id: 777, title: "No Year Movie" }],
+        },
+      })
+      .mockResolvedValueOnce({
+        data: { tagline: "Yearless tagline" },
+      });
+
+    const tagline = await fetchMovieTagline("No Year Movie");
+
+    expect(tagline).toBe("Yearless tagline");
+    expect(mockClient.get).toHaveBeenCalledWith("/search/movie", {
+      params: {
+        query: "No Year Movie",
+        language: "en-US",
+        include_adult: false,
+        page: 1,
+      },
+    });
+
+    const cached = await fetchMovieTagline("No Year Movie");
+    expect(cached).toBe("Yearless tagline");
+    expect(mockClient.get).toHaveBeenCalledTimes(2);
+  });
 });
 describe("TMDB Client - Response Interceptor", () => {
   let consoleOutput: string[] = [];
