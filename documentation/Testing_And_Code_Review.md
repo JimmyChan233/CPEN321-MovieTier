@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-11-21 | 2.1.1, 2.1.2, 2.3, 2.4, 2.5, 3.2, 5.1 (Test Structure Reorganization & Coverage Stats) | **Comprehensive Backend Test Structure Update**: (1) Updated all test file paths from `tests/mocked/` and `tests/unmocked/` to match new structure `tests/integration/mocked/` and `tests/integration/unmocked/` in API table. (2) Updated commit hash to latest (550e586) with comprehensive test enhancements. (3) Updated test suite breakdown: 16 unit tests + 3 NFR tests + 18 mocked integration tests + 14 unmocked integration tests = 51 total test suites. (4) Updated test count from 315 to 483 total tests. (5) Coverage statistics: 100% statements (1545/1545), 100% branches (523/523), 100% functions (178/178), 100% lines (1461/1461). (6) Section 2.3 & 2.4: Separated unit test coverage (100%) from integration test coverage breakdown. (7) NFR tests section documents 3 completed NFR test suites (performance, reliability, security). (8) All test paths now reference correct file locations in `backend/tests/integration/` directories. |
 | 2025-11-10 | 2.1.2, 4.1, 4.2, 5.1 (Frontend Test Names & Commit Hash) | **Updated Frontend Test File Names and Methods**: Corrected all test file names in Section 4.1 to match actual implementations (RecommendationScreenE2ETest.kt, CompareMoviesE2ETest.kt). Updated Section 4.2 with actual test method names and signatures for all three E2E test suites. Updated commit hashes in sections 2.1.2 and 5.1 to latest commit (c18d0e9). All tests are E2E tests interacting with real backend. |
 | 2025-11-09 | 2.1.2 (Commit Hash), 2.3 (Unmocked Coverage), 2.4 (Mocked Coverage), 2.5 (Combined Coverage) | **Updated Test Results and Commit Hash**: Updated commit hash to latest main branch commit (5e350ba). Updated unmocked test coverage (49.76% statements, 27.51% branches; 14 test suites, 83 tests) and mocked test coverage (84.02% statements, 71.35% branches; 15 test suites, 160 tests). Combined coverage remains at 100% across all metrics (50 test suites, 315 tests). Note: Test structure has been refactored since last documentation update (2025-11-04), with 14+15=29 test suites in individual runs combining to 50 total test suites when run together, and individual test counts changing to optimize test organization while maintaining overall 100% code coverage. |
 | 2025-11-04 (Final Documentation Fix) | 2.1.1 (API Table) | **Added Missing Endpoint Documentation**: Added 5 additional endpoints that were implemented and tested but missing from the API table: (1) GET /api/movies/:movieId/details - fetch movie details with cast, (2) GET /api/friends/stream - SSE stream for real-time friend events, (3) DELETE /api/friends/requests/:requestId - cancel pending friend request, (4) DELETE /api/feed/:activityId/comments/:commentId - delete comment, (5) GET /api/users/:userId/watchlist - view friend's watchlist. These endpoints are fully implemented with both unmocked and mocked test coverage. Updated table to reflect complete API documentation for all 35 implemented endpoints. |
@@ -21,51 +22,51 @@
 
 | **Interface** | **Describe Group Location, No Mocks** | **Describe Group Location, With Mocks** | **Mocked Components** |
 | --- | --- | --- | --- |
-| **POST /api/auth/signin** | [`backend/tests/unmocked/auth.unmocked.test.ts`](../../backend/tests/unmocked/auth.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | Google OAuth client, JWT generation, User model |
-| **POST /api/auth/signup** | [`backend/tests/unmocked/auth.unmocked.test.ts`](../../backend/tests/unmocked/auth.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | Google OAuth client, JWT generation, User model |
-| **POST /api/auth/signout** | [`backend/tests/unmocked/auth.unmocked.test.ts`](../../backend/tests/unmocked/auth.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | JWT verification, User model |
-| **DELETE /api/auth/account** | [`backend/tests/unmocked/auth.unmocked.test.ts`](../../backend/tests/unmocked/auth.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | User model, cascading deletes |
-| **GET /api/movies/search** | [`backend/tests/unmocked/allMovieRoutes.unmocked.test.ts`](../../backend/tests/unmocked/allMovieRoutes.unmocked.test.ts) | [`backend/tests/mocked/movieRoutes.mocked.test.ts`](../../backend/tests/mocked/movieRoutes.mocked.test.ts) | TMDB API client |
-| **GET /api/movies/ranked** | [`backend/tests/unmocked/allMovieRoutes.unmocked.test.ts`](../../backend/tests/unmocked/allMovieRoutes.unmocked.test.ts) | [`backend/tests/mocked/movieRoutes.mocked.test.ts`](../../backend/tests/mocked/movieRoutes.mocked.test.ts) | RankedMovie model |
-| **POST /api/movies/add** | [`backend/tests/unmocked/movieComparisonController.unmocked.test.ts`](../../backend/tests/unmocked/movieComparisonController.unmocked.test.ts) | [`backend/tests/mocked/movieComparisionController.mocked.test.ts`](../../backend/tests/mocked/movieComparisionController.mocked.test.ts) | RankedMovie model, Watchlist model, SSE service |
-| **POST /api/movies/compare** | [`backend/tests/unmocked/movieComparisonAdvanced.unmocked.test.ts`](../../backend/tests/unmocked/movieComparisonAdvanced.unmocked.test.ts) | [`backend/tests/mocked/movieComparisionController.mocked.test.ts`](../../backend/tests/mocked/movieComparisionController.mocked.test.ts) | Comparison session, RankedMovie model, FeedActivity model |
-| **POST /api/movies/rerank/start** | [`backend/tests/unmocked/rerankAdvanced.unmocked.test.ts`](../../backend/tests/unmocked/rerankAdvanced.unmocked.test.ts) | [`backend/tests/mocked/rerankController.mocked.test.ts`](../../backend/tests/mocked/rerankController.mocked.test.ts) | Comparison session, RankedMovie model |
-| **POST /api/movies/rerank/compare** | [`backend/tests/unmocked/rerankAdvanced.unmocked.test.ts`](../../backend/tests/unmocked/rerankAdvanced.unmocked.test.ts) | [`backend/tests/mocked/rerankController.mocked.test.ts`](../../backend/tests/mocked/rerankController.mocked.test.ts) | Comparison session, RankedMovie model |
-| **DELETE /api/movies/ranked/:id** | [`backend/tests/unmocked/allMovieRoutes.unmocked.test.ts`](../../backend/tests/unmocked/allMovieRoutes.unmocked.test.ts) | [`backend/tests/mocked/movieRoutes.mocked.test.ts`](../../backend/tests/mocked/movieRoutes.mocked.test.ts) | RankedMovie model, FeedActivity model |
-| **GET /api/friends** | [`backend/tests/unmocked/friends.unmocked.test.ts`](../../backend/tests/unmocked/friends.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | Friendship model |
-| **GET /api/friends/requests** | [`backend/tests/unmocked/friendRoutesDetailed.unmocked.test.ts`](../../backend/tests/unmocked/friendRoutesDetailed.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | FriendRequest model |
-| **GET /api/friends/requests/detailed** | [`backend/tests/unmocked/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/unmocked/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | FriendRequest model, User model |
-| **GET /api/friends/requests/outgoing** | [`backend/tests/unmocked/friendOperations.unmocked.test.ts`](../../backend/tests/unmocked/friendOperations.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | FriendRequest model |
-| **GET /api/friends/requests/outgoing/detailed** | [`backend/tests/unmocked/friendOperations.unmocked.test.ts`](../../backend/tests/unmocked/friendOperations.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | FriendRequest model, User model |
-| **POST /api/friends/request** | [`backend/tests/unmocked/friends.unmocked.test.ts`](../../backend/tests/unmocked/friends.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | FriendRequest model, notification service |
-| **POST /api/friends/respond** | [`backend/tests/unmocked/friends.unmocked.test.ts`](../../backend/tests/unmocked/friends.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | FriendRequest model, Friendship model, notification service |
-| **DELETE /api/friends/:friendId** | [`backend/tests/unmocked/friends.unmocked.test.ts`](../../backend/tests/unmocked/friends.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | Friendship model |
-| **GET /api/feed** | [`backend/tests/unmocked/allFeedRoutes.unmocked.test.ts`](../../backend/tests/unmocked/allFeedRoutes.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | FeedActivity model, Friendship model, TMDB client |
-| **GET /api/feed/me** | [`backend/tests/unmocked/feed.unmocked.test.ts`](../../backend/tests/unmocked/feed.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | FeedActivity model, TMDB client |
-| **GET /api/feed/stream** | [`backend/tests/unmocked/sseService.unmocked.test.ts`](../../backend/tests/unmocked/sseService.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | SSE service |
-| **POST /api/feed/:activityId/like** | [`backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | Like model, FeedActivity model, notification service |
-| **DELETE /api/feed/:activityId/like** | [`backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | Like model, FeedActivity model |
-| **GET /api/feed/:activityId/comments** | [`backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | Comment model |
-| **POST /api/feed/:activityId/comments** | [`backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | Comment model, FeedActivity model, notification service |
-| **GET /api/recommendations** | [`backend/tests/unmocked/allRecommendationRoutes.unmocked.test.ts`](../../backend/tests/unmocked/allRecommendationRoutes.unmocked.test.ts) | [`backend/tests/mocked/recommendationController.mocked.test.ts`](../../backend/tests/mocked/recommendationController.mocked.test.ts) | TMDB discover API, RankedMovie model |
-| **GET /api/recommendations/trending** | [`backend/tests/unmocked/recommendations.unmocked.test.ts`](../../backend/tests/unmocked/recommendations.unmocked.test.ts) | [`backend/tests/mocked/recommendationController.mocked.test.ts`](../../backend/tests/mocked/recommendationController.mocked.test.ts) | TMDB API client |
-| **GET /api/watchlist** | [`backend/tests/unmocked/watchlistRoutes.unmocked.test.ts`](../../backend/tests/unmocked/watchlistRoutes.unmocked.test.ts) | [`backend/tests/mocked/apis.mocked.test.ts`](../../backend/tests/mocked/apis.mocked.test.ts) | WatchlistItem model, TMDB client |
-| **POST /api/watchlist** | [`backend/tests/unmocked/watchlist.unmocked.test.ts`](../../backend/tests/unmocked/watchlist.unmocked.test.ts) | [`backend/tests/mocked/apis.mocked.test.ts`](../../backend/tests/mocked/apis.mocked.test.ts) | WatchlistItem model, TMDB client |
-| **DELETE /api/watchlist/:movieId** | [`backend/tests/unmocked/watchlistOperations.unmocked.test.ts`](../../backend/tests/unmocked/watchlistOperations.unmocked.test.ts) | [`backend/tests/mocked/apis.mocked.test.ts`](../../backend/tests/mocked/apis.mocked.test.ts) | WatchlistItem model |
-| **GET /api/users/search** | [`backend/tests/unmocked/userRoutes.unmocked.test.ts`](../../backend/tests/unmocked/userRoutes.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | User model |
-| **PUT /api/users/profile** | [`backend/tests/unmocked/userProfile.unmocked.test.ts`](../../backend/tests/unmocked/userProfile.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | User model |
-| **POST /api/users/fcm-token** | [`backend/tests/unmocked/userProfile.unmocked.test.ts`](../../backend/tests/unmocked/userProfile.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | User model |
-| **GET /api/users/:userId** | [`backend/tests/unmocked/userRoutes.unmocked.test.ts`](../../backend/tests/unmocked/userRoutes.unmocked.test.ts) | [`backend/tests/mocked/auth.mocked.test.ts`](../../backend/tests/mocked/auth.mocked.test.ts) | User model |
-| **GET /api/quotes** | [`backend/tests/unmocked/quote.unmocked.test.ts`](../../backend/tests/unmocked/quote.unmocked.test.ts) | [`backend/tests/mocked/tmdbServices.mocked.test.ts`](../../backend/tests/mocked/tmdbServices.mocked.test.ts) | TMDB tagline API |
-| **GET /api/movies/:movieId/details** | [`backend/tests/unmocked/allMovieRoutes.unmocked.test.ts`](../../backend/tests/unmocked/allMovieRoutes.unmocked.test.ts) | [`backend/tests/mocked/movieRoutes.mocked.test.ts`](../../backend/tests/mocked/movieRoutes.mocked.test.ts) | TMDB API client |
-| **GET /api/friends/stream** | [`backend/tests/unmocked/sseService.unmocked.test.ts`](../../backend/tests/unmocked/sseService.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | SSE service |
-| **DELETE /api/friends/requests/:requestId** | [`backend/tests/unmocked/friendOperations.unmocked.test.ts`](../../backend/tests/unmocked/friendOperations.unmocked.test.ts) | [`backend/tests/mocked/friendRoutes.mocked.test.ts`](../../backend/tests/mocked/friendRoutes.mocked.test.ts) | FriendRequest model, notification service |
-| **DELETE /api/feed/:activityId/comments/:commentId** | [`backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/unmocked/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/mocked/feedRoutes.mocked.test.ts`](../../backend/tests/mocked/feedRoutes.mocked.test.ts) | Comment model |
-| **GET /api/users/:userId/watchlist** | [`backend/tests/unmocked/watchlistOperations.unmocked.test.ts`](../../backend/tests/unmocked/watchlistOperations.unmocked.test.ts) | [`backend/tests/mocked/apis.mocked.test.ts`](../../backend/tests/mocked/apis.mocked.test.ts) | WatchlistItem model, User model |
+| **POST /api/auth/signin** | [`backend/tests/integration/unmocked/auth/auth.unmocked.test.ts`](../../backend/tests/integration/unmocked/auth/auth.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | Google OAuth client, JWT generation, User model |
+| **POST /api/auth/signup** | [`backend/tests/integration/unmocked/auth/auth.unmocked.test.ts`](../../backend/tests/integration/unmocked/auth/auth.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | Google OAuth client, JWT generation, User model |
+| **POST /api/auth/signout** | [`backend/tests/integration/unmocked/auth/auth.unmocked.test.ts`](../../backend/tests/integration/unmocked/auth/auth.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | JWT verification, User model |
+| **DELETE /api/auth/account** | [`backend/tests/integration/unmocked/auth/auth.unmocked.test.ts`](../../backend/tests/integration/unmocked/auth/auth.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model, cascading deletes |
+| **GET /api/movies/search** | [`backend/tests/integration/unmocked/movies/movie.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/movie.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts) | TMDB API client |
+| **GET /api/movies/ranked** | [`backend/tests/integration/unmocked/movies/movie.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/movie.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts) | RankedMovie model |
+| **POST /api/movies/add** | [`backend/tests/integration/unmocked/movies/movieComparisonController.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/movieComparisonController.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/movieComparisionController.mocked.test.ts`](../../backend/tests/integration/mocked/movies/movieComparisionController.mocked.test.ts) | RankedMovie model, Watchlist model, SSE service |
+| **POST /api/movies/compare** | [`backend/tests/integration/unmocked/movies/movieComparisonController.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/movieComparisonController.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/movieComparisionController.mocked.test.ts`](../../backend/tests/integration/mocked/movies/movieComparisionController.mocked.test.ts) | Comparison session, RankedMovie model, FeedActivity model |
+| **POST /api/movies/rerank/start** | [`backend/tests/integration/unmocked/movies/rerankController.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/rerankController.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/rerankController.mocked.test.ts`](../../backend/tests/integration/mocked/movies/rerankController.mocked.test.ts) | Comparison session, RankedMovie model |
+| **POST /api/movies/rerank/compare** | [`backend/tests/integration/unmocked/movies/rerankController.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/rerankController.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/rerankController.mocked.test.ts`](../../backend/tests/integration/mocked/movies/rerankController.mocked.test.ts) | Comparison session, RankedMovie model |
+| **DELETE /api/movies/ranked/:id** | [`backend/tests/integration/unmocked/movies/movie.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/movie.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts) | RankedMovie model, FeedActivity model |
+| **GET /api/friends** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | Friendship model |
+| **GET /api/friends/requests** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model |
+| **GET /api/friends/requests/detailed** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model, User model |
+| **GET /api/friends/requests/outgoing** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model |
+| **GET /api/friends/requests/outgoing/detailed** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model, User model |
+| **POST /api/friends/request** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model, notification service |
+| **POST /api/friends/respond** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model, Friendship model, notification service |
+| **DELETE /api/friends/:friendId** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | Friendship model |
+| **GET /api/feed** | [`backend/tests/integration/unmocked/feed/feed.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feed.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | FeedActivity model, Friendship model, TMDB client |
+| **GET /api/feed/me** | [`backend/tests/integration/unmocked/feed/feed.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feed.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | FeedActivity model, TMDB client |
+| **GET /api/feed/stream** | [`backend/tests/integration/unmocked/feed/feedStream.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedStream.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | SSE service |
+| **POST /api/feed/:activityId/like** | [`backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | Like model, FeedActivity model, notification service |
+| **DELETE /api/feed/:activityId/like** | [`backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | Like model, FeedActivity model |
+| **GET /api/feed/:activityId/comments** | [`backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | Comment model |
+| **POST /api/feed/:activityId/comments** | [`backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | Comment model, FeedActivity model, notification service |
+| **GET /api/recommendations** | [`backend/tests/integration/unmocked/recommendations/recommendations.unmocked.test.ts`](../../backend/tests/integration/unmocked/recommendations/recommendations.unmocked.test.ts) | [`backend/tests/integration/mocked/recommendations/recommendationController.mocked.test.ts`](../../backend/tests/integration/mocked/recommendations/recommendationController.mocked.test.ts) | TMDB discover API, RankedMovie model |
+| **GET /api/recommendations/trending** | [`backend/tests/integration/unmocked/recommendations/recommendations.unmocked.test.ts`](../../backend/tests/integration/unmocked/recommendations/recommendations.unmocked.test.ts) | [`backend/tests/integration/mocked/recommendations/recommendations.mocked.test.ts`](../../backend/tests/integration/mocked/recommendations/recommendations.mocked.test.ts) | TMDB API client |
+| **GET /api/watchlist** | [`backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts`](../../backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts) | [`backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts) | WatchlistItem model, TMDB client |
+| **POST /api/watchlist** | [`backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts`](../../backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts) | [`backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts) | WatchlistItem model, TMDB client |
+| **DELETE /api/watchlist/:movieId** | [`backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts`](../../backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts) | [`backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts) | WatchlistItem model |
+| **GET /api/users/search** | [`backend/tests/integration/unmocked/users/userRoutes.unmocked.test.ts`](../../backend/tests/integration/unmocked/users/userRoutes.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model |
+| **PUT /api/users/profile** | [`backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts`](../../backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model |
+| **POST /api/users/fcm-token** | [`backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts`](../../backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model |
+| **GET /api/users/:userId** | [`backend/tests/integration/unmocked/users/userRoutes.unmocked.test.ts`](../../backend/tests/integration/unmocked/users/userRoutes.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model |
+| **GET /api/quotes** | [`backend/tests/integration/unmocked/quotes/quote.unmocked.test.ts`](../../backend/tests/integration/unmocked/quotes/quote.unmocked.test.ts) | [`backend/tests/integration/mocked/services/tmdbServices.mocked.test.ts`](../../backend/tests/integration/mocked/services/tmdbServices.mocked.test.ts) | TMDB tagline API |
+| **GET /api/movies/:movieId/details** | [`backend/tests/integration/unmocked/movies/movie.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/movie.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts) | TMDB API client |
+| **GET /api/friends/stream** | [`backend/tests/integration/unmocked/feed/feedStream.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedStream.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | SSE service |
+| **DELETE /api/friends/requests/:requestId** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model, notification service |
+| **DELETE /api/feed/:activityId/comments/:commentId** | [`backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedRouteHandlers.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | Comment model |
+| **GET /api/users/:userId/watchlist** | [`backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts`](../../backend/tests/integration/unmocked/watchlist/watchlistRoutes.unmocked.test.ts) | [`backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/watchlist/watchlistRoutes.mocked.test.ts) | WatchlistItem model, User model |
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`c18d0e9` - Latest commit with frontend test documentation updates (main branch)
+`550e586` - Latest commit with enhanced test documentation and scenario/test case specifications (M5-CodeStructure branch)
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -120,6 +121,83 @@
    npm test -- --watch
    ```
 
+### 2.1.4. Backend Test Structure and Organization
+
+**Test Directory Hierarchy:**
+
+```
+backend/tests/
+├── unit/                           # 16 test suites - Pure unit tests for utilities, helpers
+│   ├── controllers/               # Unit tests for controller functions
+│   ├── middleware/                # Unit tests for auth/error handling middleware
+│   └── utils/                     # Unit tests for validators, logger, async handlers
+├── integration/                   # 32 integration test suites (18 mocked + 14 unmocked)
+│   ├── mocked/                    # 18 test suites - Services with mocked dependencies
+│   │   ├── auth/                  # Auth service tests with mocked OAuth & JWT
+│   │   ├── movies/                # Movie operations with mocked TMDB API
+│   │   ├── friends/               # Friend operations with mocked models
+│   │   ├── feed/                  # Feed operations with mocked databases
+│   │   ├── recommendations/       # Recommendation logic with mocked TMDB
+│   │   ├── watchlist/             # Watchlist with mocked models
+│   │   ├── services/              # Service tests (SSE, notifications, TMDB)
+│   │   └── (includes edge cases, error scenarios, fallback behavior)
+│   └── unmocked/                  # 14 test suites - Integration with MongoDB Memory Server
+│       ├── auth/                  # Auth endpoints with real JWT & database
+│       ├── movies/                # Movie ranking with real database
+│       ├── friends/               # Friend management with real database
+│       ├── feed/                  # Feed with real database & SSE
+│       ├── recommendations/       # Recommendations with real database
+│       ├── watchlist/             # Watchlist operations with real database
+│       ├── users/                 # User profile with real database
+│       ├── quotes/                # Quote retrieval with real database
+│       └── (focuses on success paths and real-world scenarios)
+└── nfr/                           # 3 test suites - Non-Functional Requirements
+    ├── performance.nfr.test.ts    # Response time & index efficiency tests
+    ├── reliability.nfr.test.ts    # Database reliability & data consistency
+    └── security.nfr.test.ts       # Authentication & authorization validation
+```
+
+**Test Classification:**
+
+| Category | Count | Purpose | Focus |
+|----------|-------|---------|-------|
+| **Unit Tests** | 16 suites | Test individual functions in isolation | Correctness of utility functions |
+| **Integration (Unmocked)** | 14 suites | Test features with real database | Happy paths, real-world scenarios |
+| **Integration (Mocked)** | 18 suites | Test features with mocked dependencies | Error handling, edge cases, fallbacks |
+| **NFR Tests** | 3 suites | Test non-functional requirements | Performance, reliability, security |
+| **TOTAL** | 51 suites | Complete backend test coverage | 100% code coverage, 483 total tests |
+
+**Why Both Mocked and Unmocked?**
+
+1. **Unmocked Integration Tests** focus on:
+   - Real MongoDB database interactions
+   - Actual API endpoint behavior
+   - Happy path scenarios
+   - Data persistence verification
+   - Real SSE connections
+
+2. **Mocked Integration Tests** focus on:
+   - Error condition handling (TMDB API failures, database errors)
+   - Edge case coverage (duplicate entries, validation failures)
+   - Fallback behavior (graceful degradation)
+   - Service isolation testing
+   - Deterministic error scenarios
+
+3. **Together** they provide:
+   - 100% branch coverage (happy + error paths)
+   - 100% statement coverage (all code executed)
+   - 100% function coverage (all functions called)
+   - 100% line coverage (all lines touched)
+
+**Test Execution in CI/CD:**
+
+When `npm test` runs in GitHub Actions, it executes all 51 test suites in sequence:
+1. Unit tests run first (fast, no database)
+2. Unmocked integration tests run with MongoDB Memory Server
+3. Mocked integration tests run with service mocks
+4. NFR tests validate non-functional requirements
+5. Coverage report combines all results to show 100% coverage
+
 ### 2.2. GitHub Actions Configuration Location
 
 `[.github/workflows/backend-tests.yml](../../.github/workflows/backend-tests.yml)`
@@ -160,20 +238,47 @@ Tests:       160 passed, 160 total
 
 ### 2.5. Jest Coverage Report Screenshots for Both Tests With and Without Mocking
 
-**Actual Coverage Results:**
+**Combined Coverage Results (Unmocked + Mocked + Unit + NFR):**
 ```
-Statements   : 100% ( 1503/1503 )
-Branches     : 100% ( 567/567 )
-Functions    : 100% ( 173/173 )
-Lines        : 100% ( 1442/1442 )
+================================ Coverage summary ================================
+Statements   : 100% ( 1545/1545 )
+Branches     : 100% ( 523/523 )
+Functions    : 100% ( 178/178 )
+Lines        : 100% ( 1461/1461 )
+================================================================================
 ```
 
 **Achievement:** 🎉 **100% Code Coverage across all metrics!**
 
-Test Summary:
-- **Test Suites:** 50 passed, 50 total
-- **Tests:** 315 passed, 315 total
-- **All back-end files:** Fully covered with both integration (unmocked) and unit (mocked) tests
+**Test Summary Breakdown:**
+```
+Total Test Suites:   51 passed, 51 total
+Total Tests:         483 passed, 483 total
+
+Test Breakdown by Category:
+├─ Unit Tests:                16 test suites (100% coverage)
+├─ Integration Unmocked:      14 test suites (~50% individual coverage, contributes to 100% combined)
+├─ Integration Mocked:        18 test suites (~85% individual coverage, contributes to 100% combined)
+└─ NFR Tests:                  3 test suites (Performance, Reliability, Security)
+```
+
+**Coverage Details:**
+- **Statements:** 1545 fully covered (100%)
+- **Branches:** 523 fully covered (100%)
+- **Functions:** 178 fully covered (100%)
+- **Lines:** 1461 fully covered (100%)
+
+**Test Category Contribution to 100% Coverage:**
+- **Unmocked Integration Tests:** 14 test suites, ~210+ tests - Focus on happy paths and real database scenarios (50% individual coverage)
+- **Mocked Integration Tests:** 18 test suites, ~240+ tests - Focus on error handling and edge cases (85% individual coverage)
+- **Unit Tests:** 16 test suites, ~16+ tests - Focus on utility functions and helper methods (100% individual coverage)
+- **NFR Tests:** 3 test suites - Performance, Reliability, Security requirements validation
+
+**Combined Analysis:**
+When unmocked and mocked tests run together (as they do in CI/CD), the combination achieves 100% coverage. This is by design:
+- Unmocked tests exercise main code paths with real database interactions
+- Mocked tests inject failures and edge cases that unmocked tests avoid
+- Together, they provide complete coverage across all branches and scenarios
 
 ### 2.6. Justification for Uncovered Lines
 
@@ -185,9 +290,12 @@ Test Summary:
 
 ### 3.1. Test Locations in Git
 
-| **Non-Functional Requirement** | **Location in Git** |
-| --- | --- |
-| **Performance (Ranking Response Time)** | [`backend/tests/nfr/performance.test.ts`](../../backend/tests/nfr/performance.test.ts) |
+| **Non-Functional Requirement** | **Location in Git** | **Status** |
+| --- | --- | --- |
+| **NFR1: Performance (Ranking Response Time)** | [`backend/tests/nfr/performance.nfr.test.ts`](../../backend/tests/nfr/performance.nfr.test.ts) | ✅ Implemented & Passing |
+| **NFR2: Reliability (Minimal Click Depth)** | [`frontend/app/src/androidTest/java/com/cpen321/movietier/ui/nfr/MinimalClickDepthNFRTest.kt`](../../frontend/app/src/androidTest/java/com/cpen321/movietier/ui/nfr/MinimalClickDepthNFRTest.kt) | ✅ Implemented & Passing |
+| **Backend NFR: Reliability** | [`backend/tests/nfr/reliability.nfr.test.ts`](../../backend/tests/nfr/reliability.nfr.test.ts) | ✅ Implemented & Passing |
+| **Backend NFR: Security** | [`backend/tests/nfr/security.nfr.test.ts`](../../backend/tests/nfr/security.nfr.test.ts) | ✅ Implemented & Passing |
 
 ### 3.2. Test Verification and Logs
 
@@ -685,7 +793,7 @@ Device: Android Emulator (API 33+) or Physical Device
 
 ### 5.1. Commit Hash Where Codacy Ran
 
-`c18d0e9` - Latest commit with frontend test documentation updates (main branch)
+`550e586` - Latest commit with enhanced test documentation and scenario/test case specifications (M5-CodeStructure branch)
 
 **Note:** Codacy has been integrated with the repository. The following commits demonstrate Codacy issues have been actively addressed:
 - `25d3eb6` - Remove comments from private functions per Codacy guidelines
