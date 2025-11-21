@@ -74,7 +74,7 @@ class FriendProfileViewModel @Inject constructor(
         return movieRepository.getWatchProviders(movieId, country)
     }
 
-    suspend fun addToMyWatchlist(movieId: Int, title: String, overview: String?, posterPath: String?): com.cpen321.movietier.data.repository.Result<WatchlistItem> {
+    suspend fun addToMyWatchlist(movieId: Int, title: String, overview: String?, posterPath: String?): Result<WatchlistItem> {
         return watchlistRepository.addToWatchlist(
             movieId = movieId,
             title = title,

@@ -39,8 +39,6 @@ fun RankingScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddDialog by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
-    val searchResults by rankingViewModel.searchResults.collectAsState()
-    val compareState by rankingViewModel.compareState.collectAsState()
 
     RankingEventHandler(rankingViewModel, snackbarHostState)
 
@@ -67,7 +65,7 @@ fun RankingScreen(
                 query = newQuery
                 rankingViewModel.searchMovies(newQuery)
             },
-            searchResults = searchResults,
+            searchResults = uiState.searchResults,
             onAddMovie = { movie ->
                 rankingViewModel.addMovieFromSearch(movie)
                 showAddDialog = false
@@ -76,7 +74,7 @@ fun RankingScreen(
         )
     }
 
-    compareState?.let { compareState ->
+    uiState.compareState?.let { compareState ->
         MovieComparisonDialog(
             compareState = compareState as Any,
             onCompare = { newMovie, compareWith, preferred ->
@@ -104,7 +102,7 @@ private fun RankingEventHandler(
 @Composable
 private fun RankingMainContent(
     padding: PaddingValues,
-    uiState: com.cpen321.movietier.ui.viewmodels.RankingUiState,
+    uiState: com.cpen321.movietier.features.ranking.ui.state.RankingUiState,
     rankingViewModel: RankingViewModel,
     onShowAddDialog: () -> Unit
 ) {

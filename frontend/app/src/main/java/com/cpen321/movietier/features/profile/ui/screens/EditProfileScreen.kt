@@ -53,7 +53,7 @@ fun EditProfileScreen(
 
 @Composable
 private fun EditProfileSideEffects(
-    uiState: com.cpen321.movietier.ui.viewmodels.AuthUiState,
+    uiState: AuthUiState,
     authViewModel: AuthViewModel,
     navController: NavController,
     onNameUpdate: (String) -> Unit,

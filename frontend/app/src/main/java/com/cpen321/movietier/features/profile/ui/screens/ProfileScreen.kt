@@ -100,7 +100,7 @@ private fun ProfileNavigationEffect(
 @Composable
 private fun ProfileContent(
     padding: PaddingValues,
-    user: com.cpen321.movietier.data.model.User,
+    user: com.cpen321.movietier.shared.models.User,
     navController: NavController,
     authViewModel: AuthViewModel,
     themeViewModel: ThemeViewModel,

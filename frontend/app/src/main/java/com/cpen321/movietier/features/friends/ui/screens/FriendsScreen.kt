@@ -26,6 +26,7 @@ import com.cpen321.movietier.features.friends.ui.components.FriendsMainContent
 import com.cpen321.movietier.features.friends.ui.components.FriendsTopBar
 import com.cpen321.movietier.shared.components.MovieTierTheme
 import com.cpen321.movietier.features.friends.ui.viewmodel.FriendViewModel
+import com.cpen321.movietier.features.friends.ui.state.UiEvent
 import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +68,7 @@ private fun FriendsEventHandler(friendViewModel: FriendViewModel, snackbarHostSt
     LaunchedEffect(Unit) {
         friendViewModel.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.UiEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is UiEvent.Message -> snackbarHostState.showSnackbar(event.text)
             }
         }
     }

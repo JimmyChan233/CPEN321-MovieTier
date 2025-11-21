@@ -113,14 +113,15 @@ fun FriendProfileScreen(
     LaunchedEffect(Unit) {
         rankingViewModel.events.collect { event ->
             when (event) {
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Message -> {
+                is com.cpen321.movietier.features.ranking.ui.state.RankingEvent.Message -> {
                     selectedMovie = null
                     snackbarHostState.showSnackbar(event.text)
                 }
-                is com.cpen321.movietier.ui.viewmodels.RankingEvent.Error -> {
+                is com.cpen321.movietier.features.ranking.ui.state.RankingEvent.Error -> {
                     selectedMovie = null
                     snackbarHostState.showSnackbar(event.text)
                 }
+                else -> {}
             }
         }
     }

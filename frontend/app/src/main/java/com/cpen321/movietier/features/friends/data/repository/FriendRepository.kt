@@ -2,6 +2,7 @@ package com.cpen321.movietier.features.friends.data.repository
 
 import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.shared.models.*
+import com.cpen321.movietier.shared.repository.Result
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

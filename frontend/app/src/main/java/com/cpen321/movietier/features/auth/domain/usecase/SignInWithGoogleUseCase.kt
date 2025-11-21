@@ -45,7 +45,7 @@ class SignInWithGoogleUseCase @Inject constructor(
                     }
                 }
                 is Result.Error -> {
-                    val errorMessage = signInResult.message ?: signInResult.exception.message ?: ""
+                    val errorMessage = signInResult.message ?: signInResult.exception?.message ?: ""
 
                     // Check if error is "user not found"
                     if (isUserNotFoundError(errorMessage)) {

@@ -29,15 +29,15 @@ class SendFriendRequestUseCase @Inject constructor(
 
             val result = friendRepository.sendFriendRequest(recipientId)
             when (result) {
-                is Result.Success -> {
+                is Result.Success<*> -> {
                     Log.d(TAG, "Friend request sent to $recipientId")
-                    Result.Success(Unit)
+                    Result.Success<Unit>(Unit)
                 }
                 is Result.Error -> {
                     Log.e(TAG, "Failed to send friend request to $recipientId: ${result.message}")
-                    result
+                    result as Result<Unit>
                 }
-                is Result.Loading -> result
+                is Result.Loading -> Result.Error(message = "Loading")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error sending friend request", e)

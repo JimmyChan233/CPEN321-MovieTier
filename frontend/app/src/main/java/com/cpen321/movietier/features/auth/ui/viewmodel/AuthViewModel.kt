@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.cpen321.movietier.core.network.ApiService
 import com.cpen321.movietier.shared.models.User
 import com.cpen321.movietier.features.auth.data.repository.AuthRepository
+import com.cpen321.movietier.features.auth.ui.state.AuthUiState
 import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.auth.domain.usecase.DeleteAccountUseCase
 import com.cpen321.movietier.features.auth.domain.usecase.SignInWithGoogleUseCase
@@ -23,14 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class AuthUiState(
-    val isLoading: Boolean = false,
-    val isAuthenticated: Boolean = false,
-    val user: User? = null,
-    val errorMessage: String? = null,
-    val successMessage: String? = null
-)
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(

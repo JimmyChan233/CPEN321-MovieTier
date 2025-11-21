@@ -43,7 +43,7 @@ class UserViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = result.message
-                            ?: result.exception.message
+                            ?: result.exception?.message
                             ?: "Failed to update profile"
                     )
                 }

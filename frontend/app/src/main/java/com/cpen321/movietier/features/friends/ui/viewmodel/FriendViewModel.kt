@@ -7,6 +7,9 @@ import com.cpen321.movietier.shared.models.Friend
 import com.cpen321.movietier.shared.models.FriendRequest
 import com.cpen321.movietier.shared.models.User
 import com.cpen321.movietier.features.friends.data.repository.FriendRepository
+import com.cpen321.movietier.features.friends.ui.state.FriendUiState
+import com.cpen321.movietier.features.friends.ui.state.FriendRequestUi
+import com.cpen321.movietier.features.friends.ui.state.UiEvent
 import com.cpen321.movietier.shared.repository.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,22 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class FriendUiState(
-    val isLoading: Boolean = false,
-    val friends: List<Friend> = emptyList(),
-    val requests: List<FriendRequestUi> = emptyList(),
-    val outgoingRequests: List<FriendRequestUi> = emptyList(),
-    val errorMessage: String? = null
-)
-
-data class FriendRequestUi(
-    val id: String,
-    val senderId: String,
-    val senderName: String = "",
-    val senderEmail: String = "",
-    val senderProfileImage: String? = null
-)
 
 @HiltViewModel
 class FriendViewModel @Inject constructor(
@@ -203,8 +190,4 @@ class FriendViewModel @Inject constructor(
         super.onCleared()
         viewModelScope.launch { sseClient.closePath("friends/stream") }
     }
-}
-
-sealed class UiEvent {
-    data class Message(val text: String): UiEvent()
 }

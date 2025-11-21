@@ -1,6 +1,7 @@
 package com.cpen321.movietier.features.watchlist.domain.usecase
 
 import com.cpen321.movietier.shared.models.Movie
+import com.cpen321.movietier.shared.models.WatchlistItem
 import com.cpen321.movietier.shared.repository.Result
 import com.cpen321.movietier.features.watchlist.data.repository.WatchlistRepository
 import javax.inject.Inject
@@ -12,7 +13,7 @@ import javax.inject.Inject
 class AddToWatchlistUseCase @Inject constructor(
     private val watchlistRepository: WatchlistRepository
 ) {
-    suspend operator fun invoke(movie: Movie): Result<com.cpen321.movietier.data.model.WatchlistItem> {
+    suspend operator fun invoke(movie: Movie): Result<WatchlistItem> {
         return watchlistRepository.addToWatchlist(
             movieId = movie.id,
             title = movie.title,
