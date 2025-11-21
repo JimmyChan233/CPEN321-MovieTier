@@ -247,16 +247,77 @@ Test Summary:
 - Credentials are cached in DataStore (no need to sign in again)
 - Backend server is running and accessible
 
-**Test Methods:**
+**Detailed Test Specifications:**
 
-| **Test Method** | **Expected Behavior** | **Coverage** |
-| --- | --- | --- |
-| `e2e_friendsScreen_displaysCorrectly()` | Friends tab loads with "Add Friend" button visible; displays either an empty state ("No friends yet") or list of existing friends | Navigation, UI rendering |
-| `e2e_addFriendDialog_opensSuccessfully()` | Clicking "Add Friend" button opens a Material Design dialog with a search field and keyboard focus | Dialog interaction |
-| `e2e_searchUsers_byName_works()` | Entering a user's name in the search field returns matching user profiles with name, email, and profile picture; results update in real-time | API integration, search functionality |
-| `e2e_searchUsers_byName_noUserFound()` | Searching for a non-existent user displays "No users found" message; empty state is gracefully handled | Error handling, user feedback |
-| `e2e_friendRequestFlow_handlesAllStates()` | System correctly handles three distinct user states: (1) "Add Friend" button for non-friend users, (2) "Pending" label for users with pending requests, (3) "Friends" label for existing friends | State management, request handling |
-| `e2e_addFriendDialog_dismissDialog()` | Dialog can be dismissed by tapping "Cancel" button or clicking outside the dialog; no request is sent on dismissal | Dialog dismissal, cancellation |
+**Test 1: e2e_friendsScreen_displaysCorrectly()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. App has completed authentication and navigated to main screen | Wait for authentication to complete (30s timeout) |
+| 2. User taps the Friends tab icon in bottom navigation | Verify Friends tab is selected and displays screen content |
+| 3. System loads the Friends page | Check `friends_screen` semantic tag is visible |
+| 4a. User has no existing friends | Verify empty state displays ("No friends yet" or "Add friends to get started") |
+| 4b. User has existing friends | Verify friends list displays with friend names, emails, and profile pictures |
+| 5. "Add Friend" button is visible and interactive | Check `add_friend_button` is displayed and enabled |
+
+**Test 2: e2e_addFriendDialog_opensSuccessfully()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. User is on the Friends screen (Friends tab selected) | Verify Friends screen is displayed |
+| 2. User taps the "Add Friend" button | Perform click on `add_friend_button` |
+| 3. Material Design dialog appears with search interface | Wait for dialog to appear (max 3s) and verify dialog is displayed |
+| 4. Dialog displays a text input field for search | Check input field with tag `friend_search_input` is visible and focused |
+| 5. Keyboard appears and input field has focus | Verify input field is focused and ready for text entry |
+| 6. Dialog displays "Cancel" and implicit dismiss options | Check "Cancel" button is visible and dialog can be dismissed |
+
+**Test 3: e2e_searchUsers_byName_works()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. Add Friend dialog is open with search field focused | Verify dialog is open and input field is ready |
+| 2. User types a valid user name (e.g., "TestUser") | Input text "TestUser" into search field |
+| 3. Backend processes search query via GET /api/users/search?query=TestUser | Wait for backend response (max 10s) |
+| 4. Search results display matching user profiles | Wait until search results appear with tag `search_results` |
+| 5. Each result shows user name, email, and profile picture | For each result, verify: name is displayed, email is visible, profile picture is loaded |
+| 6. Results update in real-time as user types | Input additional character and verify results update within 2s |
+| 7. User can select a result to add as friend | Verify search results are clickable and selectable |
+
+**Test 4: e2e_searchUsers_byName_noUserFound()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. Add Friend dialog is open with search field focused | Verify dialog is open and input field is ready |
+| 2. User types a non-existent user name (e.g., "XyzNonExistentUser123") | Input text "XyzNonExistentUser123" into search field |
+| 3. Backend processes search and finds no matching users | Wait for backend response (max 10s) |
+| 4. UI displays "No users found" message | Verify message appears with tag `no_results_message` |
+| 5. No results are displayed in the list | Verify `search_results` list is empty or not displayed |
+| 6. User can clear search and try again | Input field retains text; user can clear and search again |
+
+**Test 5: e2e_friendRequestFlow_handlesAllStates()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. User searches for multiple users with different relationship states | Search for: (A) non-friend user, (B) user with pending request, (C) existing friend |
+| 2a. For non-friend user: "Add Friend" button appears | Verify button text is "Add Friend" and button is enabled for user A |
+| 2b. For pending request: "Pending" label appears | Verify label displays "Pending" (or similar) for user B, button is disabled |
+| 2c. For existing friend: "Friends" label appears | Verify label displays "Friends" for user C, button is disabled |
+| 3. User taps "Add Friend" button for non-friend user A | Perform click on "Add Friend" button |
+| 4. Backend processes request via POST /api/friends/request | Wait for backend response |
+| 5. Button updates to "Pending" label after successful request | Verify button/label changes to "Pending" state |
+| 6. Multiple state transitions are handled correctly | Verify all three states display correctly without crashes |
+
+**Test 6: e2e_addFriendDialog_dismissDialog()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. Add Friend dialog is open | Verify dialog is displayed |
+| 2. User taps the "Cancel" button | Perform click on "Cancel" button |
+| 3. Dialog closes without sending any friend request | Verify dialog is no longer visible |
+| 4. User is back on Friends screen | Check Friends screen is displayed after dialog closes |
+| 5. No friend request was sent to backend | Verify no API calls to POST /api/friends/request were made |
+| 6a. Alternative: User taps outside dialog (if supported) | Perform click outside dialog bounds |
+| 6b. Dialog closes gracefully | Verify dialog closes and Friends screen remains unchanged |
 
 **Test Coverage:**
 ```
@@ -297,14 +358,62 @@ Device: Android Emulator (API 33+) or Physical Device
 - Credentials are cached in DataStore
 - Backend server is running with TMDB API access
 
-**Test Methods:**
+**Detailed Test Specifications:**
 
-| **Test Method** | **Expected Behavior** | **Coverage** |
-| --- | --- | --- |
-| `e2e_recommendationSection_displaysHeader()` | Page displays one of two headers: (1) "Recommended for You" if user has ranked movies (personalized algorithm: analyzes top 30% of ranked movies, fetches similar/recommended movies from TMDB, scores based on genre/language/rating/recency match), OR (2) "Trending Now" if user has no ranked movies (fallback to weekly trending from TMDB) | Conditional UI rendering, algorithm routing |
-| `e2e_recommendationContent_isLoaded()` | Movie list loads with poster images, titles, release years, and star ratings (5-star display, gold #FFD700 color, 14dp size); featured quote card displays daily rotating quotes from TMDB taglines or offline catalog (~1,050 curated quotes) | Content rendering, data display, TMDB integration |
-| `e2e_contentLoads_withinTimeout()` | Content loads within acceptable timeout (30 seconds); UI remains responsive during loading; loading indicator is shown while fetching from backend | Performance, user feedback |
-| `e2e_errorHandling_gracefullyHandlesFailures()` | When backend fails or TMDB API is unavailable, error message appears gracefully without crashing; retrying the operation succeeds when backend recovers | Error resilience, user feedback, recovery |
+**Test 1: e2e_recommendationSection_displaysHeader()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. App has completed authentication and navigated to main screen | Wait for authentication to complete (30s timeout) |
+| 2. User taps the Discover/Recommendation tab in bottom navigation | Verify Recommendation tab is selected and displays |
+| 3. Backend fetches user's ranked movies to determine recommendation type | Wait for API call to GET /api/recommendations |
+| 4a. User has ranked movies (minimum 3 for personalization) | Verify header displays "Recommended for You" text |
+| 4b. User has no ranked movies (first-time user) | Verify header displays "Trending Now" text instead |
+| 5. Correct algorithm path is triggered based on user state | Confirm appropriate API endpoint was called (recommendations vs trending) |
+| 6. Header text is visible and correctly positioned | Check header text is displayed with proper formatting |
+
+**Test 2: e2e_recommendationContent_isLoaded()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. Recommendation screen has loaded and header is displayed | Verify header from Test 1 is visible |
+| 2. Backend fetches movie list from TMDB (recommendations or trending) | Wait for GET /api/recommendations or GET /api/recommendations/trending response |
+| 3. Movie list renders with visual content | Wait for movie items to appear (max 15s) |
+| 4. Each movie card displays required information: | For each movie in list, verify: |
+|    - Poster image (2:3 aspect ratio) | Poster image is loaded and visible |
+|    - Movie title | Title text is displayed |
+|    - Release year | Year is shown (e.g., "2023") |
+|    - 5-star rating display (gold #FFD700, 14dp, 8dp spacing) | Stars are gold colored, proper size, correctly spaced |
+| 5. Featured quote card is displayed above or within list | Check quote card with tag `featured_quote_card` is visible |
+| 6. Quote card shows: movie name, quote text, and rotating content | Verify quote text is displayed and changes on refresh |
+| 7. All content loads without errors or missing data | Verify no "Loading failed" messages appear; all images load |
+
+**Test 3: e2e_contentLoads_withinTimeout()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. User opens Recommendation screen | Record start time when screen opens |
+| 2. System shows loading indicator while fetching from backend | Verify loading spinner/indicator is displayed |
+| 3. Backend processes recommendation request | Wait for backend response |
+| 4. Content gradually becomes visible (progressive loading) | Monitor that content starts appearing before full timeout |
+| 5. Complete content loads within 30 seconds | Measure time from request to complete content visible; verify < 30s |
+| 6. UI remains responsive during loading (no ANR/freezes) | Interact with UI during loading (scroll, tap); verify responsiveness |
+| 7. Loading indicator disappears when content is ready | Verify spinner disappears after content loads |
+| 8. All movie cards are fully rendered and interactive | Verify movie cards can be tapped and are clickable |
+
+**Test 4: e2e_errorHandling_gracefullyHandlesFailures()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. User opens Recommendation screen | Verify screen opens |
+| 2. Backend API request fails (simulated timeout or 500 error) | Verify error response received from backend |
+| 3. Error message displays gracefully without crashing app | Check error message appears (e.g., "Failed to load recommendations") |
+| 4. Error UI shows retry button | Verify "Retry" or "Try Again" button is visible and enabled |
+| 5. User taps retry button | Perform click on retry button |
+| 6. App attempts to reload recommendations (second request) | Verify new API request is sent |
+| 7a. If backend recovers: Content loads successfully | Verify movie list appears after retry |
+| 7b. If backend still fails: Error message reappears | Verify error message displays again with proper feedback |
+| 8. No crash, blank screens, or frozen UI occurs | Verify app remains stable throughout error scenario |
 
 **Test Coverage:**
 ```
@@ -345,15 +454,109 @@ Device: Android Emulator (API 33+) or Physical Device
 - Backend server is running with TMDB API access
 - User may have 0 or multiple existing ranked movies (all states are valid)
 
-**Test Methods:**
+**Detailed Test Specifications:**
 
-| **Test Method** | **Expected Behavior** | **Coverage** |
-| --- | --- | --- |
-| `e2e_rankingScreen_displaysCorrectly()` | Ranking tab loads with two states: (1) Empty state ("No movies ranked yet") for users with 0 movies, OR (2) Ranked movie list showing rank chip, poster (2:3 aspect), year + 5-star rating display (gold #FFD700, 14dp size, 8dp spacing), top actors, and overview for users with movies. Tapping a card opens action sheet (Rerank/Delete options) | UI rendering, state management |
-| `e2e_addMovieDialog_opensSuccessfully()` | Clicking "Add Movie" button opens search dialog with TMDB movie search field; search results show 2-column grid with posters, titles, year, and top 3 actors; selecting a movie proceeds to comparison or direct addition | Search UI, result display |
-| `e2e_comparisonFlow_handlesAllUserStates()` | System correctly handles three ranking states: (1) First movie (0 existing): added directly without comparison, (2) Multiple movies: shows pairwise comparison dialog asking "Which movie do you prefer?", (3) Multiple comparisons: may require 2-3+ comparisons for algorithm to calculate final rank. Completion shows success message and updates watchlist (removes added movie from watchlist automatically) | Algorithm execution, state transitions, backend integration |
-| `e2e_rankingSystem_isResponsive()` | UI responds within 500ms to user taps (comparison selections, navigation, dialog dismissals); comparison dialog appears quickly after movie selection | Performance, responsiveness |
-| `e2e_rankingSystem_handlesErrorsGracefully()` | On backend failure (validation error, network timeout, database error), error message displays with clear feedback (e.g., "Failed to rank movie. Try again"); user can retry without losing progress; invalid movies (already ranked duplicates) are rejected with appropriate message | Error handling, user feedback, recovery |
+**Test 1: e2e_rankingScreen_displaysCorrectly()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. App has completed authentication and navigated to main screen | Wait for authentication to complete (30s timeout) |
+| 2. User taps the Ranking tab in bottom navigation | Verify Ranking tab is selected and displays |
+| 3. System loads the Ranking page and fetches user's ranked movies | Wait for GET /api/movies/ranked response |
+| 4a. User has 0 ranked movies (new user) | Verify empty state displays ("No movies ranked yet" message) |
+| 4a-continued. Empty state shows "Add Movie" or similar CTA button | Check button is visible and enabled |
+| 4b. User has 1+ ranked movies | Verify ranked movie list displays with all movies |
+| 5. Each ranked movie displays: | For each movie in list, verify: |
+|    - Rank chip/badge (e.g., "#1", "#2") | Rank number/badge is shown above or on poster |
+|    - Movie poster (2:3 aspect ratio) | Poster image is loaded and correct aspect ratio |
+|    - Release year (e.g., "2023") | Year is displayed |
+|    - 5-star rating (gold #FFD700, 14dp, 8dp spacing) | Stars are properly formatted and colored |
+|    - Top actors (e.g., "Actor 1, Actor 2, Actor 3") | Actor names are displayed below poster |
+|    - Movie overview (1-2 line summary) | Overview text is visible |
+| 6. User can tap a ranked movie card | Perform click on a movie card |
+| 7. Action sheet appears with Rerank and Delete options | Verify bottom sheet displays "Rerank" and "Delete from Rankings" |
+| 8. User can tap Rerank to start re-comparison | Verify Rerank button is clickable |
+| 9. User can tap Delete to remove movie | Verify Delete button is clickable and shows confirmation |
+
+**Test 2: e2e_addMovieDialog_opensSuccessfully()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. User is on the Ranking screen (either empty or with movies) | Verify Ranking screen is displayed |
+| 2. User taps the "Add Movie" button | Perform click on `add_movie_button` |
+| 3. Search dialog opens with TMDB movie search interface | Wait for dialog to appear (max 3s) and verify it's displayed |
+| 4. Dialog displays a text input field labeled "Search movies..." | Check search input field with tag `movie_search_input` is visible |
+| 5. Input field is focused and ready for text entry | Verify input field is focused and keyboard appears |
+| 6. User types a movie name (e.g., "Inception") | Input text "Inception" into search field |
+| 7. Backend fetches search results from TMDB API | Wait for GET /api/movies/search?query=Inception response |
+| 8. Search results display in a 2-column grid layout | Verify results grid is displayed |
+| 9. Each result shows: | For each search result, verify: |
+|    - Movie poster (2:3 aspect ratio) | Poster image is loaded |
+|    - Movie title | Title is displayed below poster |
+|    - Release year | Year is shown |
+|    - Top 3 cast members | Actor names appear as subtitle |
+| 10. User can tap a movie result to select it | Verify results are clickable |
+
+**Test 3: e2e_comparisonFlow_handlesAllUserStates()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1a. User has 0 existing ranked movies (new user, first movie) | Verify ranking list is empty before adding |
+| 1a-continued. User searches and selects "Inception" to add | Perform movie search and select from results |
+| 2a. System adds first movie directly without comparison | Verify POST /api/movies/add request is sent |
+| 3a. Success message appears: "Movie successfully ranked" | Check success message displays (auto-dismiss after 4s) |
+| 4a. Movie is added to ranked list | Verify "Inception" appears in ranking list as #1 |
+| 5a. Watchlist is updated (movie removed if it was there) | Verify watchlist synchronization completed |
+| --- | --- |
+| 1b. User has 1+ existing ranked movies (repeat scenario) | Verify ranking list has existing movies |
+| 1b-continued. User searches and selects another movie | Perform movie search and select a different movie |
+| 2b. Comparison dialog appears asking "Which do you prefer?" | Verify dialog displays both movies side-by-side |
+| 3b. Dialog shows two movies: selected + an existing ranked movie | Verify both movie posters/names are displayed |
+| 4b. User selects one movie (taps left or right side) | Perform click on one side of comparison dialog |
+| 5b. System records choice via POST /api/movies/compare | Verify request is sent with comparison result |
+| 6b. May trigger additional comparisons (binary search algorithm) | If needed, verify multiple comparison dialogs appear sequentially |
+| 7b. After final comparison, ranking is calculated | Verify POST request to finalize ranking succeeds |
+| 8b. Success message appears and movie is added | Check "Movie successfully ranked" message displays |
+| 9b. New movie appears in ranked list at calculated position | Verify movie appears in correct rank order |
+| 10b. Watchlist is synchronized (movie removed if present) | Verify watchlist updated automatically |
+
+**Test 4: e2e_rankingSystem_isResponsive()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. User is on the Ranking screen with Add Movie button visible | Record baseline time |
+| 2. User taps Add Movie button | Record time: T1 |
+| 3. Dialog opens | Record time: T2 (measure T2-T1, should be < 500ms) |
+| 4. User types in search field | Verify typing is responsive (no lag) |
+| 5. Search results appear | Record time: T3 (measure from typing to results < 3s) |
+| 6. User taps a search result | Record time: T4 |
+| 7. Comparison dialog appears (if not first movie) | Record time: T5 (measure T5-T4, should be < 500ms) |
+| 8. User taps comparison choice | Record time: T6 |
+| 9. Next dialog or success message appears | Record time: T7 (measure T7-T6, should be < 500ms) |
+| 10. All interactions are responsive without noticeable lag | Verify all response times are acceptable (< 500ms per interaction) |
+
+**Test 5: e2e_rankingSystem_handlesErrorsGracefully()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. User attempts to add a movie to rankings | Start movie addition flow |
+| 2a. Backend returns validation error (e.g., invalid movieId) | Simulate backend returning 400 Bad Request |
+| 3a. Error message displays: "Invalid movie selection. Try again." | Verify error message appears in dialog or snackbar |
+| 4a. User can tap a button to retry or dismiss | Verify retry/dismiss buttons are available |
+| --- | --- |
+| 2b. Network request times out (no response from backend) | Simulate request timeout after 30s |
+| 3b. Timeout error message displays | Verify error message shows (e.g., "Request timed out") |
+| 4b. User can retry the operation | Verify retry button works and resends request |
+| --- | --- |
+| 2c. User attempts to add a movie they already ranked | Select a duplicate movie from search |
+| 3c. Backend returns 400 error: "Movie already ranked" | Verify POST /api/movies/add returns duplicate error |
+| 4c. Clear error message displays to user | Check message: "This movie is already in your rankings" |
+| 5c. User can dismiss error and try another movie | Verify user can retry with different movie |
+| --- | --- |
+| 2d. Database save fails during ranking | Simulate POST /api/movies/compare returning 500 error |
+| 3d. Error message displays: "Failed to rank movie. Try again." | Verify user sees clear failure message |
+| 4d. User can retry without losing progress (selections preserved) | Verify retry works and selections are remembered |
+| 5d. No crash, blank screen, or hung UI occurs | Verify app remains stable throughout all error scenarios |
 
 **Test Coverage:**
 ```
@@ -394,13 +597,65 @@ Device: Android Emulator (API 33+) or Physical Device
 
 **Requirement**: Any core task should be achievable within 3 clicks/taps. Navigation responses must complete within 3 seconds.
 
-**Test Methods:**
+**Detailed Test Specifications:**
 
-| **Test Method** | **Expected Behavior** | **Coverage** |
-| --- | --- | --- |
-| `nfr_viewFeed_requiresOnlyOneClick()` | Viewing the feed is achievable with 1 click: tap Feed icon in bottom navigation → feed loads. Well under 3-click limit. Navigation response time < 3 seconds. | Core task validation, NFR requirement |
-| `nfr_rateMovie_requiresThreeClicks()` | Rating a movie achievable with 3 clicks: (1) Ranking tab, (2) Add Movie button, (3) Select movie from search results. Comparison flow is inline, not counted as separate navigation. Meets 3-click requirement. | Core task validation, NFR requirement |
-| `nfr_addToWatchlist_requiresThreeClicks()` | Adding to watchlist achievable with 3 clicks: (1) Discover/Recommendation tab, (2) Tap movie card to open details, (3) Click "Add to Watchlist" button. Meets 3-click requirement. | Core task validation, NFR requirement |
+**Test 1: nfr_viewFeed_requiresOnlyOneClick()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| 1. App has completed authentication and navigated to main screen (default is Discover tab) | Wait for authentication to complete (30s timeout) |
+| 2. User taps the Feed icon in bottom navigation (1 click) | Record time T1, perform click on `nav_feed` |
+| 3. Feed screen loads and displays | Record time T2 |
+| 4. System measures navigation response time | Calculate T2 - T1 = response time (target: < 3000ms) |
+| 5. Feed content displays: activities list or empty state | Verify feed content is visible |
+| 6a. If user has friends with activities: feed items appear | Verify friend activities are displayed |
+| 6b. If user has no friends: empty state displays | Verify "No activities yet" message is shown |
+| 7. Task is complete: user can now view feed | Verify feed is fully interactive (can scroll, like, comment) |
+| **Result**: ✅ View feed achieves 1 click (well under 3-click limit) | Verify response time < 3000ms AND content is loaded |
+
+**Test 2: nfr_rateMovie_requiresThreeClicks()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| **Click 1** | |
+| 1. User is on main screen (possibly Discover tab) | Verify current screen |
+| 2. User taps Ranking tab in bottom navigation (Click 1) | Record time T1, perform click on `nav_ranking` |
+| 3. Ranking screen loads | Record time T2 (measure T2-T1) |
+| 4. Either empty state or ranking list displays | Verify Ranking tab is active |
+| **Click 2** | |
+| 5. User taps "Add Movie" button (Click 2) | Record time T3, perform click on `add_movie_button` |
+| 6. Search dialog opens with input field | Record time T4 (measure T4-T3) |
+| 7. Input field is focused and ready | Verify search field is focused |
+| **Click 3** | |
+| 8. User types movie name in search field | Input text into search field |
+| 9. Search results appear from TMDB API | Wait for results (max 10s) |
+| 10. User taps a movie result to select it (Click 3) | Record time T5, perform click on first movie result |
+| 11. Movie addition flow continues (comparison or direct add) | Record time T6 (measure T6-T5) |
+| 12. Task is complete: user initiated movie ranking | Verify movie was added to ranking or comparison started |
+| **Result**: ✅ Rate movie achieves 3 clicks (meets 3-click limit) | Verify all three clicks completed within acceptable timeframes |
+
+**Test 3: nfr_addToWatchlist_requiresThreeClicks()**
+
+| **Scenario Steps** | **Test Case Steps** |
+| --- | --- |
+| **Click 1** | |
+| 1. User is on main screen | Verify current screen |
+| 2. User taps Discover/Recommendation tab (Click 1) | Record time T1, perform click on `nav_recommendation` (or similar) |
+| 3. Recommendation screen loads | Record time T2 (measure T2-T1) |
+| 4. Movie list displays (either "Recommended for You" or "Trending Now") | Verify recommendation tab is active |
+| 5. At least one movie card is visible | Verify movie cards are displayed |
+| **Click 2** | |
+| 6. User taps a movie card to open details (Click 2) | Record time T3, perform click on a movie card |
+| 7. Movie detail bottom sheet opens | Record time T4 (measure T4-T3) |
+| 8. Detail sheet displays: poster, title, year, rating, description | Verify all movie details are visible |
+| 9. "Add to Watchlist" button is visible in detail sheet | Check button is displayed and enabled |
+| **Click 3** | |
+| 10. User taps "Add to Watchlist" button (Click 3) | Record time T5, perform click on `add_to_watchlist_button` |
+| 11. System sends POST request to /api/watchlist | Verify API call is made |
+| 12. Success message displays: "Added to watchlist" | Record time T6 (measure T6-T5) |
+| 13. Movie appears in user's watchlist | Verify movie was saved |
+| 14. Task is complete: user added movie to watchlist | Verify watchlist updated |
+| **Result**: ✅ Add to watchlist achieves 3 clicks (meets 3-click limit) | Verify all three clicks completed successfully |
 
 **Test Coverage:**
 ```
