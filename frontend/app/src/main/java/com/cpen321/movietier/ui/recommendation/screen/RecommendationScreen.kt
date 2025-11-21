@@ -305,68 +305,90 @@ private fun RSDialogs(
                 else -> null
             })
         }
-        MovieDetailBottomSheet(
-            movie = movie,
-            actions = MovieDetailActions(
-                onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
-                onPlayTrailer = dialogState.trailerKey?.let { { callbacks.onShowTrailer(movie.title) } },
-                onOpenWhereToWatch = {
-                    commonContext.scope.launch {
-                        val tmdbLink =
-                            "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
-                        var tmdbOpened = false
-                        try {
-                            commonContext.context.startActivity(
-                                Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse(tmdbLink)
-                                )
-                            ); tmdbOpened = true
-                        } catch (_: Exception) {
-                        }
-                        if (!tmdbOpened) {
-                            when (val res =
-                                recommendationViewModel.getWatchProviders(movie.id, country)) {
-                                is Result.Success -> {
-                                    val providers =
-                                        (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
-                                    if (!res.data.link.isNullOrBlank()) {
-                                        try {
-                                            commonContext.context.startActivity(
-                                                Intent(
-                                                    Intent.ACTION_VIEW,
-                                                    Uri.parse(res.data.link)
-                                                )
-                                            )
-                                        } catch (e: ActivityNotFoundException) {
-                                            commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                        }
-                                    } else if (providers.isNotEmpty()) {
-                                        commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
-                                    } else {
-                                        commonContext.snackbarHostState.showSnackbar("No streaming info found")
-                                    }
-                                }
-
-                                is Result.Error -> commonContext.snackbarHostState.showSnackbar(
-                                    res.message ?: "Failed to load providers"
-                                )
-
-                                else -> {}
-                            }
-                        }
-                    }
-                },
-                onAddToWatchlist = { recommendationViewModel.addToWatchlist(movie); callbacks.onDismissMovie() },
-                onDismissRequest = callbacks.onDismissMovie
+        val actions = remember(movie, dialogState.trailerKey, country) {
+            buildMovieActions(
+                movie = movie,
+                dialogState = dialogState,
+                country = country,
+                recommendationViewModel = recommendationViewModel,
+                rankingViewModel = rankingViewModel,
+                commonContext = commonContext,
+                callbacks = callbacks
             )
-        )
+        }
+        MovieDetailBottomSheet(movie = movie, actions = actions)
     }
     if (dialogState.showTrailerDialog && dialogState.trailerKey != null) {
         YouTubePlayerDialog(dialogState.trailerKey!!, dialogState.trailerMovieTitle) { callbacks.onDismissTrailer(false) }
     }
     if (compareState != null) {
         RSComparisonDialog(compareState, rankingViewModel)
+    }
+}
+
+private fun buildMovieActions(
+    movie: Movie,
+    dialogState: MovieDialogState,
+    country: String,
+    recommendationViewModel: RecommendationViewModel,
+    rankingViewModel: RankingViewModel,
+    commonContext: CommonContext,
+    callbacks: MovieDialogCallbacks
+): MovieDetailActions {
+    return MovieDetailActions(
+        onAddToRanking = { rankingViewModel.addMovieFromSearch(movie) },
+        onPlayTrailer = dialogState.trailerKey?.let { { callbacks.onShowTrailer(movie.title) } },
+        onOpenWhereToWatch = {
+            launchWatchProviders(
+                movie = movie,
+                country = country,
+                recommendationViewModel = recommendationViewModel,
+                commonContext = commonContext
+            )
+        },
+        onAddToWatchlist = { recommendationViewModel.addToWatchlist(movie); callbacks.onDismissMovie() },
+        onDismissRequest = callbacks.onDismissMovie
+    )
+}
+
+private fun launchWatchProviders(
+    movie: Movie,
+    country: String,
+    recommendationViewModel: RecommendationViewModel,
+    commonContext: CommonContext
+) {
+    commonContext.scope.launch {
+        val tmdbLink = "https://www.themoviedb.org/movie/${movie.id}/watch?locale=${country}"
+        var tmdbOpened = false
+        try {
+            commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tmdbLink)))
+            tmdbOpened = true
+        } catch (_: Exception) {
+        }
+        if (!tmdbOpened) {
+            when (val res = recommendationViewModel.getWatchProviders(movie.id, country)) {
+                is Result.Success -> {
+                    val providers = (res.data.providers.flatrate + res.data.providers.rent + res.data.providers.buy).distinct()
+                    if (!res.data.link.isNullOrBlank()) {
+                        try {
+                            commonContext.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(res.data.link)))
+                        } catch (e: ActivityNotFoundException) {
+                            commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                        }
+                    } else if (providers.isNotEmpty()) {
+                        commonContext.snackbarHostState.showSnackbar("Available on: ${providers.joinToString()}")
+                    } else {
+                        commonContext.snackbarHostState.showSnackbar("No streaming info found")
+                    }
+                }
+
+                is Result.Error -> commonContext.snackbarHostState.showSnackbar(
+                    res.message ?: "Failed to load providers"
+                )
+
+                else -> {}
+            }
+        }
     }
 }
 

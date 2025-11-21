@@ -8,7 +8,6 @@ import { AuthRequest } from "../../types/middleware.types";
 import {
   UserPreferences,
   TmdbMovie,
-  TmdbGenre,
   TmdbMovieDetails,
   MovieRecommendation,
   ScoredMovie,
