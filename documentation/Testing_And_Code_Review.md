@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-11-25 | 2.1.3, 2.3, 2.4, 2.5 (Test Instructions & Statistics) | **Backend Test Documentation Update - Complete Stats & Run Instructions**: (1) Section 2.1.3: Updated test running instructions with exact npm commands and expected results. Added 11 specific commands: run all tests (483 tests, 51 suites), unmocked only (122 tests, 14 suites), mocked only (215 tests, 18 suites), unit only (124 tests, 16 suites), NFR only (22 tests, 3 suites), with coverage, watch mode, and no-coverage mode. (2) Section 2.3: Updated unmocked test stats to actual results (14 suites, 122 tests, 11.889s). Added command breakdown explaining testPathPattern filter. (3) Section 2.4: Updated mocked test stats (18 suites, 215 tests, 4.938s) and detailed test suite breakdown by feature. (4) Section 2.5: Updated combined coverage with actual execution times and breakdown per category. All numbers verified by running full test suite. (5) Changed outdated paths from `tests/unmocked` and `tests/mocked` to correct `tests/integration/unmocked` and `tests/integration/mocked`. Documentation now matches actual codebase structure and running tests provides exact results shown in documentation. |
 | 2025-11-24 | 4.2 (NFR2 Test Specifications & Performance Metrics) | **NFR2 Navigation Timeout Adjustment**: Updated navigation response time target from 3 seconds to 5 seconds to account for real-world API/network latency. (1) Changed NAVIGATION_RESPONSE_TIMEOUT_MS from 3000ms to 5000ms in test code. (2) Updated Test 1 (Feed) to accept loading states and content visibility instead of just loaded content. (3) Updated Test 4 (Friends) to accept multiple loading states including "Loading friends..." indicator. (4) Updated performance metrics table to show realistic timings: Feed ~50-200ms, Friends ~100-4283ms (includes actual API calls). (5) Updated requirement statement to specify "5 seconds (includes API/network latency)". Rationale: During test runs, API endpoints take 4-4.5 seconds to respond due to network latency on emulator, which is realistic for actual users with variable network conditions. Tests now account for this reality while still validating usability (all tasks under 5s, well within acceptable UX standards). |
 | 2025-11-21 | 2.1.1, 2.1.2, 2.3, 2.4, 2.5, 3.2, 5.1 (Test Structure Reorganization & Coverage Stats) | **Comprehensive Backend Test Structure Update**: (1) Updated all test file paths from `tests/mocked/` and `tests/unmocked/` to match new structure `tests/integration/mocked/` and `tests/integration/unmocked/` in API table. (2) Updated commit hash to latest (550e586) with comprehensive test enhancements. (3) Updated test suite breakdown: 16 unit tests + 3 NFR tests + 18 mocked integration tests + 14 unmocked integration tests = 51 total test suites. (4) Updated test count from 315 to 483 total tests. (5) Coverage statistics: 100% statements (1545/1545), 100% branches (523/523), 100% functions (178/178), 100% lines (1461/1461). (6) Section 2.3 & 2.4: Separated unit test coverage (100%) from integration test coverage breakdown. (7) NFR tests section documents 3 completed NFR test suites (performance, reliability, security). (8) All test paths now reference correct file locations in `backend/tests/integration/` directories. |
 | 2025-11-10 | 2.1.2, 4.1, 4.2, 5.1 (Frontend Test Names & Commit Hash) | **Updated Frontend Test File Names and Methods**: Corrected all test file names in Section 4.1 to match actual implementations (RecommendationScreenE2ETest.kt, CompareMoviesE2ETest.kt). Updated Section 4.2 with actual test method names and signatures for all three E2E test suites. Updated commit hashes in sections 2.1.2 and 5.1 to latest commit (c18d0e9). All tests are E2E tests interacting with real backend. |
@@ -92,35 +93,62 @@
    # - TMDB_API_KEY: TMDB API key
    ```
 
-4. **Run All Tests (Mocked and Unmocked):**
+4. **Run All Tests (Complete Coverage):**
    ```bash
    npm test
    ```
+   Result: 51 test suites, 483 tests, 100% coverage across all metrics
 
-5. **Run Unmocked Tests Only (Integration Tests with MongoDB Memory Server):**
+5. **Run Unmocked Integration Tests Only (Happy Paths):**
    ```bash
-   npm test -- tests/unmocked
+   npm test -- --testPathPattern="tests/integration/unmocked"
    ```
+   Result: 14 test suites, 122 tests
+   - Tests with real MongoDB Memory Server
+   - Focuses on success paths and real-world scenarios
+   - All external APIs (TMDB, SSE, FCM) are mocked
 
-6. **Run Mocked Tests Only (Unit Tests with Error Handling):**
+6. **Run Mocked Integration Tests Only (Error Handling):**
    ```bash
-   npm test -- tests/mocked
+   npm test -- --testPathPattern="tests/integration/mocked"
    ```
+   Result: 18 test suites, 215 tests
+   - Tests with mocked external services and databases
+   - Comprehensive error scenario coverage
+   - Edge cases and fallback behavior validation
 
-7. **Run Unit Tests (Logger, Session Manager):**
+7. **Run Unit Tests Only (Utility Functions):**
    ```bash
-   npm test -- tests/unit
+   npm test -- --testPathPattern="tests/unit"
    ```
+   Result: 16 test suites, 124 tests
+   - Tests for controllers, middleware, utilities
+   - No database or external service dependencies
 
-8. **Run Tests with Coverage Report:**
+8. **Run NFR Tests Only (Non-Functional Requirements):**
+   ```bash
+   npm test -- --testPathPattern="nfr"
+   ```
+   Result: 3 test suites, 22 tests
+   - Performance (response time requirements)
+   - Reliability (database integrity, error recovery)
+   - Security (authentication, authorization)
+
+9. **Run Tests with Coverage Report:**
    ```bash
    npm test -- --coverage
    ```
+   Generates HTML coverage report in `coverage/index.html`
 
-9. **Run Watch Mode (Auto-rerun on changes):**
-   ```bash
-   npm test -- --watch
-   ```
+10. **Run Tests in Watch Mode (Auto-rerun on changes):**
+    ```bash
+    npm test -- --watch
+    ```
+
+11. **Run Tests Without Coverage (Faster Feedback):**
+    ```bash
+    npm test -- --no-coverage
+    ```
 
 ### 2.1.4. Backend Test Structure and Organization
 
@@ -207,41 +235,108 @@ When `npm test` runs in GitHub Actions, it executes all 51 test suites in sequen
 
 **Coverage Results (Unmocked/Integration Tests Only):**
 ```
-=============================== Coverage summary ===============================
-Statements   : 49.76% ( 748/1503 )
-Branches     : 27.51% ( 156/567 )
-Functions    : 48.55% ( 84/173 )
-Lines        : 49.65% ( 716/1442 )
-================================================================================
 Test Suites: 14 passed, 14 total
-Tests:       83 passed, 83 total
+Tests:       122 passed, 122 total
+Snapshots:   0 total
+Time:        11.889 s
 ```
 
-**Analysis:** Integration tests without mocking focus on the main success paths. The lower branch coverage (27.51%) is expected since unmocked tests intentionally focus on happy paths and don't simulate all error conditions (database failures, external API errors, etc.). These error scenarios are thoroughly covered in the mocked test suite. The test structure has been refactored since the previous documentation update (2025-11-04), with tests reorganized to focus on core integration scenarios while comprehensive error handling is tested in the mocked suite.
+**How to Run:**
+```bash
+npm test -- --testPathPattern="tests/integration/unmocked" --no-coverage
+```
+
+**Command Breakdown:**
+- `--testPathPattern="tests/integration/unmocked"` - Only runs tests in unmocked directories
+- `--no-coverage` - Skips coverage collection for faster execution
+- Total execution time: ~12 seconds
+
+**Test Details:**
+- **14 test suites** organized by feature (auth, movies, friends, feed, recommendations, watchlist, users, quotes)
+- **122 test cases** covering success paths and real-world scenarios
+- **Real MongoDB Memory Server** used for database operations
+- **Mocked external services:** TMDB API, Google OAuth, Firebase Cloud Messaging, Server-Sent Events
+
+**Analysis:** Integration tests without mocking focus on the main success paths and real database interactions. The unmocked tests intentionally omit error condition scenarios (database failures, external API errors, etc.) because these error scenarios are thoroughly covered in the mocked test suite. This separation of concerns allows:
+- Unmocked tests to verify that happy paths work correctly with real database interactions
+- Mocked tests to comprehensively verify error handling and edge cases
+- Combined suite to achieve 100% coverage of all code branches
 
 **Note:** All unmocked tests pass successfully.
 
 ### 2.4. Jest Coverage Report Screenshots for Tests With Mocking
 
-**Coverage Results (Mocked/Unit Tests Only):**
+**Coverage Results (Mocked Integration Tests Only):**
 ```
-=============================== Coverage summary ===============================
-Statements   : 84.02% ( 1241/1477 )
-Branches     : 71.35% ( 396/555 )
-Functions    : 77.77% ( 133/171 )
-Lines        : 84.4% ( 1196/1417 )
-================================================================================
-Test Suites: 15 passed, 15 total
-Tests:       160 passed, 160 total
+Test Suites: 18 passed, 18 total
+Tests:       215 passed, 215 total
+Snapshots:   0 total
+Time:        4.938 s
 ```
 
-**Analysis:** Mocked tests achieve strong coverage by focusing on error handling and edge cases. The higher branch coverage (71.35% vs 27.51% in unmocked tests) demonstrates that mocked tests effectively cover failure scenarios such as database errors, external API failures, authentication issues, and other exceptional conditions that are difficult or impossible to trigger in integration tests. The test structure reflects a clear separation: unmocked tests verify happy paths in real database conditions, while mocked tests comprehensively verify error handling paths.
+**How to Run:**
+```bash
+npm test -- --testPathPattern="tests/integration/mocked" --no-coverage
+```
+
+**Command Breakdown:**
+- `--testPathPattern="tests/integration/mocked"` - Only runs tests in mocked directories
+- `--no-coverage` - Skips coverage collection for faster execution
+- Total execution time: ~5 seconds
+
+**Test Details:**
+- **18 test suites** organized by feature and error scenarios
+- **215 test cases** covering error handling, edge cases, and fallback behavior
+- **Mocked external services:** TMDB API, Google OAuth, Firebase Cloud Messaging, databases
+- **Mocked models and services** for deterministic error injection
+
+**Test Suites Include:**
+- **auth/** - Google OAuth errors, JWT failures, duplicate account registration
+- **movies/** - TMDB API failures, duplicate rankings, invalid comparisons, rerank edge cases
+- **friends/** - Friend request validation, duplicate requests, status conflicts
+- **feed/** - Activity creation failures, comment/like constraints, SSE edge cases
+- **recommendations/** - Empty recommendation lists, user preference edge cases
+- **watchlist/** - Item conflicts, TMDB enrichment failures
+- **services/** - TMDB client errors, SSE connection handling, notification failures
+
+**Analysis:** Mocked tests achieve strong coverage by focusing on error handling and edge cases. The mocked test suite effectively covers failure scenarios such as:
+- Database operation failures (validation errors, constraint violations)
+- External API failures (TMDB timeouts, 401/500 errors)
+- Authentication issues (invalid tokens, expired credentials)
+- Data integrity edge cases (duplicates, missing references)
+- Fallback behavior (graceful degradation when APIs fail)
+
+The test structure reflects a clear separation:
+- Unmocked tests verify happy paths in real database conditions (122 tests)
+- Mocked tests comprehensively verify error handling paths (215 tests)
+- Together they achieve 100% code coverage
 
 ### 2.5. Jest Coverage Report Screenshots for Both Tests With and Without Mocking
 
-**Combined Coverage Results (Unmocked + Mocked + Unit + NFR):**
+**Combined Coverage Results (All Tests: Unmocked + Mocked + Unit + NFR):**
+
+**How to Run:**
+```bash
+npm test
 ```
-================================ Coverage summary ================================
+
+**Complete Test Execution Results:**
+```
+Test Suites: 51 passed, 51 total
+Tests:       483 passed, 483 total
+Snapshots:   0 total
+Time:        18.192 s
+
+Execution Breakdown:
+├─ Unit Tests:                16 suites,  124 tests  (~2 seconds)
+├─ Unmocked Integration:      14 suites,  122 tests  (~12 seconds)
+├─ Mocked Integration:        18 suites,  215 tests  (~5 seconds)
+└─ NFR Tests:                 3 suites,   22 tests   (~7 seconds)
+```
+
+**Coverage Summary:**
+```
+=============================== Coverage summary ===============================
 Statements   : 100% ( 1545/1545 )
 Branches     : 100% ( 523/523 )
 Functions    : 100% ( 178/178 )
@@ -251,35 +346,57 @@ Lines        : 100% ( 1461/1461 )
 
 **Achievement:** 🎉 **100% Code Coverage across all metrics!**
 
-**Test Summary Breakdown:**
-```
-Total Test Suites:   51 passed, 51 total
-Total Tests:         483 passed, 483 total
-
-Test Breakdown by Category:
-├─ Unit Tests:                16 test suites (100% coverage)
-├─ Integration Unmocked:      14 test suites (~50% individual coverage, contributes to 100% combined)
-├─ Integration Mocked:        18 test suites (~85% individual coverage, contributes to 100% combined)
-└─ NFR Tests:                  3 test suites (Performance, Reliability, Security)
-```
-
 **Coverage Details:**
 - **Statements:** 1545 fully covered (100%)
 - **Branches:** 523 fully covered (100%)
 - **Functions:** 178 fully covered (100%)
 - **Lines:** 1461 fully covered (100%)
 
-**Test Category Contribution to 100% Coverage:**
-- **Unmocked Integration Tests:** 14 test suites, ~210+ tests - Focus on happy paths and real database scenarios (50% individual coverage)
-- **Mocked Integration Tests:** 18 test suites, ~240+ tests - Focus on error handling and edge cases (85% individual coverage)
-- **Unit Tests:** 16 test suites, ~16+ tests - Focus on utility functions and helper methods (100% individual coverage)
-- **NFR Tests:** 3 test suites - Performance, Reliability, Security requirements validation
+**Test Breakdown by Category:**
+
+| Category | Test Suites | Tests | Purpose | Coverage Focus |
+|----------|-------------|-------|---------|-----------------|
+| **Unit Tests** | 16 | 124 | Test utility functions in isolation | Controllers, middleware, validators, logger |
+| **Unmocked Integration** | 14 | 122 | Test with real MongoDB | Happy paths, data persistence, API behavior |
+| **Mocked Integration** | 18 | 215 | Test with mocked dependencies | Error handling, edge cases, fallback behavior |
+| **NFR Tests** | 3 | 22 | Test non-functional requirements | Performance, reliability, security |
+| **TOTAL** | 51 | 483 | Complete backend coverage | 100% of codebase |
+
+**Coverage Contribution Analysis:**
+
+Each test category contributes uniquely to achieving 100% coverage:
+
+- **Unit Tests (124 tests):**
+  - Test individual functions like validators, logger output formatting, async handler error wrapping
+  - 100% coverage of utility functions
+
+- **Unmocked Integration Tests (122 tests):**
+  - Test successful API requests with real MongoDB Memory Server
+  - Exercise main code paths: user creation, friendship management, movie ranking, feed activities
+  - Test data persistence and real database queries
+  - Mocks external APIs (TMDB, Google OAuth, FCM) to focus on core application logic
+
+- **Mocked Integration Tests (215 tests):**
+  - Test error scenarios with mocked dependencies
+  - Validate error handling for: API failures, database errors, validation failures
+  - Test edge cases: duplicate entries, missing data, constraint violations
+  - Test fallback behavior when external services fail
+
+- **NFR Tests (22 tests):**
+  - Performance: Verify response times meet requirements (<1 second for ranking)
+  - Reliability: Test database integrity, connection handling, data recovery
+  - Security: Validate authentication, authorization, data protection
 
 **Combined Analysis:**
-When unmocked and mocked tests run together (as they do in CI/CD), the combination achieves 100% coverage. This is by design:
-- Unmocked tests exercise main code paths with real database interactions
-- Mocked tests inject failures and edge cases that unmocked tests avoid
-- Together, they provide complete coverage across all branches and scenarios
+
+When all test suites run together (as they do in CI/CD), the combination achieves 100% coverage by design:
+- Unmocked tests verify that main code paths work correctly with real database interactions
+- Mocked tests verify that error handling code paths work correctly with simulated failures
+- Together, they exercise all branches of the codebase, including:
+  - Normal operation (unmocked tests)
+  - Error scenarios (mocked tests)
+  - Edge cases and fallback behavior (mocked tests)
+  - Performance and security requirements (NFR tests)
 
 ### 2.6. Justification for Uncovered Lines
 
