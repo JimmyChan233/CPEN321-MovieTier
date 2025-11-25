@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-11-25 | 2.1.2, 5.1 (Commit Hash), 2.1.1 (API Table) | **Commit Hash & Endpoint Path Updates for Final Release**: (1) Updated commit hash from `550e586` to `a254c62` (latest on main branch) to reflect current state for M5 final release. (2) Corrected `/api/quotes` endpoint path to `/api/movies/quote` in API endpoints table - the quote endpoint is implemented in movieRoutes.ts, not a separate quoteRoutes file. (3) Updated test file paths: quote endpoint tests located in `backend/tests/unit/controllers/movieQuoteController.test.ts` rather than integration test directory. (4) All sections 2.1.2 and 5.1 now reference correct commit hash for M5 submission. |
 | 2025-11-25 | 2.1.3, 2.3, 2.4, 2.5 (Test Instructions & Statistics) | **Backend Test Documentation Update - Complete Stats & Run Instructions**: (1) Section 2.1.3: Updated test running instructions with exact npm commands and expected results. Added 11 specific commands: run all tests (483 tests, 51 suites), unmocked only (122 tests, 14 suites), mocked only (215 tests, 18 suites), unit only (124 tests, 16 suites), NFR only (22 tests, 3 suites), with coverage, watch mode, and no-coverage mode. (2) Section 2.3: Updated unmocked test stats to actual results (14 suites, 122 tests, 11.889s). Added command breakdown explaining testPathPattern filter. (3) Section 2.4: Updated mocked test stats (18 suites, 215 tests, 4.938s) and detailed test suite breakdown by feature. (4) Section 2.5: Updated combined coverage with actual execution times and breakdown per category. All numbers verified by running full test suite. (5) Changed outdated paths from `tests/unmocked` and `tests/mocked` to correct `tests/integration/unmocked` and `tests/integration/mocked`. Documentation now matches actual codebase structure and running tests provides exact results shown in documentation. |
 | 2025-11-24 | 4.2 (NFR2 Test Specifications & Performance Metrics) | **NFR2 Navigation Timeout Adjustment**: Updated navigation response time target from 3 seconds to 5 seconds to account for real-world API/network latency. (1) Changed NAVIGATION_RESPONSE_TIMEOUT_MS from 3000ms to 5000ms in test code. (2) Updated Test 1 (Feed) to accept loading states and content visibility instead of just loaded content. (3) Updated Test 4 (Friends) to accept multiple loading states including "Loading friends..." indicator. (4) Updated performance metrics table to show realistic timings: Feed ~50-200ms, Friends ~100-4283ms (includes actual API calls). (5) Updated requirement statement to specify "5 seconds (includes API/network latency)". Rationale: During test runs, API endpoints take 4-4.5 seconds to respond due to network latency on emulator, which is realistic for actual users with variable network conditions. Tests now account for this reality while still validating usability (all tasks under 5s, well within acceptable UX standards). |
 | 2025-11-21 | 2.1.1, 2.1.2, 2.3, 2.4, 2.5, 3.2, 5.1 (Test Structure Reorganization & Coverage Stats) | **Comprehensive Backend Test Structure Update**: (1) Updated all test file paths from `tests/mocked/` and `tests/unmocked/` to match new structure `tests/integration/mocked/` and `tests/integration/unmocked/` in API table. (2) Updated commit hash to latest (550e586) with comprehensive test enhancements. (3) Updated test suite breakdown: 16 unit tests + 3 NFR tests + 18 mocked integration tests + 14 unmocked integration tests = 51 total test suites. (4) Updated test count from 315 to 483 total tests. (5) Coverage statistics: 100% statements (1545/1545), 100% branches (523/523), 100% functions (178/178), 100% lines (1461/1461). (6) Section 2.3 & 2.4: Separated unit test coverage (100%) from integration test coverage breakdown. (7) NFR tests section documents 3 completed NFR test suites (performance, reliability, security). (8) All test paths now reference correct file locations in `backend/tests/integration/` directories. |
@@ -59,7 +60,7 @@
 | **PUT /api/users/profile** | [`backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts`](../../backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model |
 | **POST /api/users/fcm-token** | [`backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts`](../../backend/tests/integration/unmocked/users/userProfile.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model |
 | **GET /api/users/:userId** | [`backend/tests/integration/unmocked/users/userRoutes.unmocked.test.ts`](../../backend/tests/integration/unmocked/users/userRoutes.unmocked.test.ts) | [`backend/tests/integration/mocked/auth/auth.mocked.test.ts`](../../backend/tests/integration/mocked/auth/auth.mocked.test.ts) | User model |
-| **GET /api/quotes** | [`backend/tests/integration/unmocked/quotes/quote.unmocked.test.ts`](../../backend/tests/integration/unmocked/quotes/quote.unmocked.test.ts) | [`backend/tests/integration/mocked/services/tmdbServices.mocked.test.ts`](../../backend/tests/integration/mocked/services/tmdbServices.mocked.test.ts) | TMDB tagline API |
+| **GET /api/movies/quote** | [`backend/tests/unit/controllers/movieQuoteController.test.ts`](../../backend/tests/unit/controllers/movieQuoteController.test.ts) | [`backend/tests/integration/mocked/services/tmdbServices.mocked.test.ts`](../../backend/tests/integration/mocked/services/tmdbServices.mocked.test.ts) | TMDB tagline API |
 | **GET /api/movies/:movieId/details** | [`backend/tests/integration/unmocked/movies/movie.unmocked.test.ts`](../../backend/tests/integration/unmocked/movies/movie.unmocked.test.ts) | [`backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/movies/movieRoutes.mocked.test.ts) | TMDB API client |
 | **GET /api/friends/stream** | [`backend/tests/integration/unmocked/feed/feedStream.unmocked.test.ts`](../../backend/tests/integration/unmocked/feed/feedStream.unmocked.test.ts) | [`backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/feed/feedRoutes.mocked.test.ts) | SSE service |
 | **DELETE /api/friends/requests/:requestId** | [`backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts`](../../backend/tests/integration/unmocked/friends/friendRoutesAdvanced.unmocked.test.ts) | [`backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts`](../../backend/tests/integration/mocked/friends/friendRoutes.mocked.test.ts) | FriendRequest model, notification service |
@@ -68,7 +69,7 @@
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`550e586` - Latest commit with enhanced test documentation and scenario/test case specifications (M5-CodeStructure branch)
+`a254c62` - Latest commit on main branch with updated testing documentation and current stats
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -655,7 +656,7 @@ Test Type: End-to-End (E2E) with Real Backend
 Backend Endpoints Tested:
   - GET /api/recommendations (personalized recommendations)
   - GET /api/recommendations/trending (fallback for new users)
-  - GET /api/quotes (TMDB taglines for featured quote)
+  - GET /api/movies/quote (TMDB taglines for featured quote)
 Scenarios Covered:
   - User with ranked movies: displays "Recommended for You" with personalized suggestions
   - User with no ranked movies: displays "Trending Now" with popular TMDB films
@@ -917,7 +918,7 @@ Device: Android Emulator (API 33+) or Physical Device
 
 ### 5.1. Commit Hash Where Codacy Ran
 
-`550e586` - Latest commit with enhanced test documentation and scenario/test case specifications (M5-CodeStructure branch)
+`a254c62` - Latest commit on main branch with updated testing documentation and current stats
 
 **Note:** Codacy has been integrated with the repository. The following commits demonstrate Codacy issues have been actively addressed:
 - `25d3eb6` - Remove comments from private functions per Codacy guidelines
