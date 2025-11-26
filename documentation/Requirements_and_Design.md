@@ -77,8 +77,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 - **Use cases for feature 1: Authentication**
 
-1. Sign In : When a user has already created their account, they can just sign in with their google account.
-2. Sign Up: All new users will use the Sign Up use case to create an account.
+1. Sign In: When a user has already created their account, they can just sign in with their google account. If the user does not already have an account, they will use the Sign In use case to create an account.
 3. Delete Account: When  a user wants to delete an account.
 4. Sign Out: When a user wants to sign out of the app, they can use the sign out use case.
 5. Edit Profile: Users can edit their display name from the Profile screen. Changes are saved to the backend via PUT /api/users/profile and persisted locally in DataStore. Profile pictures are automatically set from Google account during sign-up.
@@ -87,7 +86,7 @@ In this app instead of giving out boring stars to rate a movie, the user decides
  
 1. Send Friend Request: Users send friend requests to other users by entering their email or selecting from search results (name/email). Users receive in-app feedback on success/failure.
 2. Accept Friend Request: To accept friend requests received by the user.
-3. Reject Friend Request : To reject a friend request received by the user. 
+3. Reject Friend Request: To reject a friend request received by the user. 
 4. Remove Friend: To remove a friend who is a friend of the user. 
 5. Search Users: Users can search for other users by name or email to send requests.
 6. Cancel Outgoing Request: Users can cancel pending outgoing friend requests.
