@@ -1,4 +1,4 @@
-package com.cpen321.movietier.fcm
+package com.cpen321.movietier.utils.fcm
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -185,13 +185,13 @@ class MovieTierFirebaseMessagingService : FirebaseMessagingService() {
             .setContentIntent(pendingIntent)
             .build()
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(notificationId, notification)
     }
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
             // Feed updates channel
             val feedChannel = NotificationChannel(
