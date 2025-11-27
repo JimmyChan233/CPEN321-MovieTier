@@ -55,30 +55,3 @@ jobs:
         name: test-results
         path: backend/coverage/
 
-    - name: Comment PR with test results
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const fs = require('fs');
-          const coverage = fs.readFileSync('./backend/coverage/coverage-summary.json', 'utf8');
-          const summary = JSON.parse(coverage).total;
-
-          const comment = `## Test Results
-
-          | Metric | Coverage |
-          |--------|----------|
-          | Statements | ${summary.statements.pct}% |
-          | Branches | ${summary.branches.pct}% |
-          | Functions | ${summary.functions.pct}% |
-          | Lines | ${summary.lines.pct}% |
-
-          ✅ Tests completed successfully!`;
-
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
-      continue-on-error: true
