@@ -12,18 +12,18 @@ import axios from "axios";
 import {
   getTmdbClient,
   resetTmdbClient,
-} from "../../../../src/services/tmdb/tmdbClient";
+} from "../../../src/services/tmdb/tmdbClient";
 import {
   fetchMovieTagline,
   cache,
-} from "../../../../src/services/tmdb/tmdbTaglineService";
+} from "../../../src/services/tmdb/tmdbTaglineService";
 
 // Mock axios
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock logger
-jest.mock("../../../../src/utils/logger", () => ({
+jest.mock("../../../src/utils/logger", () => ({
   logger: {
     info: jest.fn(),
     success: jest.fn(),

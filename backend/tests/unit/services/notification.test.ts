@@ -9,7 +9,7 @@
  */
 
 // Mock logger to avoid console output during tests
-jest.mock("../../../../src/utils/logger", () => ({
+jest.mock("../../../src/utils/logger", () => ({
   logger: {
     info: jest.fn(),
     success: jest.fn(),
@@ -76,7 +76,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockRejectedValue(new Error("Network error"));
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendFeedNotification(
       "test-token",
@@ -98,7 +98,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockResolvedValue("msg-id");
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendFriendRequestNotification(
       "token-123",
@@ -133,7 +133,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockResolvedValue("msg-id");
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendLikeNotification(
       "token-123",
@@ -170,7 +170,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockResolvedValue("msg-id");
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const longComment =
       "This is a very long comment that exceeds fifty characters and should be truncated";
@@ -200,7 +200,7 @@ describe("Notification Service Tests - Mocked", () => {
 
     mockAdmin.apps = [{}];
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendMulticastNotification(
       [],
@@ -225,7 +225,7 @@ describe("Notification Service Tests - Mocked", () => {
     );
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendMulticastNotification(
       ["token1"],
@@ -247,7 +247,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockResolvedValue("msg-id");
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     await NotificationService.sendFeedNotification(
       "token",
@@ -281,7 +281,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockResolvedValue("msg-id");
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     await NotificationService.sendFriendRequestAcceptedNotification(
       "token",
@@ -310,7 +310,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockRejectedValue(new Error("Network error"));
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendLikeNotification(
       "token",
@@ -332,7 +332,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockRejectedValue(new Error("Network error"));
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendCommentNotification(
       "token",
@@ -355,7 +355,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockRejectedValue(new Error("Generic error"));
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result = await NotificationService.sendFriendRequestNotification(
       "token",
@@ -376,7 +376,7 @@ describe("Notification Service Tests - Mocked", () => {
     mockMessaging.send.mockRejectedValue(new Error("Network error"));
 
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     const result =
       await NotificationService.sendFriendRequestAcceptedNotification(
@@ -394,9 +394,9 @@ describe("Notification Service Tests - Mocked", () => {
 
     mockAdmin.apps = [];
 
-    const { logger } = require("../../../../src/utils/logger");
+    const { logger } = require("../../../src/utils/logger");
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     // Manually set initialized to false to test the check
     NotificationService.initialized = false;
@@ -420,9 +420,9 @@ describe("Notification Service Tests - Mocked", () => {
 
     mockAdmin.apps = [];
 
-    const { logger } = require("../../../../src/utils/logger");
+    const { logger } = require("../../../src/utils/logger");
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     // Manually set initialized to false to test the check
     NotificationService.initialized = false;
@@ -446,9 +446,9 @@ describe("Notification Service Tests - Mocked", () => {
 
     mockAdmin.apps = [];
 
-    const { logger } = require("../../../../src/utils/logger");
+    const { logger } = require("../../../src/utils/logger");
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     // Manually set initialized to false to test the check
     NotificationService.initialized = false;
@@ -473,9 +473,9 @@ describe("Notification Service Tests - Mocked", () => {
 
     mockAdmin.apps = [];
 
-    const { logger } = require("../../../../src/utils/logger");
+    const { logger } = require("../../../src/utils/logger");
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     // Manually set initialized to false to test the check
     NotificationService.initialized = false;
@@ -502,9 +502,9 @@ describe("Notification Service Tests - Mocked", () => {
     mockAdmin.apps = [];
     mockMessaging.send.mockResolvedValue("message-id");
 
-    const { logger } = require("../../../../src/utils/logger");
+    const { logger } = require("../../../src/utils/logger");
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     // Manually set initialized to false
     NotificationService.initialized = false;
@@ -527,9 +527,9 @@ describe("Notification Service Tests - Mocked", () => {
 
     mockAdmin.apps = [];
 
-    const { logger } = require("../../../../src/utils/logger");
+    const { logger } = require("../../../src/utils/logger");
     NotificationService =
-      require("../../../../src/services/notification.service").default;
+      require("../../../src/services/notification.service").default;
 
     // Manually set initialized to false
     NotificationService.initialized = false;
@@ -557,10 +557,10 @@ describe("Notification Service Tests - Mocked", () => {
       const fs = require("fs");
       fs.existsSync.mockReturnValue(true); // File exists, so we can test the .json validation
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
 
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       // Should log error about file type
       expect(logger.error).toHaveBeenCalled();
@@ -573,7 +573,7 @@ describe("Notification Service Tests - Mocked", () => {
       delete process.env.FIREBASE_PRIVATE_KEY;
 
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       // Service should not be initialized
       expect(true).toBe(true);
@@ -583,10 +583,10 @@ describe("Notification Service Tests - Mocked", () => {
       process.env.FIREBASE_SERVICE_ACCOUNT_PATH =
         "/path/to/serviceAccount.JSON";
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
 
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       // Should reject uppercase .JSON (case sensitive check)
       expect(logger.error).toHaveBeenCalled();
@@ -612,10 +612,10 @@ describe("Notification Service Tests - Mocked", () => {
       fs.existsSync.mockReturnValue(true);
       fs.readFileSync.mockReturnValue(validServiceAccount);
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
 
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       // Should initialize successfully
       expect(mockAdmin.initializeApp).toHaveBeenCalled();
@@ -638,9 +638,9 @@ describe("Notification Service Tests - Mocked", () => {
       }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       const result = await NotificationService.sendFeedNotification(
         "invalid-token",
@@ -666,9 +666,9 @@ describe("Notification Service Tests - Mocked", () => {
       }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       const result = await NotificationService.sendFriendRequestNotification(
         "unregistered-token",
@@ -693,9 +693,9 @@ describe("Notification Service Tests - Mocked", () => {
       }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       const result =
         await NotificationService.sendFriendRequestAcceptedNotification(
@@ -720,9 +720,9 @@ describe("Notification Service Tests - Mocked", () => {
       }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       const result = await NotificationService.sendLikeNotification(
         "unregistered-token",
@@ -748,9 +748,9 @@ describe("Notification Service Tests - Mocked", () => {
       }; // Error without message property
       mockMessaging.send.mockRejectedValue(errorWithoutMessage);
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       const result = await NotificationService.sendCommentNotification(
         "invalid-token",
@@ -784,9 +784,9 @@ describe("Notification Service Tests - Mocked", () => {
         ],
       });
 
-      const { logger } = require("../../../../src/utils/logger");
+      const { logger } = require("../../../src/utils/logger");
       NotificationService =
-        require("../../../../src/services/notification.service").default;
+        require("../../../src/services/notification.service").default;
 
       const result = await NotificationService.sendMulticastNotification(
         tokens,

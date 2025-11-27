@@ -3,22 +3,22 @@
  * Tests with mocked external services (TMDB, SSE, FCM) and real MongoDB
  */
 
-import { startRerank } from "../../../../src/controllers/movie/movieController";
-import RankedMovieModel from "../../../../src/models/movie/RankedMovie";
-import { startSession } from "../../../../src/utils/comparisonSession";
+import { startRerank } from "../../../src/controllers/movie/movieController";
+import RankedMovieModel from "../../../src/models/movie/RankedMovie";
+import { startSession } from "../../../src/utils/comparisonSession";
 import mongoose from "mongoose";
 
-jest.mock("../../../../src/models/movie/RankedMovie");
-jest.mock("../../../../src/utils/comparisonSession");
+jest.mock("../../../src/models/movie/RankedMovie");
+jest.mock("../../../src/utils/comparisonSession");
 
 // Mock the dynamic imports
-jest.mock("../../../../src/models/friend/Friend", () => ({
+jest.mock("../../../src/models/friend/Friend", () => ({
   Friendship: {
     find: jest.fn().mockResolvedValue([]),
   },
 }));
 
-jest.mock("../../../../src/services/sse/sseService", () => ({
+jest.mock("../../../src/services/sse/sseService", () => ({
   sseService: {
     send: jest.fn(),
   },
@@ -108,7 +108,7 @@ describe("Mocked: Rerank Controller - startRerank", () => {
     const friendId = new mongoose.Types.ObjectId();
 
     // Mock Friendship.find to return a friendship
-    const { Friendship } = require("../../../../src/models/friend/Friend");
+    const { Friendship } = require("../../../src/models/friend/Friend");
     (Friendship.find as jest.Mock).mockResolvedValueOnce([{ friendId }]);
 
     const mockDoc = {
@@ -142,7 +142,7 @@ describe("Mocked: Rerank Controller - startRerank", () => {
     );
     const res = mockRes();
 
-    const { sseService } = require("../../../../src/services/sse/sseService");
+    const { sseService } = require("../../../src/services/sse/sseService");
 
     await startRerank(req as any, res as any);
 

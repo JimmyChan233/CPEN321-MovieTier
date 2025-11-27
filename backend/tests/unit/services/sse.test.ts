@@ -10,7 +10,7 @@
 
 import { Response } from "express";
 import { EventEmitter } from "events";
-import { sseService } from "../../../../src/services/sse/sseService";
+import { sseService } from "../../../src/services/sse/sseService";
 
 // Mock Response class that extends EventEmitter
 class MockResponse extends EventEmitter {
