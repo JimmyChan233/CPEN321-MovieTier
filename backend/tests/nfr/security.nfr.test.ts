@@ -10,7 +10,7 @@ import express from "express";
 import authRoutes from "../../src/routes/authRoutes";
 import movieRoutes from "../../src/routes/movieRoutes";
 import User from "../../src/models/user/User";
-import { generateTestJWT } from "../utils/test-fixtures";
+import { generateTestJWT } from "../helpers/test-fixtures";
 
 // Mock external services to focus on security testing
 jest.mock("../../src/services/tmdb/tmdbClient", () => ({

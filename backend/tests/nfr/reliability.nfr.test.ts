@@ -11,7 +11,7 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import movieRoutes from "../../src/routes/movieRoutes";
 import authRoutes from "../../src/routes/authRoutes";
 import User from "../../src/models/user/User";
-import { generateTestJWT, mockUsers } from "../utils/test-fixtures";
+import { generateTestJWT, mockUsers } from "../helpers/test-fixtures";
 import { logger } from "../../src/utils/logger";
 
 // Mock external services to simulate failures

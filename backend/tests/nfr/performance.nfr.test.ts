@@ -9,7 +9,7 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import express from "express";
 import authRoutes from "../../src/routes/authRoutes";
 import User from "../../src/models/user/User";
-import { generateTestJWT } from "../utils/test-fixtures";
+import { generateTestJWT } from "../helpers/test-fixtures";
 
 // Mock external services
 jest.mock("../../src/services/tmdb/tmdbClient", () => ({
