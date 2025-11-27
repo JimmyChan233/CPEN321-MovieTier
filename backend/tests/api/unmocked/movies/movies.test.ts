@@ -27,39 +27,6 @@ import {
   MongoTestContext,
 } from "../../../helpers/mongoConnect";
 
-// Mock the TMDB client to avoid real API calls in tests
-jest.mock("../../../../src/services/tmdb/tmdbClient", () => ({
-  getTmdbClient: jest.fn(() => ({
-    get: jest.fn((url: string) => {
-      if (url === "/search/movie") {
-        return Promise.resolve({
-          data: {
-            results: [
-              {
-                id: 27205,
-                title: "Inception",
-                overview: "A thief who steals corporate secrets...",
-                poster_path: "/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
-                release_date: "2010-07-15",
-                vote_average: 8.4,
-              },
-              {
-                id: 155,
-                title: "The Dark Knight",
-                overview: "Batman raises the stakes...",
-                poster_path: "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-                release_date: "2008-07-16",
-                vote_average: 8.5,
-              },
-            ],
-          },
-        });
-      }
-      return Promise.reject(new Error("Not found"));
-    }),
-  })),
-}));
-
 describe("Unmocked: GET /movies/search", () => {
   let mongoContext: MongoTestContext;
   let app: express.Application;
