@@ -48,20 +48,6 @@ jobs:
         GOOGLE_CLIENT_ID: test-google-client-id
         TMDB_API_KEY: test-tmdb-api-key
 
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v4
-      with:
-        files: ./backend/coverage/lcov.info
-        flags: backend
-        fail_ci_if_error: false
-
-    - name: Generate coverage badge
-      run: |
-        npm install -g coverage-badge
-        coverage-badge -o coverage/badge.svg
-      working-directory: ./backend
-      continue-on-error: true
-
     - name: Archive test results
       if: always()
       uses: actions/upload-artifact@v4
