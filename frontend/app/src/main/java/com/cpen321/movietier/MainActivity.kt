@@ -12,20 +12,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.data.api.ApiService
-import com.cpen321.movietier.fcm.FcmHelper
+import com.cpen321.movietier.utils.fcm.FcmHelper
 import com.cpen321.movietier.ui.navigation.NavGraph
 import com.cpen321.movietier.ui.navigation.NavRoutes
-import com.cpen321.movietier.ui.theme.MovieTierTheme
-import com.cpen321.movietier.ui.viewmodels.ThemeViewModel
+import com.cpen321.movietier.ui.user.theme.MovieTierTheme
+import com.cpen321.movietier.ui.user.viewmodel.ThemeViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import com.cpen321.movietier.ui.viewmodels.AuthViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

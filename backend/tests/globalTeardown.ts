@@ -1,28 +1,33 @@
+import mongoose from "mongoose";
 
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import fs from 'fs';
-import path from 'path';
-
+/**
+ * Global teardown for all tests
+ * Cleans up the shared MongoMemoryServer instance
+ */
 const globalTeardown = async () => {
-  const tempDir = path.join(__dirname, '.tmp');
-  const instancePath = path.join(tempDir, 'mongo-server-instance');
-
   try {
-    const mongoServerJson = fs.readFileSync(instancePath, 'utf8');
-    const mongoServer = MongoMemoryServer.fromJSON(mongoServerJson);
+    // Get the server instance from global scope
+    const mongoServer = (global as any).__MONGO_SERVER__;
+
     if (mongoServer) {
-      await mongoServer.stop();
+      try {
+        await mongoose.disconnect();
+      } catch (err) {
+        console.warn("Error disconnecting mongoose:", (err as Error).message);
+      }
+
+      try {
+        await mongoServer.stop();
+        console.log("✓ MongoMemoryServer stopped");
+      } catch (err) {
+        console.warn(
+          "Error stopping MongoMemoryServer:",
+          (err as Error).message,
+        );
+      }
     }
-  } catch (error) {
-    console.error('Error stopping MongoDB memory server:', error);
-  } finally {
-    // Clean up the temporary file and directory
-    if (fs.existsSync(instancePath)) {
-      fs.unlinkSync(instancePath);
-    }
-    if (fs.existsSync(tempDir)) {
-      fs.rmdirSync(tempDir);
-    }
+  } catch (err) {
+    console.error("Error in global teardown:", (err as Error).message);
   }
 };
 

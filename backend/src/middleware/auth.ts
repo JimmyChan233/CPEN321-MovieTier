@@ -1,19 +1,20 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import config from '../config';
+import { Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { AuthRequest } from "../types/middleware.types";
+import config from "../config";
 
-export interface AuthRequest extends Request {
-  userId?: string;
-}
-
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'No authentication token provided'
+        message: "No authentication token provided",
       });
     }
 
@@ -23,7 +24,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token'
+      message: "Invalid or expired token",
     });
   }
 };
