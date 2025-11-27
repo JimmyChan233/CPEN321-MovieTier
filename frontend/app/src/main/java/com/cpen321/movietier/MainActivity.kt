@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.cpen321.movietier.data.api.ApiService
-import com.cpen321.movietier.fcm.FcmHelper
+import com.cpen321.movietier.utils.fcm.FcmHelper
 import com.cpen321.movietier.ui.navigation.NavGraph
 import com.cpen321.movietier.ui.navigation.NavRoutes
 import com.cpen321.movietier.ui.user.theme.MovieTierTheme

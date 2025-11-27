@@ -1,4 +1,4 @@
-package com.cpen321.movietier.fcm
+package com.cpen321.movietier.utils.fcm
 
 import android.Manifest
 import android.app.Activity

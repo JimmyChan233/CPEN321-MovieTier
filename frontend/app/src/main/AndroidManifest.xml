@@ -34,7 +34,7 @@
 
         <!-- Firebase Cloud Messaging Service -->
         <service
-            android:name=".fcm.MovieTierFirebaseMessagingService"
+            android:name=".utils.fcm.MovieTierFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
