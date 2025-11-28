@@ -15,6 +15,7 @@
 ### Backend Tests
 - **Location**: `backend/tests/`
 - **Structure**:
+  - API test: `backend/tests/api/`
   - Unit tests: `backend/tests/unit/`
   - Integration tests: `backend/tests/integration/`
   - Test configuration: `backend/jest.config.js`
@@ -34,16 +35,15 @@ npm test
 ```bash
 cd frontend
 ./gradlew testDebugUnitTest          # Unit tests
-./gradlew connectedAndroidTest        # Instrumented tests
 ```
 
 ---
 
 ## 3. Physical Device Information
 
-**Manufacturer**: OPPO
 
-**Model**: Find N5
+
+**Model**:OPPO Find N5
 
 ---
 
@@ -248,42 +248,8 @@ Our recommendation algorithm goes far beyond a simple "popular movies" list:
 - Randomized noise for variety while maintaining relevance
 - Intelligent deduplication and filtering
 
-### 4. **Clean Architecture with Comprehensive Separation of Concerns**
-Backend follows a pristine layered architecture:
-- Routes → Controllers → Services → Models
-- TypeScript strict mode for complete type safety
-- Centralized error handling middleware
-- Custom color-coded logging utility for development
-- 100% test coverage target with mongodb-memory-server for isolated testing
 
-Frontend implements textbook Clean Architecture:
-- Data Layer (API, Repository, Local DataStore)
-- Domain Layer (Use Cases, Entities)
-- UI Layer (Jetpack Compose with MVVM)
-- Hilt dependency injection for loose coupling
-- Coroutines for elegant async operations
-
-### 5. **Robust Error Handling and User Feedback**
-- Comprehensive error handling at every layer
-- Informative user feedback messages for all operations
-- Optimistic UI updates with rollback on failure
-- Graceful degradation when external APIs fail
-- Security best practices (JWT verification, input validation, SQL injection prevention via Mongoose)
-
-### 6. **Extensive Testing Infrastructure**
-- Backend: Jest with mongodb-memory-server, Supertest for API testing, >90% code coverage
-- Frontend: JUnit 4, Espresso, MockK for comprehensive testing
-- GitHub Actions CI/CD pipeline with automated test runs
-- Codacy integration for code quality monitoring
-
-### 7. **Professional DevOps Practices**
-- Self-hosted backend on custom domain with public IP
-- Environment-based configuration (.env files)
-- Automated deployment pipeline
-- Proper git workflow with feature branches
-- Comprehensive documentation (Requirements_and_Design.md, Testing_and_Code_Review.md, FCM_SETUP.md, QUICK_REFERENCE.md)
-
-### 8. **Advanced UI/UX Features**
+### 4. **Advanced UI/UX Features**
 - Material Design 3 theming with custom color schemes
 - Consistent 5-star rating display across the entire app
 - Smooth animations and transitions
@@ -292,7 +258,6 @@ Frontend implements textbook Clean Architecture:
 - Bottom sheets for contextual actions
 - Infinite scroll with pagination
 - Pull-to-refresh functionality
-- Skeleton loading states
 
 ---
 
@@ -348,24 +313,6 @@ Frontend implements textbook Clean Architecture:
 - **Movie-Only**: The app only supports movies. No TV shows, documentaries, or other video content types.
 - **No Custom Content**: Users cannot add movies not found in TMDB (e.g., home videos, unreleased films).
 
-### 11. **Security Limitations**
-- **JWT Expiration**: JWT tokens expire after a set period. Users must re-authenticate, which can be disruptive.
-- **No Two-Factor Authentication**: Account security relies solely on Google OAuth. No additional 2FA option.
-
-### 12. **Testing Limitations**
-- **Limited Automated UI Testing**: Frontend has basic Espresso tests, but comprehensive UI test coverage is incomplete.
-- **No Load Testing**: The backend has not been tested under high concurrent user load.
-- **Manual Testing Only for Some Features**: Features like FCM push notifications and SSE require manual testing on physical devices.
-
-### 13. **Deployment Limitations**
-- **Single Backend Instance**: The backend runs on a single server with no load balancing or redundancy. Server downtime = app downtime.
-- **No Auto-Scaling**: Traffic spikes could overwhelm the single backend instance.
-- **No CDN for Images**: Movie posters are fetched directly from TMDB without CDN caching, impacting load times.
-
-### 14. **Data Limitations**
-- **No Data Export**: Users cannot export their rankings/watchlist to CSV, JSON, or other formats.
-- **No Backup/Restore**: If a user deletes their account or data is lost, there's no recovery mechanism.
-- **No Analytics Dashboard**: Users cannot see statistics about their movie-watching habits (genres watched most, average ratings, etc.).
 
 ---
 
