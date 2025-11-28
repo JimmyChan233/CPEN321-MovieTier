@@ -2,7 +2,7 @@
 
 ## 1. GitHub Repository and Final Release Version
 
-**GitHub Repository**: https://github.com/CPEN321-2024-Group29/CPEN321-MovieTier
+**GitHub Repository**: https://github.com/JimmyChan233/CPEN321-MovieTier
 
 **Final Release Commit SHA**: `7baf67f003d51944474e199122f6eeabb0876fa7`
 
