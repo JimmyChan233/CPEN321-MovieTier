@@ -76,14 +76,24 @@ In this app instead of giving out boring stars to rate a movie, the user decides
 
 ### **3.4. Use Case Description**
 
-- **Use cases for feature 1: Authentication**
+- **Use cases for feature 1: Watchlist**
+
+1. Add Movie to Watchlist: Users can add movies to their watchlist from the Discover page, Feed, or Search results. The system checks for duplicates and enriches missing metadata (poster, overview) from TMDB API before saving.
+2. View Watchlist: Users can view their complete watchlist sorted by date added (newest/oldest) or rating (high/low). Each entry displays the movie poster, title, release year, rating, and overview.
+3. Remove Movie from Watchlist: Users can long-press a watchlist item to open a delete confirmation dialog. Upon confirmation, the movie is removed from the watchlist.
+4. Sort Watchlist: Users can sort their watchlist by Date Added (Newest/Oldest) or Rating (High→Low/Low→High) via the top-right menu.
+5. Add to Ranking from Watchlist: Users can add movies from their watchlist directly to their ranked list. This triggers the comparison flow, and upon successful ranking, the movie is automatically removed from the watchlist.
+6. View Watch Providers: Users can tap "Where to Watch" on any watchlist item to open the TMDB watch page or view available streaming services (flatrate/rent/buy) based on their location (country code from device GPS).
+7. View Friend's Watchlist: Users can view their friends' watchlists from the friend profile page.
+
+- **Use cases for feature 2: Authentication**
 
 1. Sign In: When a user has already created their account, they can just sign in with their google account. If the user does not already have an account, they will use the Sign In use case to create an account.
 3. Delete Account: When  a user wants to delete an account.
 4. Sign Out: When a user wants to sign out of the app, they can use the sign out use case.
 5. Edit Profile: Users can edit their display name from the Profile screen. Changes are saved to the backend via PUT /api/users/profile and persisted locally in DataStore. Profile pictures are automatically set from Google account during sign-up.
 
-- **Use cases for feature 2: Manage Friend**
+- **Use cases for feature 3: Manage Friend**
  
 1. Send Friend Request: Users send friend requests to other users by entering their email or selecting from search results (name/email). Users receive in-app feedback on success/failure.
 2. Accept Friend Request: To accept friend requests received by the user.
@@ -98,13 +108,13 @@ Design notes:
 - Basic rate limiting is enforced for sending friend requests to reduce spam (fixed window, max 5/min per user).
 - Client behavior: SSE connection uses infinite read timeout with reconnection/backoff to remain stable during idle periods; UI provides immediate in-app feedback (snackbars) for all friend actions.
 
-- **Use cases for feature 3: Feed**
+- **Use cases for feature 4: Feed**
 
 1. View Feed: The user can view all their friends' activities in their feed. 
 2. View Live Update Notification: Every time a friend ranks a movie, a push notification will be received by the user. 
 3. Open Movie Detail from Feed: The user taps a feed entry to open a detail sheet with poster/description and can add the movie to their Watchlist or Rankings (with confirmation messages).
 
-- **Use cases for feature 4: Ranked Movie List**
+- **Use cases for feature 5: Ranked Movie List**
 
 1. Search a Movie: Users can search names of a movie by using the Search Movie use case.
 2. Add a Movie: Users can add a movie to their ranked lists.
@@ -115,7 +125,7 @@ Design notes:
    - Delete: Remove the movie (requires confirmation), shifts lower ranks up by one.
 
 
-- **Use cases for feature 5: Discover (Recommendation)**
+- **Use cases for feature 6: Discover (Recommendation)**
 
 1. View Recommended Movie List: The user can view a list of recommended movies that the application suggests based on their previously ranked movies.
 2. View Trending Movies: When users have no ranked movies, the system displays trending movies from TMDB to help them discover popular films and start their ranking journey.
@@ -123,18 +133,59 @@ Design notes:
 4. View Movie Trailer: Users can watch movie trailers directly within the app. Tapping the play button on a movie's detail sheet opens the trailer in a popup WebView player that loads the YouTube mobile page. Users can manually toggle fullscreen using YouTube's native controls and close the popup using the X button.
 5. Add Movie from Discover: Users can add movies to their rankings directly from the Discover page without navigation. The comparison flow appears inline on the same page.
 
-- **Use cases for feature 6: Watchlist**
-
-1. Add Movie to Watchlist: Users can add movies to their watchlist from the Discover page, Feed, or Search results. The system checks for duplicates and enriches missing metadata (poster, overview) from TMDB API before saving.
-2. View Watchlist: Users can view their complete watchlist sorted by date added (newest/oldest) or rating (high/low). Each entry displays the movie poster, title, release year, rating, and overview.
-3. Remove Movie from Watchlist: Users can long-press a watchlist item to open a delete confirmation dialog. Upon confirmation, the movie is removed from the watchlist.
-4. Sort Watchlist: Users can sort their watchlist by Date Added (Newest/Oldest) or Rating (High→Low/Low→High) via the top-right menu.
-5. Add to Ranking from Watchlist: Users can add movies from their watchlist directly to their ranked list. This triggers the comparison flow, and upon successful ranking, the movie is automatically removed from the watchlist.
-6. View Watch Providers: Users can tap "Where to Watch" on any watchlist item to open the TMDB watch page or view available streaming services (flatrate/rent/buy) based on their location (country code from device GPS).
-7. View Friend's Watchlist: Users can view their friends' watchlists from the friend profile page.
-
 ### **3.5. Formal Use Case Specifications (5 Most Major Use Cases)**
 
+
+<a name="uc1"></a>
+
+#### Use Case 1: ADD MOVIE TO WATCHLIST
+
+**Description**: User adds a movie to their watchlist for later viewing. The system prevents duplicates and enriches movie metadata from TMDB.
+
+**Primary actor(s)**: User, TMDB API, Backend Server
+
+**Precondition(s)**:
+
+User is authenticated and viewing a movie (from Discover page, Feed, or Search results)
+
+**Postcondition(s)**:
+
+Movie is added to the user's watchlist and persisted in MongoDB. The watchlist screen displays the newly added movie when accessed.
+
+**Main success scenario**:
+
+1. User taps "Add to Watchlist" button on a movie card or detail sheet
+2. System sends POST request to `/api/watchlist` with movieId, title, posterPath, and overview
+3. Backend validates required fields (movieId, title)
+4. Backend checks for duplicate entries using compound index (userId, movieId)
+5. Backend enriches missing metadata (poster/overview) by fetching from TMDB API (`GET /movie/{movieId}`)
+6. Backend creates WatchlistItem document and saves to MongoDB
+7. System returns success response with saved item data
+8. App displays confirmation message: "Added to watchlist"
+9. Movie appears in user's watchlist (accessible from Profile or Watchlist screen)
+
+**Failure scenario(s)**:
+
+- 3a. Missing required fields (movieId or title)
+  - 3a1. Backend returns 400 error: "movieId and title are required"
+  - 3a2. App displays error message to user
+
+- 4a. Movie already exists in user's watchlist
+  - 4a1. Backend detects duplicate via unique compound index (userId, movieId)
+  - 4a2. Backend returns 400 error: "Movie already in watchlist"
+  - 4a3. App displays message informing user the movie is already saved
+
+- 5a. TMDB API request fails or times out
+  - 5a1. Backend catches error and continues with provided metadata
+  - 5a2. Movie is saved with potentially incomplete poster/overview data
+  - 5a3. System completes successfully (TMDB enrichment is best-effort)
+
+- 7a. Database save operation fails
+  - 7a1. Backend returns 500 error: "Unable to add to watchlist. Please try again"
+  - 7a2. App displays error message to user
+  - 7a3. User can retry the operation
+
+---
 
 <a name="uc2"></a>
 
@@ -277,56 +328,6 @@ The user is on the “Feed” page
 - 4a. User has watched or dismissed all returned recommendations
   -4a1. The UI displays: “All caught up! You’ve seen the current recommendations.”
   -4a2. User can refresh to fetch a new batch which re-runs Step 2 with fresh TMDB responses.
-
-<a name="uc6"></a>
-
-#### Use Case 6: ADD MOVIE TO WATCHLIST
-
-**Description**: User adds a movie to their watchlist for later viewing. The system prevents duplicates and enriches movie metadata from TMDB.
-
-**Primary actor(s)**: User, TMDB API, Backend Server
-
-**Precondition(s)**:
-
-User is authenticated and viewing a movie (from Discover page, Feed, or Search results)
-
-**Postcondition(s)**:
-
-Movie is added to the user's watchlist and persisted in MongoDB. The watchlist screen displays the newly added movie when accessed.
-
-**Main success scenario**:
-
-1. User taps "Add to Watchlist" button on a movie card or detail sheet
-2. System sends POST request to `/api/watchlist` with movieId, title, posterPath, and overview
-3. Backend validates required fields (movieId, title)
-4. Backend checks for duplicate entries using compound index (userId, movieId)
-5. Backend enriches missing metadata (poster/overview) by fetching from TMDB API (`GET /movie/{movieId}`)
-6. Backend creates WatchlistItem document and saves to MongoDB
-7. System returns success response with saved item data
-8. App displays confirmation message: "Added to watchlist"
-9. Movie appears in user's watchlist (accessible from Profile or Watchlist screen)
-
-**Failure scenario(s)**:
-
-- 3a. Missing required fields (movieId or title)
-  - 3a1. Backend returns 400 error: "movieId and title are required"
-  - 3a2. App displays error message to user
-
-- 4a. Movie already exists in user's watchlist
-  - 4a1. Backend detects duplicate via unique compound index (userId, movieId)
-  - 4a2. Backend returns 400 error: "Movie already in watchlist"
-  - 4a3. App displays message informing user the movie is already saved
-
-- 5a. TMDB API request fails or times out
-  - 5a1. Backend catches error and continues with provided metadata
-  - 5a2. Movie is saved with potentially incomplete poster/overview data
-  - 5a3. System completes successfully (TMDB enrichment is best-effort)
-
-- 7a. Database save operation fails
-  - 7a1. Backend returns 500 error: "Unable to add to watchlist. Please try again"
-  - 7a2. App displays error message to user
-  - 7a3. User can retry the operation
-
 
 
 ### **3.6. Screen Mock-ups**(optional)
