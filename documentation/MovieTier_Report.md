@@ -59,12 +59,8 @@ cd frontend
 
 ## 5. Test User Accounts
 
-### Primary Test Account
-- **Email**: `MovieTier321@gmail.com`
-- **Password**: `Movie321$`
-
-### Alternative Test Method
-Users can also test the app using their own personal Google accounts. The app supports any valid Google account for authentication.
+### Test Method
+Users can test the app using their own personal Google accounts. The app supports any valid Google account for authentication.
 
 ### Notes
 - The app uses Google OAuth for authentication
