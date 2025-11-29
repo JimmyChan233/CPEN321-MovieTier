@@ -103,7 +103,7 @@
 
 5. **Run Unmocked Integration Tests Only (Happy Paths):**
    ```bash
-   npm test -- --testPathPattern="tests/integration/unmocked"
+   npm test -- --testPathPattern="tests/api/unmocked"
    ```
    Result: 14 test suites, 122 tests
    - Tests with real MongoDB Memory Server
@@ -112,7 +112,7 @@
 
 6. **Run Mocked Integration Tests Only (Error Handling):**
    ```bash
-   npm test -- --testPathPattern="tests/integration/mocked"
+   npm test -- --testPathPattern="tests/api/mocked"
    ```
    Result: 18 test suites, 215 tests
    - Tests with mocked external services and databases
