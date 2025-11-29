@@ -8,6 +8,7 @@ import com.cpen321.movietier.data.api.ApiService
 import com.cpen321.movietier.data.model.User
 import com.cpen321.movietier.data.repository.AuthRepository
 import com.cpen321.movietier.data.repository.Result
+import com.cpen321.movietier.utils.fcm.FcmHelper
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.credentials.CredentialManager
@@ -149,6 +150,8 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Sign in successful"
                 )
+                // Initialize FCM and register token with backend
+                FcmHelper.initializeFcm(apiService, viewModelScope)
             }
             is Result.Error -> {
                 // If sign in fails, try sign up
@@ -183,6 +186,8 @@ suspend fun signInWithGoogle(context: Context, googleClientId: String) {
                     user = result.data.user,
                     successMessage = "Account created successfully"
                 )
+                // Initialize FCM and register token with backend
+                FcmHelper.initializeFcm(apiService, viewModelScope)
             }
             is Result.Error -> {
                 Log.e(TAG, "Sign up failed: ${result.message}")
