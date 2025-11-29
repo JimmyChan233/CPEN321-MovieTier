@@ -755,7 +755,7 @@ The following sequence diagrams illustrate how the main components interact to r
 
 #### **4.6.1. Use Case 6: Add Movie to Watchlist**
 
-<img width="1280" height="827" alt="Add Movie to Watchlist Sequence Diagram" src="https://github.com/user-attachments/assets/2a9a1d05-803f-42d6-870e-0759962b7825" />
+![sequence diagram -watchlist](images/Watchlist.jpg)
 
 #### **4.6.2a. Use Case 2: Send Friend Request by email**
 
