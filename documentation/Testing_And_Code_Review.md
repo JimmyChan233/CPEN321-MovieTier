@@ -4,6 +4,7 @@
 
 | **Change Date** | **Modified Sections** | **Rationale** |
 | --------------- | --------------------- | ------------- |
+| 2025-11-28 | 2.1.4 (Directory Tree), 2.1.3-2.5, 2.3-2.4, 2.5 (Coverage Stats) | **Test Directory Naming & Documentation Consistency + FCM Logging Coverage Update**: (1) Updated section 2.1.4 directory tree label from "integration/" to "api/" to match actual test structure and terminology. (2) Changed all commentary from "integration test suites" to "API test suites" and "Services with mocked dependencies" to "API tests with mocked dependencies". (3) Updated test classification table: "Integration (Unmocked)" → "API (Unmocked)", "Integration (Mocked)" → "API (Mocked)". (4) Updated all command examples in sections 2.1.3, 2.3, and 2.4 from `--testPathPattern="tests/integration/{unmocked,mocked}"` to `--testPathPattern="tests/api/{unmocked,mocked}"` for consistency. (5) Updated commit hash reference to 2b1817f (Nov 28, 2025 - latest on main branch). (6) Updated coverage statistics in section 2.5: statements increased from 1545 to 1552, lines increased from 1461 to 1468 due to new FCM logging code added to notification service. All metrics remain at 100%. Test results verified: 49 test suites, 481 tests passing. |
 | 2025-11-27 | 2.1.1, 2.1.2, 2.1.3, 2.3-2.5 (Comprehensive Path & Stats Fix - FINAL) | **CRITICAL FIX: Test Path & Statistics Corrections for Main Branch**: (1) Updated ALL test file paths in Section 2.1.1 from incorrect `/tests/integration/` to CORRECT `/tests/api/` structure - `tests/api/unmocked/` and `tests/api/mocked/` (2) Fixed commit hash: updated from a254c62 to 175e978 (Nov 27, 2025 - actual latest on main with final documentation fix). (3) Corrected test statistics EVERYWHERE: 481 tests in 49 test suites (not 483/51): Unit 16 suites/124 tests, Unmocked 14 suites/122 tests, Mocked 18 suites/215 tests, NFR 3 suites/22 tests = TOTAL 49 suites/481 tests. (4) Fixed change history claim: all 481 tests passing (not "480 passed, 1 failed"). (5) Updated coverage: 100% verified (1545 statements, 523 branches, 178 functions, 1461 lines). (6) Fixed all 35 API endpoint test path references to match actual `/tests/api/{unmocked,mocked}/{feature}/` structure. |
 | 2025-11-25 | 2.1.2, 5.1 (Commit Hash), 2.1.1 (API Table) | **Commit Hash & Endpoint Path Updates for Final Release**: (1) Updated commit hash from `550e586` to `a254c62` (latest on main branch) to reflect current state for M5 final release. (2) Corrected `/api/quotes` endpoint path to `/api/movies/quote` in API endpoints table - the quote endpoint is implemented in movieRoutes.ts, not a separate quoteRoutes file. (3) Updated test file paths: quote endpoint tests located in `backend/tests/unit/controllers/movieQuoteController.test.ts` rather than integration test directory. (4) All sections 2.1.2 and 5.1 now reference correct commit hash for M5 submission. |
 | 2025-11-25 | 2.1.3, 2.3, 2.4, 2.5 (Test Instructions & Statistics) | **Backend Test Documentation Update - Complete Stats & Run Instructions**: (1) Section 2.1.3: Updated test running instructions with exact npm commands and expected results. Added 11 specific commands: run all tests (483 tests, 51 suites), unmocked only (122 tests, 14 suites), mocked only (215 tests, 18 suites), unit only (124 tests, 16 suites), NFR only (22 tests, 3 suites), with coverage, watch mode, and no-coverage mode. (2) Section 2.3: Updated unmocked test stats to actual results (14 suites, 122 tests, 11.889s). Added command breakdown explaining testPathPattern filter. (3) Section 2.4: Updated mocked test stats (18 suites, 215 tests, 4.938s) and detailed test suite breakdown by feature. (4) Section 2.5: Updated combined coverage with actual execution times and breakdown per category. All numbers verified by running full test suite. (5) Changed outdated paths from `tests/unmocked` and `tests/mocked` to correct `tests/integration/unmocked` and `tests/integration/mocked`. Documentation now matches actual codebase structure and running tests provides exact results shown in documentation. |
@@ -69,8 +70,7 @@
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`35c8f84` - Latest commit on main branch (Nov 27, 2025): report
-(Previous: `175e978` - Nov 27, 2025: fix(docs): Update Testing_And_Code_Review.md with correct test paths and commit hash for main branch)
+`2b1817f`
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -101,7 +101,7 @@
    ```
    Result: 49 test suites, 481 tests, 100% coverage across all metrics
 
-5. **Run Unmocked Integration Tests Only (Happy Paths):**
+5. **Run Unmocked API Tests Only (Happy Paths):**
    ```bash
    npm test -- --testPathPattern="tests/api/unmocked"
    ```
@@ -110,7 +110,7 @@
    - Focuses on success paths and real-world scenarios
    - All external APIs (TMDB, SSE, FCM) are mocked
 
-6. **Run Mocked Integration Tests Only (Error Handling):**
+6. **Run Mocked API Tests Only (Error Handling):**
    ```bash
    npm test -- --testPathPattern="tests/api/mocked"
    ```
@@ -162,8 +162,8 @@ backend/tests/
 │   ├── controllers/               # Unit tests for controller functions
 │   ├── middleware/                # Unit tests for auth/error handling middleware
 │   └── utils/                     # Unit tests for validators, logger, async handlers
-├── integration/                   # 32 integration test suites (18 mocked + 14 unmocked)
-│   ├── mocked/                    # 18 test suites - Services with mocked dependencies
+├── api/                            # 32 API test suites (18 mocked + 14 unmocked)
+│   ├── mocked/                    # 18 test suites - API tests with mocked dependencies
 │   │   ├── auth/                  # Auth service tests with mocked OAuth & JWT
 │   │   ├── movies/                # Movie operations with mocked TMDB API
 │   │   ├── friends/               # Friend operations with mocked models
@@ -172,7 +172,7 @@ backend/tests/
 │   │   ├── watchlist/             # Watchlist with mocked models
 │   │   ├── services/              # Service tests (SSE, notifications, TMDB)
 │   │   └── (includes edge cases, error scenarios, fallback behavior)
-│   └── unmocked/                  # 14 test suites - Integration with MongoDB Memory Server
+│   └── unmocked/                  # 14 test suites - API tests with MongoDB Memory Server
 │       ├── auth/                  # Auth endpoints with real JWT & database
 │       ├── movies/                # Movie ranking with real database
 │       ├── friends/               # Friend management with real database
@@ -193,8 +193,8 @@ backend/tests/
 | Category | Count | Purpose | Focus |
 |----------|-------|---------|-------|
 | **Unit Tests** | 16 suites, 124 tests | Test individual functions in isolation | Correctness of utility functions |
-| **Integration (Unmocked)** | 14 suites, 122 tests | Test features with real database | Happy paths, real-world scenarios |
-| **Integration (Mocked)** | 18 suites, 215 tests | Test features with mocked dependencies | Error handling, edge cases, fallbacks |
+| **API (Unmocked)** | 14 suites, 122 tests | Test features with real database | Happy paths, real-world scenarios |
+| **API (Mocked)** | 18 suites, 215 tests | Test features with mocked dependencies | Error handling, edge cases, fallbacks |
 | **NFR Tests** | 3 suites, 22 tests | Test non-functional requirements | Performance, reliability, security |
 | **TOTAL** | 49 suites, 481 tests | Complete backend test coverage | 100% code coverage, all tests passing |
 
@@ -245,11 +245,11 @@ Time:        11.889 s
 
 **How to Run:**
 ```bash
-npm test -- --testPathPattern="tests/integration/unmocked" --no-coverage
+npm test -- --testPathPattern="tests/api/unmocked" --no-coverage
 ```
 
 **Command Breakdown:**
-- `--testPathPattern="tests/integration/unmocked"` - Only runs tests in unmocked directories
+- `--testPathPattern="tests/api/unmocked"` - Only runs tests in unmocked directories
 - `--no-coverage` - Skips coverage collection for faster execution
 - Total execution time: ~12 seconds
 
@@ -259,7 +259,7 @@ npm test -- --testPathPattern="tests/integration/unmocked" --no-coverage
 - **Real MongoDB Memory Server** used for database operations
 - **Mocked external services:** TMDB API, Google OAuth, Firebase Cloud Messaging, Server-Sent Events
 
-**Analysis:** Integration tests without mocking focus on the main success paths and real database interactions. The unmocked tests intentionally omit error condition scenarios (database failures, external API errors, etc.) because these error scenarios are thoroughly covered in the mocked test suite. This separation of concerns allows:
+**Analysis:** API tests without mocking focus on the main success paths and real database interactions. The unmocked tests intentionally omit error condition scenarios (database failures, external API errors, etc.) because these error scenarios are thoroughly covered in the mocked test suite. This separation of concerns allows:
 - Unmocked tests to verify that happy paths work correctly with real database interactions
 - Mocked tests to comprehensively verify error handling and edge cases
 - Combined suite to achieve 100% coverage of all code branches
@@ -278,11 +278,11 @@ Time:        4.938 s
 
 **How to Run:**
 ```bash
-npm test -- --testPathPattern="tests/integration/mocked" --no-coverage
+npm test -- --testPathPattern="tests/api/mocked" --no-coverage
 ```
 
 **Command Breakdown:**
-- `--testPathPattern="tests/integration/mocked"` - Only runs tests in mocked directories
+- `--testPathPattern="tests/api/mocked"` - Only runs tests in mocked directories
 - `--no-coverage` - Skips coverage collection for faster execution
 - Total execution time: ~5 seconds
 
@@ -339,20 +339,20 @@ Execution Breakdown:
 **Coverage Summary:**
 ```
 =============================== Coverage summary ===============================
-Statements   : 100% ( 1545/1545 )
+Statements   : 100% ( 1552/1552 )
 Branches     : 100% ( 523/523 )
 Functions    : 100% ( 178/178 )
-Lines        : 100% ( 1461/1461 )
+Lines        : 100% ( 1468/1468 )
 ================================================================================
 ```
 
 **Achievement:** 🎉 **100% Code Coverage across all metrics!**
 
 **Coverage Details:**
-- **Statements:** 1545 fully covered (100%)
+- **Statements:** 1552 fully covered (100%)
 - **Branches:** 523 fully covered (100%)
 - **Functions:** 178 fully covered (100%)
-- **Lines:** 1461 fully covered (100%)
+- **Lines:** 1468 fully covered (100%)
 
 **Test Breakdown by Category:**
 
