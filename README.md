@@ -3,6 +3,34 @@ Rank movies, compare tastes with friends, and discover what to watch next.
 
 MovieTier is a social movie companion. It combines a Kotlin Android app and a TypeScript/Express backend backed by MongoDB, TMDB, Firebase Cloud Messaging, and Google OAuth.
 
+## Project walkthrough
+
+MovieTier was developed by a four-person team for UBC CPEN 321. Jimmy Chen led Android and backend development, including architecture, the client-server data model, REST APIs and authentication. The team received first place in the course project presentation.
+
+### Try the main flow
+
+1. Configure the backend and Android app using the setup instructions below, then sign in with Google.
+2. Search for a movie and rank it through pairwise comparisons.
+3. Add a friend, view their ranking activity, and try likes, comments and the watchlist.
+
+The app requires configured services; this repository does not provide a hosted public demo or shared login credentials.
+
+### Design preview
+
+These are the original screen mock-ups from the design document, not screenshots of the current build.
+
+<img src="https://github.com/user-attachments/assets/32d24c08-6408-4dc9-8473-ac7667cb27e1" alt="MovieTier original screen design 1" width="220" /> <img src="https://github.com/user-attachments/assets/45b00579-d371-45cd-904e-da1a63ae5dca" alt="MovieTier original screen design 2" width="220" />
+
+[View all screen designs and requirements](documentation/Requirements_and_Design.md)
+
+### Engineering decisions
+
+- **REST for actions, SSE for updates:** requests change application state; the server streams friend and feed events to connected clients. This supports one-way live updates without repeatedly polling for changes. Connections are held in process memory, so deployment across multiple server instances would require shared event delivery.
+- **Server-side identity verification:** Google ID tokens are verified by the backend before it issues application JWTs.
+- **Testable service boundaries:** the repository contains backend Jest suites and Android unit/instrumented tests. See the commands below; historical coverage figures are not a claim about a fresh run.
+
+![MovieTier dependency diagram](documentation/images/DependencyDiagram.png)
+
 ## Highlights
 - **Google Sign‑In & JWT auth** with secure token storage.
 - **Friend graph** with incoming/outgoing requests, rate limiting, and real-time Server-Sent Events (SSE).
